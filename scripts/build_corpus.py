@@ -4,8 +4,8 @@ Writes files only; loading them into Postgres is `make ingest` (Phase 1 step 5).
 Runs in the app container via `make corpus`; `make corpus-check` validates the sources
 and checks the committed outputs are up to date, without writing or downloading.
 
-Committed outputs (hashed in MANIFEST.json): data/processed/services.json.
-Runbooks, incidents and synthetic logs join this list in later batches.
+Committed outputs (hashed in MANIFEST.json): data/processed/services.json and
+runbooks.jsonl. Incidents and synthetic logs join this list in later batches.
 Not committed: LogHub-derived noise (license requires its notice in every copy).
 """
 
@@ -24,6 +24,7 @@ from scripts.corpus.common import (
     rng_for,
     sha256_bytes,
 )
+from scripts.corpus.runbooks import load_runbooks, runbooks_output, validate_runbooks
 from scripts.corpus.services import CorpusError, load_services, services_output, validate_services
 
 MANIFEST = "MANIFEST.json"
@@ -35,8 +36,16 @@ def build_committed() -> tuple[dict[str, bytes], dict]:
     doc = load_services(DATA / "services.toml")
     validate_services(doc)
     services = services_output(doc)
-    outputs = {"services.json": json_bytes(services)}
-    counts = {"services": len(services), "runbooks": 0, "incidents": 0, "synthetic_log_events": 0}
+    runbooks = load_runbooks(DATA / "runbooks")
+    validate_runbooks(runbooks, doc)
+    rb_rows = runbooks_output(runbooks)
+    outputs = {"services.json": json_bytes(services), "runbooks.jsonl": jsonl_bytes(rb_rows)}
+    counts = {
+        "services": len(services),
+        "runbooks": len(rb_rows),
+        "incidents": 0,
+        "synthetic_log_events": 0,
+    }
     return outputs, counts
 
 

@@ -368,6 +368,11 @@ service = "*"
 meaning = "Postgres SQLSTATE admin_shutdown (server terminated the connection)"
 
 [[error_codes]]
+code = "57P02"
+service = "*"
+meaning = "Postgres SQLSTATE crash_shutdown (another server process crashed; sessions terminated)"
+
+[[error_codes]]
 code = "SERVFAIL"
 service = "*"
 meaning = "DNS server failed to answer"
@@ -420,7 +425,7 @@ meaning = "Redis is loading its dataset into memory and rejects commands"
 [[error_codes]]
 code = "PAYAPI-E1042"
 service = "payments-api"
-meaning = "Could not acquire a database connection from the pgx pool within acquire_timeout"
+meaning = "Could not acquire a database connection from the pgx pool before the DB_ACQUIRE_TIMEOUT context deadline (an app setting, not a pgxpool one); handler returns 503"
 
 [[error_codes]]
 code = "PAYAPI-E1107"
@@ -430,7 +435,7 @@ meaning = "Card processor call failed after retries"
 [[error_codes]]
 code = "PAYAPI-W0310"
 service = "payments-api"
-meaning = "Fraud score unavailable; fell back to the static rules"
+meaning = "Fraud score unavailable or not returned in time; fell back to the static rules"
 
 [[error_codes]]
 code = "LEDGER-W210"
@@ -445,7 +450,7 @@ meaning = "Kafka publish of a ledger entry failed and was queued for retry"
 [[error_codes]]
 code = "ORD-5003"
 service = "orders-api"
-meaning = "Checkout failed because a downstream dependency was unavailable"
+meaning = "Checkout failed because a call to a downstream dependency failed or timed out from orders-api's side (the dependency itself may be healthy)"
 
 [[error_codes]]
 code = "INV-E220"

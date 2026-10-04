@@ -2,7 +2,9 @@
 with the same columns as the real file, and a fake fetch function."""
 
 import copy
+import re
 from datetime import UTC, datetime, timedelta
+from itertools import combinations
 from pathlib import Path
 
 import pytest
@@ -10,6 +12,13 @@ import pytest
 from scripts import build_corpus
 from scripts.corpus import loghub
 from scripts.corpus.common import DATA, PROCESSED, rng_for, sha256_bytes
+from scripts.corpus.runbooks import (
+    headings,
+    load_runbooks,
+    runbooks_output,
+    validate_runbooks,
+    word_count,
+)
 from scripts.corpus.services import (
     CorpusError,
     load_services,
@@ -62,8 +71,11 @@ def test_output_rows_are_marked_synthetic(services_doc):
 
 def test_error_code_catalog_has_standard_and_internal_codes(services_doc):
     codes = {e["code"]: e["service"] for e in services_doc["error_codes"]}
-    for token in ["ECONNREFUSED", "ETIMEDOUT", "53300", "503", "NXDOMAIN", "OOMKilled"]:
+    for token in ["ECONNREFUSED", "ETIMEDOUT", "53300", "57P01", "57P02", "503", "OOMKilled"]:
         assert codes[token] == "*"
+    assert len(codes) == 32
+    assert sum(s == "*" for s in codes.values()) == 17  # real-world tokens
+    assert sum(s != "*" for s in codes.values()) == 15  # fictional internal codes
     assert codes["PAYAPI-E1042"] == "payments-api"
 
 
@@ -96,6 +108,136 @@ def svc(doc, name):
 def test_validator_rejects_broken_services(services_doc, mutate, message):
     with pytest.raises(CorpusError, match=message):
         validate_services(broken(services_doc, mutate))
+
+
+# ------------------------------------------------------------------- runbooks
+
+# Batch 1 measured a maximum pairwise word-trigram Jaccard of 0.0108 (RB-004 vs RB-005).
+# The threshold leaves room for batches 2-3 and their hard-negative pairs; a pair above
+# it means two runbooks share whole passages, i.e. a template crept back in.
+MEASURED_MAX_TRIGRAM_JACCARD = 0.0108
+TRIGRAM_JACCARD_THRESHOLD = 0.03
+
+
+@pytest.fixture(scope="module")
+def runbooks():
+    return load_runbooks(DATA / "runbooks")
+
+
+def test_runbooks_load_and_validate(runbooks, services_doc):
+    validate_runbooks(runbooks, services_doc)
+    assert [r["meta"]["id"] for r in runbooks] == [f"RB-{n:03d}" for n in range(1, 11)]
+    rows = runbooks_output(runbooks)
+    assert all(r["synthetic"] is True and r["doc_type"] == "runbook" for r in rows)
+
+
+def test_runbook_failure_types_hold_one_or_two_values(runbooks):
+    by_id = {r["meta"]["id"]: r["meta"]["failure_types"] for r in runbooks}
+    assert by_id["RB-002"] == ["high_cpu", "api_latency"]
+    assert all(1 <= len(ft) <= 2 for ft in by_id.values())
+
+
+def rb(runbooks, rb_id):
+    return next(r for r in runbooks if r["meta"]["id"] == rb_id)
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda rs: rb(rs, "RB-001")["meta"]["services"].append("billing-api"), "billing-api"),
+        (
+            lambda rs: rb(rs, "RB-002").update(body="see payments-api-09.prod.internal\n"),
+            "unknown host 'payments-api-09.prod.internal'",
+        ),
+        (
+            lambda rs: rb(rs, "RB-003").update(body="logs PAYAPI-E9999 often\n"),
+            "unknown internal code 'PAYAPI-E9999'",
+        ),
+        (lambda rs: rb(rs, "RB-004").update(file="RB-044.md"), "match the filename"),
+        (lambda rs: rb(rs, "RB-005")["meta"].update(synthetic=False), "synthetic must be true"),
+        (
+            lambda rs: rb(rs, "RB-006")["meta"].update(
+                failure_types=["memory_leak", "high_cpu", "disk_full"]
+            ),
+            "1 or 2 distinct",
+        ),
+        (lambda rs: rb(rs, "RB-007")["meta"].update(failure_types=["cosmic_rays"]), "cosmic_rays"),
+        (lambda rs: rb(rs, "RB-008")["meta"].pop("owner"), "owner"),
+        (lambda rs: rb(rs, "RB-009").update(body="like INC-42\n"), "malformed reference 'INC-42'"),
+        (lambda rs: rb(rs, "RB-009").update(body="see RB-1\n"), "malformed reference 'RB-1'"),
+        (
+            lambda rs: rb(rs, "RB-009").update(body="as in INC-LIVE-001\n"),
+            "malformed reference 'INC-LIVE-001'",
+        ),
+    ],
+)
+def test_validator_rejects_broken_runbooks(runbooks, services_doc, mutate, message):
+    rs = copy.deepcopy(runbooks)
+    mutate(rs)
+    with pytest.raises(CorpusError, match=re.escape(message)):
+        validate_runbooks(rs, services_doc)
+
+
+def test_validator_allows_runbook_and_incident_references(runbooks, services_doc):
+    rs = copy.deepcopy(runbooks)
+    rb(rs, "RB-010")["body"] += "\nSee also RB-012 and past incidents INC-0042, INC-0107.\n"
+    validate_runbooks(rs, services_doc)
+
+
+def test_headings_ignore_shell_comments_in_code_fences():
+    body = "# Title\n\n```\n# not a heading\n```\n## Step\n"
+    assert headings(body) == ("title", "step")
+
+
+def test_no_two_runbooks_share_a_heading_sequence(runbooks):
+    seqs = [headings(r["body"]) for r in runbooks]
+    nonempty = [s for s in seqs if s]
+    assert len(nonempty) == len(set(nonempty))
+    # Section headings beyond the title differ too: no shared template.
+    sections = [s[1:] for s in nonempty if len(s) > 1]
+    assert len(sections) == len(set(sections))
+
+
+def test_runbook_formats_and_lengths_vary(runbooks):
+    formats = {r["meta"]["format"] for r in runbooks}
+    lengths = [word_count(r["body"]) for r in runbooks]
+    assert len(formats) >= 5, formats
+    assert min(lengths) < 300 and max(lengths) > 1000, lengths
+
+
+def trigrams(text):
+    words = re.findall(r"[a-z0-9_]+", text.lower())
+    return {tuple(words[i : i + 3]) for i in range(len(words) - 2)}
+
+
+def test_runbooks_do_not_share_passages(runbooks):
+    grams = {r["meta"]["id"]: trigrams(r["body"]) for r in runbooks}
+    scores = {
+        (a, b): len(grams[a] & grams[b]) / len(grams[a] | grams[b])
+        for a, b in combinations(sorted(grams), 2)
+    }
+    worst = max(scores, key=scores.get)
+    print(
+        f"max trigram Jaccard {scores[worst]:.4f} ({worst[0]} vs {worst[1]}); "
+        f"threshold {TRIGRAM_JACCARD_THRESHOLD} (batch 1 measured {MEASURED_MAX_TRIGRAM_JACCARD})"
+    )
+    assert scores[worst] < TRIGRAM_JACCARD_THRESHOLD, (worst, scores[worst])
+
+
+def leaks_demo(body):
+    """Stand-in until demo_answer.toml (batch 4): only the demo's specific host + error +
+    port combination counts, so generic config-push runbooks (RB-027) pass."""
+    return all(t in body for t in ("payments-pgbouncer-01", "ECONNREFUSED", "6432"))
+
+
+def test_demo_leak_guard_is_scoped():
+    assert leaks_demo("payments-pgbouncer-01 refused :6432 with ECONNREFUSED")
+    assert not leaks_demo("Roll back the config push, then flip the kill switch.")
+    assert not leaks_demo("ECONNREFUSED from payments-pgbouncer-02 on 6432")
+
+
+def test_runbooks_do_not_leak_the_demo_combination(runbooks):
+    assert not [r["meta"]["id"] for r in runbooks if leaks_demo(r["body"])]
 
 
 # --------------------------------------------------------------------- LogHub
@@ -188,7 +330,8 @@ def test_manifest_hashes_committed_outputs_only():
     manifest = build_corpus.manifest(outputs, counts).decode()
     assert build_corpus.LOGHUB_OUT not in manifest
     assert counts["services"] == 24
-    assert set(outputs) == {"services.json"}
+    assert counts["runbooks"] == 10
+    assert set(outputs) == {"services.json", "runbooks.jsonl"}
 
 
 def test_committed_outputs_are_up_to_date():
