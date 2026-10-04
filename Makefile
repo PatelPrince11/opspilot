@@ -1,11 +1,24 @@
-.PHONY: up down logs test lint fmt ingest eval
+.PHONY: up down logs test lint fmt migrate migrate-down psql ingest eval
 
 -include .env
 APP_HOST_PORT ?= 8001
+DB_HOST_PORT ?= 5433
+POSTGRES_USER ?= opspilot
+POSTGRES_PASSWORD ?= change-me
+POSTGRES_DB ?= opspilot
+
+# .env's DATABASE_URL (db:5432) only resolves inside Docker. Host-side commands get
+# this one instead; a real env var beats .env in config.py. A password containing
+# URL-special characters (@ : / #) would need percent-encoding here.
+HOST_DATABASE_URL = postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(DB_HOST_PORT)/$(POSTGRES_DB)
 
 up:
-	docker compose up -d --build
-	@echo "waiting for /health on 127.0.0.1:$(APP_HOST_PORT)..."
+	@docker compose up -d --build || { \
+		echo "docker compose up failed; migrate logs:"; docker compose logs migrate; exit 1; }
+	@code=$$(docker compose ps -a migrate --format '{{.ExitCode}}'); \
+	if [ "$$code" != "0" ]; then \
+		echo "migrate exited with code $$code; logs:"; docker compose logs migrate; exit 1; fi
+	@echo "migrations applied; waiting for /health on 127.0.0.1:$(APP_HOST_PORT)..."
 	@for i in $$(seq 1 30); do \
 		curl -fsS http://127.0.0.1:$(APP_HOST_PORT)/health 2>/dev/null | grep -q '"service":"opspilot"' \
 			&& echo "app healthy" && exit 0; \
@@ -19,7 +32,7 @@ logs:
 	docker compose logs -f
 
 test:
-	uv run pytest
+	@DATABASE_URL=$(HOST_DATABASE_URL) uv run pytest
 
 lint:
 	uv run ruff check .
@@ -28,6 +41,15 @@ lint:
 fmt:
 	uv run ruff format .
 	uv run ruff check --fix .
+
+migrate:
+	@DATABASE_URL=$(HOST_DATABASE_URL) uv run alembic upgrade head
+
+migrate-down:
+	@DATABASE_URL=$(HOST_DATABASE_URL) uv run alembic downgrade -1
+
+psql:
+	docker compose exec db psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
 
 ingest:
 	@echo "ingest: not implemented (Phase 1 step 5)"

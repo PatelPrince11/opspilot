@@ -10,7 +10,9 @@ Work in progress. See `docs/BUILD_GUIDE.md` for the plan and `NOTES.md` for deci
 
 ```bash
 cp .env.example .env
-make up      # Postgres + pgvector and the FastAPI app
+make up      # Postgres + pgvector, migrations (one-shot container), then the FastAPI app
 curl 127.0.0.1:8001/health
-make test
+make test    # schema tests need the stack up; they skip with a reason otherwise
 ```
+
+Migrations are Alembic, in `db/migrations/`. `make migrate` / `make migrate-down` run them from the host (via `localhost:5433`); `make psql` opens a shell in the database.

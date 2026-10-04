@@ -5,6 +5,7 @@ description = "Incident-investigation agent with cited diagnoses (synthetic data
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
+    "alembic>=1.20.0",
     "fastapi>=0.142.2",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
@@ -23,6 +24,9 @@ select = ["E", "F", "W", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# -rs: always print skip reasons, so skipped DB tests are never silent.
+addopts = "-rs"
+markers = ["db: needs Postgres on the host port (make up)"]
 # Starlette prefers httpx2 but falls back to httpx with only a deprecation warning.
 filterwarnings = [
     "ignore:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",

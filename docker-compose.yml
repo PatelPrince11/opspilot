@@ -15,14 +15,27 @@ services:
       timeout: 3s
       retries: 10
 
+  # One-shot: applies migrations, then exits. The app only starts if this exits 0,
+  # so it never runs against a half-migrated schema.
+  migrate:
+    image: opspilot:local # same image as app, built once
+    build: .
+    env_file: .env # DATABASE_URL=...@db:5432 is correct inside the network
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   app:
+    image: opspilot:local
     build: .
     env_file: .env # runtime secrets; reaches Postgres at db:5432 on the compose network
     ports:
       - "127.0.0.1:${APP_HOST_PORT:-8001}:8000"
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     extra_hosts:
       - "host.docker.internal:host-gateway" # Ollama on the host; makes this work on Linux too
 
