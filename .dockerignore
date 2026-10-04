@@ -1,0 +1,11 @@
+# Secrets are injected at runtime by Compose (env_file), never baked into the image.
+.env
+.git
+.venv
+.claude
+**/__pycache__
+.pytest_cache
+.ruff_cache
+.DS_Store
+data/raw/
+frontend/node_modules
