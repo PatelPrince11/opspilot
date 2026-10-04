@@ -39,5 +39,18 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway" # Ollama on the host; makes this work on Linux too
 
+  # One-shot corpus build (`make corpus`). Profile "tools" keeps it out of `make up`.
+  # Writes files only, so no database dependency. data/ is mounted so outputs land on
+  # the host; the eval sidecar is read-only because the build only validates against it.
+  corpus:
+    image: opspilot:local
+    build: .
+    command: ["python", "-m", "scripts.build_corpus"]
+    volumes:
+      - ./data:/app/data
+      - ./eval/corpus:/app/eval/corpus:ro
+    profiles: ["tools"]
+    restart: "no"
+
 volumes:
   pgdata:

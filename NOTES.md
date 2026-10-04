@@ -65,6 +65,42 @@ Running log of decisions, errors and fixes. Newest entries at the bottom.
 
 **Verified:** ruff clean; 19 tests pass with the stack up (12 schema tests incl. downgrade-to-base round trip, 384-dim enforcement, HNSW and GIN used in EXPLAIN, CHECKs, cascade); with the stack down, 7 pass and 12 skip with a reason (19 collected both ways). `make up`: migrate `Exited (0)`, app healthy. Throwaway `0002` with `SELECT 1/0`: `make up` printed migrate logs, exited 2, app stayed `Created`; DB still at `0001` (transactional DDL rolled back). `make migrate` from the Mac on 5433 reports head.
 
+## 2026-10-03: Phase 1 step 3, batch 0 (corpus infrastructure)
+
+Plan for step 3, approved with review changes:
+- batches: infra → runbooks ×3 → a 200-row incident skeleton (reviewed before any prose) → 10 calibration incidents → ~27 per batch
+- eval-only fields live in a sidecar (`eval/corpus/`) that ingest never reads
+- the open demo incident `INC-LIVE-001` is not one of the 200 and not a document
+
+**Built:**
+- `data/services.toml`: 24 services, 13 apps and 11 datastores, plus hosts, IPs, ports, statuses and an error-code catalog
+- `scripts/build_corpus.py` with `scripts/corpus/{common,services,loghub}.py`
+- a one-shot `corpus` compose service; `make corpus` and `make corpus-check`
+- `data/processed/{services.json, MANIFEST.json}`
+- `tests/test_corpus.py` (22 tests)
+
+**Decisions**
+- **The corpus build runs in the app container.** This settles the host-or-container question left open in step 1. It's a `corpus` service under `profiles: ["tools"]`, so `make up` never starts it, and it has no DB dependency because it writes files only (`make ingest` loads Postgres in step 5). `./data` is bind-mounted read-write so outputs land on the host. `./eval/corpus` is mounted read-only because the build only validates against the sidecar. `--build` on `docker compose run` means the image never runs a stale script; the deps layer stays cached.
+- **Who writes the content:** Claude Code writes runbook and incident prose as files and Prince reviews them. The script only does deterministic work, and no code makes an LLM call.
+- **No new dependencies:** TOML front matter (`tomllib`), `urllib`, `csv`.
+- **Seed** `20261003`. One RNG per item (`sha256(f"{SEED}:{key}")`), so editing one incident never reshuffles another's logs. `hashlib` because `hash()` is salted per process.
+- **MANIFEST hashes committed outputs only.** It records the LogHub commit and file pins but not LogHub-derived files.
+- **LogHub: OpenStack 2k structured sample**, pinned to commit `dd61d09` (master on 2026-10-03), with sha256 checks on the CSV and the LICENSE. A mismatched download raises and writes nothing. A valid cached copy is reused; a corrupt one is re-downloaded. The fallback to synthetic noise wasn't needed: it worked on the first try, well inside the 1-hour time box.
+- **LogHub license** ("LICENSE OF LOGHUB"): free for research or academic work, cite the ISSRE 2023 paper, and include the notice in all copies. So nothing LogHub-derived is committed: `data/raw/*` and `log_events.loghub.jsonl` are gitignored. Even the test fixture is **made up** in LogHub's column format rather than cut from the real file. The README carries the citation.
+- **LogHub facts (measured):** 2,000 rows (1,969 INFO, 31 WARNING; `WARNING` → `WARN`), from three source logs (nova-api 1,060, nova-compute 933, nova-scheduler 7), all within 15 minutes on 2017-05-16. So rows are **rebased**: a seeded contiguous slice of 40 per incident window, order kept, `incident_id` NULL. Service names are `openstack-nova-*`, outside `services` (no FK on `log_events.service`). 0 placed so far because there are no incidents yet.
+- **`--check`** builds in memory and compares to the committed bytes. It writes and downloads nothing, so it can run in CI later.
+
+**Errors and fixes**
+- *Fixture licensing.* I first cut the test fixture from the real CSV, then replaced it with made-up rows: committing even 5 real lines is a copy under the LogHub notice.
+- *Lint:* one line over 100 characters in a test; fixed with `make fmt`.
+
+**Verified:**
+- `make corpus` in the container: 24 services, 2,000 LogHub lines parsed.
+- A second run produced a byte-identical `MANIFEST.json`.
+- `make corpus-check` passes. On a tampered `services.json` it exits 1 and names the file; after restoring, it exits 0.
+- `make test`: 41 passed (22 new). `make lint` is clean.
+- Downloaded hashes match the pins.
+
 ## Status
 
 - Phase 0 accounts (AWS, Groq, Gemini, Langfuse Cloud, Anthropic credits, GitHub): **not done**. Prince is doing these in parallel. Repo files only until then.

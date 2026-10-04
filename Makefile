@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint fmt migrate migrate-down psql ingest eval
+.PHONY: up down logs test lint fmt migrate migrate-down psql corpus corpus-check ingest eval
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -50,6 +50,14 @@ migrate-down:
 
 psql:
 	docker compose exec db psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+
+# Corpus build runs in the app container (data/ is bind-mounted). --build keeps the
+# script current; the dependency layer stays cached.
+corpus:
+	docker compose run --rm --build corpus
+
+corpus-check:
+	docker compose run --rm --build corpus python -m scripts.build_corpus --check
 
 ingest:
 	@echo "ingest: not implemented (Phase 1 step 5)"

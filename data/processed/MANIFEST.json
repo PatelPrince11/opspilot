@@ -1,0 +1,22 @@
+{
+  "counts": {
+    "incidents": 0,
+    "runbooks": 0,
+    "services": 24,
+    "synthetic_log_events": 0
+  },
+  "files": {
+    "services.json": "e91a6e9ac170dc5d865f6cfd0a08c47534558366a315c67fcb7f361f4506eece"
+  },
+  "loghub": {
+    "commit": "dd61d0952749ee7963bde24220d1be5ede023033",
+    "files": {
+      "LICENSE": "9ffa6ae259833cdc6e7ed8a0219fec72ef6455fb457b3c44096cb1ac1f0696d4",
+      "OpenStack/OpenStack_2k.log_structured.csv": "ecc88e7909777181824260e9bdacd1469bd24d55131d6fc14e9c8c17edc49ff0"
+    },
+    "note": "background noise only; downloaded at build time, not committed",
+    "repo": "https://github.com/logpai/loghub"
+  },
+  "seed": 20261003,
+  "synthetic": true
+}
