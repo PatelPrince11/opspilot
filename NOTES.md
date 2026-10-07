@@ -302,7 +302,7 @@ The batch 1 uncertainty list was **reconstructed from the 2026-10-04 batch 1 tra
 
 **Restored with source:** RB-020:32, Go doesn't try another server after NXDOMAIN.
 
-**Pending:** the RB-003:36 `detailed=true` wording (edit 7). RB-003 is a batch 1 file outside the approved set.
+**Applied:** the RB-003:36 `detailed=true` wording (edit 7), after Prince approved editing RB-003 for that change only (separate commit).
 
 **New facts:** HikariCP 5.x for ledger-service; private cgroup namespace for containers. Checked against RB-002:16, which already says the file is at the cgroup root inside the container, so there's no contradiction.
 
