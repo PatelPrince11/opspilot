@@ -209,6 +209,103 @@ Plan for step 3, approved with review changes:
 
 **Verified:** `make corpus` gives 20 runbooks, and a second run produced a byte-identical MANIFEST. `make corpus-check` ok. `make test`: 61 passed with the stack up. `make lint` clean.
 
+## 2026-10-07: Batch 1 and 2 upstream-doc checks
+
+The batch 1 uncertainty list was **reconstructed from the 2026-10-04 batch 1 transcript, not from NOTES**. NOTES line "Not yet verified against upstream docs" named the list but never enumerated it, and no corrections had been recorded against it. Each item below was read against a primary source (docs or source at the named version) on 2026-10-07.
+
+**Items confirmed**
+- *PgBouncer 1.22* (`doc/usage.md`, `doc/config.md`, `src/janitor.c`, `src/proto.c`, NEWS):
+  - `SHOW POOLS` columns `cl_waiting`, `maxwait`, `sv_active`, `sv_idle`
+  - `SHOW SERVERS` lists server connections
+  - server login uses the client user name when `[databases] user=` is unset
+  - `max_prepared_statements` exists since 1.21
+  - `query_wait_timeout` reaches the client as FATAL `query_wait_timeout`, SQLSTATE `08P01`, and is logged as `pooler error: query_wait_timeout`
+- *Postgres 16* (docs and `REL_16_STABLE` source):
+  - `wal_status` values
+  - `max_slot_wal_keep_size`: default −1, `PGC_SIGHUP` (reload is enough)
+  - `pg_stat_archiver` and `pg_stat_wal_receiver` columns
+  - the `could not write to file "%s": %m` text
+  - 57P02 "terminating connection because of crash of another server process"
+  - 57P01 "terminating connection due to administrator command"
+  - `restart_after_crash` defaults to on
+  - `CHECKPOINT` lets unneeded WAL be recycled or removed
+  - `pg_stat_activity` `state`, `state_change`, `xact_start`, `idle in transaction`
+  - the 53300 messages and which role sees which
+  - WAL senders don't count toward `max_connections`
+  - Debian `/var/lib/postgresql/<version>/<cluster>` and `postgresql@<version>-<cluster>`
+- *Kubernetes, kernel and Go*:
+  - cgroup v2 `cpu.stat` fields `nr_periods`, `nr_throttled`, `throttled_usec`
+  - cAdvisor `container_cpu_cfs_periods_total` and `container_cpu_cfs_throttled_periods_total`
+  - GOMAXPROCS is container-aware only from Go 1.25
+  - `OOMKilled` with exit code 137, and the `lastState.terminated.reason` jsonpath
+  - containerd reports reason `Error` for a non-zero, non-OOM exit
+  - the `Evicted` message format "The node was low on resource: %v."
+  - the eviction ranking (usage over requests, then priority, then usage relative to requests; QoS class not used)
+  - `kubectl cp` needs `tar`
+  - `kubectl logs deploy/x` reads the first pod
+  - **`kubectl logs -l` defaults `--tail` to 10**
+  - Go `lookup <name> on <server>: <err>`, `no such host`, `server misbehaving`, and no retry on NXDOMAIN (`net.go`, `dnsclient_unix.go`)
+  - glibc `res_send.c`: over UDP, SERVFAIL/REFUSED/NOTIMP try the next server; NXDOMAIN is final
+- *JVM* (JDK 17 man pages, `jdk17u` HotSpot source):
+  - `jcmd Thread.print` and `GC.heap_info`
+  - `jstat -gcutil` columns `O`, `FGC`, `FGCT`
+  - thread-dump `cpu=`, `elapsed=` and hex `nid=0x%x`
+  - GC thread names `GC Thread#N`, `G1 Conc#N`
+  - `-XX:MaxRAMPercentage` and the `-Xlog:…:file=` syntax
+- *HikariCP 5.0.1*:
+  - timeout message `… request timed out after <n>ms.` (no pool-state suffix before 6.x)
+  - `connectionTimeout` default 30000
+  - `HikariPool-` name prefix
+  - the leak-detection message
+- *Node and V8* (main):
+  - `FATAL ERROR: Reached heap limit` and `Ineffective mark-compacts near heap limit` with "Allocation failed - JavaScript heap out of memory"
+  - the heap-snapshot flags are allowed in `NODE_OPTIONS`
+  - snapshots go to the working directory, need about 2× the heap, and block the event loop
+- *Python and Redis*:
+  - py-spy needs `SYS_PTRACE`, and `top --subprocesses` exists
+  - gunicorn `WEB_CONCURRENCY`, `--max-requests`, `--max-requests-jitter`
+  - `redis-cli --latency`
+  - the fork for BGSAVE can add latency
+  - Redis admin and FAQ text on overcommit
+- *OpenSearch* (docs and `ExceptionsHelper.java`):
+  - `_cat/thread_pool` columns
+  - `running_time_in_nanos`
+  - the task id format and cancel path
+  - `hot_threads`
+  - `search.default_search_timeout` is dynamic with default −1
+  - a rejected execution returns HTTP 429
+- *Kafka 3.8* (generated config docs and source):
+  - `kafka-log-dirs.sh --describe --broker-list`
+  - `kafka-configs.sh --add-config` / `--delete-config`
+  - `log.retention.hours` 168, retention check every 5 min, `file.delete.delay.ms` 60000
+  - `retention.bytes` is per partition
+  - the active segment is never deleted (`segment.ms`)
+  - a broker shuts down when all log dirs fail
+  - `acks=all` with `min.insync.replicas` → NotEnoughReplicas
+- *Linux man pages*: `du -x`/`--max-depth`, `journalctl --vacuum-size`, `SystemMaxUse=`, `df -i`, `copytruncate`, `lsof +L1`.
+- *Envoy and kernel*: Envoy flags `UT`/`UF`/`UO`/`URX`/`UH`; the strict-mode `CommitLimit` formula (`filesystems/proc`).
+
+**Items unverified**
+- (5) RB-007:35: the PANIC level on that particular write. The text is confirmed, and `elog.c` promotes ERROR to PANIC inside a critical section, but I didn't trace the call path.
+- (6) RB-007:17: that `pg_archivecleanup` is unsafe on `pg_wal`. The docs are silent, and the line is a prohibition, so it's left as is.
+- (9) RB-008:20: that truncating through `/proc/<pid>/fd/<fd>` frees the space. `proc_pid_fd(5)` says only that the entry links to the open file.
+- (10) RB-001:45, :57, :59, :80: `jcmd` and `top` attaching to PID 1 inside the container. No source checked.
+- **CPU-limit arithmetic (RB-002:14):** the kernel docs confirm the 100 ms default period, and the 2-CPU / 16-thread figures are plain arithmetic. But the Kubernetes docs only say CPU limits "are enforced by CPU throttling". They don't state that a limit becomes a CFS quota over a 100 ms period, so that mapping stays unverified against Kubernetes' own docs.
+
+**Wrong, fixed:**
+- RB-005:38 claimed pods with no requests are evicted before everything else; the eviction docs rank by usage over requests, then priority, then usage relative to requests (batch 1 commit).
+- RB-019:23 counted `FRD-E140` through `kubectl logs -l`, which tails 10 lines per pod by default; `--tail=-1` added.
+
+**Reworded, because unverified:**
+- RB-007:38 and :127: the "can't finish crash recovery on a full disk" claim is gone.
+- RB-011:88: the pgx claim is replaced by the confirmed FATAL/`08P01` text.
+
+**Restored with source:** RB-020:32, Go doesn't try another server after NXDOMAIN.
+
+**Pending:** the RB-003:36 `detailed=true` wording (edit 7). RB-003 is a batch 1 file outside the approved set.
+
+**New facts:** HikariCP 5.x for ledger-service; private cgroup namespace for containers. Checked against RB-002:16, which already says the file is at the cgroup root inside the container, so there's no contradiction.
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.
@@ -226,7 +323,7 @@ Invented details of the fictional company, introduced in batch 1. Reuse them as-
 - WAL archiving goes to object storage; dropping a slot needs the DBA lead's approval; an online volume grow takes about 15 min
 
 **ledger-service** (RB-001)
-- Spring Boot on Java 17, JVM is PID 1, `-XX:MaxRAMPercentage=75`, GC log at `/var/log/ledger/gc.log`
+- Spring Boot on Java 17; **ledger-service uses HikariCP 5.x** (its timeout message ends `ms.` with no pool-state suffix); JVM is PID 1, `-XX:MaxRAMPercentage=75`, GC log at `/var/log/ledger/gc.log`
 - Kafka retry workers are threads named `ledger-retry-*`; **release 4.12, shipped 2025-11-12**, added backoff to the retry worker (before 4.12 it spun on broker outages). **Skeleton rule:** no incident whose cause is the retry spin without backoff may start after 2025-11-12. Later Kafka outages can still log `LEDGER-E455`, but the retry worker backs off instead of burning CPU.
 - Month-end reconciliation batches are large and CPU-heavy on whichever instance picks them up
 
@@ -249,7 +346,7 @@ Invented details of the fictional company, introduced in batch 1. Reuse them as-
 - redis-features is a single node (no failover); latency spikes come from big key scans and BGSAVE
 
 **Platform-wide** (RB-002, RB-005, RB-008)
-- Nodes run cgroup v2; payments-api sets `GOMAXPROCS` from its CPU limit in the Deployment; CPU limit raises keep requests unchanged
+- Nodes run cgroup v2; **containers run with a private cgroup namespace** (so `/sys/fs/cgroup/cpu.stat` inside a container is the container's own); payments-api sets `GOMAXPROCS` from its CPU limit in the Deployment; CPU limit raises keep requests unchanged
 - Grafana panels "Container CPU" (with a throttling view) and "Container memory (working set)"; throttling above about 25% of periods counts as significant
 - Slack channel `#platform-oncall`; journald capped with `SystemMaxUse=500M`; on VMs, `/var` is on the root disk
 
