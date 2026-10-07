@@ -127,7 +127,7 @@ def test_validator_rejects_broken_services(services_doc, mutate, message):
 # Batch 1 measured a maximum pairwise word-trigram Jaccard of 0.0108 (RB-004 vs RB-005).
 # The threshold leaves room for batches 2-3 and their hard-negative pairs; a pair above
 # it means two runbooks share whole passages, i.e. a template crept back in.
-MEASURED_MAX_TRIGRAM_JACCARD = 0.0234  # batch 2, RB-001 vs RB-013
+MEASURED_MAX_TRIGRAM_JACCARD = 0.0233  # batch 2, RB-001 vs RB-013
 TRIGRAM_JACCARD_THRESHOLD = 0.03
 
 
