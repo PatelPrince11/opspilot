@@ -71,12 +71,24 @@ def test_output_rows_are_marked_synthetic(services_doc):
 
 def test_error_code_catalog_has_standard_and_internal_codes(services_doc):
     codes = {e["code"]: e["service"] for e in services_doc["error_codes"]}
-    for token in ["ECONNREFUSED", "ETIMEDOUT", "53300", "57P01", "57P02", "503", "OOMKilled"]:
+    for token in [
+        "ECONNREFUSED",
+        "ETIMEDOUT",
+        "53300",
+        "57P01",
+        "57P02",
+        "503",
+        "OOMKilled",
+        "query_wait_timeout",
+        "READONLY",
+        "OOM command not allowed",
+    ]:
         assert codes[token] == "*"
-    assert len(codes) == 32
-    assert sum(s == "*" for s in codes.values()) == 17  # real-world tokens
-    assert sum(s != "*" for s in codes.values()) == 15  # fictional internal codes
+    assert len(codes) == 36
+    assert sum(s == "*" for s in codes.values()) == 20  # real-world tokens
+    assert sum(s != "*" for s in codes.values()) == 16  # fictional internal codes
     assert codes["PAYAPI-E1042"] == "payments-api"
+    assert codes["FRD-E140"] == "fraud-scorer"
 
 
 def broken(doc, mutate):
@@ -115,7 +127,7 @@ def test_validator_rejects_broken_services(services_doc, mutate, message):
 # Batch 1 measured a maximum pairwise word-trigram Jaccard of 0.0108 (RB-004 vs RB-005).
 # The threshold leaves room for batches 2-3 and their hard-negative pairs; a pair above
 # it means two runbooks share whole passages, i.e. a template crept back in.
-MEASURED_MAX_TRIGRAM_JACCARD = 0.0108
+MEASURED_MAX_TRIGRAM_JACCARD = 0.0234  # batch 2, RB-001 vs RB-013
 TRIGRAM_JACCARD_THRESHOLD = 0.03
 
 
@@ -126,7 +138,7 @@ def runbooks():
 
 def test_runbooks_load_and_validate(runbooks, services_doc):
     validate_runbooks(runbooks, services_doc)
-    assert [r["meta"]["id"] for r in runbooks] == [f"RB-{n:03d}" for n in range(1, 11)]
+    assert [r["meta"]["id"] for r in runbooks] == [f"RB-{n:03d}" for n in range(1, 21)]
     rows = runbooks_output(runbooks)
     assert all(r["synthetic"] is True and r["doc_type"] == "runbook" for r in rows)
 
@@ -219,7 +231,7 @@ def test_runbooks_do_not_share_passages(runbooks):
     worst = max(scores, key=scores.get)
     print(
         f"max trigram Jaccard {scores[worst]:.4f} ({worst[0]} vs {worst[1]}); "
-        f"threshold {TRIGRAM_JACCARD_THRESHOLD} (batch 1 measured {MEASURED_MAX_TRIGRAM_JACCARD})"
+        f"threshold {TRIGRAM_JACCARD_THRESHOLD} (last measured {MEASURED_MAX_TRIGRAM_JACCARD})"
     )
     assert scores[worst] < TRIGRAM_JACCARD_THRESHOLD, (worst, scores[worst])
 
@@ -330,7 +342,7 @@ def test_manifest_hashes_committed_outputs_only():
     manifest = build_corpus.manifest(outputs, counts).decode()
     assert build_corpus.LOGHUB_OUT not in manifest
     assert counts["services"] == 24
-    assert counts["runbooks"] == 10
+    assert counts["runbooks"] == 20
     assert set(outputs) == {"services.json", "runbooks.jsonl"}
 
 

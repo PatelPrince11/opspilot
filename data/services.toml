@@ -423,6 +423,21 @@ service = "*"
 meaning = "Redis is loading its dataset into memory and rejects commands"
 
 [[error_codes]]
+code = "query_wait_timeout"
+service = "*"
+meaning = "PgBouncer disconnected a client whose query waited longer than query_wait_timeout for a server connection"
+
+[[error_codes]]
+code = "READONLY"
+service = "*"
+meaning = "Redis rejected a write sent to a replica (READONLY You can't write against a read only replica.)"
+
+[[error_codes]]
+code = "OOM command not allowed"
+service = "*"
+meaning = "Redis rejected a write because used memory is above maxmemory and the policy cannot evict"
+
+[[error_codes]]
 code = "PAYAPI-E1042"
 service = "payments-api"
 meaning = "Could not acquire a database connection from the pgx pool before the DB_ACQUIRE_TIMEOUT context deadline (an app setting, not a pgxpool one); handler returns 503"
@@ -476,6 +491,11 @@ meaning = "Card processor rate limit hit; request delayed or rejected"
 code = "FRD-W118"
 service = "fraud-scorer"
 meaning = "Feature fetch from redis-features exceeded its latency budget"
+
+[[error_codes]]
+code = "FRD-E140"
+service = "fraud-scorer"
+meaning = "Velocity-counter write to redis-features rejected; counters stale until writes recover"
 
 [[error_codes]]
 code = "CAT-E301"

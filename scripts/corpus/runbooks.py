@@ -20,7 +20,18 @@ FAILURE_TYPES = {
     "bad_deploy",
     "rate_limiting",
 }
-FORMATS = {"long", "prose", "decision_tree", "checklist", "faq", "commands", "table", "procedure"}
+FORMATS = {
+    "long",
+    "prose",
+    "decision_tree",
+    "checklist",
+    "faq",
+    "commands",
+    "table",
+    "procedure",
+    "reference",
+    "worked_example",
+}
 REQUIRED = {
     "id": str,
     "title": str,

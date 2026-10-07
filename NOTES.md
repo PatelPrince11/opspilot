@@ -149,6 +149,64 @@ Plan for step 3, approved with review changes:
   - The other 12 codes the runbooks use match as written.
 - *ledger-service release 4.12 dated* 2025-11-12; see Fictional facts.
 
+## 2026-10-05: Phase 1 step 3, batch 2 (runbooks RB-011 to RB-020)
+
+**Built:** `data/runbooks/RB-011.md` … `RB-020.md` (conn_pool ×3, api_latency ×3, redis_down ×3, dns_failure ×1); 4 catalog codes; formats `reference` and `worked_example` added to the validator; tests updated (20 runbooks, catalog 36 = 20 real + 16 internal).
+
+**Decisions**
+- **Topic map for 30 runbooks:** conn_pool 4 (010–013), latency 3 primary (014–016; 002/003 also carry it), Redis 3 (017–019), DNS 3 (020–022), TLS 3, deploy 3, rate limiting 2 (029–030). All 10 failure types covered after batch 3.
+- **RB-013 reassigned** from "connection leaks / idle-in-transaction", which RB-010 already covers (rows on `idle in transaction`, `rows.Close()`, `tx.Rollback`), to ledger-service HikariCP pool exhaustion.
+- **RB-017/018 split by what the data is:** redis-cache is a cache (losing it floods catalog-db). redis-sessions is a system of record (failover → `READONLY` writes → `AUTH-E401X`). RB-019 is redis-features (single node, refused writes) and never mentions Sentinel.
+- **Assumption A amendments:** payments-pgbouncer and internal-dns run on VMs, not Kubernetes (details in Fictional facts). I grepped RB-007 and RB-010 before deciding: neither says Kubernetes or pods for PgBouncer, and no runbook mentioned internal-dns.
+- **Catalog adds** (approved): `query_wait_timeout`, `READONLY` and `OOM command not allowed` (real); `FRD-E140` (fraud-scorer). **Design choice, not a measured result:** the catalog holds codes and error tokens. Free-text log phrases (Hikari's timeout text, Envoy flags, Go's `no such host`, PG16's reserved-slot wording) stay out of it, as `context deadline exceeded` did in batch 1. We haven't measured whether this helps or hurts retrieval.
+- **Hard negatives scored (word-trigram Jaccard, threshold 0.03):** 010/011 0.0131, 010/012 0.0045, 011/012 0.0096, 010/013 0.0129, 001/013 0.0234, 010/015 0.0108, 017/018 0.0168, 017/019 0.0043, 006/019 0.0157, 014/016 0.0032, 002/014 0.0031, 003/014 0.0048, 004/016 0.0029, 002/016 0.0028. Max over RB-001–020: **0.0234 (RB-001 vs RB-013)**, up from 0.0219 after RB-013 adopted RB-001's `http-nio-*`/Jackson wording on purpose. Threshold unchanged.
+- **RB-011 vs RB-010 is separated by PgBouncer-side vocabulary only** (`cl_waiting`, `maxwait`, `SHOW POOLS`, `query_wait_timeout`). RB-010 stays unedited and has none of it. **The June 2025 PgBouncer incident links both RB-011 and RB-010**, because RB-010's row "sessions mostly `active` on the same query" also fits a slow export.
+- **013 vs 010 and 015 vs 010:** the primary discriminator is the service's code and database (`LEDGER-W210` + ledger-db; `INV-E220` + inventory-db vs `PAYAPI-E1042` + payments-db), not the language.
+- **Batch 3:** the rate_limiting runbooks (RB-029, RB-030) must be scored as hard negatives against RB-016 (shared `CPX-W429`).
+- **October 2025 check:** the existing October 2025 ledger retry-spin row names only ledger-service, `ledger-retry-*` and `LEDGER-E455`; no skeleton constraint uses auth-service-01 for it. The new October 2025 RB-018 event (auth-service-01, redis-sessions) shares only the month.
+- **Checked against primary sources this round:**
+  - PG16 `postinit.c`/`proc.c` (which 53300 message which role sees)
+  - PG12 release notes (WAL senders don't count toward `max_connections`)
+  - Redis Sentinel docs (failover needs a majority; two Sentinels discouraged → 3 Sentinels)
+  - Redis admin docs and FAQ (overcommit)
+  - Linux `mm/util.c`
+  - CoreDNS `forward`, `cache` and `file` docs
+  - Kubernetes DNS docs (default Corefile `cache 30`; pod `ndots:5`)
+  - PgBouncer config and usage docs
+  - go-redis `error.go`/`sentinel.go`
+
+**Errors and fixes**
+- *Outline review, pre-draft:*
+  - RB-011's first June 2025 figure (`cl_waiting` ≈ 60) was impossible: about 80 clients per bouncer against 40 + 10 server connections caps it near 30, and the reserve opens only after `reserve_pool_timeout` (3 s).
+  - The event also claimed `query_wait_timeout` errors with `maxwait` ≈ 4 s, under the 10 s limit; dropped.
+  - Two Sentinels can't fail over after losing a VM (no majority), so there are now three.
+  - RB-017's failover time now includes the 30 s detection (≈ 40 s as clients saw it).
+  - RB-019's first mechanism (fork failing under `overcommit_memory = 0`) doesn't hold on current kernels, where mode 0 refuses only allocations above RAM + swap. It now uses mode 2. The Redis FAQ still describes the old mode-0 behavior; RB-019 doesn't restate it.
+  - RB-018's first story invented go-redis behavior; go-redis actually drops connections on `READONLY` and asks Sentinel again, so the claim is reduced to a few-second window.
+  - RB-020 says "intermittent" rather than "about half": the CoreDNS cache docs don't say how the negative TTL is derived from the SOA.
+- *Draft:*
+  - RB-006 vs RB-019 measured **0.0407**, over 0.03. Root cause: the two runbooks share the redis-features hostname on every `redis-cli` line, and I had copied RB-006's `kubectl -n risk logs deploy/fraud-scorer --since=15m | grep -c` idiom and its "fraud-scorer-01… and fraud-scorer-02…" sentence. Fix: a shell function wraps the repeated `redis-cli -h …` prefix (a function rather than `$R`, because zsh doesn't word-split unquoted variables), and the log line and history sentence were rewritten. Now 0.0157. The threshold was not raised.
+- *Test:* `test_manifest_hashes_committed_outputs_only` failed (`assert 20 == 10`). Root cause: it hard-codes the runbook count, and my test-change list covered only the id-range test. Fixed to 20.
+
+**Fixes after review** (RB-011, 012, 014, 015, 017, 018, 020; RB-010 unchanged, `git diff 1a5d32c -- data/runbooks/RB-010.md` empty)
+- **RB-017:** removed the hand-promotion path (`REPLICAOF NO ONE`, `SENTINEL RESET`). Now: if there's no majority, restore a Sentinel; otherwise page team-platform's lead; never promote by hand. The catalog-db escalation pages team-catalog and team-platform.
+- **RB-011:**
+  - An uneven bouncer split now goes to team-payments, with no restart. RB-011 no longer says how payments-api spreads connections; batch 4 decides that.
+  - Dropped the unsupported last sentence of "If waits pass 10 seconds".
+- **RB-020:** checked against glibc `resolv/res_send.c` (master). Over UDP (`send_dg`), SERVFAIL, NOTIMP and REFUSED move on to the next nameserver. NXDOMAIN is returned as the final answer. TCP (`send_vc`) doesn't inspect the rcode.
+  - The VM paragraph and the SERVFAIL fix now match this.
+  - Removed the unverified claim that Go doesn't try another server.
+  - The log pipeline now extracts `lookup <name> on <resolver>: <error>` before `uniq -c`.
+- **RB-015:** query D adds `state <> 'idle'`.
+- **RB-018:** the restart answer now says a restart shorter than `down-after-milliseconds` (30 s) triggers no failover but drops every connection. On data, it says only what the Redis admin docs support: a primary that restarts empty wipes its replicas, so data depends on persistence.
+- **RB-012:** I couldn't confirm from PgBouncer's own docs or source that it logs a server-side 53300 refusal; I found only third-party guides and 2017 mailing-list logs. The sentence is now "also check the PgBouncer log on payments-pgbouncer-01/02".
+- **RB-014:** the `/search` row says "slow" only; rejections are search-api's own errors.
+- **Envoy flags** `UT`/`UF`/`UO`/`URX`/`UH` checked against Envoy's substitution-formatter docs (current release). **The strict-mode `CommitLimit` formula** checked against the kernel docs `filesystems/proc` (meminfo): `CommitLimit = (RAM pages − huge TLB pages) × overcommit_ratio / 100 + swap pages`. RB-019's 32 GB × 80% + 0 swap ≈ 25.6 GB matches, with no huge pages.
+- *Rerun:* the first rerun failed (`make corpus`: docker API socket missing; `runbooks.jsonl is stale` in the tests). Root cause: Docker Desktop had stopped, so the corpus wasn't rebuilt. I restarted Docker Desktop and the stack (`make up`) and reran everything; all green. Scores above are after the review fixes.
+- **RB-001 vs RB-013 thread-name conflict, resolved in RB-013 only.** RB-001:68 attributes month-end CPU to an `http-nio-*` thread in Jackson serializer frames. RB-013 said `recon-worker-*` threads were doing the serialization. RB-013 now says `top -H` showed the `http-nio-*` serializer thread as the top CPU thread and that `recon-worker-*` threads held the connections. The split is recorded in Fictional facts. RB-001 is unchanged.
+
+**Verified:** `make corpus` gives 20 runbooks, and a second run produced a byte-identical MANIFEST. `make corpus-check` ok. `make test`: 61 passed with the stack up. `make lint` clean.
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.
@@ -193,6 +251,45 @@ Invented details of the fictional company, introduced in batch 1. Reuse them as-
 - Grafana panels "Container CPU" (with a throttling view) and "Container memory (working set)"; throttling above about 25% of periods counts as significant
 - Slack channel `#platform-oncall`; journald capped with `SystemMaxUse=500M`; on VMs, `/var` is on the root disk
 
+**Batch 2 facts approved in review:** namespaces `commerce` and `identity`; systemd units `redis-server` and `redis-sentinel`; `reservations_expires_at_idx`; zone file `/etc/coredns/zones/prod.internal.db`; Envoy admin on port 9901; route `/checkout`.
+
+**Assumption A amendments** (batch 2)
+- **payments-pgbouncer runs on two VMs**, not Kubernetes: systemd unit `pgbouncer`, `/etc/pgbouncer/pgbouncer.ini`, admin console `psql -h <host> -p 6432 -U pgbouncer pgbouncer`. Each bouncer normally carries about half of payments-api's connections. How payments-api picks a bouncer, and how it falls back, is **not decided**; batch 4's demo spec decides it. (RB-011)
+- **internal-dns runs on two VMs**: CoreDNS, systemd unit `coredns`, `/etc/coredns/Corefile`.
+  - Authoritative for `prod.internal` via the `file` plugin, zone file `/etc/coredns/zones/prod.internal.db`, reloaded when the SOA serial changes. Record TTL 60 s, SOA negative TTL 60 s. Each VM has its own copy; the rollout tool updates them one after the other.
+  - Kubernetes cluster CoreDNS has a `prod.internal` server block with `cache 30` and `forward . 10.0.0.53 10.0.0.54` (default `random` policy). Pods use the Kubernetes default `ndots:5`.
+  - VMs list internal-dns-01, then -02, in `/etc/resolv.conf`, with no `options rotate`. (RB-020)
+
+**payments-pgbouncer** (RB-011, RB-012)
+- Each instance: `default_pool_size = 40`, `reserve_pool_size = 10`, `reserve_pool_timeout = 3`, `max_client_conn = 500`, `query_wait_timeout = 10`
+- 4 × 40 = 160 client connections, about 80 per bouncer; at most 2 × 50 = 100 server connections on payments-db
+
+**Postgres connection budgets** (RB-012)
+- `max_connections`: payments-db 200, ledger-db 200, orders-db 300, auth-db 200, inventory-db 100, catalog-db 100; `superuser_reserved_connections = 3` and `reserved_connections = 0` everywhere
+- App pools: orders-api `pg` Pool `max` 25 × 3 pods; auth-service pgxpool `pool_max_conns` 30 × 2; catalog-api SQLAlchemy `pool_size` 10 + `max_overflow` 5 × 2; inventory-service pool 20 × **2 pods** (80 during the April 2026 release); ledger-service Hikari `maximumPoolSize` 20 × 2
+- DB roles `inventory_app`, `ledger_app` (alongside `payments_app`)
+
+**ledger-service** (RB-013)
+- HikariCP pool `HikariPool-1`, `connectionTimeout` default 30 s, `leakDetectionThreshold = 60000`; metrics `hikaricp_connections_active` / `_pending`
+- Month-end reconciliation is triggered over HTTP. Result serialization runs on the request (`http-nio-*`) thread, which matches RB-001. Chunk work runs on `recon-worker-*` threads, each holding one Hikari connection per chunk transaction. One transaction per chunk of accounts; resumes from its last committed chunk after a restart. `LEDGER_RECON_PARALLELISM` was 24 until the January 2026 incident and was changed to **4 on the night of 2026-01-31/02-01** (RB-013). **Skeleton rule:** no ledger-service month-end HikariCP exhaustion caused by reconciliation parallelism may start after 2026-02-01. A separate reconciliation pool is proposed, **not built**.
+
+**inventory-service / inventory-db** (RB-012, RB-015, RB-020)
+- Namespace `commerce`. Table `reservations` (`sku`, `status`, `expires_at`); index `reservations_expires_at_idx` built after the July 2025 incident
+
+**edge-gateway** (RB-014, RB-016)
+- Namespace `platform`; route timeout 15 s; Envoy admin on port 9901 (pod-local); routes `/v1/payments/*`, `/checkout`, `/search`
+
+**Checkout retries** (RB-016)
+- orders-api → payments-api `PAYMENTS_MAX_ATTEMPTS = 3`; payments-api → card-processor-proxy `CPX_MAX_ATTEMPTS = 3` (ConfigMaps; RB-016 sets it to 1 during an incident and restores 3 afterwards); no deadline propagation between orders-api and payments-api; retry budgets, jittered backoff and deadline passing are **not built**
+
+**Redis** (RB-017, RB-018, RB-019)
+- **Sentinel:** 3 processes (systemd `redis-sentinel`, port 26379) on redis-cache-02, redis-sessions-02 and internal-dns-01. They monitor **only** masters `cache` and `sessions`, never redis-features. Quorum 2; `down-after-milliseconds 30000`.
+- **catalog-api** cache hit ratio about 95%.
+- **payments-api and inventory-service** cache only reference data in redis-cache, with an in-process copy refreshed every 60 s, served on Redis errors.
+- **auth-service** writes a session at login and looks it up on each request. If a session write fails, it logs the error and completes the login anyway; the session isn't stored, and the next lookup fails with `AUTH-E401X`. Namespace `identity`.
+- **redis-features:** 32 GB RAM VM, no swap, `vm.overcommit_memory = 1` (team-platform's OS hardening baseline briefly set 2 with ratio 80 in September 2025); systemd unit `redis-server`; `maxmemory 24gb`, `maxmemory-policy noeviction`, `stop-writes-on-bgsave-error yes`.
+- **fraud-scorer** writes per-card velocity counters (INCR + TTL) on every score; `FRD-E140` means they go stale.
+
 **Past events mentioned in runbooks: these MUST exist as incidents in the batch 4 skeleton, with matching details**
 
 The runbooks give these as history, so the incident set has to contain them. Each row is a constraint on the skeleton: date, service, hosts, codes and numbers must match. Months are written into the runbooks; years are fixed here.
@@ -208,6 +305,15 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 | 2025-01 to 2025-09 | RB-006 | at least one fraud-scorer memory-growth incident (fraud-scorer-01 or -02) during a redis-features latency spike, with `FRD-W118` and `PAYAPI-W0310`; before RB-006's 2025-09-15 review |
 | 2025-01 to 2026-08 | RB-007 | every WAL-disk incident on payments-db has cause *inactive slot* or *archiving failure*, never anything else: at least one of each |
 | 2025-04 to 2026-04 | RB-009 | at least one Kafka broker-disk incident in the year before RB-009's 2026-04-11 review, where `ledger.entries` and `notifications.outbound` were the two largest topics |
+| **June 2025** | RB-011 | **Must exist as an incident.** Both payments-pgbouncer instances saturated by a refunds export inside payments-api (about 2 s transactions). `cl_waiting` about 30 per instance, `maxwait` about 4 s; pgx pools filled and `PAYAPI-E1042`/`503` followed. **No `query_wait_timeout`.** Types conn_pool / api_latency. **runbook_ids include RB-011 and RB-010.** No WAL or disk involvement; no demo details. |
+| **January 2026** (night of 31 Jan) | RB-013 | **Must exist as an incident.** ledger-service-02 HikariCP pool 20/20, `hikaricp_connections_pending` up to about 40, held by `recon-worker-*` threads (`LEDGER_RECON_PARALLELISM=24`). `LEDGER-W210`, then `request timed out after 30000ms`; `503` to payments-api. CPU elevated, not saturated. Fixed by parallelism 4 and a pod restart. **Not a retry-spin incident.** |
+| **April 2026** | RB-012 | **Must exist as an incident.** inventory-db-01 `53300` ("remaining connection slots are reserved for roles with the SUPERUSER attribute") after an inventory-service release raised its pool from 20 to 80 per pod (2 × 80 = 160 > 97 usable). Cause bad_deploy, symptom conn_pool; fixed by rollback. |
+| **July 2025** | RB-015 | **Must exist as an incident.** inventory-db-01 sequential scans on `reservations` after a release added an `expires_at` filter with no index; `INV-E220`, `ORD-5003`; fixed the same afternoon by building `reservations_expires_at_idx` concurrently. |
+| **May 2026** | RB-016 | **Must exist as an incident.** Processor slowdown → `CPX-W429` → retries in payments-api and orders-api; `PAYAPI-E1107`, `ORD-5003`, edge `504` for about 40 minutes; ended within minutes of `CPX_MAX_ATTEMPTS=1`. Cause rate_limiting, symptom api_latency. **Not ledger-service.** |
+| **December 2025** | RB-017 | **Must exist as an incident.** redis-cache-01 VM lost; outage as clients saw it about 40 s (30 s detection + failover to redis-cache-02), `ETIMEDOUT` until rediscovery. catalog-api `CAT-E301`, catalog-db-01 CPU about 90%. payments-api and inventory-service logged Redis timeouts **with no extra DB reads** (60 s in-process copies). |
+| **October 2025** | RB-018 | **Must exist as an incident.** Planned `SENTINEL FAILOVER sessions` before patching redis-sessions-01. For a few seconds, before auth-service-01 learned the new master, session writes that still failed after the client's retries got `READONLY` and weren't stored; those users hit `AUTH-E401X` on their next request. Few users affected. No other session loss. |
+| **September 2025** | RB-019 | **Must exist as an incident.** team-platform's OS hardening baseline set `vm.overcommit_memory = 2` (ratio 80) on redis-features-01. Redis at about 14 GB; the BGSAVE fork failed (`fork: Cannot allocate memory`) → `MISCONF` → `FRD-E140` on fraud-scorer-01/02. Fixed by restoring `1`. Before RB-019's 2025-11-03 review. |
+| **March 2026** | RB-020 | **Must exist as an incident.** A zone rollout reached only internal-dns-02 and dropped `inventory-db-01.prod.internal`. inventory-service-01/02 logged `no such host` **intermittently**; VMs unaffected because their resolv.conf lists internal-dns-01 first. Before RB-020's 2026-04-08 review. |
 
 ## Status
 
