@@ -533,6 +533,7 @@ No new committed output yet: MANIFEST is unchanged, and `incidents.jsonl` arrive
 - **Anachronisms:** a token from a dated fact (`CPX-W430`, `ndots:2`, `4.12`, `lock_timeout`, …) may appear only if resolved_at + 7 days is on or after that date.
 - **Leakage:** word-trigram Jaccard target 0.025 (the test threshold stays 0.03). No 8-word run is shared with a runbook or another write-up (inline code and code blocks excluded). No sidecar keys or mechanism tags appear, except those that are real runbook vocabulary, such as `s_client`.
 - **What the number checks prove.** The `facts` and arithmetic tests prove a number is *present* in the write-up and that the arithmetic in the test is right. They don't prove the write-up uses that number correctly (that a 30 is the `cl_waiting` and not something else). Whether the prose is true to the runbooks and facts is reviewed by hand.
+- **Narrative colour is not fact.** Follow-ups, owner names, confirmations (such as a vendor's report) and reported-by details inside write-ups are narrative colour, not Fictional facts. Eval questions must not rely on them.
 - **No migration change.** Ingest (step 5) maps `incidents.jsonl` to `incidents` (with `symptom_services`, `failure_types`, `codes`, `hosts`, `title` and `format` in `metadata`) and `documents`, and the log jsonl to `log_events`. `incidents` is loaded first because of the foreign keys.
 
 **Errors and fixes**
@@ -619,6 +620,16 @@ No new committed output yet: MANIFEST is unchanged, and `incidents.jsonl` arrive
   - No cluster-mode fact is recorded.
 - **INC-0171:** the 18:30 line now says it used RB-009's retention check.
 - **INC-0099 has the longest session-loss window so far:** logins through auth-service-02 from 18:05 to 18:07:45 (2 min 45 s; the promotion itself was at 18:05:05). RB-018 says the write-failure window "lasts seconds" and doesn't cover a window this long, from a primary cut off from the Sentinels but still reachable by clients. RB-018 is not edited; the write-up doesn't claim RB-018 describes it.
+
+**Content pass** (named sentences only, in 0055, 0101, 0099, 0048, 0168 and 0185)
+- **0055:** "nothing was lost" removed; the export's share is now "about 90 of the 100 server connections" throughout.
+- **0101:** the lost-log window is 05:30 to 06:10 (when OpenSearch lines resumed).
+- **0099:** auth-service-02 "moved to the new primary at 18:07:49"; the claim about how it learned is gone.
+- **0048:** the processor's next-morning confirmation and "most tried again" removed; "about 180" stays as a stated observation with no derivation.
+- **0168:** "written up from this ticket" and the 22:30 comment removed.
+- **0185:**
+  - "No event was lost anywhere" and "cleared in under a minute" removed.
+  - "about 1,200" (retry queue) and "about 2,400" (outbox backlog) match the log spec's ramps (`{ramp:10-1200}`, `{ramp:300-2400}`, backlog line 2410).
 
 **What to be able to explain in an interview**
 - Why the write-ups are checked against structured rows (hosts, codes, times, arithmetic), and what a deterministic validator can't catch (whether a cause is true, voice, implications).
