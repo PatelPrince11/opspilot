@@ -551,7 +551,7 @@ No new committed output yet: MANIFEST is unchanged, and `incidents.jsonl` arrive
   - `s_client` (a real `facts` key of INC-0031) was flagged as a label.
   - INC-0023 has INFO-only logs, which is correct for a TLS failure that never reaches the access log, so the level-mix rule now applies only to rows with codes.
 
-**Found, not changed:** RB-027:62 quotes the Kafka client line as "… could not be established. Broker may not be available." Kafka 3.8 `NetworkClient.java` says "Node may not be available." RB-027 is frozen and not edited, and the synthetic logs don't use that line. Prince to rule.
+**Found, then fixed in a separate commit:** RB-027:62 quoted the Kafka client line as "… could not be established. Broker may not be available." Kafka 3.8 `NetworkClient.java` says "Node may not be available." Prince approved editing RB-027 for that line only, and it now reads "Node may not be available." Nothing else in RB-027 changed. The synthetic logs still don't use the line.
 
 **Verified:**
 - `make corpus` run twice gave a byte-identical MANIFEST
