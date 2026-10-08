@@ -551,6 +551,8 @@ No new committed output yet: MANIFEST is unchanged, and `incidents.jsonl` arrive
   - `s_client` (a real `facts` key of INC-0031) was flagged as a label.
   - INC-0023 has INFO-only logs, which is correct for a TLS failure that never reaches the access log, so the level-mix rule now applies only to rows with codes.
 
+**RB-027 changed after its review:** in commit 3e62118, RB-027:62's Kafka client line changed from "Broker may not be available" to "Node may not be available" (per Kafka 3.8 `NetworkClient`). RB-027 is therefore no longer verbatim from its batch 3 review.
+
 **Found, then fixed in a separate commit:** RB-027:62 quoted the Kafka client line as "… could not be established. Broker may not be available." Kafka 3.8 `NetworkClient.java` says "Node may not be available." Prince approved editing RB-027 for that line only, and it now reads "Node may not be available." Nothing else in RB-027 changed. The synthetic logs still don't use the line.
 
 **Verified:**
@@ -610,7 +612,11 @@ No new committed output yet: MANIFEST is unchanged, and `incidents.jsonl` arrive
   - INC-0101: agent backlog %
 
   The `{int:}` placeholders left are latencies and partition numbers, which really are random per line. Tested: counters never jump back, and a ramp in a single line is an error.
-- **INC-0185 logs:** `[KafkaServer id=1] started` at 10:27:05 and `[KafkaServer id=2] started` at 10:27:21. The text was checked against Kafka 3.8 `KafkaServer.scala` (logIdent `[KafkaServer id=N] `, `info("started")`). That class is the ZooKeeper-mode broker, so the brokers run in ZooKeeper mode (new fact). The orders-api backlog line is now a fixed 2410.
+- **INC-0185 logs:** a `systemd: Started kafka.service.` line at 10:27:05 (kafka-01) and 10:27:21 (kafka-02). The orders-api backlog line is now a fixed 2410.
+  - At first these were Kafka's own `[KafkaServer id=N] started` lines. That class is the ZooKeeper-mode broker, and nothing in `services.toml` or the facts sets a cluster mode, so the line, not the facts, was changed.
+  - Kafka 3.8 has no startup line that is the same in both modes. `Kafka Server started` (`KafkaBroker.STARTED_MESSAGE`) is logged only by `KafkaRaftServer`, which is KRaft.
+  - systemd `job.c` logs `Started %s.`. Per `unit.c` `unit_status_string`, `%s` is the unit name when the unit sets no `Description=` (otherwise its description), so the line is exact only for a `kafka` unit with no `Description=`.
+  - No cluster-mode fact is recorded.
 - **INC-0171:** the 18:30 line now says it used RB-009's retention check.
 - **INC-0099 has the longest session-loss window so far:** logins through auth-service-02 from 18:05 to 18:07:45 (2 min 45 s; the promotion itself was at 18:05:05). RB-018 says the write-failure window "lasts seconds" and doesn't cover a window this long, from a primary cut off from the Sentinels but still reachable by clients. RB-018 is not edited; the write-up doesn't claim RB-018 describes it.
 
@@ -642,7 +648,7 @@ Invented details of the fictional company, introduced in batch 1. Reuse them as-
 - Month-end reconciliation batches are large and CPU-heavy on whichever instance picks them up
 
 **Kafka** (RB-001, RB-008, RB-009)
-- Brokers run in **ZooKeeper mode** (`KafkaServer`; batch 5 logs use its `[KafkaServer id=N] started` line). Broker ids 1/2/3 = kafka-01/02/03; one data dir `/data/kafka` per broker; tools in `/opt/kafka/bin`; systemd unit `kafka`; broker GC logs in `/var/log/kafka`
+- Broker ids 1/2/3 = kafka-01/02/03; one data dir `/data/kafka` per broker; tools in `/opt/kafka/bin`; systemd unit `kafka`; broker GC logs in `/var/log/kafka`
 - Replication factor 3, `min.insync.replicas=2`; broker default `log.retention.hours=168`
 - Topics: `ledger.entries` (**14-day retention**, audit; changes need finance ops' sign-off; **12 partitions**, batch 5), `notifications.outbound` (broker default; temporarily cut to 24 h in RB-009's procedure); consumer group `notification-worker`
 

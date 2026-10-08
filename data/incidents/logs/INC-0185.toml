@@ -1,6 +1,7 @@
 # Synthetic logs for INC-0185. Texts checked: ConfigException (Kafka 3.8 ConfigDef),
-# "[KafkaServer id=N] started" (Kafka 3.8 KafkaServer.scala, ZooKeeper mode),
-# systemd "Main process exited, code=exited, status=1/FAILURE" (systemd unit.c).
+# systemd "Main process exited, code=exited, status=1/FAILURE" (unit.c) and
+# "Started %s." (job.c; %s is the unit name when the unit sets no Description=).
+# Kafka 3.8 has no startup line that is the same in ZooKeeper and KRaft mode.
 [[line]]
 at = "10:12:09"
 service = "kafka"
@@ -83,14 +84,14 @@ at = "10:27:05"
 service = "kafka"
 host = "kafka-01.prod.internal"
 level = "INFO"
-message = "[KafkaServer id=1] started"
+message = "systemd: Started kafka.service."
 
 [[line]]
 at = "10:27:21"
 service = "kafka"
 host = "kafka-02.prod.internal"
 level = "INFO"
-message = "[KafkaServer id=2] started"
+message = "systemd: Started kafka.service."
 
 [[line]]
 at = "10:28:02"
