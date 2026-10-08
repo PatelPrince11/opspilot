@@ -1,0 +1,59 @@
+# Synthetic logs for INC-0067.
+[[burst]]
+from = "10:00:00"
+to = "10:07:59"
+count = 6
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8}"
+
+[[burst]]
+from = "10:08:00"
+to = "10:40:00"
+count = 35
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login failed: wrong password user={hex8}"
+
+[[burst]]
+from = "10:10:00"
+to = "10:33:59"
+count = 25
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login shed: 64 logins in flight, returning 503"
+
+[[burst]]
+from = "10:10:00"
+to = "10:33:59"
+count = 20
+service = "edge-gateway"
+level = "WARN"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "POST /v1/auth/login 503 upstream=auth-service duration_ms={int:2-40}"
+
+[[line]]
+at = "10:29:41"
+service = "auth-service"
+host = "auth-service-01.prod.internal"
+level = "INFO"
+message = "starting auth-service GOMAXPROCS=4"
+
+[[line]]
+at = "10:32:18"
+service = "auth-service"
+host = "auth-service-02.prod.internal"
+level = "INFO"
+message = "starting auth-service GOMAXPROCS=4"
+
+[[burst]]
+from = "10:34:00"
+to = "10:55:00"
+count = 12
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8}"

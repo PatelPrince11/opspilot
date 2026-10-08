@@ -1,0 +1,49 @@
+# Synthetic logs for INC-0023. Rejected handshakes never reach the access log, so
+# edge-gateway-01 goes quiet from 10:15 until its restart.
+[[burst]]
+from = "10:05:00"
+to = "10:14:59"
+count = 12
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "{choice:GET /checkout|GET /search|POST /v1/payments} 200 duration_ms={int:20-180}"
+
+[[burst]]
+from = "10:15:00"
+to = "10:58:59"
+count = 26
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "{choice:GET /checkout|GET /search|POST /v1/payments} 200 duration_ms={int:20-180}"
+
+[[line]]
+at = "10:59:20"
+service = "edge-gateway"
+host = "edge-gateway-01.prod.internal"
+level = "INFO"
+message = "envoy starting (rollout restart)"
+
+[[line]]
+at = "11:02:05"
+service = "edge-gateway"
+host = "edge-gateway-02.prod.internal"
+level = "INFO"
+message = "envoy starting (rollout restart)"
+
+[[line]]
+at = "11:05:11"
+service = "edge-gateway"
+host = "edge-gateway-03.prod.internal"
+level = "INFO"
+message = "envoy starting (rollout restart)"
+
+[[burst]]
+from = "11:06:00"
+to = "11:25:00"
+count = 15
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "{choice:GET /checkout|GET /search|POST /v1/payments} 200 duration_ms={int:20-180}"

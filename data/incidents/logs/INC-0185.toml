@@ -1,0 +1,152 @@
+# Synthetic logs for INC-0185. Texts checked: ConfigException (Kafka 3.8 ConfigDef),
+# "[KafkaServer id=N] started" (Kafka 3.8 KafkaServer.scala, ZooKeeper mode),
+# systemd "Main process exited, code=exited, status=1/FAILURE" (systemd unit.c).
+[[line]]
+at = "10:12:09"
+service = "kafka"
+host = "kafka-01.prod.internal"
+level = "INFO"
+message = "rollout: wrote /opt/kafka/config/server.properties (canary)"
+
+[[line]]
+at = "10:12:10"
+service = "kafka"
+host = "kafka-01.prod.internal"
+level = "INFO"
+message = "rollout: systemctl restart kafka exited 0; next host in 300s"
+
+[[line]]
+at = "10:12:13"
+service = "kafka"
+host = "kafka-01.prod.internal"
+level = "ERROR"
+message = "org.apache.kafka.common.config.ConfigException: Invalid value 10MB for configuration message.max.bytes: Not a number of type INT"
+
+[[line]]
+at = "10:12:14"
+service = "kafka"
+host = "kafka-01.prod.internal"
+level = "WARN"
+message = "systemd: kafka.service: Main process exited, code=exited, status=1/FAILURE"
+
+[[line]]
+at = "10:17:09"
+service = "kafka"
+host = "kafka-02.prod.internal"
+level = "INFO"
+message = "rollout: wrote /opt/kafka/config/server.properties"
+
+[[line]]
+at = "10:17:10"
+service = "kafka"
+host = "kafka-02.prod.internal"
+level = "INFO"
+message = "rollout: systemctl restart kafka exited 0; next host in 300s"
+
+[[line]]
+at = "10:17:13"
+service = "kafka"
+host = "kafka-02.prod.internal"
+level = "ERROR"
+message = "org.apache.kafka.common.config.ConfigException: Invalid value 10MB for configuration message.max.bytes: Not a number of type INT"
+
+[[line]]
+at = "10:17:14"
+service = "kafka"
+host = "kafka-02.prod.internal"
+level = "WARN"
+message = "systemd: kafka.service: Main process exited, code=exited, status=1/FAILURE"
+
+[[line]]
+at = "10:20:05"
+service = "kafka"
+host = "kafka-02.prod.internal"
+level = "WARN"
+message = "rollout: run stopped by operator"
+
+[[line]]
+at = "10:25:40"
+service = "kafka"
+host = "kafka-01.prod.internal"
+level = "INFO"
+message = "rollout: wrote /opt/kafka/config/server.properties (revert to previous commit)"
+
+[[line]]
+at = "10:25:52"
+service = "kafka"
+host = "kafka-02.prod.internal"
+level = "INFO"
+message = "rollout: wrote /opt/kafka/config/server.properties (revert to previous commit)"
+
+[[line]]
+at = "10:27:05"
+service = "kafka"
+host = "kafka-01.prod.internal"
+level = "INFO"
+message = "[KafkaServer id=1] started"
+
+[[line]]
+at = "10:27:21"
+service = "kafka"
+host = "kafka-02.prod.internal"
+level = "INFO"
+message = "[KafkaServer id=2] started"
+
+[[line]]
+at = "10:28:02"
+service = "ledger-service"
+host = "ledger-service-01.prod.internal"
+level = "INFO"
+message = "retry queue drained"
+
+[[line]]
+at = "10:27:40"
+service = "orders-api"
+host = "orders-api-02.prod.internal"
+level = "INFO"
+message = "outbox relay: publishing again, backlog 2410 events"
+
+[[burst]]
+from = "10:02:00"
+to = "10:16:59"
+count = 12
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "published entry to ledger.entries partition={int:0-11}"
+
+[[burst]]
+from = "10:17:05"
+to = "10:26:59"
+count = 40
+service = "ledger-service"
+level = "ERROR"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "LEDGER-E455 publish to ledger.entries failed (NotEnoughReplicasException); entry queued for retry, queue={ramp:10-1200}"
+
+[[burst]]
+from = "10:17:30"
+to = "10:26:59"
+count = 8
+service = "ledger-service"
+level = "WARN"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "retry worker backing off {ramp:1-8}s"
+
+[[burst]]
+from = "10:17:30"
+to = "10:26:50"
+count = 10
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "outbox relay: publish failed, {ramp:300-2400} events pending"
+
+[[burst]]
+from = "10:28:30"
+to = "10:46:00"
+count = 12
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "published entry to ledger.entries partition={int:0-11}"

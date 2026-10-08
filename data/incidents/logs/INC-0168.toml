@@ -1,0 +1,166 @@
+# Synthetic logs for INC-0168: three evenings of slow /checkout, then the 18 June fix.
+# Node prints getaddrinfo errors as "getaddrinfo <code> <host>" (checked locally).
+
+[[burst]]
+date = "2026-06-15"
+from = "19:30:00"
+to = "22:00:00"
+count = 8
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "POST /checkout status=200 duration_ms={int:80-240}"
+
+[[burst]]
+date = "2026-06-15"
+from = "19:30:00"
+to = "22:00:00"
+count = 14
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "slow request POST /checkout status=200 duration_ms={int:5004-5190}"
+
+[[burst]]
+date = "2026-06-15"
+from = "19:30:00"
+to = "22:00:00"
+count = 3
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "slow request POST /checkout status=200 duration_ms={int:10006-10180}"
+
+[[burst]]
+date = "2026-06-16"
+from = "19:30:00"
+to = "22:00:00"
+count = 8
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "POST /checkout status=200 duration_ms={int:80-240}"
+
+[[burst]]
+date = "2026-06-16"
+from = "19:30:00"
+to = "22:00:00"
+count = 14
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "slow request POST /checkout status=200 duration_ms={int:5004-5190}"
+
+[[burst]]
+date = "2026-06-16"
+from = "19:30:00"
+to = "22:00:00"
+count = 3
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "slow request POST /checkout status=200 duration_ms={int:10006-10180}"
+
+[[burst]]
+date = "2026-06-17"
+from = "19:30:00"
+to = "22:00:00"
+count = 8
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "POST /checkout status=200 duration_ms={int:80-240}"
+
+[[burst]]
+date = "2026-06-17"
+from = "19:30:00"
+to = "22:00:00"
+count = 14
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "slow request POST /checkout status=200 duration_ms={int:5004-5190}"
+
+[[burst]]
+date = "2026-06-17"
+from = "19:30:00"
+to = "22:00:00"
+count = 3
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "slow request POST /checkout status=200 duration_ms={int:10006-10180}"
+
+[[line]]
+date = "2026-06-15"
+at = "20:41:17"
+service = "orders-api"
+host = "orders-api-02.prod.internal"
+level = "ERROR"
+message = "pg connect failed: Error: getaddrinfo EAI_AGAIN orders-db-01.prod.internal"
+
+[[line]]
+date = "2026-06-16"
+at = "21:07:52"
+service = "orders-api"
+host = "orders-api-03.prod.internal"
+level = "ERROR"
+message = "pg connect failed: Error: getaddrinfo EAI_AGAIN orders-db-01.prod.internal"
+
+[[line]]
+date = "2026-06-17"
+at = "19:58:03"
+service = "orders-api"
+host = "orders-api-01.prod.internal"
+level = "ERROR"
+message = "pg connect failed: Error: getaddrinfo EAI_AGAIN orders-db-01.prod.internal"
+
+[[line]]
+date = "2026-06-17"
+at = "20:46:30"
+service = "orders-api"
+host = "orders-api-01.prod.internal"
+level = "ERROR"
+message = "pg connect failed: Error: getaddrinfo EAI_AGAIN orders-db-01.prod.internal"
+
+[[line]]
+date = "2026-06-17"
+at = "21:33:11"
+service = "orders-api"
+host = "orders-api-02.prod.internal"
+level = "ERROR"
+message = "pg connect failed: Error: getaddrinfo EAI_AGAIN orders-db-01.prod.internal"
+
+[[line]]
+date = "2026-06-18"
+at = "15:43:00"
+service = "orders-api"
+host = "orders-api-01.prod.internal"
+level = "INFO"
+message = "starting: resolv.conf options ndots:2, pg pool idleTimeoutMillis=60000"
+
+[[line]]
+date = "2026-06-18"
+at = "15:46:00"
+service = "orders-api"
+host = "orders-api-02.prod.internal"
+level = "INFO"
+message = "starting: resolv.conf options ndots:2, pg pool idleTimeoutMillis=60000"
+
+[[line]]
+date = "2026-06-18"
+at = "15:49:00"
+service = "orders-api"
+host = "orders-api-03.prod.internal"
+level = "INFO"
+message = "starting: resolv.conf options ndots:2, pg pool idleTimeoutMillis=60000"
+
+[[burst]]
+date = "2026-06-18"
+from = "15:50:00"
+to = "16:10:00"
+count = 6
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "POST /checkout status=200 duration_ms={int:70-210}"
