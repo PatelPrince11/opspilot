@@ -1,0 +1,74 @@
+# Eval-only: the open demo incident INC-LIVE-001. SYNTHETIC. Never ingested, never a
+# document, and none of the 200 incidents. Evidence lives only in logs (data/live/, a later
+# batch) and in the services.toml status snapshot.
+
+id = "INC-LIVE-001"
+question = "The payment API is returning connection-refused errors. What likely happened, what evidence supports it, and what should I check next?"
+
+# Demo guard: no document (runbook, incident row or prose) may contain all three.
+leak_combination = ["payments-pgbouncer-01", "ECONNREFUSED", "6432"]
+
+[cause]
+summary = "A rollout-tool run scoped to payments-pgbouncer-01 pushed a bad pgbouncer.ini; `systemctl restart pgbouncer` exited 0 (unit is Type=simple), then pgbouncer exited; payments-api's new connections to 10.0.4.21:6432 that pick -01 are refused and return 503."
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+ip = "10.0.4.21"
+port = 6432
+healthy_peer = "payments-pgbouncer-02.prod.internal"
+# Placeholder until PgBouncer 1.22 source (src/loader.c, config handling) is read: does an
+# invalid pool_mode make the process exit at startup, and with what exact text?
+mechanism = "invalid setting in pgbouncer.ini (candidate: typo'd pool_mode value)"
+mechanism_status = "placeholder: verify PgBouncer 1.22 loader.c/config handling (invalid pool_mode exits at startup? exact text) before any demo log is written"
+
+[bouncer_selection]
+# NOTES Fictional facts F1: payments-api's db package alternates bouncer hosts per new
+# connection, with no fallback (not built). pgx's own behavior on a failed dial is unverified.
+policy = "alternate per new connection, no fallback"
+normal_split = "about half each: 4 x 40 = 160 client connections, about 80 per bouncer"
+demo_load_acquired_per_pod = 8
+log_errno_field = "errno=ECONNREFUSED"  # F2: Go prints "connection refused", never the errno name
+no_payapi_e1042 = true  # the dial fails fast, never reaching DB_ACQUIRE_TIMEOUT=500ms
+
+[timeline]  # UTC
+date = 2026-10-06
+run_started = "14:30:00"
+restart_exit_0 = "14:30:40"
+pgbouncer_exited = "14:30:41"
+first_refused = "14:30:41"
+paged = "14:38:00"
+snapshot = "14:52:00"
+full_run_would_have_reached_02 = "14:35:00"  # older pacing: fixed 5 min; did not happen (run scoped to -01)
+
+[binding_constraint]
+gate_live_since = 2026-08-20
+pgbouncer_enrolled = false
+pacing = "older: canary, fixed 5-minute wait, only the exit status of systemctl restart (RB-027)"
+run_scope = ["payments-pgbouncer-01.prod.internal"]  # F5: runs can be scoped to a subset
+after_last_incident = true  # every skeleton row starts before 2026-10-01
+after_last_runbook_review = "2026-09-29"  # RB-029
+
+[distractor]
+service = "search-api"
+since = "13:10"
+reason = "expensive /search queries (RB-003 pattern); slow-query WARNs and occasional SRCH-E502"
+near_miss_runbooks = ["RB-003", "RB-014"]
+
+[evidence]
+runbooks = ["RB-027", "RB-011"]
+analog_incident = "INC-0185"
+contrast_incident = "INC-0055"
+near_miss_runbooks = ["RB-010", "RB-012", "RB-007", "RB-020", "RB-017"]
+near_miss_incident = "redis-cache restart: payments-api ECONNREFUSED on :6379 (sidecar mechanism redis_cache_restart_refused)"
+get_service_status = "payments-api degraded; payments-pgbouncer degraded; payments-db healthy; search-api degraded"
+query_logs_payments_api = "503 lines with 10.0.4.21:6432 and errno=ECONNREFUSED from all 4 pods from 14:30:41; work via 10.0.4.22 continues; no PAYAPI-E1042, no 53300"
+query_logs_payments_pgbouncer = "-01: rollout line writing /etc/pgbouncer/pgbouncer.ini (journal identifier `rollout`, F4), restart, config error, exit status=1, unit failed; -02: normal periodic stats"
+
+next_checks = [
+  "journalctl -u pgbouncer -n 100 on payments-pgbouncer-01",
+  "revert by pushing the previous commit to -01 only, then systemctl start pgbouncer",
+  "SHOW POOLS on both bouncers via the admin console",
+  "do not rerun or extend the push to -02",
+  "ask team-platform to enroll pgbouncer in the rollout gate",
+  "add a client-side fallback between bouncers",
+]
+forbidden_claims = ["payments-db disk full", "pgx pool exhaustion", "DNS failure", "search-api is the cause"]

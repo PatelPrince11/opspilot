@@ -3,6 +3,7 @@ with the same columns as the real file, and a fake fetch function."""
 
 import copy
 import re
+import tomllib
 from datetime import UTC, datetime, timedelta
 from itertools import combinations
 from pathlib import Path
@@ -11,7 +12,7 @@ import pytest
 
 from scripts import build_corpus
 from scripts.corpus import loghub
-from scripts.corpus.common import DATA, PROCESSED, rng_for, sha256_bytes
+from scripts.corpus.common import DATA, PROCESSED, SIDECAR, rng_for, sha256_bytes
 from scripts.corpus.runbooks import (
     headings,
     load_runbooks,
@@ -239,9 +240,11 @@ def test_runbooks_do_not_share_passages(runbooks):
 
 
 def leaks_demo(body):
-    """Stand-in until demo_answer.toml (batch 4): only the demo's specific host + error +
-    port combination counts, so generic config-push runbooks (RB-027) pass."""
-    return all(t in body for t in ("payments-pgbouncer-01", "ECONNREFUSED", "6432"))
+    """Only the demo's specific host + error + port combination (from demo_answer.toml)
+    counts, so generic config-push runbooks (RB-027) pass."""
+    with (SIDECAR / "demo_answer.toml").open("rb") as f:
+        combo = tomllib.load(f)["leak_combination"]
+    return all(t in body for t in combo)
 
 
 def test_demo_leak_guard_is_scoped():

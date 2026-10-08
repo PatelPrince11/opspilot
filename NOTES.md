@@ -414,6 +414,100 @@ The batch 1 uncertainty list was **reconstructed from the 2026-10-04 batch 1 tra
   - **RB-025** no longer claims `connection_error` climbs when clients reject our certificate. It now watches `ssl.handshake` dropping off, and says the docs don't settle whether `connection_error` counts this case.
 - **Facts added:** proxy maxSurge 0 / maxUnavailable 1; auth-db-01 primary, auth-db-02 replica.
 
+## 2026-10-08: Phase 1 step 3, batch 4 (incident skeleton + demo spec)
+
+**Built:**
+- `data/incidents/skeleton.toml`: 200 rows (INC-0001..0200), with no prose and no logs
+- `eval/corpus/incidents_sidecar.toml`: eval-only fields, never ingested
+- `eval/corpus/demo_answer.toml`: INC-LIVE-001, with the mechanism still a placeholder
+- `scripts/corpus/incidents.py`: the schema and catalog validator, called by `build_committed()`, so `make corpus` and `corpus-check` fail on a broken row
+- `tests/test_incidents.py` (43 tests); `leaks_demo` now reads `leak_combination` from `demo_answer.toml`
+
+No new committed output yet: MANIFEST is unchanged, and `incidents.jsonl` arrives with the prose.
+
+**Decisions**
+- **Row fields** (in `data/`):
+  - `service` (the cause service of record), `symptom_services`, `severity`, UTC `started_at`/`resolved_at`
+  - `failure_types` (cause type first), `codes`, `hosts`, `runbook_ids` (0–3), `synthetic`
+- **Sidecar fields** (in `eval/corpus/`): `constraint`, `mechanism`, `cause_component`, `absent_codes`, `anchor_tokens`, `multi_doc`, `hard_negative_pair` + `discriminators`, `facts`.
+- **Ids are chronological** by `started_at` within fixed month blocks, so the constraint ids were fixed before generation. Changing a date later means renumbering.
+- **Constraint rows:** the NOTES past-events table has 27 rows, which became **29 incidents**: RB-007's row needs ≥1 inactive-slot and ≥1 archive incident, plus a third WAL incident so RB-007 has 3 links. All 29 are pinned field by field in `test_constraint_rows_match_exactly`.
+- **Rulings (Prince):**
+  - INC-0016 is filed under internal-dns with `cause_component = "cluster CoreDNS (kube-system)"`; its codes are `EAI_AGAIN` only.
+  - R14–R19 and R21 approved.
+  - tls_expired 14 and rate_limiting 16 (the facts close most paths for these).
+  - Demo option B; facts F1–F5 (below).
+- **Fillers (171)** came from a seeded one-off generator in the scratchpad (per-type templates: service, mechanism, codes, hosts, runbooks, date window). It isn't committed; the TOML is the source of truth.
+- **Filler placement rule:** fillers that link a runbook whose history names a single event (RB-019, RB-022, RB-024) are dated after that runbook's review, and so are search-suffix latency (RB-021) and campaign search rejections (RB-030). Otherwise those runbooks would read as unaware of a later or earlier sibling.
+
+**Errors and fixes**
+- *INC-0124 host ownership.* The validator rejected `ledger-db-01` because ledger-db wasn't among the row's services. Root cause: the outline listed the host but not ledger-db as a symptom. Fix: `symptom_services = ["payments-api", "ledger-db"]`, a deviation from the approved outline table.
+- *inventory-db never a cause* (`3 <= 0` in the bounds test). Root cause: my templates never used it, although the outline targeted 6. Fix: 3 rows moved to inventory-db (a `/var` row, a table-bloat latency row, a 53300 row). It now sits at 3, the lower bound.
+- *Severity skew.* The first draw gave sev1 5 and sev3 107 against targets of 16 and 90 (±5). Root cause: the template defaults leaned to sev3. Fixed per template: final 16/56/87/41.
+- *RB-028 and RB-030 under 3 links.* RB-028 was linked to a QueuePool row and a post-2025-05-16 `lock_timeout` retry row; RB-030 to a campaign-driven `SRCH-E502` row. Neither creates a hard-negative pair.
+- *Narrative conflicts found in the spot check* (e.g. a 2025-01 `MISCONF` row linking RB-019, whose history lists only 2025-09). Fixed by the placement rule above.
+
+**Verified:**
+- `make corpus` and `make corpus-check` ok
+- `make test`: 104 passed (43 new)
+- `make lint` clean
+- `git diff --stat data/runbooks` is empty
+
+**Spot-check fix:** generated fillers could name payments-db-02, the replica (e.g. INC-0009), though no fact says payments-api reads from it. Every payments-db filler host is now payments-db-01. payments-db-02 appears only in INC-0174 (replica slot).
+
+**Follow-up after review** (skeleton, sidecar and tests only; the TOML was edited directly, so the scratchpad generator is no longer the source)
+- **INC-0116 (EMFILE on payments-pgbouncer-02):** RB-011 removed. No runbook mentions file descriptors or EMFILE, so it links none.
+- **INC-0100, INC-0122:** the card-processor-proxy / `PAYAPI-E1107` symptom is dropped instead of adding a fact (nothing says the proxy resolves the processor endpoint through internal-dns). Both are now prod.internal `SERVFAIL` rows (mechanism `servfail_zone_load`; symptoms ledger-service / auth-service; RB-020; sev2).
+- **Runbooks written after their incident can't be linked before it.**
+  - RB-016 opens: "I'm writing this down after the May 2026 checkout incident, where we lost the first half hour looking at the wrong service." So it didn't exist before 2026-05-26.
+  - RB-013 is the worked example of 2026-01-31.
+  - 12 links broke this, all fixed:
+    - INC-0015 and 0022 (processor latency) and the five `CPX-W429` blips before 2026-05-26 (0018, 0019, 0048, 0051, 0159) now link no runbook.
+    - INC-0029 and 0064 (payments slow cascade) now link RB-010 + RB-014.
+    - INC-0020, 0056 and 0077 swap RB-013 for RB-001 (its HikariCP-timeout path).
+  - New test `test_no_link_to_a_runbook_written_after_the_incident` covers RB-013, 016, 021, 028 and 030. It fails on the pre-follow-up file (12 violations).
+- **RB-014 capped at 15** (was 25), and a test enforces it.
+  - Swapped: search GC pauses → RB-003; INC-0114 → RB-002; INC-0181 (2026-07-31) → RB-015 + RB-016.
+  - Dropped RB-014 from pgx slow-query rows, INC-0049, 0088, 0003 and 0017.
+  - Second links added where the runbook applies, to keep ≥60 multi-runbook rows:
+    - zone pushes → RB-020 + RB-027 (a declared hard-negative pair, discriminator `Type=simple`)
+    - kafka `/var` rows → RB-008 + RB-009
+    - INC-0177 restart-halved budget → RB-029 + RB-023 (RB-023 step 6; discriminator `CPX-E600`)
+    - `NTF-E710` rows → RB-009
+- **Bounds changed:** rows with no runbook may now number ≤20 (16 do). Real incidents often have no runbook, and here several predate the runbook that would cover them. Hard-negative rows: 14 (cap 15). Rows with ≥2 runbooks: 60, exactly the bound.
+- **sessions_failover rows** (INC-0099, 0121, 0143, 0154, 0164) all start after RB-018's review (2025-11-10), so RB-018's "Has this happened before? October 2025" stays true. RB-018 is not edited. Their sidecar facts carry `after_rb018_review = true`, and a test checks the dates.
+  - **Prose rule:** these write-ups may say RB-018 was followed, but never that RB-018 records them; RB-018 knows only October 2025.
+
+**Binding for prose and logs** (not stated in any runbook; fixed here and now constraints):
+- **INC-0042** ends at **14:09**, as in NOTES. RB-028 has the 504s stopping "within the minute" after the 14:09 cancel; prose may say so, but `resolved_at` stays 14:09.
+- **INC-0093** hosts are **ledger-service-01 and ledger-service-02**. No kafka hosts are named because the broker outage's scope isn't stated; prose must not name a broker.
+- **Chosen times** (UTC), binding:
+
+  | Incident | Start → end |
+  |---|---|
+  | INC-0024 | 2025-03-18 15:10 → 16:05 |
+  | INC-0055 | 2025-06-24 13:20 → 14:05 |
+  | INC-0059 | 2025-07-09 10:40 → 15:30 |
+  | INC-0063 | 2025-07-22 08:15 → 11:00 |
+  | INC-0070 | 2025-08-12 02:30 → 03:45 |
+  | INC-0078 | 2025-09-09 11:20 → 13:05 |
+  | INC-0084 | 2025-09-25 04:10 → 07:30 |
+  | INC-0087 | 2025-10-07 06:10 → 06:20 |
+  | INC-0093 | 2025-10-23 16:40 → 17:55 |
+  | INC-0101 | 2025-11-18 05:30 → 06:40 |
+  | INC-0108 | 2025-12-09 03:12 → 03:40 |
+  | INC-0120 | 2026-01-19 21:00 → 23:30 |
+  | INC-0128 | 2026-02-10 09:00 → 15:20 |
+  | INC-0133 | 2026-02-23 07:00 → 08:10 |
+  | INC-0142 | 2026-03-24 13:30 → 14:15 |
+  | INC-0151 | 2026-04-21 10:05 → 10:40 |
+  | INC-0157 | 2026-05-12 02:20 → 05:10 |
+  | INC-0162 | 2026-05-26 17:05 → 17:50 |
+  | INC-0168 | 2026-06-15 19:30 → 2026-06-18 16:00 (the 18 June fix time is chosen) |
+  | INC-0174 | 2026-07-07 09:00 → 12:40 |
+
+  INC-0124's `resolved_at` of 03:10 is the batch finish, not when the 503s stopped. All 171 filler times are binding too, as they stand in `skeleton.toml`.
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.
@@ -588,6 +682,25 @@ Invented details of the fictional company, introduced in batch 1. Reuse them as-
 - **Cluster DNS (RB-022):** no capacity incident on 2 cluster CoreDNS replicas may start after 2025-02-20.
 - **Edge `/search` limit (RB-030):** no `EDGE-RL01` incident at 100 per pod may start after 2026-03-10.
 - **auth-service sessions (RB-026):** no logout wave from an unreadable session encoding may start after 2026-07-22.
+
+**Batch 4 facts (demo, approved)**
+- **F1:** payments-api's db package alternates bouncer hosts (payments-pgbouncer-01/02) on each new connection, with **no fallback (not built)**. Each bouncer carries about half (4 × 40 = 160 client connections, about 80 each). **pgx's own behavior on a failed dial is unverified**, so demo logs may rely only on this fact.
+- **F2:** payments-api's logger adds an `errno` field (e.g. `errno=ECONNREFUSED`) when a network error wraps a syscall errno. Go itself prints "connection refused".
+- **F3:** the `pgbouncer` systemd unit is `Type=simple`, so `systemctl restart` exits 0 even if pgbouncer dies seconds later. Upstream's shipped unit may differ (unverified).
+- **F4:** the rollout tool logs to each host's journal under the identifier `rollout`.
+- **F5:** a rollout-tool run can be scoped to a subset of hosts (e.g. a canary-only run).
+- Demo: 2026-10-06, a run scoped to payments-pgbouncer-01. The exact config error is **unverified until PgBouncer 1.22 source is read**, and no demo logs are written before then.
+
+**Skeleton rules from batch 4** (approved; tested in `tests/test_incidents.py`)
+- R14: no `EDGE-RL01` incident before 2026-03-10 (RB-030, "nobody had looked").
+- R15: no other redis-cache primary loss from 2025-12-09 to 2026-01-12 (RB-017, "Last time").
+- R16: no other inventory missing-index scan from 2025-07-09 to 2025-08-19 (RB-015, "Last seen").
+- R17: no other redis-sessions failover `AUTH-E401X` incident before 2025-11-10 (RB-018).
+- R18: no other unrotated-app-log `/var` incident from 2025-11-18 to 2025-12-04 (RB-008, "last time").
+- R19: overcommit-fork failures only in 2025-09 (RB-019).
+- R20: every Kafka broker-disk incident from 2025-04-11 to 2026-04-11 has `ledger.entries` and `notifications.outbound` as its top two topics, and there are ≥2 of them (RB-009).
+- R21: no `CPX-W429` + `ORD-5003` retry storm before 2026-05-26 (RB-016). The 7 `CPX-W429` filler blips carry no `ORD-5003` and have `retry_storm = false`.
+- R22: no incident after 2026-09-30; no payments-pgbouncer bad_deploy; no `ECONNREFUSED` row with a payments-pgbouncer host or cause.
 
 **Past events mentioned in runbooks: these MUST exist as incidents in the batch 4 skeleton, with matching details**
 

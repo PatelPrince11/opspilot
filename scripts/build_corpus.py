@@ -24,6 +24,7 @@ from scripts.corpus.common import (
     rng_for,
     sha256_bytes,
 )
+from scripts.corpus.incidents import load_skeleton, validate_skeleton
 from scripts.corpus.runbooks import load_runbooks, runbooks_output, validate_runbooks
 from scripts.corpus.services import CorpusError, load_services, services_output, validate_services
 
@@ -39,6 +40,9 @@ def build_committed() -> tuple[dict[str, bytes], dict]:
     runbooks = load_runbooks(DATA / "runbooks")
     validate_runbooks(runbooks, doc)
     rb_rows = runbooks_output(runbooks)
+    # Skeleton rows are validated now; incidents.jsonl joins the outputs once prose exists.
+    skeleton = load_skeleton(DATA / "incidents" / "skeleton.toml")
+    validate_skeleton(skeleton, doc, {r["id"] for r in rb_rows})
     outputs = {"services.json": json_bytes(services), "runbooks.jsonl": jsonl_bytes(rb_rows)}
     counts = {
         "services": len(services),
