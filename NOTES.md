@@ -306,6 +306,114 @@ The batch 1 uncertainty list was **reconstructed from the 2026-10-04 batch 1 tra
 
 **New facts:** HikariCP 5.x for ledger-service; private cgroup namespace for containers. Checked against RB-002:16, which already says the file is at the cgroup root inside the container, so there's no contradiction.
 
+## 2026-10-07: Phase 1 step 3, batch 3 (runbooks RB-021 to RB-030)
+
+**Built:**
+- `data/runbooks/RB-021.md` … `RB-030.md`: dns_failure ×2, tls_expired ×3, bad_deploy ×3, rate_limiting ×2. All 10 failure types are now covered, and the 30 runbooks are complete.
+- 2 catalog codes
+- tests updated: 30 runbooks; catalog **38 = 21 real + 17 internal**
+
+**Decisions**
+- **Catalog adds** (approved):
+  - `EAI_AGAIN` (real, errno-style like `ETIMEDOUT`)
+  - `CPX-W430` (internal): the proxy's own egress limiter
+  - Option (b) was chosen over widening `CPX-W429`, so no existing meaning changes and RB-016:27 stays exactly true.
+- **Formats:** every one of the 10 formats now appears exactly 3 times.
+- **Owners:** team-growth has its first runbook (RB-030); team-platform took 3 of the 10.
+- **No `RB-NNN` cross-references in batch 3**, so no runbook is contrasted with its hard negatives.
+- **Demo-guard scratch rule:** flag a runbook with (config-push trigger and `payments-pgbouncer-01`) or (`ECONNREFUSED` and `6432`). On RB-001..030 it flags nothing. `ECONNREFUSED` occurs 0 times in all 30 runbooks. RB-027 is the config-push runbook: it uses Kafka, never names PgBouncer, and quotes Java's "could not be established" text, not `ECONNREFUSED`. The test's `leaks_demo` is unchanged.
+- **Binding constraint for the batch 4 demo spec:** the rollout tool's health gate (since 2026-08-20) covers only the units in its probe table, and **payments-pgbouncer is not enrolled**. A unit outside the table still gets the older pacing: canary, a fixed 5-minute wait, then the next host, with only the exit status of `systemctl restart` checked. So the demo's config push to payments-pgbouncer-01 is consistent only while PgBouncer stays outside the gate. If batch 4 enrolls it, or wants the gate to have caught the failure, the spec must say so explicitly.
+- **ndots amendment:** RB-020's "pods use ndots:5" stays true for every pod except orders-api from 2026-06-18 (RB-021). RB-020 is unedited and was accurate at its 2026-04-08 review.
+- **Hard negatives scored** (word-trigram Jaccard; ceiling 0.025, test threshold 0.03 unchanged):
+
+  | Pair | Score |
+  |---|---|
+  | 020/021 | 0.0061 |
+  | 004/021 | 0.0043 |
+  | 014/021 | 0.0032 |
+  | 020/022 | 0.0098 |
+  | 021/022 | 0.0028 |
+  | 002/022 | 0.0018 |
+  | 016/023 | 0.0046 |
+  | 023/024 | 0.0090 |
+  | 023/029 | 0.0089 |
+  | 012/024 | 0.0016 |
+  | 010/024 | 0.0044 |
+  | 014/025 | 0.0037 |
+  | 023/025 | 0.0056 |
+  | 018/026 | 0.0141 |
+  | 009/027 | 0.0143 |
+  | 001/027 | 0.0022 |
+  | 020/027 | 0.0056 |
+  | 015/028 | 0.0085 |
+  | 017/028 | 0.0075 |
+  | 012/028 | 0.0021 |
+  | 016/029 | 0.0082 |
+  | 016/030 | 0.0019 |
+  | 003/030 | 0.0026 |
+  | 014/030 | 0.0126 |
+  | 029/030 | 0.0027 |
+
+  Max over RB-001–030 is still **0.0233 (RB-001 vs RB-013)**. Word counts for 021–030 are 446–852 (after the follow-up fixes; scores above are re-measured).
+- **Quote check:** all 49 committed lines cited in the batch 3 hard-negative table were re-read at HEAD `b320d6c` and match.
+- **Checked against primary sources this round:**
+  - pgx `pgxpool/pool.go`: `defaultMaxConnLifetime = time.Hour`, `defaultMaxConnIdleTime = time.Minute * 30`; `pool_max_conn_*` parsed from the URL
+  - SQLAlchemy `pool/impl.py`: QueuePool `timeout: float = 30.0`, message "QueuePool limit of size %d overflow %d reached, connection timed out, timeout %0.2f"
+  - node-postgres `pg-pool/index.js`: `idleTimeoutMillis = 10000`
+  - Kafka 3.8 `ConfigException` ("Invalid value … for configuration …: …") and `ConfigDef.parseType` ("Not a number of type " + type)
+  - Envoy listener stats: `listener.<address>.ssl.connection_error`, "Total TLS connection errors not including failed certificate verifications"
+  - Kubernetes DNS docs: `dnsConfig` options `ndots` "2", merged with the policy's options
+  - resolv.conf(5): timeout default 5, attempts default 2
+  - Node `dns` docs: `dns.lookup` runs `getaddrinfo` on libuv's threadpool
+  - PG16 docs:
+    - SSL files read at start and on every configuration reload
+    - `server.key` must be 0600 (or root-owned 0640)
+    - `pg_file_settings` columns and behavior
+    - `pg_blocking_pids` "soft block": a waiter ahead in the queue blocks later requests
+    - ACCESS SHARE conflicts only with ACCESS EXCLUSIVE
+
+**Errors and fixes**
+- *Outline review, pre-draft:*
+  - **RB-027 timeline.** 10:12 and 10:13 implied kafka-03 at 10:14, yet the run was stopped at 10:19 "before kafka-03". The tool's pacing is now stated (canary, then a fixed 5 min). kafka-02 restarts at 10:17, the run stops at 10:20 with kafka-03 due at 10:22, and the write outage is 10 minutes, not 13.
+  - **RB-027's other Kafka dependents** are now accounted for: the orders-api outbox relay (no `ORD-5003`) and notification-worker (lag flat, no `NTF-E710`).
+  - **RB-028:** "every read stalls" ignored RB-017's 95% cache hit. Only cache misses (about 60/s) and writes (about 5/s) queue. 30 connections fill in about 0.46 s, which fixes 14:02:15 (edge 504) and 14:02:30 (QueuePool).
+  - **RB-029:**
+    - Retries take limiter tokens. With `CPX_MAX_ATTEMPTS=3`: r³ = 0.25, r ≈ 0.63, about 487 attempts/s, 60/s `PAYAPI-E1107`.
+    - 240/s is a steady-state measured arrival rate, with the orders-api retry feedback ignored.
+    - A rejected attempt waits the full 2 s.
+    - The Pending pod is explained by the egress-pool allowlist plus anti-affinity.
+    - The uncordon waited for the patch and reboot.
+  - **RB-024:** no percentage of failing logins; it says only that new connections fail and older ones age out over the hour.
+  - **RB-021:** no mechanism is claimed for the lost UDP reply ("now and then a reply is lost").
+  - **Demo-guard scratch rule:** the first version ("any two of four tokens") would have false-flagged RB-011.
+- *Draft:*
+  - RB-014 vs RB-025 first measured **0.0244**, just under the 0.025 ceiling. Root cause: RB-025 copied RB-014's admin-port idiom (`kubectl -n platform port-forward pod/<edge pod> 9901:9901` then `curl -s localhost:9901/stats…`) and its "access log line" / "on every route" wording. RB-025 was reworded and now scores 0.0037 (after the follow-up fixes). RB-014 is untouched.
+  - RB-027 step 1 first said `pg_file_settings` "lists lines the server would reject". The PG16 docs say a setting that can't change after start also shows a message in `error`. Reworded so each row gets read.
+  - *Rerun:* `make test` and `make corpus-check` failed with `runbooks.jsonl is stale`. Root cause: I edited RB-027 after the last `make corpus`. Rebuilt; all green.
+
+**Verified:** `make corpus` produced 30 runbooks; `make corpus-check` ok; `make test` 61 passed; `make lint` clean.
+
+**Follow-up fixes** (RB-021, 023, 025, 028, 029, 030; facts updated)
+- **RB-021:** the 10 s group is two lost replies on *different* queries, each recovered by its retry: a slow `200`, not an error. `EAI_AGAIN` needs both tries of *one* query lost (`attempts:2`). The 21:40 paragraph said two losses in a row end in `EAI_AGAIN`, which mixed the two cases.
+- **RB-023:**
+  - Step 6 now says a restart rolls one proxy at a time (maxSurge 0 / maxUnavailable 1, new fact), halving the budget while it rolls.
+  - The sample counts are labeled off-peak (2,071 in 10 min ≈ 3.5/s per pod).
+  - Because step 6 now names `CPX-W430` (which exists only from 2026-07-09), `last_reviewed` moved from 2026-01-19 to **2026-09-22**. Otherwise the review date would predate the code it cites.
+- **RB-029:** lever 2 checked against the new rollout settings and reworded. With one pod Pending, maxUnavailable 1 is already used up, so the running pod must be deleted by hand, leaving a gap with no proxy.
+- **RB-028:** the `pg_stat_activity` query is now ordered by `xact_start`, and the voice is third person throughout.
+- **Envoy, checked against the docs (latest) on 2026-10-07:**
+  - *Local rate limit filter page:*
+    - "If the local rate limit token bucket is checked, and there are no tokens available, a 429 response is returned (the response is configurable)."
+    - "By default the rate limits are applied per Envoy process."
+    - stats under `<stat_prefix>.http_local_rate_limit.`: `rate_limited` is "Total responses without an available token (but not necessarily enforced)"; `enforced` is "Total number of requests for which rate limiting was applied (e.g.: 429 returned)"
+  - *Substitution formatter, `RL`:* "The request was rate-limited locally by the HTTP rate limit filter in addition to 429 response code."
+  - *Listener stats:* `listener.<address>.ssl.connection_error` is "Total TLS connection errors not including failed certificate verifications", with no further detail; `handshake` is "Total successful TLS connection handshakes".
+- **Envoy changes that follow from the docs:**
+  - **RB-030** drops the `RL` flag. The docs tie `RL` to "the HTTP rate limit filter" without naming the local filter, so it isn't claimed for our limiter.
+  - **RB-030** reads the `enforced` counter instead of `rate_limited`, because `rate_limited` counts token misses that weren't necessarily rejected.
+  - **RB-025** no longer claims `connection_error` climbs when clients reject our certificate. It now watches `ssl.handshake` dropping off, and says the docs don't settle whether `connection_error` counts this case.
+- **Facts added:** proxy maxSurge 0 / maxUnavailable 1; auth-db-01 primary, auth-db-02 replica.
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.
@@ -356,7 +464,7 @@ Invented details of the fictional company, introduced in batch 1. Reuse them as-
 - **payments-pgbouncer runs on two VMs**, not Kubernetes: systemd unit `pgbouncer`, `/etc/pgbouncer/pgbouncer.ini`, admin console `psql -h <host> -p 6432 -U pgbouncer pgbouncer`. Each bouncer normally carries about half of payments-api's connections. How payments-api picks a bouncer, and how it falls back, is **not decided**; batch 4's demo spec decides it. (RB-011)
 - **internal-dns runs on two VMs**: CoreDNS, systemd unit `coredns`, `/etc/coredns/Corefile`.
   - Authoritative for `prod.internal` via the `file` plugin, zone file `/etc/coredns/zones/prod.internal.db`, reloaded when the SOA serial changes. Record TTL 60 s, SOA negative TTL 60 s. Each VM has its own copy; the rollout tool updates them one after the other.
-  - Kubernetes cluster CoreDNS has a `prod.internal` server block with `cache 30` and `forward . 10.0.0.53 10.0.0.54` (default `random` policy). Pods use the Kubernetes default `ndots:5`.
+  - Kubernetes cluster CoreDNS has a `prod.internal` server block with `cache 30` and `forward . 10.0.0.53 10.0.0.54` (default `random` policy). Pods use the Kubernetes default `ndots:5`, **except orders-api, which sets `ndots:2` in its Deployment's `dnsConfig` from 2026-06-18** (RB-021). RB-020's statement stays true for every other pod.
   - VMs list internal-dns-01, then -02, in `/etc/resolv.conf`, with no `options rotate`. (RB-020)
 
 **payments-pgbouncer** (RB-011, RB-012)
@@ -389,6 +497,98 @@ Invented details of the fictional company, introduced in batch 1. Reuse them as-
 - **redis-features:** 32 GB RAM VM, no swap, `vm.overcommit_memory = 1` (team-platform's OS hardening baseline briefly set 2 with ratio 80 in September 2025); systemd unit `redis-server`; `maxmemory 24gb`, `maxmemory-policy noeviction`, `stop-writes-on-bgsave-error yes`.
 - **fraud-scorer** writes per-card velocity counters (INCR + TTL) on every score; `FRD-E140` means they go stale.
 
+**Batch 3 facts** (RB-021 to RB-030)
+
+**orders-api** (RB-021, RB-027)
+- Debian-based image (glibc resolver)
+- `pg` Pool `idleTimeoutMillis` was the default 10 s; **60000 since 2026-06-18**
+- Deployment `dnsConfig` sets ndots "2" since 2026-06-18
+- order events are written to an outbox table in orders-db and published by an in-process relay; checkout never waits on Kafka
+
+**Cluster DNS** (RB-022)
+- Deployment `coredns` in kube-system, label `k8s-app=kube-dns`
+- 2 replicas until 2025-02-20, **4 since**; fixed count, not autoscaled
+
+**card-processor-proxy** (RB-023, RB-029)
+- Go service, namespace `payments`
+- Client certificate:
+  - issued by the processor (not our CA), 1-year validity, CSR through the processor's merchant portal (up to 3 business days; an emergency line exists)
+  - Secret `card-processor-client-tls`, read only at start
+  - expiry alerts at 30 and 7 days since 2025-01-15; renewed each December
+- Processor limit: 400 rps per merchant account
+- Local egress limiter **since 2026-07-09**, ConfigMap `card-processor-proxy-config`:
+  - `CPX_LOCAL_RPS=180` per instance
+  - `CPX_LOCAL_MAX_WAIT=2s`: an attempt queues up to 2 s, goes ahead late if a token frees, otherwise is rejected at 2 s, logs `CPX-W430` and never reaches the processor
+  - every attempt, retries included, takes a token
+- Pods run only on the 2-node `egress` pool (outbound IPs on the processor's allowlist; nodeSelector plus taint toleration), with required anti-affinity of one proxy per node
+- The Deployment uses **maxSurge 0 / maxUnavailable 1**, since a surge pod could never schedule. A restart rolls one instance at a time, so the local budget is halved (180/s) while it rolls (RB-023). If one pod is already Pending, the rollout can't take the running pod down, so it has to be deleted by hand, leaving a gap with no proxy (RB-029).
+- A shared cross-instance budget is proposed, **not built**
+
+**auth-db / auth-service TLS** (RB-024)
+- auth-db-01 is the primary, auth-db-02 the replica
+- auth-service connects as `auth_app` with `sslmode=verify-full` (internal CA)
+- `pool_max_conn_lifetime=1h` and `pool_max_conn_idle_time=30m` are set explicitly in its `DATABASE_URL` (the same as the pgxpool defaults)
+- Server certificate and key in `/etc/postgresql/16/main/`
+- `pg-cert-renew.timer` renews 30 days before expiry, and **since 2025-04-09** also reloads Postgres
+
+**edge-gateway** (RB-025, RB-030)
+- Public certificate:
+  - issued by a public CA, in Secret `edge-public-tls` (namespace `platform`), mounted as files
+  - Envoy reads it at start, so renewal needs `rollout restart`
+  - renewed by team-platform 30 days ahead; an outside probe checks expiry daily
+- **Only `/search` has an edge local rate limit**:
+  - token bucket per edge pod: 100 tokens/1 s until 2026-03-10, **250 since**
+  - the rejection is 429 (Envoy's default status for the local rate limit) with body code `EDGE-RL01`. No access-log flag is claimed (see the follow-up below).
+  - one bucket per Envoy process (Envoy's default), so one per pod
+  - settings in ConfigMap `edge-gateway-envoy`, read at start
+  - the limit went in when the route was set up, as a crawler guard
+- Growth gives team-catalog a heads-up before large sends
+
+**auth-service sessions** (RB-026)
+- Session values in redis-sessions under prefix `sess:`
+- Since 2026-07-22, auth-service reads both the old and the July 2026 encodings
+- Rollouts use the Deployment defaults (1 surge / 0 unavailable at 2 replicas)
+
+**Rollout tool for VM config** (RB-027)
+- Pushes host by host, canary first.
+- Before 2026-08-20: a fixed 5-minute wait between hosts; checked only the exit status of `systemctl restart`.
+- **Since 2026-08-20, for enrolled units:** wait 60 s, run `systemctl is-active` plus a probe, and stop on the first failure.
+- Enrolled units and probes:
+
+  | Unit | Probe |
+  |---|---|
+  | `kafka` | `kafka-broker-api-versions.sh` |
+  | `opensearch` | `_cluster/health` |
+  | `redis-server` | `redis-cli PING` |
+  | `redis-sentinel` | `redis-cli -p 26379 PING` |
+  | `coredns` | `dig @host prod.internal SOA` |
+  | `postgresql@16-main` | `pg_isready` |
+
+- **payments-pgbouncer is not enrolled** (not stated in RB-027; see the batch 4 demo constraint in the batch 3 entry).
+- Kafka config is at `/opt/kafka/config/server.properties`. The `kafka` unit is `Type=simple`. The under-replicated-partitions alert needs 10 min sustained.
+
+**catalog-api / catalog-db** (RB-028)
+- Table `products`; role `catalog_app`
+- catalog-api serves with async workers
+- Alembic migrations run in the pre-deploy Job `catalog-api-migrate` (namespace `catalog`); the Deployment rolls only if it succeeds
+- A weekly `products` export runs as one transaction of about 40 min
+- Migrations had no lock timeout before 2025-05-16; **since 2025-05-16** they run with `PGOPTIONS='-c lock_timeout=5s'` and retry
+- The edge alerts on the 504 rate
+- Rates in May 2025: about 1,200 product reads/s, about 95% from cache (about 60/s to catalog-db), and about 5 writes/s to `products`
+
+**Skeleton rules from batch 3** (each like the 4.12 rule)
+- **orders-api (RB-021):** no orders-api incident caused by search-suffix lookup latency may start after 2026-06-18.
+- **`CPX-W430` (RB-029):** none may appear before 2026-07-09.
+- **Rollout-tool gate (RB-027):**
+  - after 2026-08-20, no config-push incident on an enrolled unit may have the tool continue past a failed host
+  - units that aren't enrolled (payments-pgbouncer included) are not covered
+- **catalog-api migrations (RB-028):** no migration may hold a lock queue longer than about 5 s after 2025-05-16.
+- **auth-db certificates (RB-024):** no incident from a renewed but unloaded server certificate after 2025-04-09.
+- **card-processor-proxy certificate (RB-023):** no client certificate may expire unnoticed after 2025-01-15.
+- **Cluster DNS (RB-022):** no capacity incident on 2 cluster CoreDNS replicas may start after 2025-02-20.
+- **Edge `/search` limit (RB-030):** no `EDGE-RL01` incident at 100 per pod may start after 2026-03-10.
+- **auth-service sessions (RB-026):** no logout wave from an unreadable session encoding may start after 2026-07-22.
+
 **Past events mentioned in runbooks: these MUST exist as incidents in the batch 4 skeleton, with matching details**
 
 The runbooks give these as history, so the incident set has to contain them. Each row is a constraint on the skeleton: date, service, hosts, codes and numbers must match. Months are written into the runbooks; years are fixed here.
@@ -413,6 +613,15 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 | **October 2025** | RB-018 | **Must exist as an incident.** Planned `SENTINEL FAILOVER sessions` before patching redis-sessions-01. For a few seconds, before auth-service-01 learned the new master, session writes that still failed after the client's retries got `READONLY` and weren't stored; those users hit `AUTH-E401X` on their next request. Few users affected. No other session loss. |
 | **September 2025** | RB-019 | **Must exist as an incident.** team-platform's OS hardening baseline set `vm.overcommit_memory = 2` (ratio 80) on redis-features-01. Redis at about 14 GB; the BGSAVE fork failed (`fork: Cannot allocate memory`) → `MISCONF` → `FRD-E140` on fraud-scorer-01/02. Fixed by restoring `1`. Before RB-019's 2025-11-03 review. |
 | **March 2026** | RB-020 | **Must exist as an incident.** A zone rollout reached only internal-dns-02 and dropped `inventory-db-01.prod.internal`. inventory-service-01/02 logged `no such host` **intermittently**; VMs unaffected because their resolv.conf lists internal-dns-01 first. Before RB-020's 2026-04-08 review. |
+| **2025-01-14** (00:00–02:40 UTC) | RB-023 | **Must exist as an incident.** card-processor-proxy client certificate expired at notAfter 00:00 UTC. `CPX-E600` on both proxy pods; every card payment failed with `PAYAPI-E1107` after 3 attempts. Paged 00:04, emergency certificate from the processor 02:30, Secret update + restart 02:38, clear 02:40. tls_expired. Before RB-023's 2026-09-22 review. |
+| **2025-02-20** (19:50–20:15) | RB-022 | **Must exist as an incident.** Cluster CoreDNS (2 replicas) at its CPU limit at evening peak. Lookups timed out in auth-service, catalog-api and orders-api; internal-dns healthy when queried directly. Scaled to 4 at 20:08. dns_failure. |
+| **2025-04-08** (09:00–09:53 UTC) | RB-024 | **Must exist as an incident.** auth-db-01 served an expired certificate: renewed file written 2025-03-09, Postgres never reloaded. auth-service new connections failed with `x509: certificate has expired`, logins returned `503`, and older connections aged out. Paged 09:38, `pg_reload_conf()` 09:51; auth-db-02 reloaded too. tls_expired. **No percentage of failing logins is stated.** |
+| **2025-05-15** (14:02–14:09) | RB-028 | **Must exist as an incident.** catalog-api migration `ALTER TABLE products` waited behind the weekly export (no `lock_timeout` yet). Cache-miss reads (about 60/s) and writes (about 5/s) on `products` queued and filled the 30 connections. Edge `504` from 14:02:15, QueuePool timeouts from 14:02:30, edge 504-rate alert paged 14:06. ALTER cancelled 14:09; re-run 14:40. bad_deploy / api_latency. **Not** a `CAT-E301` or 53300 incident. |
+| **2026-03-10** (09:05–09:50) | RB-030 | **Must exist as an incident.** Growth's spring campaign took `/search` to about 420 rps against the edge limit of 3 × 100. About 120/s (about 29%) got 429 `EDGE-RL01`. search-api flat at about 300/s, no `SRCH-E502`, search-cluster healthy. Limit raised to 250/pod; edge restart 09:46–09:50. rate_limiting. Same month as RB-020's incident, no shared services. |
+| **2026-06-15..17** (fixed 2026-06-18) | RB-021 | **Must exist as an incident.** orders-api `/checkout` p99 bursts to about 5 s (some about 10 s, rare `EAI_AGAIN`) over three evenings, from slow lookups of orders-db-01 under ndots:5 (8 queries per lookup) and `pg` idle timeout 10 s. Edge `200`, slow. Fixed with ndots:2 and `idleTimeoutMillis` 60000. dns_failure / api_latency. **No cause claimed for the lost replies.** |
+| **2026-07-21** (14:05–14:30) | RB-026 | **Must exist as an incident.** auth-service release changed the session encoding. `AUTH-E401X` from 14:08 (first new pod Ready); page 14:14; rollback 14:20; second wave from 14:23. No `READONLY`, redis-sessions primary unchanged, no data lost (sessions unreadable). Dual-read release 2026-07-22. bad_deploy. |
+| **2026-08-13** (10:12–10:36) | RB-027 | **Must exist as an incident.** Rollout-tool push of `message.max.bytes=10MB`: kafka-01 (canary) 10:12 and kafka-02 10:17 both failed to start with `ConfigException`. acks=all writes failed 10:17–10:27 (10 min). Run stopped 10:20 before kafka-03 (due 10:22). ledger-service `LEDGER-E455` with backoff, **no CPU spin, not a retry-spin incident**; orders-api outbox relay backlogged, no `ORD-5003`; notification-worker lag flat, no `NTF-E710`. bad_deploy. |
+| **2026-09-16** (19:41–20:23) | RB-029 | **Must exist as an incident.** The egress node under card-processor-proxy-02 was cordoned for a kernel patch; the replacement stayed Pending (allowlisted egress pool + anti-affinity). proxy-01 alone had 180 tokens/s against about 240 payment requests/s: `CPX-W430` and about 60/s `PAYAPI-E1107`. **No `CPX-W429`**, processor healthy, `CPX_MAX_ATTEMPTS` left at 3. Uncordoned 20:20 after the patch and reboot (20:18). rate_limiting. |
 
 ## Status
 

@@ -82,13 +82,15 @@ def test_error_code_catalog_has_standard_and_internal_codes(services_doc):
         "query_wait_timeout",
         "READONLY",
         "OOM command not allowed",
+        "EAI_AGAIN",
     ]:
         assert codes[token] == "*"
-    assert len(codes) == 36
-    assert sum(s == "*" for s in codes.values()) == 20  # real-world tokens
-    assert sum(s != "*" for s in codes.values()) == 16  # fictional internal codes
+    assert len(codes) == 38
+    assert sum(s == "*" for s in codes.values()) == 21  # real-world tokens
+    assert sum(s != "*" for s in codes.values()) == 17  # fictional internal codes
     assert codes["PAYAPI-E1042"] == "payments-api"
     assert codes["FRD-E140"] == "fraud-scorer"
+    assert codes["CPX-W430"] == "card-processor-proxy"
 
 
 def broken(doc, mutate):
@@ -127,7 +129,7 @@ def test_validator_rejects_broken_services(services_doc, mutate, message):
 # Batch 1 measured a maximum pairwise word-trigram Jaccard of 0.0108 (RB-004 vs RB-005).
 # The threshold leaves room for batches 2-3 and their hard-negative pairs; a pair above
 # it means two runbooks share whole passages, i.e. a template crept back in.
-MEASURED_MAX_TRIGRAM_JACCARD = 0.0233  # batch 2, RB-001 vs RB-013
+MEASURED_MAX_TRIGRAM_JACCARD = 0.0233  # batch 2, RB-001 vs RB-013; unchanged after batch 3
 TRIGRAM_JACCARD_THRESHOLD = 0.03
 
 
@@ -138,7 +140,7 @@ def runbooks():
 
 def test_runbooks_load_and_validate(runbooks, services_doc):
     validate_runbooks(runbooks, services_doc)
-    assert [r["meta"]["id"] for r in runbooks] == [f"RB-{n:03d}" for n in range(1, 21)]
+    assert [r["meta"]["id"] for r in runbooks] == [f"RB-{n:03d}" for n in range(1, 31)]
     rows = runbooks_output(runbooks)
     assert all(r["synthetic"] is True and r["doc_type"] == "runbook" for r in rows)
 
@@ -342,7 +344,7 @@ def test_manifest_hashes_committed_outputs_only():
     manifest = build_corpus.manifest(outputs, counts).decode()
     assert build_corpus.LOGHUB_OUT not in manifest
     assert counts["services"] == 24
-    assert counts["runbooks"] == 20
+    assert counts["runbooks"] == 30
     assert set(outputs) == {"services.json", "runbooks.jsonl"}
 
 

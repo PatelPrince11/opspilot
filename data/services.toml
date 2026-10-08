@@ -383,6 +383,11 @@ service = "*"
 meaning = "DNS name does not exist"
 
 [[error_codes]]
+code = "EAI_AGAIN"
+service = "*"
+meaning = "getaddrinfo: temporary failure in name resolution (resolver timed out or got no usable answer)"
+
+[[error_codes]]
 code = "x509: certificate has expired"
 service = "*"
 meaning = "TLS handshake failed: peer certificate past its notAfter date"
@@ -486,6 +491,11 @@ meaning = "Upstream TLS handshake with the card processor failed"
 code = "CPX-W429"
 service = "card-processor-proxy"
 meaning = "Card processor rate limit hit; request delayed or rejected"
+
+[[error_codes]]
+code = "CPX-W430"
+service = "card-processor-proxy"
+meaning = "Proxy's own egress limiter (each instance's fixed share of the processor's rate limit) delayed or rejected a request; the processor was not called"
 
 [[error_codes]]
 code = "FRD-W118"
