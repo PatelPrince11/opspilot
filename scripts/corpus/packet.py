@@ -5,22 +5,47 @@
 Contents:
 - the skeleton row and its sidecar entry
 - the NARRATIVE dates of its runbooks (post-dated ones are labels only, never named)
-- the NOTES Fictional-facts parts that mention the row's service or symptom services. A block
-  whose header names one goes in whole. Otherwise only its matching units go in: a top-level
-  bullet with its sub-bullets, or a table row. Platform-wide facts always go in.
+- Fictional-facts blocks for its service and symptom services. A block whose header names one
+  goes in whole; otherwise only its matching bullets or table rows. Platform-wide facts always
+  go in.
+- the "Skeleton rules" sections in full
+- the past-events table rows that mention its services
+- for a VM service or a bad_deploy row: the "Rollout tool for VM config" block in full, plus
+  every NOTES line about the rollout tool (e.g. F4, F5)
 - every NOTES line that mentions the id (as INC-NNNN or bare NNNN)
+- every NOTES line or table row that names one of its hosts, codes, services, or a systemd
+  unit of its services
+- scratchpad/review_checklist.md, if it exists
 - the linked runbooks in full
 """
 
 import re
 import sys
+import tomllib
 
 from scripts.corpus.checks import load_sidecar
 from scripts.corpus.common import DATA, ROOT
 from scripts.corpus.incidents import NARRATIVE, load_skeleton, postdated
 
 PACKETS = ROOT / "scratchpad" / "packets"
+CHECKLIST = ROOT / "scratchpad" / "review_checklist.md"
 FACTS_HEADING = "## Fictional facts"
+PAST_EVENTS = "**Past events mentioned in runbooks"
+ROLLOUT_BLOCK = "**Rollout tool for VM config**"
+ROLLOUT_RE = re.compile(r"rollout[- ]tool", re.I)
+POSTGRES = ("payments-db", "ledger-db", "orders-db", "auth-db", "inventory-db", "catalog-db")
+REDIS = ("redis-cache", "redis-sessions", "redis-features")
+# systemd units of each service (NOTES Fictional facts and the RB-027 probe table)
+UNITS = {
+    "internal-dns": ["coredns"],
+    "kafka": ["kafka"],
+    "search-cluster": ["opensearch"],
+    "payments-pgbouncer": ["pgbouncer"],
+    **{s: ["postgresql@16-main"] for s in POSTGRES},
+    **{s: ["redis-server", "redis-sentinel"] for s in REDIS},
+}
+# Datastores run on VMs, and NOTES (batch 2, Assumption A) puts these two apps on VMs too.
+VM_APPS = {"payments-pgbouncer", "internal-dns"}
 
 
 def fact_blocks(notes: str) -> list[list[str]]:
@@ -47,14 +72,25 @@ def units(block: list[str]) -> list[list[str]]:
     return out
 
 
+def term_re(terms: list[str], ignore_case: bool) -> re.Pattern | None:
+    """Whole-token match: not part of a longer name, host or code."""
+    if not terms:
+        return None
+    alts = "|".join(re.escape(t) for t in sorted(set(terms), key=len, reverse=True))
+    return re.compile(rf"(?<![\w-])(?:{alts})(?![\w-])", re.I if ignore_case else 0)
+
+
 def mentions(text: str, services: list[str]) -> bool:
-    return any(re.search(rf"(?<![\w-]){re.escape(s)}(?![\w-])", text, re.I) for s in services)
+    pat = term_re(services, ignore_case=True)
+    return bool(pat and pat.search(text))
 
 
 def facts_for(notes: str, services: list[str]) -> str:
     parts = []
     for block in fact_blocks(notes):
         head = block[0]
+        if head.startswith(PAST_EVENTS) or head.startswith("**Skeleton rules"):
+            continue  # sections of their own below
         if head.startswith("**Platform-wide") or mentions(head, services):
             parts.append("\n".join(block).strip())
             continue
@@ -64,10 +100,40 @@ def facts_for(notes: str, services: list[str]) -> str:
     return "\n\n".join(parts)
 
 
-def notes_lines(notes: str, inc_id: str) -> list[str]:
+def blocks_starting(notes: str, prefix: str) -> list[str]:
+    return ["\n".join(b).strip() for b in fact_blocks(notes) if b[0].startswith(prefix)]
+
+
+def past_event_rows(notes: str, services: list[str]) -> list[str]:
+    rows = []
+    for block in fact_blocks(notes):
+        if block[0].startswith(PAST_EVENTS):
+            rows += [ln for ln in block if ln.startswith("| ") and mentions(ln, services)]
+    return rows
+
+
+def numbered(notes: str, keep) -> list[str]:
+    return [f"NOTES.md:{n}: {ln}" for n, ln in enumerate(notes.split("\n"), 1) if keep(ln)]
+
+
+def id_lines(notes: str, inc_id: str) -> list[str]:
     num = inc_id.split("-")[1]
     pat = re.compile(rf"(?<![\w-])(?:INC-)?{num}(?!\w)")
-    return [f"NOTES.md:{n}: {ln}" for n, ln in enumerate(notes.split("\n"), 1) if pat.search(ln)]
+    return numbered(notes, pat.search)
+
+
+def term_lines(notes: str, row: dict, services: list[str]) -> list[str]:
+    """Lines naming a row host (full or short), code, service, or a unit of its services."""
+    hosts = row["hosts"] + [h.split(".")[0] for h in row["hosts"]]
+    words = services + [u for s in services for u in UNITS.get(s, [])]
+    loose = term_re(hosts + words, ignore_case=True)
+    codes = term_re(row["codes"], ignore_case=False)  # catalog codes are case-sensitive
+    return numbered(notes, lambda ln: loose.search(ln) or (codes and codes.search(ln)))
+
+
+def is_vm_row(row: dict, kinds: dict) -> bool:
+    services = [row["service"], *row["symptom_services"]]
+    return any(kinds[s] == "datastore" or s in VM_APPS for s in services)
 
 
 def build(inc_id: str) -> str:
@@ -77,6 +143,8 @@ def build(inc_id: str) -> str:
     row = rows[inc_id]
     side = load_sidecar()[inc_id]
     notes = (ROOT / "NOTES.md").read_text()
+    with (DATA / "services.toml").open("rb") as f:
+        kinds = {s["name"]: s["kind"] for s in tomllib.load(f)["services"]}
     services = [row["service"], *row["symptom_services"]]
     late = postdated(row)
 
@@ -101,8 +169,25 @@ def build(inc_id: str) -> str:
     if not row["runbook_ids"]:
         out.append("- none linked")
     out += ["", f"## Fictional facts for {', '.join(services)}", "", facts_for(notes, services)]
+    out += ["", "## Skeleton rules (in full)", "", *blocks_starting(notes, "**Skeleton rules")]
+    out += ["", f"## Past-events rows for {', '.join(services)}", ""]
+    out += past_event_rows(notes, services) or ["(none)"]
+    if is_vm_row(row, kinds) or "bad_deploy" in row["failure_types"]:
+        out += ["", "## Rollout tool (VM service or bad_deploy row)", ""]
+        out += blocks_starting(notes, ROLLOUT_BLOCK)
+        out += ["", "Every NOTES line about the rollout tool:", ""]
+        out += numbered(notes, ROLLOUT_RE.search)
     out += ["", f"## NOTES lines that mention {inc_id}", ""]
-    out += notes_lines(notes, inc_id) or ["(none)"]
+    out += id_lines(notes, inc_id) or ["(none)"]
+    out += ["", "## NOTES lines naming the row's hosts, codes, services or their units", ""]
+    out += term_lines(notes, row, services) or ["(none)"]
+    if CHECKLIST.exists():
+        out += [
+            "",
+            "## Review checklist (scratchpad/review_checklist.md)",
+            "",
+            CHECKLIST.read_text(),
+        ]
     for rb in row["runbook_ids"]:
         out += ["", f"## Runbook {rb} (full)", "", (DATA / "runbooks" / f"{rb}.md").read_text()]
     return "\n".join(out) + "\n"

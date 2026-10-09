@@ -40,7 +40,7 @@ def copied_sentence():
 
 def test_clean_fixture_passes_every_check(draft, capsys):
     assert failing(draft) == set()
-    assert selfcheck.main([INC, str(draft)]) == 0
+    assert selfcheck.main([INC, "--file", str(draft)]) == 0
     out = capsys.readouterr().out
     assert "FAIL" not in out and out.count("PASS") == len(selfcheck.run(INC, draft)[0])
 
@@ -56,7 +56,7 @@ def test_clean_fixture_passes_every_check(draft, capsys):
 def test_planted_flaw_fails_its_check(draft, sentence, check, capsys):
     plant(draft, sentence or copied_sentence())
     assert check in failing(draft)
-    assert selfcheck.main([INC, str(draft)]) == 1
+    assert selfcheck.main([INC, "--file", str(draft)]) == 1
     assert f"FAIL  {check}" in capsys.readouterr().out
 
 
@@ -87,3 +87,29 @@ def test_progress_resume_rule(tmp_path):
     path.write_text('batch = 7\n[rows."INC-0042"]\nstate = "done"\n')
     with pytest.raises(ValueError, match="not in"):
         progress.load(path)
+
+
+def test_packet_has_rollout_pacing_and_f5_for_a_vm_bad_deploy_row():
+    text = packet.build("INC-0025")
+    assert "Before 2026-08-20: a fixed 5-minute wait between hosts" in text
+    assert "**F5:** a rollout-tool run can be scoped to a subset of hosts" in text
+
+
+def test_packet_has_the_proxy_rollout_fact():
+    assert "**maxSurge 0 / maxUnavailable 1**" in packet.build("INC-0177")
+
+
+def test_two_drafts_sharing_an_8_word_run_both_fail_with_drafts(tmp_path):
+    (tmp_path / "logs").mkdir()
+    shared = "The amber lamps along the quiet corridor glowed softly all evening."
+    for inc in ("INC-0055", "INC-0067"):
+        shutil.copy(DATA / "incidents" / f"{inc}.md", tmp_path / f"{inc}.md")
+        shutil.copy(DATA / "incidents" / "logs" / f"{inc}.toml", tmp_path / "logs" / f"{inc}.toml")
+        plant(tmp_path / f"{inc}.md", shared)
+    for inc, other in (("INC-0055", "INC-0067"), ("INC-0067", "INC-0055")):
+        path = tmp_path / f"{inc}.md"
+        alone, _ = selfcheck.run(inc, path)
+        assert not dict(alone)["8-word runs"], inc  # no draft-vs-draft check without DRAFTS
+        results, _ = selfcheck.run(inc, path, drafts=tmp_path)
+        assert any(f"draft:{other}" in e for e in dict(results)["8-word runs"]), inc
+        assert selfcheck.main([inc, "--file", str(path), "--drafts", str(tmp_path)]) == 1

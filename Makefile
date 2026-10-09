@@ -59,9 +59,10 @@ corpus:
 corpus-check:
 	docker compose run --rm --build corpus python -m scripts.build_corpus --check
 
-# One draft write-up, every deterministic check: make selfcheck ID=INC-NNNN [FILE=path]
+# One draft write-up, every deterministic check:
+#   make selfcheck ID=INC-NNNN [FILE=path] [DRAFTS=dir]
 selfcheck:
-	@uv run python -m scripts.corpus.selfcheck $(ID) $(FILE)
+	@uv run python -m scripts.corpus.selfcheck $(ID) $(if $(FILE),--file $(FILE)) $(if $(DRAFTS),--drafts $(DRAFTS))
 
 # Writer packet for one row: make packet ID=INC-NNNN -> scratchpad/packets/INC-NNNN.md
 packet:
