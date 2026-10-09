@@ -24,7 +24,7 @@ message = "rollout: systemctl restart coredns exit=0; run complete hosts=1 faile
 
 [[burst]]
 from = "15:15:20"
-to = "15:39:20"
+to = "15:38:35"
 count = 44
 service = "orders-api"
 level = "ERROR"
