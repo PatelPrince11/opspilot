@@ -8,6 +8,7 @@ notice in every copy, so we download at build time instead of redistributing.
 import csv
 import io
 import random
+import re
 import urllib.request
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -101,6 +102,7 @@ def parse(csv_bytes: bytes) -> list[dict]:
 
 
 PER_WINDOW = 10  # 200 incidents x 10 lines = the 2,000-line sample, each line used once
+INCIDENT_KEY_RE = re.compile(r"^INC-(\d{4})$")  # slots are by incident number only
 
 
 def place_in_windows(
@@ -122,7 +124,10 @@ def place_in_windows(
     """
     placed = []
     for key, start, end in windows:
-        first = (int(key.rsplit("-", 1)[1]) - 1) * per_window
+        m = INCIDENT_KEY_RE.fullmatch(key)
+        if not m:
+            raise ValueError(f"{key}: not an INC-NNNN id")
+        first = (int(m.group(1)) - 1) * per_window
         if first < 0 or first + per_window > len(events):
             raise ValueError(f"{key}: no LogHub slice left at line {first} of {len(events)}")
         rng = rng_for(f"loghub:{key}")

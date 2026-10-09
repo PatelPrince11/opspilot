@@ -341,6 +341,15 @@ def test_place_in_windows_slices_are_sequential_by_incident_and_never_overlap():
         loghub.place_in_windows(events, [("INC-0003", start, w)], rng_for, per_window=2)
 
 
+@pytest.mark.parametrize("key", ["INC-LIVE-001", "INC-A", "INC-00001"])
+def test_place_in_windows_rejects_keys_that_are_not_incident_ids(key):
+    """Only INC-NNNN has a slot; INC-LIVE-001 would otherwise reuse INC-0001's lines."""
+    events = loghub.parse(FIXTURE.read_bytes())
+    start = datetime(2026, 3, 1, 12, 0, tzinfo=UTC)
+    with pytest.raises(ValueError, match=re.escape(f"{key}: not an INC-NNNN id")):
+        loghub.place_in_windows(events, [(key, start, start + timedelta(minutes=5))], rng_for)
+
+
 def test_loghub_budget_is_10_lines_for_each_of_the_200_incidents():
     from scripts.corpus.incidents import COUNT
 
