@@ -777,6 +777,52 @@ No 8-word run is shared with any runbook or write-up. The 6-word runs that remai
 
 Committed outputs are unchanged, because LogHub-derived lines aren't committed or hashed. Only `log_events.loghub.jsonl` (gitignored) is regenerated.
 
+## 2026-10-09: LogHub key guard, INC-0025 cache window, INC-0177 sidecar, post-dated runbooks, repo state
+
+**LogHub keys (4fab571):** `place_in_windows` accepts only keys matching `^INC-(\d{4})$` and raises `ValueError("<key>: not an INC-NNNN id")` otherwise.
+- Before this, `INC-LIVE-001` took the digits after its last hyphen (`001`) and silently reused INC-0001's slice.
+- Broken-input tests: `INC-LIVE-001`, `INC-A`, `INC-00001`.
+
+**INC-0025 (3b3aba6):** the fix was live at 15:38:07, and cluster CoreDNS caches replies for at most 30 s. But the NXDOMAIN burst ran to 15:39:20, longer than the cache allows.
+- The burst now ends at 15:38:35, with count unchanged (44 NXDOMAIN lines, 94 lines in all).
+- The last NXDOMAIN line is now 2025-03-19T15:38:25.230Z, and the write-up says "the last failed one was logged at 15:38".
+- No test pinned the old time or line count.
+
+**INC-0177 sidecar (cd6d740):** the discriminator `CPX-E600` was replaced by `rollout restart`. The old one was not a row code, so the codes rule made the row unwritable. The new token:
+- appears in RB-023 step 6 (`k rollout restart deploy/card-processor-proxy`)
+- doesn't appear in RB-029, which says "rollout" but never "rollout restart"
+- is not a catalog code or a sidecar label word
+
+Only that sidecar entry changed in `eval/`.
+
+**Post-dated runbook links (19dc7b3):** a runbook written about a given incident (NARRATIVE date on or after its `started_at`) stays in that row's `runbook_ids` as a relevance label, but the write-up never names it, including in a header line.
+- **An exemption was needed:** the validator required runbook references to equal `runbook_ids`. It now requires them to equal `runbook_ids` minus `postdated(row)`, and the `NARRATIVE` check went from `<` to `<=`.
+- **INC-0168** (batch 5) named RB-021, its own post-dated runbook, in its header table. That cell was removed; nothing else in INC-0168 changed.
+- Tests: naming RB-021 in INC-0168 fails, and an ordinary missing runbook (RB-020) in the same row still fails.
+- Rows 0042, 0124, 0137 and 0162 are marked for the next batch.
+
+**README (f769d00):**
+- The disclaimer now covers runbooks, incidents, services and logs, and says the company is fictional.
+- The LogHub license notice is copied from `data/raw/loghub/LICENSE` downloaded at `dd61d09` (sha256 matches the pin, `9ffa6ae2…`). Only trailing spaces were stripped.
+
+**CLAUDE.md (045cb2b):** added "Do not use the superpowers plugin's brainstorming, plan-writing, plan-executing or subagent skills. These rules override any plugin skill." No equivalent rule existed.
+
+**Secrets check:**
+- `git ls-files` matches only `.env.example` (empty keys, placeholder `change-me`).
+- `.env` is gitignored (`.gitignore:2`) and was never committed.
+- A pattern scan of tracked files for real keys found none.
+
+**Remote state:**
+- `origin` = github.com/PatelPrince11/opspilot, **PUBLIC**.
+- `origin/phase-1/scaffold` is at `1a5d32c` (batch 1). Everything later on `phase-1/scaffold` is unpushed.
+- `origin/main` is at `0ff6e2b`.
+
+**Eval notes for Phase 1 step 4 (questions):**
+- INC-0025 (March 2025, orders-api, internal-dns-01) and RB-020's March 2026 incident (inventory-service, internal-dns-02) are near-twins. Questions must name the year, the server or the service.
+- INC-0025's 15:26 page, its 15:31 check and "the diff of the 15:15 push showed the record removed" are narrative colour. No question may rely on them.
+
+**Verified:** step 8 gate below.
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.
