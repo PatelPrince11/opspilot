@@ -100,26 +100,35 @@ def parse(csv_bytes: bytes) -> list[dict]:
     return events
 
 
+PER_WINDOW = 10  # 200 incidents x 10 lines = the 2,000-line sample, each line used once
+
+
 def place_in_windows(
     events: list[dict],
     windows: list[tuple[str, datetime, datetime]],
     rng_for: Callable[[str], random.Random],
-    per_window: int = 40,
+    per_window: int = PER_WINDOW,
 ) -> list[dict]:
-    """Copy a seeded, contiguous slice of LogHub lines into each (key, start, end) window.
+    """Copy a fixed, non-overlapping slice of LogHub lines into each (incident id, start, end)
+    window.
 
-    The sample spans 15 minutes in 2017, so without rebasing it would never overlap the
-    time ranges query_logs searches. Line order inside a slice is kept; timestamps are
-    seeded random offsets inside the window. incident_id stays None: noise overlaps an
-    incident's time range but is never part of it.
+    Slices are allocated sequentially by incident number: INC-NNNN gets lines
+    [(NNNN - 1) * per_window, NNNN * per_window), so no noise line is used twice and a
+    window's noise never changes when other incidents gain write-ups. The sample spans 15
+    minutes in 2017, so without rebasing it would never overlap the time ranges query_logs
+    searches. Line order inside a slice is kept; timestamps are seeded random offsets inside
+    the window. incident_id stays None: noise overlaps an incident's time range but is never
+    part of it.
     """
     placed = []
-    n = min(per_window, len(events))
     for key, start, end in windows:
+        first = (int(key.rsplit("-", 1)[1]) - 1) * per_window
+        if first < 0 or first + per_window > len(events):
+            raise ValueError(f"{key}: no LogHub slice left at line {first} of {len(events)}")
         rng = rng_for(f"loghub:{key}")
-        first = rng.randrange(len(events) - n + 1)
         span = (end - start).total_seconds()
-        offsets = sorted(rng.uniform(0, span) for _ in range(n))
-        for event, offset in zip(events[first : first + n], offsets, strict=True):
+        offsets = sorted(rng.uniform(0, span) for _ in range(per_window))
+        chunk = events[first : first + per_window]
+        for event, offset in zip(chunk, offsets, strict=True):
             placed.append({**event, "ts": start + timedelta(seconds=round(offset, 3))})
     return placed

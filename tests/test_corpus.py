@@ -314,17 +314,38 @@ def test_place_in_windows_keeps_noise_inside_windows_and_unlinked():
     events = loghub.parse(FIXTURE.read_bytes())
     start = datetime(2026, 3, 1, 12, 0, tzinfo=UTC)
     windows = [
-        ("INC-A", start, start + timedelta(hours=1)),
-        ("INC-B", start, start + timedelta(minutes=5)),
+        ("INC-0002", start, start + timedelta(minutes=5)),
+        ("INC-0001", start, start + timedelta(hours=1)),
     ]
-    placed = loghub.place_in_windows(events, windows, rng_for, per_window=3)
+    placed = loghub.place_in_windows(events, windows, rng_for, per_window=2)
 
-    assert len(placed) == 6
-    for (_, w_start, w_end), chunk in zip(windows, (placed[:3], placed[3:]), strict=True):
+    assert len(placed) == 4
+    for (_, w_start, w_end), chunk in zip(windows, (placed[:2], placed[2:]), strict=True):
         assert all(w_start <= e["ts"] <= w_end for e in chunk)
         assert [e["ts"] for e in chunk] == sorted(e["ts"] for e in chunk)
     assert all(e["incident_id"] is None for e in placed)
-    assert placed == loghub.place_in_windows(events, windows, rng_for, per_window=3)
+    assert placed == loghub.place_in_windows(events, windows, rng_for, per_window=2)
+
+
+def test_place_in_windows_slices_are_sequential_by_incident_and_never_overlap():
+    """INC-NNNN gets lines [(NNNN - 1) * n, NNNN * n): fixed per incident, each line used once."""
+    events = loghub.parse(FIXTURE.read_bytes())
+    start = datetime(2026, 3, 1, 12, 0, tzinfo=UTC)
+    w = start + timedelta(minutes=5)
+    strip = lambda evs: [{k: v for k, v in e.items() if k != "ts"} for e in evs]  # noqa: E731
+    one = loghub.place_in_windows(events, [("INC-0001", start, w)], rng_for, per_window=2)
+    two = loghub.place_in_windows(events, [("INC-0002", start, w)], rng_for, per_window=2)
+    assert strip(one) == strip(events[0:2])
+    assert strip(two) == strip(events[2:4])
+    with pytest.raises(ValueError, match="no LogHub slice left"):
+        loghub.place_in_windows(events, [("INC-0003", start, w)], rng_for, per_window=2)
+
+
+def test_loghub_budget_is_10_lines_for_each_of_the_200_incidents():
+    from scripts.corpus.incidents import COUNT
+
+    assert loghub.PER_WINDOW == 10
+    assert loghub.PER_WINDOW * COUNT == 2_000  # the OpenStack 2k sample, measured in batch 0
 
 
 # --------------------------------------------------------- seed and manifest
