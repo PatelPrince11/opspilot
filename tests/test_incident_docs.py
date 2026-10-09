@@ -7,24 +7,36 @@ import copy
 import re
 import tomllib
 from datetime import date, timedelta
-from itertools import combinations
 
 import pytest
 
 from scripts import build_corpus
 from scripts.corpus import synthetic_logs
+from scripts.corpus.checks import (
+    TRIGRAM_JACCARD_THRESHOLD,
+    copied_runs,
+    duration_errors,
+    fact_errors,
+    has_token,
+    heading_errors,
+    hm,
+    jaccard_scores,
+    label_errors,
+    leaks_demo,
+    log_size_errors,
+    sidecar_labels,
+    word_count_errors,
+)
 from scripts.corpus.common import DATA, SIDECAR
 from scripts.corpus.incidents import (
     DOC_FORMATS,
-    TIME_RE,
     doc_text,
     load_documents,
     load_skeleton,
     validate_documents,
 )
-from scripts.corpus.runbooks import headings, load_runbooks, word_count
+from scripts.corpus.runbooks import load_runbooks
 from scripts.corpus.services import CorpusError, load_services
-from tests.test_corpus import TRIGRAM_JACCARD_THRESHOLD, leaks_demo, trigrams
 
 BATCH5 = {
     "INC-0023",
@@ -47,19 +59,6 @@ BATCH6 = {
     *("INC-0197", "INC-0031", "INC-0015", "INC-0194", "INC-0096"),
 }
 FORMAT_CAP = {"batch5": (BATCH5, 2), "batch6": (BATCH6, 4)}  # most uses of one format
-JACCARD_TARGET = 0.025  # working ceiling; the test threshold stays TRIGRAM_JACCARD_THRESHOLD
-SHARED_RUN = 8  # no run of this many words shared with a runbook or another write-up
-WORDS = {
-    "postmortem": (450, 900),
-    "table": (350, 700),
-    "ticket": (500, 950),
-    "handoff": (250, 500),
-    "qa": (350, 700),
-    "brief": (100, 220),
-    "narrative": (350, 650),
-    "timeline": (300, 650),
-    "chat_digest": (300, 550),
-}
 
 
 @pytest.fixture(scope="module")
@@ -104,10 +103,6 @@ def events(rows, docs, services_doc):
     for e in build_corpus.synthetic_events(rows, list(docs.values()), services_doc):
         out.setdefault(e["incident_id"], []).append(e)
     return out
-
-
-def has_token(text, token):
-    return re.search(rf"(?<![\w.,]){re.escape(token)}(?!\w|[.,]\d)", text) is not None
 
 
 # ------------------------------------------------------------------ validator
@@ -300,58 +295,19 @@ def test_codes_are_catalog_tokens_only(services_doc):
 # ------------------------------------------------------------- sidecar labels
 
 
-def test_absent_codes_never_in_documents_or_logs(docs, events, side):
+def test_sidecar_facts_hold(docs, events, side):
+    """Facts stated, false booleans not contradicted, discriminators present, absent codes
+    absent from prose and logs (scripts/corpus/checks.py: fact_errors)."""
     for i in docs:
-        text = doc_text(docs[i]) + "\n".join(e["message"] for e in events[i])
-        for c in side[i].get("absent_codes", []):
-            assert c not in text, (i, c)
-
-
-# Boolean facts become text that must not appear.
-FORBIDDEN_BY_FACT = {
-    "wal_or_disk": [r"\bWAL\b", r"\bdisk\b"],
-    "retry_storm": [r"retry storm"],
-    "ledger_cpu_spin": [r"\bspin"],
-    "after_rb018_review": [r"RB-018 (?:records|lists|describes this|mentions this)"],
-    "internal_dns_healthy": [r"internal-dns (?:was|were) (?:down|unhealthy|broken|failing)"],
-    "data_lost": [
-        r"\b(?:data|sessions?) (?:was|were) (?:lost|deleted|wiped)",
-        r"\blost (?:the )?data\b",
-    ],
-}
-
-
-def test_facts_appear_in_the_write_up(docs, side):
-    for i in docs:
-        text = doc_text(docs[i])
-        for key, val in side[i].get("facts", {}).items():
-            if isinstance(val, bool):
-                for pat in FORBIDDEN_BY_FACT[key]:  # every boolean fact needs an entry
-                    assert not re.search(pat, text, re.IGNORECASE), (i, key, pat)
-            elif isinstance(val, int | float):
-                assert has_token(text, f"{val:g}") or has_token(text, f"{val:,}"), (i, key, val)
-            elif TIME_RE.search(val):
-                for t in TIME_RE.findall(val):
-                    assert ":".join(x for x in t if x) in text, (i, key, val)
-            elif "/" in val or "=" in val:
-                assert val in text, (i, key, val)
-
-
-def test_discriminators_appear(docs, side):
-    for i in docs:
-        for tok in side[i].get("discriminators", []):
-            assert tok in doc_text(docs[i]), (i, tok)
+        logtext = "\n".join(e["message"] for e in events[i])
+        assert not fact_errors(doc_text(docs[i]), side[i], logtext), i
 
 
 def test_no_sidecar_keys_or_mechanism_tags_in_write_ups(docs, side, runbooks):
     """Labels that are also real vocabulary in a runbook (e.g. `s_client`) are exempt."""
-    labels = {s["mechanism"] for s in side.values()}
-    labels |= {k for s in side.values() for k in s if "_" in k}
-    labels |= {k for s in side.values() for k in s.get("facts", {}) if "_" in k}
-    labels -= {w for r in runbooks for w in re.findall(r"[a-z0-9_]+", r["body"])}
+    labels = sidecar_labels(side, runbooks)
     for i in docs:
-        words = set(re.findall(r"[a-z0-9_]+", doc_text(docs[i])))
-        assert not labels & words, (i, labels & words)
+        assert not label_errors(doc_text(docs[i]), labels), i
 
 
 def test_no_write_up_or_log_leaks_the_demo(docs, events):
@@ -363,26 +319,10 @@ def test_no_write_up_or_log_leaks_the_demo(docs, events):
 # ----------------------------------------------------------- times and numbers
 
 
-def hm(s):
-    """Minutes since midnight; seconds count as a fraction of a minute."""
-    h, m, *sec = s.split(":")
-    return int(h) * 60 + int(m) + (int(sec[0]) / 60 if sec else 0)
-
-
-DUR_RE = re.compile(r"\b(\d+)[ -](?:minutes?|min|hours?|h)\b")
-DURATION_WHITELIST = {"INC-0171": {23, 168}}
-
-
 def test_stated_durations_match_the_times(docs, by_id):
     """Every "N minutes" / "N h" is the total, a gap between two stated times, or whitelisted."""
     for i in docs:
-        text, r = doc_text(docs[i]), by_id[i]
-        total = int((r["resolved_at"] - r["started_at"]).total_seconds() // 60)
-        clocks = {hm(m.group(0)) for m in TIME_RE.finditer(text)}
-        gaps = {(b - a) % 1440 for a in clocks for b in clocks}
-        allowed = {total} | gaps | DURATION_WHITELIST.get(i, set())
-        for n in DUR_RE.findall(text):
-            assert int(n) in allowed, (i, n)
+        assert not duration_errors(docs[i], by_id[i]), i
 
 
 def at(clock, minutes=0.0):
@@ -474,49 +414,31 @@ def test_formats_and_lengths(docs):
         mine = [docs[i]["meta"]["format"] for i in ids if i in docs]
         assert not mine or max(mine.count(f) for f in mine) <= cap, batch
     for i, d in docs.items():
-        lo, hi = WORDS[d["meta"]["format"]]
-        assert lo <= word_count(d["body"]) <= hi, (i, word_count(d["body"]))
+        assert not word_count_errors(d), i
 
 
 def test_headings_never_repeat(docs, runbooks):
-    rb = {headings(r["body"]) for r in runbooks}
-    seqs = [headings(d["body"]) for d in docs.values()]
-    assert len(seqs) == len(set(seqs))
-    assert not set(seqs) & rb
-    sections = [s[1:] for s in seqs if len(s) > 1]
-    assert len(sections) == len(set(sections))
-    titles = [d["meta"]["title"].lower() for d in docs.values()]
-    assert len(set(titles)) == len(titles)
-    assert not set(titles) & {r["meta"]["title"].lower() for r in runbooks}
-
-
-def jaccard(a, b):
-    return len(a & b) / len(a | b)
+    for i, d in docs.items():
+        others = {k: v for k, v in docs.items() if k != i}
+        assert not heading_errors(d, others, runbooks), i
 
 
 def test_write_ups_do_not_share_passages(docs, runbooks):
-    grams = {i: trigrams(d["body"]) for i, d in docs.items()}
-    rgrams = {r["meta"]["id"]: trigrams(r["body"]) for r in runbooks}
-    scores = {(a, b): jaccard(grams[a], grams[b]) for a, b in combinations(sorted(grams), 2)}
-    scores |= {(a, b): jaccard(grams[a], rgrams[b]) for a in grams for b in rgrams}
-    top = sorted(scores.items(), key=lambda kv: -kv[1])[:10]
-    print("top trigram Jaccard:", ", ".join(f"{a}/{b} {s:.4f}" for (a, b), s in top))
-    assert top[0][1] < TRIGRAM_JACCARD_THRESHOLD, top[0]
-
-
-def prose_ngrams(text, n=SHARED_RUN):
-    text = re.sub(r"```.*?```", " ", text, flags=re.S)
-    text = re.sub(r"`[^`]*`", " ", text)
-    words = re.findall(r"[a-z0-9_]+", text.lower())
-    return {tuple(words[i : i + n]) for i in range(len(words) - n + 1)}
+    texts = {r["meta"]["id"]: r["body"] for r in runbooks}
+    scores = []
+    for i, d in docs.items():
+        others = {**texts, **{k: v["body"] for k, v in docs.items() if k > i}}
+        scores += [(j, f"{i}/{n}") for j, n in jaccard_scores(d["body"], others)]
+    top = sorted(scores, reverse=True)[:10]
+    print("top trigram Jaccard:", ", ".join(f"{p} {j:.4f}" for j, p in top))
+    assert top[0][0] < TRIGRAM_JACCARD_THRESHOLD, top[0]
 
 
 def test_no_sentence_copied_from_a_runbook_or_another_write_up(docs, runbooks):
-    mine = {i: prose_ngrams(d["body"]) for i, d in docs.items()}
-    others = {r["meta"]["id"]: prose_ngrams(r["body"]) for r in runbooks}
-    for a, ga in mine.items():
-        for b, gb in {**others, **{k: v for k, v in mine.items() if k != a}}.items():
-            assert not ga & gb, (a, b, sorted(ga & gb)[:2])
+    texts = {r["meta"]["id"]: r["body"] for r in runbooks}
+    for i, d in docs.items():
+        others = {**texts, **{k: v["body"] for k, v in docs.items() if k != i}}
+        assert not copied_runs(d["body"], others), i
 
 
 # ----------------------------------------------------------------------- logs
@@ -525,9 +447,8 @@ def test_no_sentence_copied_from_a_runbook_or_another_write_up(docs, runbooks):
 def test_logs_are_deterministic_and_sized(events, by_id, docs, services_doc):
     for i in docs:
         evs = events[i]
-        assert 40 <= len(evs) <= 160, (i, len(evs))
-        if by_id[i]["codes"]:  # a TLS failure the server never sees logs no errors at all
-            assert len({e["level"] for e in evs}) >= 2, i
+        # a TLS failure the server never sees logs no errors at all, so one level is fine there
+        assert not log_size_errors(evs, by_id[i]), i
         spec = synthetic_logs.load_spec(DATA / "incidents" / "logs" / f"{i}.toml")
         again = synthetic_logs.generate(i, spec, by_id[i]["started_at"].date())
         assert again == evs, i

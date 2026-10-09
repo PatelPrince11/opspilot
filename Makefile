@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint fmt migrate migrate-down psql corpus corpus-check ingest eval
+.PHONY: up down logs test lint fmt migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -58,6 +58,14 @@ corpus:
 
 corpus-check:
 	docker compose run --rm --build corpus python -m scripts.build_corpus --check
+
+# One draft write-up, every deterministic check: make selfcheck ID=INC-NNNN [FILE=path]
+selfcheck:
+	@uv run python -m scripts.corpus.selfcheck $(ID) $(FILE)
+
+# Writer packet for one row: make packet ID=INC-NNNN -> scratchpad/packets/INC-NNNN.md
+packet:
+	@uv run python -m scripts.corpus.packet $(ID)
 
 ingest:
 	@echo "ingest: not implemented (Phase 1 step 5)"

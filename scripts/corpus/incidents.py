@@ -313,6 +313,93 @@ def check_times(where: str, text: str, row: dict) -> list[str]:
     return errors
 
 
+# The groups document_errors reports under, in the order `make selfcheck` prints them.
+DOC_CHECKS = (
+    "front matter",
+    "hosts",
+    "codes",
+    "runbook refs",
+    "references",
+    "severity",
+    "labels",
+    "anachronisms",
+    "blocklist",
+    "demo guard",
+    "times",
+)
+
+
+def document_errors(doc: dict, row: dict, find_codes, short_re) -> dict[str, list[str]]:
+    """Every validator rule for one write-up against its row, grouped by check name (the
+    build flattens the groups; `make selfcheck` prints one line per group)."""
+    meta, where = doc["meta"], doc["file"]
+    groups: dict[str, list[str]] = {}
+
+    def err(group, msg):
+        groups.setdefault(group, []).append(f"{where}: {msg}")
+
+    if meta["format"] not in DOC_FORMATS:
+        err("front matter", f"format {meta['format']!r}")
+    if meta["synthetic"] is not True:
+        err("front matter", "synthetic must be true")
+    text = doc_text(doc)
+    row_hosts = set(row["hosts"])
+    for h in sorted(set(HOST_RE.findall(text)) - row_hosts):
+        err("hosts", f"host {h!r} is not one of the row's hosts")
+    short = {h.split(".")[0] for h in row_hosts}
+    for h in sorted(set(short_re.findall(text)) - short):
+        err("hosts", f"host {h!r} is not one of the row's hosts")
+    found, unknown = find_codes(text)
+    for c in sorted(found - set(row["codes"])):
+        err("codes", f"code {c!r} is not one of the row's codes")
+    for c in sorted(set(row["codes"]) - found):
+        err("codes", f"row code {c!r} never stated")
+    for c in sorted(unknown):
+        err("codes", f"unknown internal code {c!r}")
+    refs = set(REF_RE.findall(text))
+    # A runbook written about this very incident (NARRATIVE date on or after its start)
+    # stays in runbook_ids as a relevance label but is never named in the write-up.
+    named = set(row["runbook_ids"]) - postdated(row)
+    if {r for r in refs if r.startswith("RB-")} != named:
+        err("runbook refs", f"runbook references must equal {sorted(named)}")
+    for rb in sorted(refs & NARRATIVE.keys()):
+        if row["started_at"].date().isoformat() <= NARRATIVE[rb]:
+            err("runbook refs", f"{rb} did not exist before {NARRATIVE[rb]}")
+    if {r for r in refs if r.startswith("INC-")}:
+        err("references", "no incident references in write-ups")
+    for ref in sorted(set(REF_LIKE_RE.findall(text)) - refs):
+        err("references", f"malformed reference {ref!r}")
+    sevs = {f"sev{n}" for n in SEV_RE.findall(text)}
+    if sevs != {row["severity"]}:
+        err("severity", f"severity stated as {sorted(sevs)}, row says {row['severity']}")
+    if m := LABEL_RE.search(text):
+        err("labels", f"eval label word {m.group(0)!r}")
+    for e in anachronisms(text, row):
+        err("anachronisms", e)
+    low = text.lower()
+    for phrase in BLOCKED_PHRASES:
+        if phrase in low:
+            err("blocklist", f"unsupported claim {phrase!r}")
+    if row["service"] == "payments-pgbouncer" or any("pgbouncer" in h for h in row_hosts):
+        if "ECONNREFUSED" in text or "6432" in text:
+            err("demo guard", "demo guard: pgbouncer with ECONNREFUSED or 6432")
+    times = check_times(where, text, row)
+    if times:
+        groups.setdefault("times", []).extend(times)
+    return groups
+
+
+def front_matter_errors(doc: dict, by_id: dict) -> list[str]:
+    """Checks that must pass before a write-up can be matched to its row."""
+    meta, where = doc["meta"], doc["file"]
+    bad = [k for k, typ in DOC_REQUIRED.items() if not isinstance(meta.get(k), typ)]
+    if bad:
+        return [f"{where}: missing or wrongly typed front matter keys: {bad}"]
+    if meta["id"] not in by_id or f"{meta['id']}.md" != where:
+        return [f"{where}: id must be a skeleton row and match the filename"]
+    return []
+
+
 def validate_documents(
     docs: list[dict], rows: list[dict], services_doc: dict, runbook_ids: set[str]
 ) -> None:
@@ -321,60 +408,12 @@ def validate_documents(
     short_re = short_host_re(services_doc)
     errors = []
     for doc in docs:
-        meta, where = doc["meta"], doc["file"]
-        bad = [k for k, typ in DOC_REQUIRED.items() if not isinstance(meta.get(k), typ)]
-        if bad:
-            errors.append(f"{where}: missing or wrongly typed front matter keys: {bad}")
+        if fm := front_matter_errors(doc, by_id):
+            errors += fm
             continue
-        row = by_id.get(meta["id"])
-        if row is None or f"{meta['id']}.md" != where:
-            errors.append(f"{where}: id must be a skeleton row and match the filename")
-            continue
-        if meta["format"] not in DOC_FORMATS:
-            errors.append(f"{where}: format {meta['format']!r}")
-        if meta["synthetic"] is not True:
-            errors.append(f"{where}: synthetic must be true")
-        text = doc_text(doc)
-        row_hosts = set(row["hosts"])
-        for h in sorted(set(HOST_RE.findall(text)) - row_hosts):
-            errors.append(f"{where}: host {h!r} is not one of the row's hosts")
-        short = {h.split(".")[0] for h in row_hosts}
-        for h in sorted(set(short_re.findall(text)) - short):
-            errors.append(f"{where}: host {h!r} is not one of the row's hosts")
-        found, unknown = find_codes(text)
-        for c in sorted(found - set(row["codes"])):
-            errors.append(f"{where}: code {c!r} is not one of the row's codes")
-        for c in sorted(set(row["codes"]) - found):
-            errors.append(f"{where}: row code {c!r} never stated")
-        for c in sorted(unknown):
-            errors.append(f"{where}: unknown internal code {c!r}")
-        refs = set(REF_RE.findall(text))
-        # A runbook written about this very incident (NARRATIVE date on or after its start)
-        # stays in runbook_ids as a relevance label but is never named in the write-up.
-        named = set(row["runbook_ids"]) - postdated(row)
-        if {r for r in refs if r.startswith("RB-")} != named:
-            errors.append(f"{where}: runbook references must equal {sorted(named)}")
-        if {r for r in refs if r.startswith("INC-")}:
-            errors.append(f"{where}: no incident references in write-ups")
-        for ref in sorted(set(REF_LIKE_RE.findall(text)) - refs):
-            errors.append(f"{where}: malformed reference {ref!r}")
-        sevs = {f"sev{n}" for n in SEV_RE.findall(text)}
-        if sevs != {row["severity"]}:
-            errors.append(f"{where}: severity stated as {sorted(sevs)}, row says {row['severity']}")
-        if m := LABEL_RE.search(text):
-            errors.append(f"{where}: eval label word {m.group(0)!r}")
-        errors += [f"{where}: {e}" for e in anachronisms(text, row)]
-        low = text.lower()
-        for phrase in BLOCKED_PHRASES:
-            if phrase in low:
-                errors.append(f"{where}: unsupported claim {phrase!r}")
-        for rb in sorted(refs & NARRATIVE.keys()):
-            if row["started_at"].date().isoformat() <= NARRATIVE[rb]:
-                errors.append(f"{where}: {rb} did not exist before {NARRATIVE[rb]}")
-        if row["service"] == "payments-pgbouncer" or any("pgbouncer" in h for h in row_hosts):
-            if "ECONNREFUSED" in text or "6432" in text:
-                errors.append(f"{where}: demo guard: pgbouncer with ECONNREFUSED or 6432")
-        errors += check_times(where, text, row)
+        row = by_id[doc["meta"]["id"]]
+        for group in document_errors(doc, row, find_codes, short_re).values():
+            errors += group
     if errors:
         raise CorpusError("incident documents:\n  " + "\n  ".join(errors))
 

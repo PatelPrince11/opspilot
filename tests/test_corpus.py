@@ -3,7 +3,6 @@ with the same columns as the real file, and a fake fetch function."""
 
 import copy
 import re
-import tomllib
 from datetime import UTC, datetime, timedelta
 from itertools import combinations
 from pathlib import Path
@@ -12,7 +11,8 @@ import pytest
 
 from scripts import build_corpus
 from scripts.corpus import loghub
-from scripts.corpus.common import DATA, PROCESSED, SIDECAR, rng_for, sha256_bytes
+from scripts.corpus.checks import TRIGRAM_JACCARD_THRESHOLD, leaks_demo, trigrams
+from scripts.corpus.common import DATA, PROCESSED, rng_for, sha256_bytes
 from scripts.corpus.runbooks import (
     headings,
     load_runbooks,
@@ -131,7 +131,6 @@ def test_validator_rejects_broken_services(services_doc, mutate, message):
 # The threshold leaves room for batches 2-3 and their hard-negative pairs; a pair above
 # it means two runbooks share whole passages, i.e. a template crept back in.
 MEASURED_MAX_TRIGRAM_JACCARD = 0.0233  # batch 2, RB-001 vs RB-013; unchanged after batch 3
-TRIGRAM_JACCARD_THRESHOLD = 0.03
 
 
 @pytest.fixture(scope="module")
@@ -220,11 +219,6 @@ def test_runbook_formats_and_lengths_vary(runbooks):
     assert min(lengths) < 300 and max(lengths) > 1000, lengths
 
 
-def trigrams(text):
-    words = re.findall(r"[a-z0-9_]+", text.lower())
-    return {tuple(words[i : i + 3]) for i in range(len(words) - 2)}
-
-
 def test_runbooks_do_not_share_passages(runbooks):
     grams = {r["meta"]["id"]: trigrams(r["body"]) for r in runbooks}
     scores = {
@@ -237,14 +231,6 @@ def test_runbooks_do_not_share_passages(runbooks):
         f"threshold {TRIGRAM_JACCARD_THRESHOLD} (last measured {MEASURED_MAX_TRIGRAM_JACCARD})"
     )
     assert scores[worst] < TRIGRAM_JACCARD_THRESHOLD, (worst, scores[worst])
-
-
-def leaks_demo(body):
-    """Only the demo's specific host + error + port combination (from demo_answer.toml)
-    counts, so generic config-push runbooks (RB-027) pass."""
-    with (SIDECAR / "demo_answer.toml").open("rb") as f:
-        combo = tomllib.load(f)["leak_combination"]
-    return all(t in body for t in combo)
 
 
 def test_demo_leak_guard_is_scoped():

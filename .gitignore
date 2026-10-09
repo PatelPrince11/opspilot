@@ -8,3 +8,4 @@ __pycache__/
 data/raw/*
 !data/raw/.gitkeep
 data/processed/log_events.loghub.jsonl
+scratchpad/
