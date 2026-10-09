@@ -673,7 +673,7 @@ No new committed output yet: MANIFEST is unchanged, and `incidents.jsonl` arrive
 - **Skipped rows (QUEUE):**
   - INC-0177: its sidecar discriminator `CPX-E600` is not a row code, so the codes rule rejects any write-up that carries it. The sidecar needs a fix.
   - INC-0134: the draft invented a cause and fix (plan flip, `ANALYZE`); skipped per Prince's ruling.
-  - Not chosen: 0042, 0124, 0137 and 0162. Each row forces a citation of a runbook written after the incident (RB-028, RB-013, RB-030 and RB-016).
+  - Not chosen: 0042, 0124, 0137 and 0162. Each row's runbook_ids include the runbook written about that incident (RB-028, RB-013, RB-030 and RB-016). **Marked for the next batch:** since 2026-10-09 the validator keeps such post-dated runbooks as labels only, and a write-up must not name them (see the 2026-10-09 entry).
 - **Prince's rulings on invented details:**
   - The feature-cache rows (0013, 0063, 0080, 0097) say only that redis-features was slow; RB-006's two sources are named without choosing.
   - Unsupported "nothing changed" / "nobody deployed" sentences were removed (0015, 0096, 0194, 0063, 0030).

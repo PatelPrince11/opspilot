@@ -204,6 +204,13 @@ NARRATIVE = {
 WRITE_UP_DAYS = 7
 
 
+def postdated(row: dict) -> set[str]:
+    """Runbook ids of the row that were written about this incident (dated on or after its
+    start): labels for eval, never named in its write-up."""
+    start = row["started_at"].date().isoformat()
+    return {rb for rb in row["runbook_ids"] if rb in NARRATIVE and start <= NARRATIVE[rb]}
+
+
 def anachronisms(text: str, row: dict) -> list[str]:
     errors = []
     written = (row["resolved_at"].date() + timedelta(days=WRITE_UP_DAYS)).isoformat()
@@ -342,10 +349,11 @@ def validate_documents(
         for c in sorted(unknown):
             errors.append(f"{where}: unknown internal code {c!r}")
         refs = set(REF_RE.findall(text))
-        if {r for r in refs if r.startswith("RB-")} != set(row["runbook_ids"]):
-            errors.append(
-                f"{where}: runbook references must equal runbook_ids {row['runbook_ids']}"
-            )
+        # A runbook written about this very incident (NARRATIVE date on or after its start)
+        # stays in runbook_ids as a relevance label but is never named in the write-up.
+        named = set(row["runbook_ids"]) - postdated(row)
+        if {r for r in refs if r.startswith("RB-")} != named:
+            errors.append(f"{where}: runbook references must equal {sorted(named)}")
         if {r for r in refs if r.startswith("INC-")}:
             errors.append(f"{where}: no incident references in write-ups")
         for ref in sorted(set(REF_LIKE_RE.findall(text)) - refs):
@@ -361,7 +369,7 @@ def validate_documents(
             if phrase in low:
                 errors.append(f"{where}: unsupported claim {phrase!r}")
         for rb in sorted(refs & NARRATIVE.keys()):
-            if row["started_at"].date().isoformat() < NARRATIVE[rb]:
+            if row["started_at"].date().isoformat() <= NARRATIVE[rb]:
                 errors.append(f"{where}: {rb} did not exist before {NARRATIVE[rb]}")
         if row["service"] == "payments-pgbouncer" or any("pgbouncer" in h for h in row_hosts):
             if "ECONNREFUSED" in text or "6432" in text:

@@ -165,6 +165,10 @@ def body_replace(old, new):
         ("INC-0101", body_add("SystemMaxUse was in place here."), "never true"),
         ("INC-0163", body_add("Workers came from `WEB_CONCURRENCY=8`."), "never true"),
         ("INC-0048", body_add("See RB-016."), "RB-016 did not exist before 2026-05-26"),
+        # post-dated RB-021 (written about INC-0168) is a label only: naming it fails, and an
+        # ordinary missing runbook in the same row still fails
+        ("INC-0168", body_add("See RB-021."), "RB-021 did not exist before 2026-06-15"),
+        ("INC-0168", body_replace("RB-020", "the DNS runbook"), "runbook references must equal"),
         ("INC-0055", body_add("The processor confirmed the next morning."), "unsupported claim"),
         ("INC-0055", body_add("The ticket sat in the queue."), "unsupported claim"),
         ("INC-0055", body_add("This was written up from chat."), "unsupported claim"),
