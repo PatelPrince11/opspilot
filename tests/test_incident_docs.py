@@ -26,7 +26,7 @@ from scripts.corpus.runbooks import headings, load_runbooks, word_count
 from scripts.corpus.services import CorpusError, load_services
 from tests.test_corpus import TRIGRAM_JACCARD_THRESHOLD, leaks_demo, trigrams
 
-BATCH = {
+BATCH5 = {
     "INC-0023",
     "INC-0048",
     "INC-0055",
@@ -38,6 +38,15 @@ BATCH = {
     "INC-0171",
     "INC-0185",
 }
+# Batch 6: planned ids. A write-up lands when its writer finishes, so the tests take the
+# documents present; every present document must be from a planned batch.
+BATCH6 = {
+    *("INC-0001", "INC-0011", "INC-0079", "INC-0089", "INC-0109", "INC-0127", "INC-0149"),
+    *("INC-0183", "INC-0094", "INC-0013", "INC-0024", "INC-0030", "INC-0063", "INC-0080"),
+    *("INC-0097", "INC-0172", "INC-0189", "INC-0152", "INC-0016", "INC-0025", "INC-0178"),
+    *("INC-0197", "INC-0031", "INC-0015", "INC-0194", "INC-0096"),
+}
+FORMAT_CAP = {"batch5": (BATCH5, 2), "batch6": (BATCH6, 4)}  # most uses of one format
 JACCARD_TARGET = 0.025  # working ceiling; the test threshold stays TRIGRAM_JACCARD_THRESHOLD
 SHARED_RUN = 8  # no run of this many words shared with a runbook or another write-up
 WORDS = {
@@ -105,7 +114,7 @@ def has_token(text, token):
 
 
 def test_batch_documents_validate(docs, rows, services_doc, rb_ids):
-    assert set(docs) == BATCH
+    assert BATCH5 <= set(docs) <= BATCH5 | BATCH6
     validate_documents(list(docs.values()), rows, services_doc, rb_ids)
 
 
@@ -152,6 +161,15 @@ def body_replace(old, new):
             "exists only from 2026-07-22",
         ),
         ("INC-0101", body_add("journald was already capped by SystemMaxUse."), "never true"),
+        ("INC-0101", body_add("This VM had SystemMaxUse set long ago."), "never true"),
+        ("INC-0101", body_add("SystemMaxUse was in place here."), "never true"),
+        ("INC-0163", body_add("Workers came from `WEB_CONCURRENCY=8`."), "never true"),
+        ("INC-0048", body_add("See RB-016."), "RB-016 did not exist before 2026-05-26"),
+        ("INC-0055", body_add("The processor confirmed the next morning."), "unsupported claim"),
+        ("INC-0055", body_add("The ticket sat in the queue."), "unsupported claim"),
+        ("INC-0055", body_add("This was written up from chat."), "unsupported claim"),
+        ("INC-0055", body_add("Nothing was lost."), "unsupported claim"),
+        ("INC-0055", body_add("No event was lost anywhere."), "unsupported claim"),
         ("INC-0055", body_add("PgBouncer listens on 6432."), "demo guard"),
         ("INC-0055", body_add("We checked again at 03:15."), "outside start-2h"),
         ("INC-0055", body_add("- 13:00 · late entry"), "timeline goes backwards"),
@@ -238,6 +256,31 @@ def test_web_concurrency_timeline(by_id, docs):
     assert not anachronisms(doc_text(docs["INC-0163"]), by_id["INC-0163"])
 
 
+def test_web_concurrency_only_ever_16(by_id):
+    from scripts.corpus.incidents import anachronisms
+
+    assert anachronisms("`WEB_CONCURRENCY=12`", by_id["INC-0189"])
+    assert not anachronisms("`WEB_CONCURRENCY=16`", by_id["INC-0189"])
+
+
+def test_inc_0024_fix_is_the_cpu_limit(docs):
+    """NOTES binding: INC-0024 (before 2026-05-29) is fixed with the CPU-limit lever."""
+    if "INC-0024" in docs:
+        assert re.search(r"CPU limit", doc_text(docs["INC-0024"])), "INC-0024"
+
+
+def test_journal_growth_write_ups_apply_the_cap(docs, side, rows):
+    """SystemMaxUse=500M is applied per VM as RB-008's fix: each journal-growth write-up says
+    it was applied, and once applied the VM can't fill /var with its journal again."""
+    journal = [r for r in rows if side[r["id"]]["mechanism"] == "var_journal_growth"]
+    assert len(journal) == 8
+    hosts = [h for r in journal for h in r["hosts"]]
+    assert len(hosts) == len(set(hosts)), hosts
+    for r in journal:
+        if r["id"] in docs:
+            assert "SystemMaxUse=500M" in doc_text(docs[r["id"]]), r["id"]
+
+
 def test_codes_are_catalog_tokens_only(services_doc):
     from scripts.corpus.incidents import code_finder
 
@@ -254,7 +297,7 @@ def test_codes_are_catalog_tokens_only(services_doc):
 
 
 def test_absent_codes_never_in_documents_or_logs(docs, events, side):
-    for i in BATCH:
+    for i in docs:
         text = doc_text(docs[i]) + "\n".join(e["message"] for e in events[i])
         for c in side[i].get("absent_codes", []):
             assert c not in text, (i, c)
@@ -266,15 +309,20 @@ FORBIDDEN_BY_FACT = {
     "retry_storm": [r"retry storm"],
     "ledger_cpu_spin": [r"\bspin"],
     "after_rb018_review": [r"RB-018 (?:records|lists|describes this|mentions this)"],
+    "internal_dns_healthy": [r"internal-dns (?:was|were) (?:down|unhealthy|broken|failing)"],
+    "data_lost": [
+        r"\b(?:data|sessions?) (?:was|were) (?:lost|deleted|wiped)",
+        r"\blost (?:the )?data\b",
+    ],
 }
 
 
 def test_facts_appear_in_the_write_up(docs, side):
-    for i in BATCH:
+    for i in docs:
         text = doc_text(docs[i])
         for key, val in side[i].get("facts", {}).items():
             if isinstance(val, bool):
-                for pat in FORBIDDEN_BY_FACT[key]:
+                for pat in FORBIDDEN_BY_FACT[key]:  # every boolean fact needs an entry
                     assert not re.search(pat, text, re.IGNORECASE), (i, key, pat)
             elif isinstance(val, int | float):
                 assert has_token(text, f"{val:g}") or has_token(text, f"{val:,}"), (i, key, val)
@@ -286,7 +334,7 @@ def test_facts_appear_in_the_write_up(docs, side):
 
 
 def test_discriminators_appear(docs, side):
-    for i in BATCH:
+    for i in docs:
         for tok in side[i].get("discriminators", []):
             assert tok in doc_text(docs[i]), (i, tok)
 
@@ -297,13 +345,13 @@ def test_no_sidecar_keys_or_mechanism_tags_in_write_ups(docs, side, runbooks):
     labels |= {k for s in side.values() for k in s if "_" in k}
     labels |= {k for s in side.values() for k in s.get("facts", {}) if "_" in k}
     labels -= {w for r in runbooks for w in re.findall(r"[a-z0-9_]+", r["body"])}
-    for i in BATCH:
+    for i in docs:
         words = set(re.findall(r"[a-z0-9_]+", doc_text(docs[i])))
         assert not labels & words, (i, labels & words)
 
 
 def test_no_write_up_or_log_leaks_the_demo(docs, events):
-    for i in BATCH:
+    for i in docs:
         assert not leaks_demo(doc_text(docs[i])), i
         assert not leaks_demo("\n".join(e["message"] for e in events[i])), i
 
@@ -323,7 +371,7 @@ DURATION_WHITELIST = {"INC-0171": {23, 168}}
 
 def test_stated_durations_match_the_times(docs, by_id):
     """Every "N minutes" / "N h" is the total, a gap between two stated times, or whitelisted."""
-    for i in BATCH:
+    for i in docs:
         text, r = doc_text(docs[i]), by_id[i]
         total = int((r["resolved_at"] - r["started_at"]).total_seconds() // 60)
         clocks = {hm(m.group(0)) for m in TIME_RE.finditer(text)}
@@ -380,6 +428,22 @@ ARITHMETIC = [
     ("INC-0067", at("10:34") - at("10:10"), "24", 0),
     ("INC-0048", 400 / 4, "100", 0),  # "about 100 … a quarter of the 400"
     ("INC-0023", (date(2025, 3, 16) - date(2025, 2, 14)).days, "30", 0),
+    # batch 6
+    ("INC-0197", 240 - 180, "60", 0),
+    ("INC-0197", 2 * 180, "360", 0),
+    ("INC-0197", at("20:23") - at("19:41"), "42", 0),
+    ("INC-0031", (date(2025, 4, 8) - date(2025, 3, 9)).days, "30", 0),
+    ("INC-0025", at("15:50") - at("15:15"), "35", 0),
+    ("INC-0096", at("09:15") - at("09:05"), "10", 0),
+    ("INC-0015", at("10:45") - at("10:05"), "40", 0),
+    ("INC-0001", at("23:15") - at("21:25"), "110", 0),
+    ("INC-0089", at("13:40") - at("11:55"), "105", 0),
+    ("INC-0089", at("12:35") - at("11:55"), "40", 0),
+    ("INC-0149", at("24:05") - at("22:55"), "70", 0),
+    ("INC-0097", 16 * 150, "2,400", 0),
+    ("INC-0097", 3_072 - 2_400, "672", 0),
+    ("INC-0013", at("10:50") - at("08:50"), "120", 0),
+    ("INC-0080", at("05:20") - at("05:02"), "18", 0),
 ]
 
 
@@ -402,7 +466,9 @@ def test_arithmetic_stated_in_the_write_up(docs, inc, value, token, tol):
 def test_formats_and_lengths(docs):
     formats = [d["meta"]["format"] for d in docs.values()]
     assert set(formats) <= DOC_FORMATS and len(set(formats)) >= 8
-    assert max(formats.count(f) for f in formats) <= 2
+    for batch, (ids, cap) in FORMAT_CAP.items():
+        mine = [docs[i]["meta"]["format"] for i in ids if i in docs]
+        assert not mine or max(mine.count(f) for f in mine) <= cap, batch
     for i, d in docs.items():
         lo, hi = WORDS[d["meta"]["format"]]
         assert lo <= word_count(d["body"]) <= hi, (i, word_count(d["body"]))
@@ -453,7 +519,7 @@ def test_no_sentence_copied_from_a_runbook_or_another_write_up(docs, runbooks):
 
 
 def test_logs_are_deterministic_and_sized(events, by_id, docs, services_doc):
-    for i in BATCH:
+    for i in docs:
         evs = events[i]
         assert 40 <= len(evs) <= 160, (i, len(evs))
         if by_id[i]["codes"]:  # a TLS failure the server never sees logs no errors at all
@@ -475,13 +541,33 @@ def counters(evs, pattern):
         ("INC-0185", r"backing off (\d+)s", 1),
         ("INC-0101", r"backlog (\d+)% shipped", 1),
         ("INC-0171", r"lag (\d+) above", 0),  # rises to 20:30, then falls
+        # batch 6
+        ("INC-0025", r"waiting_clients=(\d+)", 1),
+        ("INC-0031", r"open_conns=(\d+)", -1),
+        ("INC-0001", r"/var usage (\d+)%", 1),
+        ("INC-0001", r"holding (\d+) unsent", 1),
+        ("INC-0001", r"backlog (\d+)% shipped", 1),
+        ("INC-0011", r"/var usage (\d+)% \(alert", 1),
+        ("INC-0079", r"/var usage (\d+)% \(alert", 1),
+        ("INC-0089", r"\(/var\) usage (\d+)%", 1),
+        ("INC-0109", r"lines (\d+)% shipped", 1),
+        ("INC-0127", r"/var usage (\d+)%", 1),
+        ("INC-0149", r"/var usage (\d+)% \(alert", 1),
+        ("INC-0183", r"/var usage (\d+)% \(ticket", 1),
+        ("INC-0013", r"working_set_mib=(\d+)", 1),
+        ("INC-0063", r"feature_entries=(\d+)", 1),
+        ("INC-0080", r"process memory rss_mib=(\d+)", 1),
+        ("INC-0080", r"since restart rss_mib=(\d+)", 1),
+        ("INC-0097", r"mem check rss_mib=(\d+)", 1),
+        ("INC-0097", r"after restart rss_mib=(\d+)", 1),
+        ("INC-0152", r"stale for (\d+) min", 1),
     ],
 )
 def test_log_counters_never_jump_back(events, inc, pattern, direction):
     vals = counters(events[inc], pattern)
     assert len(vals) >= 4, (inc, pattern)
     if direction:
-        assert vals == sorted(vals), (inc, vals)
+        assert vals == sorted(vals, reverse=direction < 0), (inc, vals)
     else:
         peak = vals.index(max(vals))
         assert vals[: peak + 1] == sorted(vals[: peak + 1]), vals
@@ -514,9 +600,9 @@ def test_ramp_counts_both_ways_and_only_in_bursts():
         synthetic_logs.generate("X", {"line": [line]}, date(2026, 1, 1))
 
 
-def test_loghub_windows_cover_the_documented_incidents(by_id):
+def test_loghub_windows_cover_the_documented_incidents(by_id, docs):
     windows = build_corpus.incident_windows()
-    assert [w[0] for w in windows] == sorted(BATCH)
+    assert [w[0] for w in windows] == sorted(docs)
     for i, lo, hi in windows:
         assert lo == by_id[i]["started_at"] - timedelta(minutes=10)
         assert hi == by_id[i]["resolved_at"] + timedelta(minutes=10)

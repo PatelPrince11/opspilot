@@ -348,7 +348,7 @@ def test_manifest_hashes_committed_outputs_only():
     assert build_corpus.LOGHUB_OUT not in manifest
     assert counts["services"] == 24
     assert counts["runbooks"] == 30
-    assert counts["incidents"] == 10
+    assert counts["incidents"] == len(list((DATA / "incidents").glob("INC-*.md")))
     assert set(outputs) == {
         "services.json",
         "runbooks.jsonl",

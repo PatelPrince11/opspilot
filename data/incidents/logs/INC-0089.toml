@@ -1,0 +1,57 @@
+# Synthetic logs for INC-0089. Fictional log-agent, disk-monitor and ops lines only; no real Kafka text.
+[[burst]]
+from = "11:46:00"
+to = "11:54:40"
+count = 5
+service = "kafka"
+level = "WARN"
+hosts = ["kafka-01.prod.internal"]
+message = "disk-monitor: root filesystem (/var) usage {ramp:97-99}%"
+
+[[burst]]
+from = "11:55:00"
+to = "12:46:30"
+count = 30
+service = "kafka"
+level = "ERROR"
+hosts = ["kafka-01.prod.internal"]
+message = "log-agent: write to /var/lib/log-agent/offsets failed: ENOSPC"
+
+[[burst]]
+from = "12:05:00"
+to = "12:30:00"
+count = 6
+service = "kafka"
+level = "INFO"
+hosts = ["kafka-01.prod.internal", "kafka-02.prod.internal", "kafka-03.prod.internal"]
+message = "disk-monitor: /data/kafka usage {int:52-56}%"
+
+[[line]]
+at = "12:41:15"
+service = "kafka"
+host = "kafka-01.prod.internal"
+level = "INFO"
+message = "ops: journal vacuumed to 500M on root disk"
+
+[[line]]
+at = "12:47:05"
+service = "kafka"
+host = "kafka-01.prod.internal"
+level = "INFO"
+message = "log-agent: offset writes resumed, shipping buffered lines"
+
+[[line]]
+at = "12:58:40"
+service = "kafka"
+host = "kafka-01.prod.internal"
+level = "INFO"
+message = "ops: SystemMaxUse=500M added to journald.conf; systemd-journald restarted"
+
+[[burst]]
+from = "12:48:00"
+to = "13:45:00"
+count = 14
+service = "kafka"
+level = "INFO"
+hosts = ["kafka-01.prod.internal"]
+message = "disk-monitor: root filesystem (/var) usage steady"

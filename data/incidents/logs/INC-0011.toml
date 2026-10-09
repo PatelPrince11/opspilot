@@ -1,0 +1,32 @@
+# Synthetic logs for INC-0011. Fictional disk-monitor and ops lines only.
+[[burst]]
+from = "02:55:00"
+to = "03:44:00"
+count = 18
+service = "orders-db"
+level = "WARN"
+hosts = ["orders-db-01.prod.internal"]
+message = "disk-monitor: /var usage {ramp:90-94}% (alert threshold 90%)"
+
+[[line]]
+at = "03:44:30"
+service = "orders-db"
+host = "orders-db-01.prod.internal"
+level = "INFO"
+message = "ops: journal vacuum to 500M started"
+
+[[line]]
+at = "03:46:20"
+service = "orders-db"
+host = "orders-db-01.prod.internal"
+level = "INFO"
+message = "ops: journald.conf now has SystemMaxUse=500M; systemd-journald restarted"
+
+[[burst]]
+from = "03:45:00"
+to = "05:12:00"
+count = 24
+service = "orders-db"
+level = "INFO"
+hosts = ["orders-db-01.prod.internal"]
+message = "disk-monitor: /var usage below threshold"

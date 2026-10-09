@@ -1,0 +1,77 @@
+# Synthetic logs for INC-0197. card-processor-proxy and payments-api lines are our own services'.
+[[burst]]
+from = "19:31:00"
+to = "19:39:59"
+count = 10
+service = "card-processor-proxy"
+level = "INFO"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "processor call ok latency_ms={int:90-260} req={hex8}"
+
+[[burst]]
+from = "19:31:00"
+to = "19:40:59"
+count = 8
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "POST /v1/payments status=200 latency_ms={int:120-400} req={hex8}"
+
+[[line]]
+at = "19:40:03"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "INFO"
+message = "SIGTERM received; draining and shutting down"
+
+[[burst]]
+from = "19:41:00"
+to = "20:22:59"
+count = 40
+service = "card-processor-proxy"
+level = "WARN"
+hosts = ["card-processor-proxy-01.prod.internal"]
+message = "CPX-W430 local limiter: no token within 2000ms; attempt rejected, processor not called req={hex8}"
+
+[[burst]]
+from = "19:41:00"
+to = "20:22:59"
+count = 14
+service = "card-processor-proxy"
+level = "INFO"
+hosts = ["card-processor-proxy-01.prod.internal"]
+message = "processor call ok latency_ms={int:110-280} queued_ms={int:1500-1990} req={hex8}"
+
+[[burst]]
+from = "19:41:00"
+to = "20:22:59"
+count = 40
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-E1107 card processor call failed after 3 attempts req={hex8}"
+
+[[line]]
+at = "20:22:08"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "INFO"
+message = "listening on :8443"
+
+[[burst]]
+from = "20:23:00"
+to = "20:33:00"
+count = 12
+service = "card-processor-proxy"
+level = "INFO"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "processor call ok latency_ms={int:90-250} req={hex8}"
+
+[[burst]]
+from = "20:23:00"
+to = "20:33:00"
+count = 8
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "POST /v1/payments status=200 latency_ms={int:120-380} req={hex8}"

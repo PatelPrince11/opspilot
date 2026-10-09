@@ -1,0 +1,41 @@
+# Synthetic logs for INC-0183. Fictional disk-monitor and ops lines plus our own slow-log style lines.
+[[burst]]
+from = "00:40:00"
+to = "01:23:30"
+count = 18
+service = "search-cluster"
+level = "WARN"
+hosts = ["search-cluster-01.prod.internal"]
+message = "disk-monitor: /var usage {ramp:91-94}% (ticket threshold 90%)"
+
+[[burst]]
+from = "00:40:00"
+to = "02:35:00"
+count = 30
+service = "search-cluster"
+level = "INFO"
+hosts = ["search-cluster-01.prod.internal"]
+message = "opensearch: query on index products took {int:500-900}ms (slow log)"
+
+[[line]]
+at = "01:24:15"
+service = "search-cluster"
+host = "search-cluster-01.prod.internal"
+level = "INFO"
+message = "ops: journal vacuumed to 500M"
+
+[[line]]
+at = "01:34:20"
+service = "search-cluster"
+host = "search-cluster-01.prod.internal"
+level = "INFO"
+message = "ops: SystemMaxUse=500M added to journald.conf; systemd-journald restarted"
+
+[[burst]]
+from = "01:26:00"
+to = "02:30:00"
+count = 14
+service = "search-cluster"
+level = "INFO"
+hosts = ["search-cluster-01.prod.internal"]
+message = "disk-monitor: /var usage below threshold"

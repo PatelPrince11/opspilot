@@ -1,0 +1,41 @@
+# Synthetic logs for INC-0079. Fictional disk-monitor and ops lines only.
+[[burst]]
+from = "03:25:00"
+to = "03:57:30"
+count = 14
+service = "redis-cache"
+level = "WARN"
+hosts = ["redis-cache-02.prod.internal"]
+message = "disk-monitor: /var usage {ramp:91-93}% (alert threshold 90%)"
+
+[[burst]]
+from = "03:25:00"
+to = "04:45:00"
+count = 16
+service = "redis-cache"
+level = "INFO"
+hosts = ["redis-cache-02.prod.internal"]
+message = "cache-probe: PING ok in {int:1-3}ms"
+
+[[line]]
+at = "03:58:10"
+service = "redis-cache"
+host = "redis-cache-02.prod.internal"
+level = "INFO"
+message = "ops: journal vacuumed to 500M"
+
+[[line]]
+at = "04:06:30"
+service = "redis-cache"
+host = "redis-cache-02.prod.internal"
+level = "INFO"
+message = "ops: SystemMaxUse=500M set in journald.conf; systemd-journald restarted"
+
+[[burst]]
+from = "03:59:00"
+to = "04:44:00"
+count = 12
+service = "redis-cache"
+level = "INFO"
+hosts = ["redis-cache-02.prod.internal"]
+message = "disk-monitor: /var usage below threshold"

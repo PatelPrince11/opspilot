@@ -1,0 +1,45 @@
+# Synthetic logs for INC-0031. Go's x509 message as in the catalog; no Postgres log lines.
+[[burst]]
+from = "08:50:00"
+to = "08:59:59"
+count = 10
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login status=200 user={hex8}"
+
+[[burst]]
+from = "09:00:00"
+to = "09:50:59"
+count = 40
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "db dial auth-db-01.prod.internal:5432 failed: tls error: x509: certificate has expired or is not yet valid"
+
+[[burst]]
+from = "09:00:00"
+to = "09:50:59"
+count = 12
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "db pool open_conns={ramp:30-3} cannot replace retired connections"
+
+[[burst]]
+from = "09:05:00"
+to = "09:50:59"
+count = 30
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login status=503 no database connection available user={hex8}"
+
+[[burst]]
+from = "09:51:30"
+to = "10:03:00"
+count = 12
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login status=200 user={hex8}"

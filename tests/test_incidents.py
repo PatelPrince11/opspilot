@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 import pytest
 
 from scripts.corpus.common import DATA, SIDECAR
-from scripts.corpus.incidents import load_skeleton, validate_skeleton
+from scripts.corpus.incidents import NARRATIVE, load_skeleton, validate_skeleton
 from scripts.corpus.runbooks import load_runbooks, runbooks_output
 from scripts.corpus.services import CorpusError, load_services
 
@@ -623,16 +623,6 @@ def test_r15_to_r18_last_time_windows(by_id, side, rule, mechanism, keep, lo, hi
         if i != keep:
             t = by_id[i]["started_at"]
             assert not d(f"{lo}T00:00") <= t < d(f"{hi}T00:00"), (rule, i)
-
-
-# Runbooks written as the story of one incident did not exist before it.
-NARRATIVE = {
-    "RB-013": "2026-01-31",
-    "RB-016": "2026-05-26",
-    "RB-021": "2026-06-15",
-    "RB-028": "2025-05-15",
-    "RB-030": "2026-03-10",
-}
 
 
 def test_no_link_to_a_runbook_written_after_the_incident(rows):

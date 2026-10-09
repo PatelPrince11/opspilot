@@ -1,0 +1,42 @@
+# Synthetic logs for INC-0149. Fictional disk-monitor and ops lines only; window crosses midnight.
+[[burst]]
+from = "22:45:00"
+to = "23:25:30"
+count = 18
+service = "kafka"
+level = "WARN"
+hosts = ["kafka-03.prod.internal"]
+message = "disk-monitor: /var usage {ramp:91-93}% (alert threshold 90%)"
+
+[[burst]]
+from = "23:03:00"
+to = "23:06:00"
+count = 6
+service = "kafka"
+level = "INFO"
+hosts = ["kafka-01.prod.internal", "kafka-02.prod.internal", "kafka-03.prod.internal"]
+message = "disk-monitor: /data/kafka usage {int:48-53}%"
+
+[[line]]
+at = "23:26:20"
+service = "kafka"
+host = "kafka-03.prod.internal"
+level = "INFO"
+message = "ops: journal vacuumed to 500M"
+
+[[line]]
+at = "23:34:10"
+service = "kafka"
+host = "kafka-03.prod.internal"
+level = "INFO"
+message = "ops: journald.conf now has SystemMaxUse=500M; systemd-journald restarted"
+
+[[burst]]
+from = "23:27:00"
+to = "00:12:00"
+to_date = "2026-04-20"
+count = 16
+service = "kafka"
+level = "INFO"
+hosts = ["kafka-03.prod.internal"]
+message = "disk-monitor: /var usage below threshold"

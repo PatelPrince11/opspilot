@@ -1,0 +1,54 @@
+# Synthetic logs for INC-0178. No Redis error text: Redis was healthy throughout.
+[[burst]]
+from = "13:55:00"
+to = "14:07:59"
+count = 12
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8} session written"
+
+[[burst]]
+from = "13:55:00"
+to = "14:07:59"
+count = 2
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "AUTH-E401X no session for key=sess:{hex8}; redirect to login"
+
+[[burst]]
+from = "14:08:00"
+to = "14:22:59"
+count = 45
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "AUTH-E401X session value not decodable key=sess:{hex8}; redirect to login"
+
+[[burst]]
+from = "14:08:00"
+to = "14:29:59"
+count = 15
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8} session written"
+
+[[burst]]
+from = "14:23:00"
+to = "14:29:59"
+count = 30
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "AUTH-E401X session value not decodable key=sess:{hex8}; redirect to login"
+
+[[burst]]
+from = "14:30:00"
+to = "14:40:00"
+count = 10
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8} session written"

@@ -637,6 +637,122 @@ No new committed output yet: MANIFEST is unchanged, and `incidents.jsonl` arrive
 - Word-trigram Jaccard and shared n-grams as leakage measures, and why copying a runbook into an incident would inflate retrieval scores.
 - Why the codes rule is strict: a write-up that mentions a code it isn't about becomes a false hit for exact-token queries.
 
+## 2026-10-09: Phase 1 step 3, batch 6 (26 incident write-ups)
+
+**Built:**
+- 26 write-ups plus log specs, on branch `batch-6` (WIP checkpoint commits, no final commit):
+  - all 8 `/var` journal rows: 0001, 0011, 0079, 0089, 0109, 0127, 0149, 0183
+  - all 8 WEB_CONCURRENCY rows: 0013, 0024, 0030, 0063, 0080, 0097, 0172, 0189
+  - 10 others: 0015, 0016, 0025, 0031, 0094, 0096, 0152, 0178, 0194, 0197
+- Coverage:
+  - all 10 failure types as the cause type
+  - 4 hard-negative rows: 0016, 0025, 0178, 0197
+  - 7 rows with sidecar facts: 0015, 0016, 0024, 0025, 0031, 0178, 0197
+  - 3 rows with no runbook: 0015, 0194, 0096
+- Formats: 3 each, except handoff with 2 (0134 was dropped).
+- Corpus totals: 36 incidents and 2,914 synthetic log lines.
+- **Validator rules** (`scripts/corpus/incidents.py`), each with a broken-input test:
+  - `BLOCKED_PHRASES` on every write-up: "confirmed the next morning", "sat in the queue", "written up from", "nothing was lost", "no event was lost".
+  - `NARRATIVE` (moved here from `tests/test_incidents.py`): a write-up may not cite RB-013/016/021/028/030 for an incident that started before that runbook existed.
+  - `NEVER` gains two rules: `SystemMaxUse` stated as set, in place or "had" (beyond the old "already"), and any `WEB_CONCURRENCY=N` with N ≠ 16.
+- **Tests:**
+  - `BATCH5` (fixed) and `BATCH6` (planned); the tests take the documents present.
+  - Per-batch format caps: ≤2 for batch 5, ≤4 for batch 6.
+  - Journal rows: every write-up states `SystemMaxUse=500M`, and no host appears in two journal rows.
+  - INC-0024 must name the CPU limit.
+  - `FORBIDDEN_BY_FACT` gains `internal_dns_healthy` and `data_lost`; every boolean fact needs an entry.
+  - Log counters may also count down (`-1`).
+  - New ARITHMETIC rows for 0001, 0013, 0015, 0025, 0031, 0080, 0089, 0096, 0097, 0149 and 0197.
+
+**Decisions**
+- **Process:**
+  - 3 writer subagents drafted in the scratchpad and ran a self-check (validator, logs, facts, labels, blocklist, headings, 8-word runs, Jaccard against everything).
+  - The coordinator copied a writer's drafts into `data/` only once the whole set was clean.
+  - The gate: `make corpus` ×2 (MANIFEST byte-identical), `corpus-check`, `test`, `lint`.
+  - Subagents were authorised for this run only.
+- **Skipped rows (QUEUE):**
+  - INC-0177: its sidecar discriminator `CPX-E600` is not a row code, so the codes rule rejects any write-up that carries it. The sidecar needs a fix.
+  - INC-0134: the draft invented a cause and fix (plan flip, `ANALYZE`); skipped per Prince's ruling.
+  - Not chosen: 0042, 0124, 0137 and 0162. Each row forces a citation of a runbook written after the incident (RB-028, RB-013, RB-030 and RB-016).
+- **Prince's rulings on invented details:**
+  - The feature-cache rows (0013, 0063, 0080, 0097) say only that redis-features was slow; RB-006's two sources are named without choosing.
+  - Unsupported "nothing changed" / "nobody deployed" sentences were removed (0015, 0096, 0194, 0063, 0030).
+  - Ticket-age sentences were reworded (0001, 0127).
+  - INC-0152 quotes the OOM text only as the catalog code.
+  - In each Jaccard close call, the later document was rewritten; the ceiling was not raised.
+- **The 90% `/var` alert "opens a ticket, not a page" is a search-cluster fact only** (batch 5). Write-ups for other VMs say the alert fired or was seen, never how it is routed.
+- **`Type=simple` (INC-0025)** appears only as RB-027's statement about the `kafka` unit, used to rule that path out. coredns's unit type stays unstated.
+- **LogHub noise budget:**
+  - 36 windows × 40 lines = 1,440 noise lines from the 2,000-line OpenStack sample. The plan's 37 × 40 = 1,480 assumed 0134.
+  - `place_in_windows` takes a random 40-line slice per window, so slices already overlap, and past 50 windows the total exceeds the sample.
+  - Later batches can't keep this sample-window approach: noise lines would repeat across many incidents. They need a larger LogHub sample or fewer lines per window.
+- **Canary check of the reviewers:**
+  - 5 planted flaws, in copies of 0197, 0089 and 0015, mixed unlabeled into the review set.
+  - Reviewer A (consistency, Opus) caught the host, runbook-date and number flaws.
+  - Reviewer B (unsupported claims, Sonnet) caught the invented confirmation.
+  - Reviewer C (overlap) caught the copied RB-008 row.
+  - No reviewer missed a flaw in its domain, so none was rerun.
+
+**Errors and fixes**
+- *First `ExitPlanMode` was rejected with changes,* so plan mode stayed on. Two writers wrote nothing on their first run, and two later stopped on the API rate limit. Fix: the plan was re-approved and the writers were resumed with their drafts intact.
+- *`git add` with a bad brace glob* (`INC-00178`) failed, and the first checkpoint commit held only the documents. It was amended with the outputs, the validator and the tests (`ea1b98b`).
+- *Facts test `KeyError: 'internal_dns_healthy'`:* the root cause was that `FORBIDDEN_BY_FACT` covered only batch 5's boolean facts. Patterns were added for `internal_dns_healthy` and `data_lost`.
+- *Counter tests found 0 lines for 0011, 0079 and 0149 after fix round 1.* The root cause was that W1 reworded "(ticket threshold 90%)" to "(alert threshold 90%)", per the routing decision above. The test regexes were updated; the logs were right.
+- *Reviewer findings fixed in round 1:*
+  - absolute claims ("nobody outside platform noticed", "users felt nothing", "everybody", "every worker")
+  - claims about other teams and their follow-ups
+  - 0089's "first half hour" vs 40 minutes
+  - near-twins 0024/0030 and 0013/0063 restructured
+  - shared closing lists and the "this note won't guess" idiom varied (the idiom now appears in 0013 only)
+- *Final fixes (Prince's rulings on the report):*
+  - INC-0025 had the bad zone file reach both internal-dns servers, but the row's only internal-dns host is internal-dns-01. The rewrite keeps the push to internal-dns-01 alone: a run scoped to that host (F5), failures intermittent throughout, and the fix pushed there at 15:38. The other server is never named.
+  - INC-0172's channel name `#risk-releases` was removed; no fact names it.
+- *Reviewer A flagged "namespace `risk`" in 0063 as unbacked,* but RB-006 uses `kubectl -n risk`. A saw no runbooks. W2 had already removed it.
+
+**Verified** (after the final fixes):
+- `make corpus` twice gave a byte-identical MANIFEST
+- `make corpus-check` ok
+- `make test`: 243 passed (46 new)
+- `make lint` clean
+- `git diff phase-1/scaffold` on runbooks, skeleton, `eval/` and the batch 5 write-ups and log specs shows only INC-0101 (Prince's `6eb3f98`)
+
+**Jaccard after the fixes** (top 10, batch 6 write-up vs anything):
+
+| Pair | Score |
+|---|---|
+| 0001/0089 | 0.0231 |
+| 0001/0109 | 0.0225 |
+| 0024/RB-002 | 0.0224 |
+| 0109/RB-008 | 0.0216 |
+| 0080/0097 | 0.0208 |
+| 0013/0063 | 0.0192 |
+| 0013/0097 | 0.0188 |
+| 0013/0080 | 0.0188 |
+| 0011/0109 | 0.0187 |
+| 0063/RB-006 | 0.0177 |
+
+No 8-word run is shared with any runbook or write-up. The 6-word runs that remain are host-pair names and short phrases.
+
+**Real-world texts used:** none newly verified. All synthetic log lines are our own services' formats. Error text inside them reuses what runbooks or earlier batches already quote:
+- Node `getaddrinfo EAI_AGAIN`
+- Python `[Errno -3] Temporary failure in name resolution` (RB-022)
+- Go `x509: certificate has expired or is not yet valid` (RB-024)
+- the catalog tokens `OOM command not allowed`, `LOADING`, `NXDOMAIN`
+- the kubelet OOMKilled line format from INC-0163
+
+**Unverified:**
+- Redis's full `OOM command not allowed …` reply wording was not fetched, so only the catalog token is used.
+
+**Open (eval risk, from reviewer C; not fixed in prose):**
+- A `/var` journal question that names no host has 8 equally good answers. Eval questions must name the host or date.
+- The constraint write-ups (0016/RB-022, 0024/RB-002, 0031/RB-024, 0178/RB-026, 0197/RB-029) retell their runbook's history with the same times. Their questions have two correct documents, and the gold sets must list both.
+
+**What to be able to explain in an interview**
+- Why writers drafted outside `data/`, and why each set was gated before it landed: a parallel writer's half-finished file must never break another writer's gate.
+- Canary flaws as a test of the reviewers, and why a reviewer is scored only on flaws inside its domain.
+- Deterministic rules (blocklist, `NARRATIVE` dates, `NEVER` patterns) vs judgement (absolute claims, near-duplicate incidents), and why the second still needs reviewers.
+- Why near-duplicate incidents and runbook retellings are an eval problem (several gold documents), not just a style problem.
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.

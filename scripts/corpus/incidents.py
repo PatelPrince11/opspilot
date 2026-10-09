@@ -178,7 +178,29 @@ SUPERSEDED = [
 # so a write-up may say it was applied, never that the VM already had it.
 NEVER = [
     r"SystemMaxUse[^.\n]*\balready\b|\balready\b[^.\n]*SystemMaxUse",
+    r"SystemMaxUse[^.\n]{0,40}\b(?:was|were|is)\s+(?:set|in place|configured|present)\b"
+    r"|\b(?:had|has)\s+(?:a\s+|the\s+)?`?SystemMaxUse",
+    # WEB_CONCURRENCY was only ever set to 16 (2026-05-29); any other value is invented.
+    r"WEB_CONCURRENCY`?\s*=\s*`?(?!16\b)\d+",
 ]
+# Phrases that assert something outside the incident the write-up can't back (ticket ages,
+# next-day confirmations, absolute no-loss claims, provenance). Checked in every write-up.
+BLOCKED_PHRASES = [
+    "confirmed the next morning",
+    "sat in the queue",
+    "written up from",
+    "nothing was lost",
+    "no event was lost",
+]
+# Runbooks written as the story of one incident did not exist before it (skeleton test and
+# write-up validator): a write-up may not cite one for an incident that started earlier.
+NARRATIVE = {
+    "RB-013": "2026-01-31",
+    "RB-016": "2026-05-26",
+    "RB-021": "2026-06-15",
+    "RB-028": "2025-05-15",
+    "RB-030": "2026-03-10",
+}
 WRITE_UP_DAYS = 7
 
 
@@ -334,6 +356,13 @@ def validate_documents(
         if m := LABEL_RE.search(text):
             errors.append(f"{where}: eval label word {m.group(0)!r}")
         errors += [f"{where}: {e}" for e in anachronisms(text, row)]
+        low = text.lower()
+        for phrase in BLOCKED_PHRASES:
+            if phrase in low:
+                errors.append(f"{where}: unsupported claim {phrase!r}")
+        for rb in sorted(refs & NARRATIVE.keys()):
+            if row["started_at"].date().isoformat() < NARRATIVE[rb]:
+                errors.append(f"{where}: {rb} did not exist before {NARRATIVE[rb]}")
         if row["service"] == "payments-pgbouncer" or any("pgbouncer" in h for h in row_hosts):
             if "ECONNREFUSED" in text or "6432" in text:
                 errors.append(f"{where}: demo guard: pgbouncer with ECONNREFUSED or 6432")

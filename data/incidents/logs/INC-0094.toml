@@ -1,0 +1,37 @@
+# Synthetic logs for INC-0094. Fictional catalog-api lines; no real Redis reply text quoted beyond the
+# LOADING error prefix token.
+[[burst]]
+from = "02:40:00"
+to = "02:49:50"
+count = 8
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "cache hit ratio {int:94-96}% over last minute"
+
+[[burst]]
+from = "02:50:00"
+to = "02:57:40"
+count = 40
+service = "catalog-api"
+level = "ERROR"
+hosts = ["catalog-api-02.prod.internal"]
+message = "CAT-E301 cache unavailable (redis-cache-02.prod.internal:6379 replied LOADING); reading product {int:10000-99999} from catalog-db"
+
+[[burst]]
+from = "02:58:00"
+to = "03:10:00"
+count = 12
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "cache hit ratio {ramp:40-94}% over last minute"
+
+[[burst]]
+from = "03:10:00"
+to = "03:20:00"
+count = 6
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "cache hit ratio {int:94-96}% over last minute"

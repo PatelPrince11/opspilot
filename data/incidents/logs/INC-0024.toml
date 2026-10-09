@@ -1,0 +1,50 @@
+# Synthetic logs for INC-0024.
+[[burst]]
+from = "15:01:00"
+to = "15:09:30"
+count = 6
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal"]
+message = "score ok latency_ms={int:9-40}"
+
+[[burst]]
+from = "15:10:00"
+to = "15:54:30"
+count = 45
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-03.prod.internal"]
+message = "PAYAPI-W0310 fraud score late after {int:150-250}ms, static rules applied payment_id={hex8}"
+
+[[burst]]
+from = "15:10:00"
+to = "15:50:00"
+count = 20
+service = "fraud-scorer"
+level = "WARN"
+hosts = ["fraud-scorer-01.prod.internal"]
+message = "slow score latency_ms={int:610-990} worker_pid={int:20-60}"
+
+[[line]]
+at = "15:44:12"
+service = "fraud-scorer"
+host = "fraud-scorer-01.prod.internal"
+level = "INFO"
+message = "gunicorn master shutting down for rollout restart"
+
+[[line]]
+at = "15:46:30"
+service = "fraud-scorer"
+host = "fraud-scorer-01.prod.internal"
+level = "INFO"
+message = "entrypoint: WEB_CONCURRENCY unset, starting 16 gunicorn workers (cpu count)"
+
+[[burst]]
+from = "15:52:00"
+to = "16:12:00"
+count = 12
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal"]
+message = "score ok latency_ms={int:8-36}"

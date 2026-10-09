@@ -1,0 +1,54 @@
+# Synthetic logs for INC-0096. card-processor-proxy and payments-api lines are our own services'.
+[[burst]]
+from = "08:55:00"
+to = "09:04:59"
+count = 12
+service = "card-processor-proxy"
+level = "INFO"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "processor call ok latency_ms={int:90-250} req={hex8}"
+
+[[burst]]
+from = "08:55:00"
+to = "09:04:59"
+count = 8
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "POST /v1/payments status=200 latency_ms={int:150-420} req={hex8}"
+
+[[burst]]
+from = "09:05:00"
+to = "09:13:59"
+count = 30
+service = "card-processor-proxy"
+level = "ERROR"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "processor call failed attempt={choice:1|2|3} req={hex8}"
+
+[[burst]]
+from = "09:05:00"
+to = "09:14:30"
+count = 35
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-E1107 card processor call failed after 3 attempts req={hex8}"
+
+[[burst]]
+from = "09:15:00"
+to = "09:25:00"
+count = 12
+service = "card-processor-proxy"
+level = "INFO"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "processor call ok latency_ms={int:90-250} req={hex8}"
+
+[[burst]]
+from = "09:15:00"
+to = "09:25:00"
+count = 8
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "POST /v1/payments status=200 latency_ms={int:150-430} req={hex8}"

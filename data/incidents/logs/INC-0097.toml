@@ -1,0 +1,96 @@
+# Synthetic logs for INC-0097. Two climbs, each ending in a kill.
+[[burst]]
+from = "17:25:00"
+to = "18:24:00"
+count = 14
+service = "fraud-scorer"
+level = "WARN"
+hosts = ["fraud-scorer-02.prod.internal"]
+message = "FRD-W118 slow feature fetch from redis-features took_ms={int:140-450}"
+
+[[burst]]
+from = "17:28:00"
+to = "17:57:00"
+count = 7
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-02.prod.internal"]
+message = "mem check rss_mib={ramp:2450-3040} limit_mib=3072"
+
+[[line]]
+at = "17:58:02"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "ERROR"
+message = "kubelet: container fraud-scorer terminated reason=OOMKilled exitCode=137"
+
+[[line]]
+at = "17:58:40"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "INFO"
+message = "entrypoint: WEB_CONCURRENCY unset, starting 16 gunicorn workers (cpu count)"
+
+[[burst]]
+from = "19:05:00"
+to = "19:52:00"
+count = 16
+service = "fraud-scorer"
+level = "WARN"
+hosts = ["fraud-scorer-02.prod.internal"]
+message = "FRD-W118 slow feature fetch from redis-features took_ms={int:140-450}"
+
+[[burst]]
+from = "19:08:00"
+to = "19:40:00"
+count = 7
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-02.prod.internal"]
+message = "mem check after restart rss_mib={ramp:2440-3050} limit_mib=3072"
+
+[[line]]
+at = "19:41:15"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "ERROR"
+message = "kubelet: container fraud-scorer terminated reason=OOMKilled exitCode=137"
+
+[[line]]
+at = "19:41:55"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "INFO"
+message = "entrypoint: WEB_CONCURRENCY unset, starting 16 gunicorn workers (cpu count)"
+
+[[burst]]
+from = "17:26:00"
+to = "19:58:00"
+count = 28
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-W0310 no fraud score in time, static rules applied payment_id={hex8}"
+
+[[line]]
+at = "20:41:20"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "INFO"
+message = "gunicorn master shutting down for rollout restart"
+
+[[line]]
+at = "20:43:50"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "INFO"
+message = "entrypoint: WEB_CONCURRENCY unset, starting 16 gunicorn workers (cpu count)"
+
+[[burst]]
+from = "20:45:00"
+to = "21:33:00"
+count = 10
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "score ok latency_ms={int:8-34}"
