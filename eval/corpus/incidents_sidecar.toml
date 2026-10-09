@@ -1117,7 +1117,7 @@ mechanism = "cpx_restart_halved_budget"
 anchor_tokens = ["CPX-W430"]
 multi_doc = ["RB-023", "INC-0018", "INC-0019"]
 hard_negative_pair = ["RB-023", "RB-029"]
-discriminators = ["CPX-E600"]
+discriminators = ["rollout restart"]
 facts = { budget_while_rolling = 180 }
 
 [[incidents]]
