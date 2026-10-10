@@ -15,7 +15,7 @@ Contents:
 - every NOTES line that mentions the id (as INC-NNNN or bare NNNN)
 - every NOTES line or table row that names one of its hosts, codes, services, or a systemd
   unit of its services
-- scratchpad/review_checklist.md, if it exists
+- scripts/corpus/review_checklist.md (judgement-only review rules)
 - the linked runbooks in full
 """
 
@@ -28,7 +28,7 @@ from scripts.corpus.common import DATA, ROOT
 from scripts.corpus.incidents import NARRATIVE, load_skeleton, postdated
 
 PACKETS = ROOT / "scratchpad" / "packets"
-CHECKLIST = ROOT / "scratchpad" / "review_checklist.md"
+CHECKLIST = ROOT / "scripts" / "corpus" / "review_checklist.md"
 FACTS_HEADING = "## Fictional facts"
 PAST_EVENTS = "**Past events mentioned in runbooks"
 ROLLOUT_BLOCK = "**Rollout tool for VM config**"
@@ -181,13 +181,12 @@ def build(inc_id: str) -> str:
     out += id_lines(notes, inc_id) or ["(none)"]
     out += ["", "## NOTES lines naming the row's hosts, codes, services or their units", ""]
     out += term_lines(notes, row, services) or ["(none)"]
-    if CHECKLIST.exists():
-        out += [
-            "",
-            "## Review checklist (scratchpad/review_checklist.md)",
-            "",
-            CHECKLIST.read_text(),
-        ]
+    out += [
+        "",
+        "## Review checklist (scripts/corpus/review_checklist.md)",
+        "",
+        CHECKLIST.read_text(),
+    ]
     for rb in row["runbook_ids"]:
         out += ["", f"## Runbook {rb} (full)", "", (DATA / "runbooks" / f"{rb}.md").read_text()]
     return "\n".join(out) + "\n"

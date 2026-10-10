@@ -846,7 +846,7 @@ Only that sidecar entry changed in `eval/`.
   - `BATCH7` set and format cap 4
   - 29 ARITHMETIC rows
   - `test_rb023_is_postdated_for_inc_0004_only`
-- `scratchpad/review_checklist.md` holds the judgement-only rules; `make packet` includes it.
+- `scripts/corpus/review_checklist.md` (tracked since the batch 7 cleanup) holds the judgement-only rules; `make packet` includes it.
 
 **Decisions**
 - **Process:**

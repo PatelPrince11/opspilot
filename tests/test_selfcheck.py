@@ -8,7 +8,7 @@ import pytest
 
 from scripts.corpus import packet, progress, selfcheck
 from scripts.corpus.checks import prose_ngrams
-from scripts.corpus.common import DATA
+from scripts.corpus.common import DATA, ROOT
 from scripts.corpus.runbooks import parse_runbook
 
 INC = "INC-0055"
@@ -93,6 +93,13 @@ def test_packet_has_rollout_pacing_and_f5_for_a_vm_bad_deploy_row():
     text = packet.build("INC-0025")
     assert "Before 2026-08-20: a fixed 5-minute wait between hosts" in text
     assert "**F5:** a rollout-tool run can be scoped to a subset of hosts" in text
+
+
+def test_packet_includes_the_tracked_review_checklist():
+    text = packet.build("INC-0007")
+    assert packet.CHECKLIST == ROOT / "scripts" / "corpus" / "review_checklist.md"
+    assert "## Review checklist (scripts/corpus/review_checklist.md)" in text
+    assert "Don't retell a runbook in its own order" in text
 
 
 def test_packet_has_the_proxy_rollout_fact():
