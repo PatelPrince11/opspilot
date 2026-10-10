@@ -979,6 +979,23 @@ No 8-word run is shared with any runbook or write-up.
 - Canary flaws scored per reviewer domain, and what a cross-domain catch (B catching A's flaws) does and doesn't prove.
 - Turning review findings into deterministic rules (blocklists, unverified strings, boolean-fact patterns) and leaving the rest as a checklist.
 
+**Cleanup after batch 7** (2026-10-09)
+- **INC-0007:** the prose said the client's connections "end up on edge-gateway-03". With an even load-balancer spread, a wrong client clock fails against every pod. Rewritten strictly from the sidecar (client device clock wrong): edge-gateway-03 is named only because its log has the broken-off handshake and its certificate was read. An Opus reviewer's findings (the unchecked "same certificate on all pods" inference, the handshake treated as the client's confirmed attempt, absolute claims) were fixed.
+- **INC-0128:** RB-005 states the cause (a cache with no size cap) but not the fix. The resolution now says only who took it (catalog on-call) and that no OOMKill was logged after 14:50, with resolution at 15:20. Also fixed: the 11:00 comment named a 10:10 restart; the log's restarts are at 09:50 and 10:40.
+
+**Eval notes (batch 7, added in cleanup):**
+- The resolutions of 0060, 0107, 0125 and 0128 are not stated in any source, so no question may ask what fixed them.
+- 0142's missing record is paraphrased ("the inventory database record"), so no question may use its hostname.
+- 0107, 0125 and 0133 are short briefs, so questions on them must be host, code or date lookups.
+
+**Status:**
+- 63 of 200 incidents written.
+- INC-0103 and INC-0134 now have approved sidecar facts (see "Batch 7 cleanup facts") and are writable in batch 8. Neither needed a new host, service, code or skeleton change.
+
+**Rules for future batches:**
+- A writer never infers a fix from a cause. With no sourced fix, the resolution states only who took the incident and when the errors stopped.
+- Any runbook that retells a row's event as the reason it was written gets a `NARRATIVE` date, and is then a label only for that row (as RB-013, 016, 021, 023, 028 and 030 are).
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.
