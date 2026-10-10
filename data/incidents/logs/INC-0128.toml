@@ -48,13 +48,6 @@ host = "catalog-api-02.prod.internal"
 level = "ERROR"
 message = "container terminated: reason OOMKilled, exit code 137; restarting"
 
-[[line]]
-at = "15:20:30"
-service = "catalog-api"
-host = "catalog-api-02.prod.internal"
-level = "INFO"
-message = "response cache: size limit configured; entries now evicted past the cap"
-
 [[burst]]
 from = "09:00:30"
 to = "09:49:30"
