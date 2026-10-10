@@ -1209,6 +1209,16 @@ Invented details of the fictional company, introduced in batch 1. Reuse them as-
   - the load balancer spreads new connections evenly over the 3 pods
 - **payments:** in June 2025 the evening rate was about 100 payment requests/s.
 
+**Batch 7 cleanup facts** (approved 2026-10-09; sidecar `facts` for rows that had none)
+- **INC-0103 (orders-db-01, 2025-11-22):**
+  - About 222 idle sessions were left open by an orders-api batch Job in namespace `commerce`. The Job opened a new connection for each batch and never closed it.
+  - With orders-api's 3 × 25 = 75, that filled the 297 usable slots (300 − 3), so new connections got `53300`.
+  - Fix: the Job was stopped, then its idle sessions were ended with `pg_terminate_backend` once team-commerce agreed (RB-012 lever 2).
+- **INC-0134 (orders-api-01/03, 2026-02-28, month end):**
+  - Month-end order-summary requests each held a `pg` Pool connection for about 30 s while their query ran on orders-db. They filled the 25-connection pools on orders-api-01 and orders-api-03, and `ORD-5003` followed.
+  - Fix: team-commerce switched off the order-summary endpoint at 07:58, and the pools drained by 08:05.
+  - Not a plan flip; no `ANALYZE`.
+
 **Past events mentioned in runbooks: these MUST exist as incidents in the batch 4 skeleton, with matching details**
 
 The runbooks give these as history, so the incident set has to contain them. Each row is a constraint on the skeleton: date, service, hosts, codes and numbers must match. Months are written into the runbooks; years are fixed here.

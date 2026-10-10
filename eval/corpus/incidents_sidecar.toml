@@ -645,6 +645,7 @@ multi_doc = ["RB-008", "INC-0078", "INC-0123"]
 id = "INC-0103"
 mechanism = "max_connections_job_leak"
 anchor_tokens = ["53300", "orders-db-01"]
+facts = { held_by = "idle sessions left open by an orders-api batch Job in namespace commerce, which opened a new connection for each batch and never closed it", idle_sessions = 222, usable_slots = 297, fix = "Job stopped, then its idle sessions ended with pg_terminate_backend after team-commerce agreed" }
 
 [[incidents]]
 id = "INC-0104"
@@ -834,6 +835,7 @@ facts = { batch = "Monday-morning email batch", memory_otherwise = "flat" }
 id = "INC-0134"
 mechanism = "pg_pool_slow_query"
 multi_doc = ["INC-0182"]
+facts = { cause = "month-end order-summary requests each held a pg Pool connection for about 30 s while their query ran on orders-db, filling the 25-connection pools on orders-api-01 and orders-api-03", query_seconds = 30, pool_max = 25, fix = "team-commerce switched off the order-summary endpoint at 07:58 and the pools drained by 08:05" }
 
 [[incidents]]
 id = "INC-0135"
