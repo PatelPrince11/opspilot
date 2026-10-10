@@ -18,7 +18,7 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from scripts.corpus.common import rng_for
-from scripts.corpus.incidents import code_finder
+from scripts.corpus.incidents import UNVERIFIED_STRINGS, code_finder
 from scripts.corpus.runbooks import HOST_RE
 from scripts.corpus.services import CorpusError
 
@@ -124,6 +124,9 @@ def validate_logs(events: list[dict], row: dict, services_doc: dict) -> None:
             errors.append(f"{where}: {e['ts']} outside start-10min..end+10min")
         if e["source"] != "synthetic" or e["incident_id"] != row["id"]:
             errors.append(f"{where}: source must be synthetic and incident_id set")
+        for string in UNVERIFIED_STRINGS:
+            if string in msg:
+                errors.append(f"{where}: unverified real-world string {string!r}")
         if "INC-LIVE" in msg or (pgb and ("ECONNREFUSED" in msg or "6432" in msg)):
             errors.append(f"{where}: demo guard: {msg[:60]!r}")
     for c in sorted(set(row["codes"]) - seen):

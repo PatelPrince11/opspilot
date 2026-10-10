@@ -1,0 +1,58 @@
+# Synthetic logs for INC-0087. READONLY text is the Redis reply quoted in RB-018;
+# the rest is our own service formats.
+[[line]]
+at = "06:10:02"
+service = "redis-sessions"
+host = "redis-sessions-02.prod.internal"
+level = "INFO"
+message = "sentinel: forced failover for master sessions, promoting this node"
+
+[[line]]
+at = "06:10:04"
+service = "redis-sessions"
+host = "redis-sessions-01.prod.internal"
+level = "INFO"
+message = "role changed: now a replica of redis-sessions-02"
+
+[[line]]
+at = "06:10:09"
+service = "auth-service"
+host = "auth-service-01.prod.internal"
+level = "INFO"
+message = "session store: primary changed to redis-sessions-02, reconnecting"
+
+[[burst]]
+from = "06:10:03"
+to = "06:10:09"
+count = 6
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-01.prod.internal"]
+message = "session write failed after retries: READONLY You can't write against a read only replica.; login completed without a stored session"
+
+[[burst]]
+from = "06:10:15"
+to = "06:14:30"
+count = 5
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal"]
+message = "AUTH-E401X session lookup failed; user must log in again"
+
+[[burst]]
+from = "06:00:00"
+to = "06:09:50"
+count = 20
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok, session {hex8} stored"
+
+[[burst]]
+from = "06:10:20"
+to = "06:19:50"
+count = 20
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok, session {hex8} stored"

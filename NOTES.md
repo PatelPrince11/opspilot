@@ -823,6 +823,162 @@ Only that sidecar entry changed in `eval/`.
 
 **Verified:** step 8 gate below.
 
+## 2026-10-09: Phase 1 step 3, batch 7 (27 incident write-ups)
+
+**Built:**
+- 27 write-ups plus log specs:
+  - the four post-dated-runbook rows: 0042, 0124, 0137, 0162
+  - 0177, which contains "rollout restart"
+  - every remaining past-events constraint row: 0004, 0059, 0070, 0078, 0084, 0087, 0093, 0108, 0120, 0128, 0133, 0142, 0151, 0157, 0174
+  - balance rows: 0007, 0026, 0034, 0060, 0107, 0125, 0156
+- Coverage:
+  - all 10 failure types as the cause type
+  - formats: 3 each of the 9
+  - hard-negative rows: 5 (0042, 0124, 0137, 0162, 0177)
+  - no rows without a runbook
+- Corpus: 63 incidents, 4,782 synthetic log lines, 630 LogHub lines placed.
+- **Validator** (`scripts/corpus/incidents.py`, `checks.py`, `synthetic_logs.py`), each change with a broken-input test:
+  - `NARRATIVE` gains `RB-023: 2025-01-14`, because RB-023's samples and History are INC-0004's own night. RB-023 is a label only for 0004, and later rows may name it.
+  - `FORBIDDEN_BY_FACT` gains `last_retry_spin`, `data_kafka_involved`, `payments_inventory_extra_db_reads` and `intermittent`. Before this, selfcheck crashed with a KeyError on 0093, 0070, 0108 and 0142. A new test requires every written boolean fact to have a pattern.
+  - `BLOCKED_PHRASES` gains statements by outside parties: "hosting provider", "told us it saw", "the processor said" and "the processor told".
+  - New `UNVERIFIED_STRINGS` (`+sdown`, `+odown`, `+switch-master`, `Started coredns.service`), checked in prose and in log lines.
+- **Tests:**
+  - `BATCH7` set and format cap 4
+  - 29 ARITHMETIC rows
+  - `test_rb023_is_postdated_for_inc_0004_only`
+- `scratchpad/review_checklist.md` holds the judgement-only rules; `make packet` includes it.
+
+**Decisions**
+- **Process:**
+  - 3 Sonnet writers drafted in the scratchpad, after a one-row pilot (0042).
+  - A writer's set landed in `data/` only when all 9 drafts passed selfcheck.
+  - Reviewers A (Opus, consistency), B (Sonnet, unsupported claims) and C (Sonnet, overlap) worked from `make packet` output.
+  - Subagents were authorised for this batch only.
+- **Selection rulings:**
+  - **0103 deferred.** Its sidecar has only `max_connections_job_leak` and doesn't say what held the about 222 connections beyond orders-api's 75. **0156** (`pgx_slow_queries`) replaced it.
+  - **0007 kept.** "Client device clock wrong" needs no expired public certificate; on 2025-01-19 the certificate was valid until 2025-03-16 10:15.
+  - **RB-029 is not post-dated.** It is a reference card whose limiter terms date from 2026-07-09; the 2026-09-16 case is an added section. 0177 names it.
+  - After the NARRATIVE change, the 36 earlier write-ups were rescanned. Only 0197 (2026-09-16) names RB-023 or RB-029, and that is legal.
+- **Format twins:** the twin check (same cause service and cause type, or the same runbook retold) ran against all 63 write-ups. 0142 moved off qa (INC-0025) and 0177 off brief (INC-0048), with 0 collisions after. None of the 8 journal rows is on kafka-02.
+- **Sourcing rulings:** these details come from sidecar `facts`, so they were kept:
+  - 0042 export start 13:30
+  - 0124 batch start 23:30
+  - 0004 3.5/s per pod
+  - 0084/0174 caught by the 50 GB alert
+- **0142:**
+  - The prose says only that the zone file reached internal-dns-02 alone. No scoped run and no explanation of why.
+  - Sidecar `missing_record = inventory-db-01.prod.internal` is paraphrased ("the inventory database record"): inventory-db-01 is not a row host, so the host rule blocks the name. Accepted rather than editing the skeleton.
+- **0093:** no "4.12" (anachronism: resolved + 7 days < 2025-11-12); backoff appears only as an undated follow-up.
+- **Grace-window tokens** (`lock_timeout` in 0042, 250 per pod in 0137) appear only as follow-ups.
+- **0128:** the fix (a size cap on the response cache) is inferred from RB-005's "no size cap". The packet gives no fix.
+
+**Errors and fixes**
+- *Selfcheck KeyError on boolean facts* (0093, then 0070/0108/0142).
+  - Root cause: `fact_errors` looks up every boolean fact in `FORBIDDEN_BY_FACT`, and only batch 5/6 keys had entries.
+  - Two writers worked around it with local wrappers (since deleted).
+  - Fixed by adding the patterns plus a test that covers every written row.
+- *Rate limit:* W3 stopped on the session limit (about 15:10 to 19:00) after 8 drafts. It resumed from `progress.toml` with its drafts intact and wrote 0133.
+- *Reviewer A couldn't write its findings file* (the harness told subagents to return text); the coordinator saved it.
+- *Canaries:* 5 flaws planted in copies (0004 time order, 0151 2×80=140, 0108 provider statement, 0177 processor statement, 0084 RB-007 paraphrase).
+  - A caught 0004 and 0151, B caught 0108 and 0177, C caught 0084. B also caught A's two.
+  - No reviewer missed a canary in its domain, so none was rerun.
+- *Review: 131 findings* (A 21, B 42, C 68). Main classes:
+  - **C, 19 must-fix:** structural retelling of a runbook in its own order (steps, FAQ, table rows, decision tree), invisible to Jaccard and the 8-word check. This includes retelling label-only runbooks in 0042, 0124, 0137 and 0162.
+  - **B:** invented check results, causes and fixes; absolute claims; unverified log formats (Sentinel event lines, systemd `Started coredns.service.`).
+  - **A:**
+    - effect before cause (0177's restart time)
+    - mid-incident arithmetic that uses the end time (0128)
+    - logs crossing thresholds before the alert (0070)
+    - in-process cache not reset by OOMKills (0128)
+    - reloads 14 s apart under the pre-2026-08-20 5-min pacing (0142)
+    - Team field (0128)
+  - Fixed in one round. Script-catchable classes became the rules above; the rest went to the checklist.
+
+**Verified:**
+- `make corpus` twice gave a byte-identical MANIFEST
+- `make corpus-check` ok
+- `make test`: 298 passed (40 new)
+- `make lint` clean
+- `git diff phase-1/scaffold` on runbooks, skeleton and `eval/` is empty
+- none of the 36 earlier write-ups or log specs changed
+
+**Jaccard after the fixes** (top 10, batch 7 write-up vs anything):
+
+| Pair | Score |
+|---|---|
+| 0042/RB-028 | 0.0225 |
+| 0108/RB-017 | 0.0224 |
+| 0162/0048 | 0.0205 |
+| 0137/RB-030 | 0.0198 |
+| 0124/RB-013 | 0.0192 |
+| 0004/0048 | 0.0189 |
+| 0142/RB-020 | 0.0187 |
+| 0026/RB-011 | 0.0186 |
+| 0059/RB-015 | 0.0173 |
+| 0070/0089 | 0.0156 |
+
+No 8-word run is shared with any runbook or write-up.
+
+**Real-world texts verified 2026-10-09:**
+- `SENTINEL FAILOVER <master name>`: redis.io Sentinel docs (latest), https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel/ ("Force a failover as if the master was not reachable, and without asking for agreement to other Sentinels"). Used in 0087.
+- `Can't save in background: fork: Cannot allocate memory`: Redis **7.2.4** `src/rdb.c:1583`, `serverLog(LL_WARNING,"Can't save in background: fork: %s", strerror(errno))`, https://raw.githubusercontent.com/redis/redis/7.2.4/src/rdb.c; the ENOMEM text "Cannot allocate memory" comes from glibc `sysdeps/gnu/errlist.h` (master). Used in 0078.
+- `Background saving started by pid %ld`: same file, `rdb.c:1587`. Not used verbatim.
+
+**Unverified (kept out of documents and logs):**
+- Go's TLS alert text for an expired client certificate
+- Sentinel event log-line formats
+- systemd `Started coredns.service.` (depends on the unit's `Description=`)
+- Postgres PANIC wording beyond what RB-007 quotes
+
+**Eval notes (for Phase 1 step 4):**
+- **Rows that retell their runbook's history.** Gold sets need both documents:
+  - 0004/RB-023
+  - 0042/RB-028
+  - 0059/RB-015
+  - 0070/RB-008
+  - 0078/RB-019
+  - 0084, 0157, 0174/RB-007
+  - 0087/RB-018
+  - 0093/RB-001
+  - 0108/RB-017
+  - 0120/RB-009
+  - 0124/RB-013
+  - 0128 and 0133/RB-005
+  - 0137/RB-030
+  - 0142/RB-020
+  - 0151/RB-012
+  - 0162/RB-016
+- **Twin pairs, with what tells them apart:**
+  - 0007/0023: client clock on edge-gateway-03, 2025-01-19, vs missed pod edge-gateway-01, 2025-03-16
+  - 0125/0016: internal-dns-01 not answering, VMs, 2026 vs cluster CoreDNS CPU, pods, 2025
+  - 0125/0025: no answer vs NXDOMAIN; kafka-02 vs orders-api; 2026 vs 2025
+  - 0125/0142: internal-dns-01 silent vs zone file on internal-dns-02
+  - 0142/0016: zone file on internal-dns-02 vs cluster CoreDNS CPU
+  - 0142/0025: internal-dns-02, inventory-service, 2026 vs internal-dns-01, orders-api, 2025
+  - 0162/0048: CPX-W429 retry storm, sev1, 2026-05-26 vs a 5-minute blip in 2025
+  - 0177/0048: CPX-W430 during a rollout restart vs CPX-W429 blip
+  - 0162/0177: CPX-W429 + ORD-5003 vs CPX-W430 only
+  - 0162/0197: processor slow, CPX-W429 vs node cordon, CPX-W430
+  - 0177/0197: 5-min rollout restart vs 42-min cordon
+  - 0156/0055: payments-api slow queries, 2026 vs PgBouncer export, 2025
+  - 0059/0151: missing index, INV-E220, 2025 vs pool 20→80, 53300, 2026
+  - 0070/0089: kafka-02 GC logs vs kafka-01 journal
+  - 0070/0149: kafka-02 GC logs vs kafka-03 journal
+  - 0070/0120: `/var` vs the data disk
+  - 0070/0101: both retell RB-008; kafka vs search-cluster
+  - 0120/0089 and 0120/0149: kafka-03 data disk, 2026-01 vs `/var` journal rows
+  - 0078/0152: overcommit 2, MISCONF, 2025-09 vs a 2026-04 row
+  - 0084/0157/0174: `cdc_payments` slot, 2025-09 vs archiving failure, ENOSPC, 2026-05 vs `payments_db_02` slot, 2026-07
+  - 0087/0099: planned failover, auth-service-01, 2025-10-07 vs partitioned primary, auth-service-02, 2025-11-12
+  - 0108/0094: VM lost, catalog-db-01 CPU, 2025-12-09 vs 2025-10-26 row
+  - 0128/0133: catalog-api-02 every 50 min vs notification-worker-01 Monday batch
+
+**What to be able to explain in an interview**
+- Why a runbook retold in its own order is leakage even when Jaccard is under 0.025, and why that took a reviewer, not a script.
+- Post-dated runbooks: a relevance label without a citation, and how `NARRATIVE` dates enforce it.
+- Canary flaws scored per reviewer domain, and what a cross-domain catch (B catching A's flaws) does and doesn't prove.
+- Turning review findings into deterministic rules (blocklists, unverified strings, boolean-fact patterns) and leaving the rest as a checklist.
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.

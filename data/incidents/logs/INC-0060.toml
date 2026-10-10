@@ -1,0 +1,23 @@
+# Synthetic logs for INC-0060. Everything is our own service format.
+[[line]]
+at = "05:50:12"
+service = "edge-gateway"
+host = "edge-gateway-03.prod.internal"
+level = "ERROR"
+message = "upstream request timeout after 15s, returned 504 for GET /search?q={hex8}"
+
+[[line]]
+at = "06:34:30"
+service = "edge-gateway"
+host = "edge-gateway-03.prod.internal"
+level = "INFO"
+message = "upstream request served normally; no timeouts in the last minute"
+
+[[burst]]
+from = "05:50:20"
+to = "06:34:00"
+count = 60
+service = "edge-gateway"
+level = "ERROR"
+hosts = ["edge-gateway-03.prod.internal"]
+message = "upstream request timeout after 15s, returned 504 for {choice:GET /search|POST /checkout|POST /v1/payments/authorize}"

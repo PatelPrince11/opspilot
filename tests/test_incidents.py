@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 import pytest
 
 from scripts.corpus.common import DATA, SIDECAR
-from scripts.corpus.incidents import NARRATIVE, load_skeleton, validate_skeleton
+from scripts.corpus.incidents import NARRATIVE, load_skeleton, postdated, validate_skeleton
 from scripts.corpus.runbooks import load_runbooks, runbooks_output
 from scripts.corpus.services import CorpusError, load_services
 
@@ -630,6 +630,14 @@ def test_no_link_to_a_runbook_written_after_the_incident(rows):
         for rb in r["runbook_ids"]:
             if rb in NARRATIVE:
                 assert r["started_at"] >= d(f"{NARRATIVE[rb]}T00:00"), (r["id"], rb)
+
+
+def test_rb023_is_postdated_for_inc_0004_only(by_id):
+    """RB-023's samples and History are the 2025-01-14 night, so it is INC-0004's label only;
+    later RB-023 rows may still name it."""
+    assert postdated(by_id["INC-0004"]) == {"RB-023"}
+    assert postdated(by_id["INC-0110"]) == set()
+    assert postdated(by_id["INC-0177"]) == set()
 
 
 def test_later_sessions_failovers_postdate_rb018_review(by_id, side, runbooks):

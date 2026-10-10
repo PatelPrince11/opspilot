@@ -191,6 +191,19 @@ BLOCKED_PHRASES = [
     "written up from",
     "nothing was lost",
     "no event was lost",
+    # batch 7: statements by outside parties nothing in the corpus records
+    "hosting provider",
+    "told us it saw",
+    "the processor said",
+    "the processor told",
+]
+# Real-world log formats seen in drafts but never checked against a source (batch 7 review).
+# A write-up or synthetic log line may not carry them; describe the event in words instead.
+UNVERIFIED_STRINGS = [
+    "+sdown",  # Redis Sentinel event lines: NOTES verifies the events exist, not the format
+    "+odown",
+    "+switch-master",
+    "Started coredns.service",  # systemd job.c prints the Description=, unknown for coredns
 ]
 # Runbooks written as the story of one incident did not exist before it (skeleton test and
 # write-up validator): a write-up may not cite one for an incident that started earlier.
@@ -198,6 +211,7 @@ NARRATIVE = {
     "RB-013": "2026-01-31",
     "RB-016": "2026-05-26",
     "RB-021": "2026-06-15",
+    "RB-023": "2025-01-14",  # its samples and History are the 2025-01-14 night (INC-0004)
     "RB-028": "2025-05-15",
     "RB-030": "2026-03-10",
 }
@@ -380,6 +394,9 @@ def document_errors(doc: dict, row: dict, find_codes, short_re) -> dict[str, lis
     for phrase in BLOCKED_PHRASES:
         if phrase in low:
             err("blocklist", f"unsupported claim {phrase!r}")
+    for string in UNVERIFIED_STRINGS:
+        if string in text:
+            err("blocklist", f"unverified real-world string {string!r}")
     if row["service"] == "payments-pgbouncer" or any("pgbouncer" in h for h in row_hosts):
         if "ECONNREFUSED" in text or "6432" in text:
             err("demo guard", "demo guard: pgbouncer with ECONNREFUSED or 6432")

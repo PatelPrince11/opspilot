@@ -1,0 +1,48 @@
+# Synthetic logs for INC-0034. Our own service formats; Kubernetes reason and exit code as in the runbook.
+[[line]]
+at = "18:05:10"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "WARN"
+message = "pod restarted: last state terminated, reason OOMKilled, exit code 137"
+
+[[line]]
+at = "21:00:00"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "INFO"
+message = "heap summary taken from the restarted process for the leak ticket"
+
+[[line]]
+at = "22:30:00"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "INFO"
+message = "memory working set normal; incident closed"
+
+[[burst]]
+from = "17:56:00"
+to = "18:04:30"
+count = 20
+service = "ledger-service"
+level = "WARN"
+hosts = ["ledger-service-02.prod.internal"]
+message = "memory working set {ramp:90-99}% of container limit"
+
+[[burst]]
+from = "19:21:00"
+to = "22:25:00"
+count = 20
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-02.prod.internal"]
+message = "memory working set {ramp:30-70}% of container limit"
+
+[[burst]]
+from = "17:56:00"
+to = "22:20:00"
+count = 20
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-02.prod.internal"]
+message = "published entry to ledger.entries partition={int:0-11}"

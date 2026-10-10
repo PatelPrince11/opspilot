@@ -1,0 +1,84 @@
+# Synthetic logs for INC-0042. Texts checked: SQLAlchemy QueuePool message (as quoted in the
+# catalog squad's replay); everything else is our own service format.
+[[line]]
+at = "14:02:00"
+service = "catalog-api"
+host = "catalog-api-01.prod.internal"
+level = "INFO"
+message = "migration: applying schema change to products; blocked, waiting on catalog-db-01.prod.internal"
+
+[[line]]
+at = "14:02:15"
+service = "edge-gateway"
+host = "edge-gateway-01.prod.internal"
+level = "ERROR"
+message = "upstream catalog-api timed out after 15s, returned 504 for GET /v1/products/{int:1-9999}"
+
+[[line]]
+at = "14:02:30"
+service = "catalog-api"
+host = "catalog-api-01.prod.internal"
+level = "ERROR"
+message = "QueuePool limit of size 10 overflow 5 reached, connection timed out, timeout 30.00"
+
+[[line]]
+at = "14:02:31"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "ERROR"
+message = "QueuePool limit of size 10 overflow 5 reached, connection timed out, timeout 30.00"
+
+[[line]]
+at = "14:06:00"
+service = "edge-gateway"
+host = "edge-gateway-01.prod.internal"
+level = "WARN"
+message = "alert fired: 504 rate on catalog-api above threshold; paging catalog on-call"
+
+[[line]]
+at = "14:07:20"
+service = "catalog-db"
+host = "catalog-db-01.prod.internal"
+level = "INFO"
+message = "sessions in use 32 of 97 usable; cpu low"
+
+[[line]]
+at = "14:09:10"
+service = "catalog-db"
+host = "catalog-db-01.prod.internal"
+level = "WARN"
+message = "migration backend cancelled by operator; lock queue on products cleared"
+
+[[line]]
+at = "14:09:12"
+service = "catalog-api"
+host = "catalog-api-01.prod.internal"
+level = "ERROR"
+message = "migration: step cancelled, job failed; deployment will not roll"
+
+[[burst]]
+from = "14:02:16"
+to = "14:08:59"
+count = 40
+service = "edge-gateway"
+level = "ERROR"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal"]
+message = "upstream catalog-api timed out after 15s, returned 504 for GET /v1/products/{int:1-9999}"
+
+[[burst]]
+from = "14:02:32"
+to = "14:09:05"
+count = 30
+service = "catalog-api"
+level = "ERROR"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "QueuePool limit of size 10 overflow 5 reached, connection timed out, timeout 30.00"
+
+[[burst]]
+from = "13:55:00"
+to = "14:01:59"
+count = 10
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "GET /v1/products/{int:1-9999} 200"

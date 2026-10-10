@@ -1,0 +1,128 @@
+# Synthetic logs for INC-0128. Everything is our own service format.
+[[line]]
+at = "09:50:04"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "ERROR"
+message = "container terminated: reason OOMKilled, exit code 137; restarting"
+
+[[line]]
+at = "10:40:10"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "ERROR"
+message = "container terminated: reason OOMKilled, exit code 137; restarting"
+
+[[line]]
+at = "11:30:02"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "ERROR"
+message = "container terminated: reason OOMKilled, exit code 137; restarting"
+
+[[line]]
+at = "12:20:07"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "ERROR"
+message = "container terminated: reason OOMKilled, exit code 137; restarting"
+
+[[line]]
+at = "13:10:05"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "ERROR"
+message = "container terminated: reason OOMKilled, exit code 137; restarting"
+
+[[line]]
+at = "14:00:09"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "ERROR"
+message = "container terminated: reason OOMKilled, exit code 137; restarting"
+
+[[line]]
+at = "14:50:03"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "ERROR"
+message = "container terminated: reason OOMKilled, exit code 137; restarting"
+
+[[line]]
+at = "15:20:30"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "INFO"
+message = "response cache: size limit configured; entries now evicted past the cap"
+
+[[burst]]
+from = "09:00:30"
+to = "09:49:30"
+count = 6
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "response cache entries: {ramp:1000-12000}"
+
+[[burst]]
+from = "09:50:30"
+to = "10:39:30"
+count = 6
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "response cache entries: {ramp:1000-12000}"
+
+[[burst]]
+from = "10:40:30"
+to = "11:29:30"
+count = 6
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "response cache entries: {ramp:1000-12000}"
+
+[[burst]]
+from = "11:30:30"
+to = "12:19:30"
+count = 6
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "response cache entries: {ramp:1000-12000}"
+
+[[burst]]
+from = "12:20:30"
+to = "13:09:30"
+count = 6
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "response cache entries: {ramp:1000-12000}"
+
+[[burst]]
+from = "13:10:30"
+to = "13:59:30"
+count = 6
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "response cache entries: {ramp:1000-12000}"
+
+[[burst]]
+from = "14:00:30"
+to = "14:49:30"
+count = 6
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "response cache entries: {ramp:1000-12000}"
+
+[[burst]]
+from = "14:50:30"
+to = "15:19:00"
+count = 5
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "response cache entries: {ramp:1000-9000}"

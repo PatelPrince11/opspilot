@@ -1,0 +1,58 @@
+# Synthetic logs for INC-0078. Texts checked: Redis 7.2.4 rdb.c "Can't save in background: fork: %s"
+# with glibc's ENOMEM text (strings.md); the rest is our own service formats.
+[[line]]
+at = "11:19:58"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "WARN"
+message = "Can't save in background: fork: Cannot allocate memory"
+
+[[line]]
+at = "12:58:40"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "sysctl: vm.overcommit_memory set to 1"
+
+[[line]]
+at = "12:59:10"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "operator ran BGSAVE; snapshot started"
+
+[[burst]]
+from = "11:20:00"
+to = "12:58:00"
+count = 40
+service = "fraud-scorer"
+level = "ERROR"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "FRD-E140 velocity counter write refused by redis-features-01 (MISCONF); counters stale"
+
+[[burst]]
+from = "11:20:30"
+to = "12:55:00"
+count = 6
+service = "redis-features"
+level = "WARN"
+hosts = ["redis-features-01.prod.internal"]
+message = "Can't save in background: fork: Cannot allocate memory"
+
+[[burst]]
+from = "11:11:00"
+to = "11:19:50"
+count = 10
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "scored card {hex8} velocity counters updated"
+
+[[burst]]
+from = "13:00:00"
+to = "13:04:50"
+count = 10
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "scored card {hex8} velocity counters updated"

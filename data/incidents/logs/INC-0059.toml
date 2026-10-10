@@ -1,0 +1,41 @@
+# Synthetic logs for INC-0059. Everything is our own service format.
+[[line]]
+at = "10:41:05"
+service = "inventory-db"
+host = "inventory-db-01.prod.internal"
+level = "WARN"
+message = "slow statement on reservations filtered by expires_at: seq scan, {int:900-2600} ms"
+
+[[line]]
+at = "15:12:40"
+service = "inventory-db"
+host = "inventory-db-01.prod.internal"
+level = "INFO"
+message = "CREATE INDEX CONCURRENTLY reservations_expires_at_idx completed"
+
+[[burst]]
+from = "10:41:10"
+to = "15:12:30"
+count = 40
+service = "inventory-service"
+level = "ERROR"
+hosts = ["inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+message = "INV-E220 stock reservation timed out"
+
+[[burst]]
+from = "10:41:30"
+to = "15:12:30"
+count = 40
+service = "orders-api"
+level = "ERROR"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "ORD-5003 inventory call failed or timed out from orders-api's side on checkout"
+
+[[burst]]
+from = "10:41:20"
+to = "15:12:30"
+count = 20
+service = "inventory-db"
+level = "WARN"
+hosts = ["inventory-db-01.prod.internal"]
+message = "slow statement on reservations filtered by expires_at: seq scan, {int:900-2600} ms"

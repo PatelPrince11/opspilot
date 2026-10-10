@@ -13,6 +13,7 @@ import pytest
 from scripts import build_corpus
 from scripts.corpus import synthetic_logs
 from scripts.corpus.checks import (
+    FORBIDDEN_BY_FACT,
     TRIGRAM_JACCARD_THRESHOLD,
     copied_runs,
     duration_errors,
@@ -58,7 +59,14 @@ BATCH6 = {
     *("INC-0097", "INC-0172", "INC-0189", "INC-0152", "INC-0016", "INC-0025", "INC-0178"),
     *("INC-0197", "INC-0031", "INC-0015", "INC-0194", "INC-0096"),
 }
-FORMAT_CAP = {"batch5": (BATCH5, 2), "batch6": (BATCH6, 4)}  # most uses of one format
+BATCH7 = {
+    *("INC-0042", "INC-0084", "INC-0157", "INC-0174", "INC-0026", "INC-0124", "INC-0093"),
+    *("INC-0034", "INC-0156", "INC-0004", "INC-0162", "INC-0177", "INC-0137", "INC-0007"),
+    *("INC-0060", "INC-0128", "INC-0059", "INC-0151", "INC-0142", "INC-0125", "INC-0078"),
+    *("INC-0087", "INC-0108", "INC-0070", "INC-0120", "INC-0107", "INC-0133"),
+}
+# most uses of one format
+FORMAT_CAP = {"batch5": (BATCH5, 2), "batch6": (BATCH6, 4), "batch7": (BATCH7, 4)}
 
 
 @pytest.fixture(scope="module")
@@ -109,7 +117,7 @@ def events(rows, docs, services_doc):
 
 
 def test_batch_documents_validate(docs, rows, services_doc, rb_ids):
-    assert BATCH5 <= set(docs) <= BATCH5 | BATCH6
+    assert BATCH5 <= set(docs) <= BATCH5 | BATCH6 | BATCH7
     validate_documents(list(docs.values()), rows, services_doc, rb_ids)
 
 
@@ -164,11 +172,16 @@ def body_replace(old, new):
         # ordinary missing runbook in the same row still fails
         ("INC-0168", body_add("See RB-021."), "RB-021 did not exist before 2026-06-15"),
         ("INC-0168", body_replace("RB-020", "the DNS runbook"), "runbook references must equal"),
+        # RB-023's samples and History are INC-0004's own night: a label only, never named
+        ("INC-0004", body_add("See RB-023."), "RB-023 did not exist before 2025-01-14"),
         ("INC-0055", body_add("The processor confirmed the next morning."), "unsupported claim"),
         ("INC-0055", body_add("The ticket sat in the queue."), "unsupported claim"),
         ("INC-0055", body_add("This was written up from chat."), "unsupported claim"),
         ("INC-0055", body_add("Nothing was lost."), "unsupported claim"),
         ("INC-0055", body_add("No event was lost anywhere."), "unsupported claim"),
+        ("INC-0055", body_add("The hosting provider blamed a hypervisor."), "unsupported claim"),
+        ("INC-0048", body_add("The processor said all was well."), "unsupported claim"),
+        ("INC-0099", body_add("Sentinel logged +switch-master."), "unverified real-world string"),
         ("INC-0055", body_add("PgBouncer listens on 6432."), "demo guard"),
         ("INC-0055", body_add("We checked again at 03:15."), "outside start-2h"),
         ("INC-0055", body_add("- 13:00 · late entry"), "timeline goes backwards"),
@@ -215,6 +228,7 @@ def kafka_line_from_ledger_host(evs):
         ("INC-0185", log_mut("ts", fn=lambda t: t + timedelta(hours=2)), "outside"),
         ("INC-0185", log_mut("incident_id", "INC-0001"), "incident_id"),
         ("INC-0055", log_mut("message", fn=lambda m: m + " :6432"), "demo guard"),
+        ("INC-0185", log_mut("message", fn=lambda m: m + " +sdown"), "unverified real-world"),
     ],
 )
 def test_validator_rejects_broken_logs(events, by_id, services_doc, inc, mutate, message):
@@ -329,6 +343,27 @@ def at(clock, minutes=0.0):
     return hm(clock) + minutes
 
 
+@pytest.mark.parametrize(
+    ("key", "contradiction"),
+    [
+        ("last_retry_spin", "The retry workers spun again in December."),
+        ("data_kafka_involved", "/data/kafka was full as well."),
+        ("payments_inventory_extra_db_reads", "payments-api made extra DB reads."),
+        ("intermittent", "Every lookup failed for 40 minutes."),
+    ],
+)
+def test_batch7_boolean_facts_reject_contradictions(key, contradiction):
+    val = key in ("last_retry_spin", "intermittent")
+    assert fact_errors(contradiction, {"facts": {key: val}}), key
+    assert not fact_errors("A neutral sentence.", {"facts": {key: val}}), key
+
+
+def test_every_written_boolean_fact_has_a_pattern(side):
+    for i in BATCH5 | BATCH6 | BATCH7:
+        for k, v in side[i].get("facts", {}).items():
+            assert not isinstance(v, bool) or k in FORBIDDEN_BY_FACT, (i, k)
+
+
 # (incident, value computed here, token the write-up states, tolerance). Clock-time tokens
 # compare as minutes since midnight; "2,400" and "28%" parse as numbers.
 ARITHMETIC = [
@@ -388,6 +423,36 @@ ARITHMETIC = [
     ("INC-0097", 3_072 - 2_400, "672", 0),
     ("INC-0013", at("10:50") - at("08:50"), "120", 0),
     ("INC-0080", at("05:20") - at("05:02"), "18", 0),
+    # batch 7
+    ("INC-0042", 60 + 5, "65", 0),
+    ("INC-0042", 2 * (10 + 5), "30", 0),
+    ("INC-0042", 30 + 1 + 1, "32", 0),
+    ("INC-0042", 100 - 3, "97", 0),
+    ("INC-0124", 20 - 4, "16", 0),
+    ("INC-0137", 420 - 300, "120", 0),
+    ("INC-0137", 3 * 100, "300", 0),
+    ("INC-0137", 100 * 120 / 420, "29", 0.5),
+    ("INC-0137", 3 * 250, "750", 0),
+    ("INC-0137", at("09:50") - at("09:05"), "45", 0),
+    ("INC-0137", at("09:50") - at("09:42"), "8", 0),
+    ("INC-0128", at("15:20") - at("09:00"), "380", 0),
+    ("INC-0128", 380 / 50, "7.6", 0),
+    ("INC-0059", at("15:30") - at("10:40"), "290", 0),
+    ("INC-0059", 2 * 20, "40", 0),
+    ("INC-0151", 100 - 3, "97", 0),
+    ("INC-0151", 2 * 20, "40", 0),
+    ("INC-0151", 2 * 80, "160", 0),
+    ("INC-0151", 160 - 97, "63", 0),
+    ("INC-0162", 3 * 3, "9", 0),
+    ("INC-0177", 2 * 180, "360", 0),
+    ("INC-0078", 32 * 0.8 + 0, "25.6", 0),
+    ("INC-0078", 14 + 14, "28", 0),
+    ("INC-0120", 2 * (168 / 24), "14", 0),
+    ("INC-0120", 24 * 3_600 * 1_000, "86400000", 0),
+    ("INC-0108", at("03:40") - at("03:12"), "28", 0),
+    ("INC-0108", 40 - 30, "10", 0),
+    ("INC-0108", hm("03:12") + 30 / 60, "03:12:30", 0),
+    ("INC-0108", hm("03:12:30") + 10 / 60, "03:12:40", 0),
 ]
 
 

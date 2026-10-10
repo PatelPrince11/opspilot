@@ -36,6 +36,13 @@ FORBIDDEN_BY_FACT = {
         r"\b(?:data|sessions?) (?:was|were) (?:lost|deleted|wiped)",
         r"\blost (?:the )?data\b",
     ],
+    # batch 7
+    "last_retry_spin": [r"\b(?:spun|spin\w*) (?:again|once more)\b"],
+    "data_kafka_involved": [
+        r"/data/kafka (?:was|were|had|filled|is) (?:full|filling|involved|also)"
+    ],
+    "payments_inventory_extra_db_reads": [r"(?<!no )(?<!without )extra (?:DB|database) reads"],
+    "intermittent": [r"\bevery (?:lookup|query|resolution) (?:failed|returned)"],
 }
 DUR_RE = re.compile(r"\b(\d+)[ -](?:minutes?|min|hours?|h)\b")
 DURATION_WHITELIST = {"INC-0171": {23, 168}}

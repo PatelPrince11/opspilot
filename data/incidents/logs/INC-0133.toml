@@ -1,0 +1,41 @@
+# Synthetic logs for INC-0133. Our own services' formats; OOMKilled is the Kubernetes reason string.
+[[line]]
+at = "07:02:15"
+service = "notification-worker"
+host = "notification-worker-01.prod.internal"
+level = "ERROR"
+message = "container terminated: reason OOMKilled, exit code 137"
+
+[[line]]
+at = "07:55:00"
+service = "notification-worker"
+host = "notification-worker-01.prod.internal"
+level = "INFO"
+message = "memory limit raised; pod restarted"
+
+[[burst]]
+from = "07:00:05"
+to = "07:54:50"
+count = 30
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal"]
+message = "email batch: sent {int:100-900} messages"
+
+[[burst]]
+from = "07:56:00"
+to = "08:09:50"
+count = 20
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal"]
+message = "email batch: sent {int:100-900} messages"
+
+[[burst]]
+from = "06:50:00"
+to = "06:59:50"
+count = 4
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal"]
+message = "idle, no batch queued"

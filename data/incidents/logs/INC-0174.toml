@@ -1,0 +1,69 @@
+# Synthetic logs for INC-0174. Our own service formats; no vendor text quoted.
+[[line]]
+at = "09:00:05"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "WARN"
+message = "alert: retained WAL above 50 GB; slot payments_db_02 active=false"
+
+[[line]]
+at = "09:06:00"
+service = "payments-db"
+host = "payments-db-02.prod.internal"
+level = "WARN"
+message = "WAL receiver not streaming from payments-db-01.prod.internal"
+
+[[line]]
+at = "11:55:00"
+service = "payments-db"
+host = "payments-db-02.prod.internal"
+level = "INFO"
+message = "WAL receiver streaming from payments-db-01.prod.internal"
+
+[[line]]
+at = "11:55:02"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "slot payments_db_02 active again; replica catching up"
+
+[[line]]
+at = "12:30:00"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "CHECKPOINT complete; old WAL segments removed"
+
+[[line]]
+at = "12:40:00"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "retained WAL back to normal size; alert cleared"
+
+[[burst]]
+from = "09:05:00"
+to = "11:50:00"
+count = 40
+service = "payments-db"
+level = "WARN"
+hosts = ["payments-db-01.prod.internal"]
+message = "slot payments_db_02 still inactive; WAL retained and growing"
+
+[[burst]]
+from = "09:05:00"
+to = "11:50:00"
+count = 15
+service = "payments-db"
+level = "WARN"
+hosts = ["payments-db-02.prod.internal"]
+message = "WAL receiver not streaming from payments-db-01.prod.internal"
+
+[[burst]]
+from = "08:52:00"
+to = "08:59:30"
+count = 10
+service = "payments-db"
+level = "INFO"
+hosts = ["payments-db-01.prod.internal"]
+message = "checkpoint complete"

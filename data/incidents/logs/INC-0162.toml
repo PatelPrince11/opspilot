@@ -1,0 +1,57 @@
+# Synthetic logs for INC-0162. No vendor error text is quoted; everything is our own service format.
+[[line]]
+at = "17:05:12"
+service = "card-processor-proxy"
+host = "card-processor-proxy-01.prod.internal"
+level = "WARN"
+message = "CPX-W429 processor rate-limit reply; attempt rejected"
+
+[[line]]
+at = "17:05:15"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "WARN"
+message = "CPX-W429 processor rate-limit reply; attempt rejected"
+
+[[line]]
+at = "17:46:10"
+service = "payments-api"
+host = "payments-api-01.prod.internal"
+level = "INFO"
+message = "config reload: CPX_MAX_ATTEMPTS=1"
+
+[[burst]]
+from = "17:05:20"
+to = "17:47:30"
+count = 30
+service = "card-processor-proxy"
+level = "WARN"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "CPX-W429 processor rate-limit reply; attempt rejected"
+
+[[burst]]
+from = "17:06:00"
+to = "17:47:30"
+count = 24
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-E1107 card processor call failed after 3 attempts"
+
+[[burst]]
+from = "17:06:30"
+to = "17:47:30"
+count = 20
+service = "orders-api"
+level = "ERROR"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "ORD-5003 payment call failed or timed out from orders-api's side; retrying"
+
+[[burst]]
+from = "17:08:00"
+to = "17:47:30"
+count = 24
+service = "edge-gateway"
+level = "ERROR"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "upstream orders-api timed out after 15s, returned 504 for POST /checkout"

@@ -1,0 +1,53 @@
+# Synthetic logs for INC-0084. Our own service formats; no vendor text quoted.
+[[line]]
+at = "04:10:05"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "WARN"
+message = "alert: retained WAL above 50 GB; slot cdc_payments active=false"
+
+[[line]]
+at = "04:12:30"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "on-call: replication slot check, cdc_payments inactive and holding the most WAL"
+
+[[line]]
+at = "07:24:10"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "slot cdc_payments no longer pinning WAL"
+
+[[line]]
+at = "07:26:00"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "manual CHECKPOINT requested; old WAL segments being removed"
+
+[[line]]
+at = "07:30:00"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "retained WAL back to normal size; alert cleared"
+
+[[burst]]
+from = "04:10:30"
+to = "07:20:00"
+count = 40
+service = "payments-db"
+level = "WARN"
+hosts = ["payments-db-01.prod.internal"]
+message = "slot cdc_payments still inactive; WAL retained and growing"
+
+[[burst]]
+from = "04:00:00"
+to = "04:09:00"
+count = 20
+service = "payments-db"
+level = "INFO"
+hosts = ["payments-db-01.prod.internal"]
+message = "checkpoint complete"

@@ -1,0 +1,62 @@
+# Synthetic logs for INC-0026. Our own service formats; no vendor text quoted.
+[[line]]
+at = "14:15:20"
+service = "payments-api"
+host = "payments-api-01.prod.internal"
+level = "ERROR"
+message = "PAYAPI-E1042 could not acquire database connection within 500ms; returning error"
+
+[[line]]
+at = "14:35:10"
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+level = "WARN"
+message = "pool status: clients waiting while server connections idle"
+
+[[line]]
+at = "14:45:30"
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+level = "WARN"
+message = "pgbouncer process cpu at 100% of one core"
+
+[[line]]
+at = "14:50:15"
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+level = "INFO"
+message = "escalated to team-payments infra; pool sizes unchanged"
+
+[[line]]
+at = "15:00:00"
+service = "payments-api"
+host = "payments-api-01.prod.internal"
+level = "INFO"
+message = "db acquire wait back within deadline"
+
+[[burst]]
+from = "14:15:30"
+to = "14:58:00"
+count = 40
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-E1042 could not acquire database connection within 500ms; returning error"
+
+[[burst]]
+from = "14:16:00"
+to = "14:57:00"
+count = 24
+service = "payments-pgbouncer"
+level = "WARN"
+hosts = ["payments-pgbouncer-01.prod.internal"]
+message = "pgbouncer process cpu at {int:96-100}% of one core"
+
+[[burst]]
+from = "14:05:00"
+to = "14:14:30"
+count = 10
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "POST /v1/payments 200"

@@ -1,0 +1,51 @@
+# Synthetic logs for INC-0108. Our own services' formats; ETIMEDOUT is the Node/libc errno name
+# used in RB-017.
+[[line]]
+at = "03:12:30"
+service = "redis-cache"
+host = "redis-cache-02.prod.internal"
+level = "WARN"
+message = "sentinel marked redis-cache-01 down"
+
+[[line]]
+at = "03:12:38"
+service = "redis-cache"
+host = "redis-cache-02.prod.internal"
+level = "INFO"
+message = "sentinel promoted redis-cache-02 to primary"
+
+[[burst]]
+from = "03:12:01"
+to = "03:12:39"
+count = 16
+service = "catalog-api"
+level = "WARN"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "CAT-E301 cache unavailable (ETIMEDOUT), reading through to catalog-db"
+
+[[burst]]
+from = "03:13:00"
+to = "03:33:00"
+count = 14
+service = "catalog-db"
+level = "WARN"
+hosts = ["catalog-db-01.prod.internal"]
+message = "cpu {ramp:90-45}%, query rate above baseline"
+
+[[burst]]
+from = "03:05:00"
+to = "03:11:59"
+count = 6
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "GET /v1/products/{int:1-9999} 200 cache hit"
+
+[[burst]]
+from = "03:35:00"
+to = "03:40:00"
+count = 6
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "GET /v1/products/{int:1-9999} 200 cache hit"
