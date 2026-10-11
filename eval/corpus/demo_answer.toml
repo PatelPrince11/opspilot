@@ -90,6 +90,7 @@ key_facts = [
   "a rollout-tool run scoped to payments-pgbouncer-01 wrote /etc/pgbouncer/pgbouncer.ini at 14:30:39",
   "systemctl restart pgbouncer exited 0, but the unit is Type=simple, so that proved nothing",
   "pgbouncer rejected pool_mode value transction and exited with status 1",
+  "systemd did not restart it (F6)",
   "pgbouncer is not enrolled in the 2026-08-20 rollout health gate, so only the restart exit status was checked",
   "payments-api alternates bouncers per new connection with no fallback, so about half of new connections fail",
   "payments-db is healthy; this is not pool exhaustion (no PAYAPI-E1042, no 53300)",

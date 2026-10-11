@@ -1623,6 +1623,7 @@ Invented details of the fictional company, introduced in batch 1. Reuse them as-
 - **F3:** the `pgbouncer` systemd unit is `Type=simple`, so `systemctl restart` exits 0 even if pgbouncer dies seconds later. Upstream's shipped unit differs: `etc/pgbouncer.service` at `pgbouncer_1_22_0` is `Type=notify`.
 - **F4:** the rollout tool logs to each host's journal under the identifier `rollout`.
 - **F5:** a rollout-tool run can be scoped to a subset of hosts (e.g. a canary-only run).
+- **F6:** the pgbouncer systemd unit has no Restart= setting (systemd default: no restart), so a failed start stays down until someone acts.
 - Demo: 2026-10-06, a run scoped to payments-pgbouncer-01. The config error is a misspelled `pool_mode` (`transction`), verified from 1.22 source in the 2026-10-11 PgBouncer entry.
 
 **Skeleton rules from batch 4** (approved; tested in `tests/test_incidents.py`)
