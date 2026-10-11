@@ -1311,6 +1311,12 @@ rows: all 14 are written. Every past-events constraint row is written.
 - The skeleton's balance tests still describe all 200 rows; nothing claims the written subset matches
   them beyond the counts above.
 
+## Standing rules (write-ups)
+
+- **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
+  cause or symptom service, or a runbook the row cites (not a post-dated one) names it. Enforced by the
+  validator's `teams` check (`team_sources` in `scripts/corpus/incidents.py`).
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.
