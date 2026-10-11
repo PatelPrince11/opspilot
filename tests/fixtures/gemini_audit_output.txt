@@ -1,11 +1,12 @@
 Q001 | OK | missing_gold: none | unsupported_facts: none | reason: Both facts are in INC-0107.
-Q002 | WRONG | missing_gold: RB-014 | unsupported_facts: 2 | reason: Fact 2 is not stated in the gold docs.
+Q002 | WRONG | missing_gold: RB-014 | unsupported_facts: 2 | reason: INC-0015 has no such detail for fact 2; RB-014 covers it.
 Q003 | OK | missing_gold: INC-0022 | unsupported_facts: none | reason: INC-0022 also answers it.
 
-Q004 | OK | missing_gold: None | unsupported_facts: None | reason: Gold answers it.
+Q004 | OK | missing_gold: None | unsupported_facts: None | reason: INC-0049 states row locks on reservations.
 Q005 | MAYBE | missing_gold: none | unsupported_facts: none | reason: unsure
 Q006 | OK | missing_gold: kafka-02 | unsupported_facts: none | reason: bad id
 Q007 | OK | missing_gold: none | unsupported_facts: 9 | reason: no fact 9
 Q001 | OK | missing_gold: none | unsupported_facts: none | reason: duplicate
 Q999 | OK | missing_gold: none | unsupported_facts: none | reason: unknown id
+Q008 | OK | missing_gold: none | unsupported_facts: none | reason: The gold documents perfectly support every fact.
 Here are the results:

@@ -74,10 +74,10 @@ import-human:
 	@uv run python eval/validate_questions.py --import-human $(FILE) --author $(AUTHOR)
 
 # Gemini label audit, pasted by hand into AI Studio (no LLM calls from code):
-#   make audit-pack            -> scratchpad/gemini_audit/corpus.md, batch_01..08.md
-#   make import-audit FILE=path -> eval/label_audit.md
+#   make audit-pack [FROM=N]          -> scratchpad/gemini_audit/corpus.md, batch_NN..08.md
+#   make import-audit FILE="a.txt b.txt" -> eval/label_audit.md (files merged)
 audit-pack:
-	@uv run python eval/label_audit.py pack
+	@uv run python eval/label_audit.py pack $(if $(FROM),--from $(FROM))
 
 import-audit:
 	@uv run python eval/label_audit.py import $(FILE)

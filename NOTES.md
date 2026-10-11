@@ -1521,6 +1521,12 @@ about 447 KB) and `batch_01..08.md` (20 questions each, fixed instructions, numb
 reason` lines into `eval/label_audit.md`: every flagged question plus 10 seeded OK ones, each with a
 Prince AGREE/DISAGREE line. Malformed, duplicate or unknown-id lines fail the import; missing ids are
 listed. No question or label changed.
+- First Gemini pass: Q081-Q160 came back rubber-stamped (all OK, generic praise, the `reason:` label
+  dropped) and were discarded. The batch instructions now require the gold doc ids checked and the
+  detail found for each key fact, say "If you did not open the document, answer WRONG. Generic praise is
+  not a reason.", and repeat the line format at the end. The importer rejects a reason naming no
+  INC-NNNN or RB-NNN id and merges several files (`FILE="a b"`). Batches 05-08 are re-run with this;
+  the kept Q001-Q080 lines all cite ids.
 
 **Phase 2 requirement:** Retrieval eval also reports all-gold Recall@k for questions with 2+ gold
 docs, because at-least-one recall flatters multi-gold questions (108 of 160).

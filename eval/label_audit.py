@@ -1,9 +1,9 @@
 """Gemini label audit, by hand: no LLM calls from code.
 
-    python eval/label_audit.py pack           # scratchpad/gemini_audit/corpus.md + batch_01..08.md
-    python eval/label_audit.py import FILE    # Gemini's pasted lines -> eval/label_audit.md
+    python eval/label_audit.py pack [--from N]   # corpus.md + batch_NN..08.md (default all)
+    python eval/label_audit.py import FILE...    # Gemini's pasted lines, merged -> label_audit.md
 
-Prince pastes corpus.md, then each batch, into Google AI Studio and saves the replies to FILE.
+Prince pastes the corpus, then each batch, into Google AI Studio and saves the replies to FILEs.
 """
 
 import argparse
@@ -23,23 +23,28 @@ BATCH = 20
 SAMPLE = 10
 
 INSTRUCTIONS = """You are auditing an evaluation set. The corpus was pasted in an earlier message. For each question: (1) Do the listed gold docs together answer it? (2) Is each key fact stated in a gold doc? Quote the doc id. (3) Does any doc NOT listed also clearly answer it? List those ids. Use only the corpus, never outside knowledge. Output one line per question, exactly:
-<qid> | OK or WRONG | missing_gold: <ids or none> | unsupported_facts: <fact numbers or none> | reason: <one short sentence>
+<qid> | OK or WRONG | missing_gold: <ids or none> | unsupported_facts: <fact numbers or none> | reason: <evidence>
+The reason must name the gold doc id(s) you checked and, for each key fact, the specific detail you found (a few words each), e.g. "reason: INC-0124 states pool 20/20 at 23:35; RB-013 states parallelism 24".
+If you did not open the document, answer WRONG. Generic praise is not a reason.
 Output nothing else."""  # noqa: E501
+REMINDER = """Reminder, one line per question, exactly:
+<qid> | OK or WRONG | missing_gold: <ids or none> | unsupported_facts: <fact numbers or none> | reason: <doc ids and the detail found for each key fact>"""  # noqa: E501
 
 LINE = re.compile(
     r"^(?P<qid>Q\d{3}) \| (?P<verdict>OK|WRONG) \| missing_gold: (?P<missing>[^|]+?) \| "
     r"unsupported_facts: (?P<facts>[^|]+?) \| reason: (?P<reason>.+)$"
 )
 DOC_ID = re.compile(r"^(?:INC-\d{4}|RB-\d{3})$")
+CITES_DOC = re.compile(r"\b(?:INC-\d{4}|RB-\d{3})\b")
 
 
-def pack(questions: list[dict], out: Path = PACK) -> list[Path]:
+def pack(questions: list[dict], out: Path = PACK, first: int = 1) -> list[Path]:
     out.mkdir(parents=True, exist_ok=True)
     text = Corpus().text  # the 117 written incidents and 30 runbooks, nothing else
     corpus = out / "corpus.md"
     corpus.write_text("".join(f"=== {i} ===\n{text[i].strip()}\n\n" for i in sorted(text)))
     paths = [corpus]
-    for n in range(0, len(questions), BATCH):
+    for n in range((first - 1) * BATCH, len(questions), BATCH):
         blocks = [INSTRUCTIONS, ""]
         for q in questions[n : n + BATCH]:
             facts = "\n".join(f"  {k}. {f}" for k, f in enumerate(q["expected_key_facts"], 1))
@@ -47,8 +52,9 @@ def pack(questions: list[dict], out: Path = PACK) -> list[Path]:
                 f"{q['id']}\nQuestion: {q['question']}\n"
                 f"Gold: {', '.join(q['relevant_doc_ids'])}\nKey facts:\n{facts}\n"
             )
+        blocks.append(REMINDER)
         path = out / f"batch_{n // BATCH + 1:02}.md"
-        path.write_text("\n".join(blocks))
+        path.write_text("\n".join(blocks) + "\n")
         paths.append(path)
     return paths
 
@@ -80,10 +86,17 @@ def parse(text: str, questions: list[dict]) -> tuple[dict[str, dict], list[str],
             bad.append(f"missing_gold is not 'none' or doc ids: {line!r}")
         elif not all(x.isdigit() and 1 <= int(x) <= n_facts for x in facts):
             bad.append(f"unsupported_facts is not 'none' or fact numbers 1..{n_facts}: {line!r}")
+        elif not CITES_DOC.search(row["reason"]):
+            bad.append(f"reason names no INC-NNNN or RB-NNN id: {line!r}")
         else:
             rows[qid] = row | {"missing": missing, "facts": [int(x) for x in facts]}
     absent = [q["id"] for q in questions if q["id"] not in rows]
     return rows, bad, absent
+
+
+def read_all(files: list[Path]) -> str:
+    """Several Gemini replies merged into one text; a qid in two files is a duplicate line."""
+    return "\n".join(f.read_text() for f in files)
 
 
 def flagged(row: dict) -> bool:
@@ -125,16 +138,17 @@ def report(questions: list[dict], rows: dict[str, dict], absent: list[str]) -> s
 def main() -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("pack")
+    pk = sub.add_parser("pack")
+    pk.add_argument("--from", dest="first", type=int, default=1, help="first batch to write")
     imp = sub.add_parser("import")
-    imp.add_argument("file", type=Path)
+    imp.add_argument("files", type=Path, nargs="+")
     args = ap.parse_args()
     questions = [q for q in load(QUESTIONS) if q["relevant_doc_ids"]]
     if args.cmd == "pack":
-        for p in pack(questions):
+        for p in pack(questions, first=args.first):
             print(p.relative_to(ROOT))
         return 0
-    rows, bad, absent = parse(args.file.read_text(), questions)
+    rows, bad, absent = parse(read_all(args.files), questions)
     for b in bad:
         print(f"malformed: {b}")
     if bad:
