@@ -1,0 +1,45 @@
+# Synthetic logs for INC-0179. Lines are our own wording; EAI_AGAIN is the resolver status name.
+[[burst]]
+from = "02:50:30"
+to = "02:59:59"
+count = 8
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+message = "send handed to email provider"
+
+[[burst]]
+from = "03:00:10"
+to = "06:34:30"
+count = 40
+service = "notification-worker"
+level = "WARN"
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+message = "name lookup for email provider API was slow to answer"
+
+[[burst]]
+from = "03:01:00"
+to = "06:33:00"
+count = 12
+service = "notification-worker"
+level = "ERROR"
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+message = "name lookup failed: EAI_AGAIN"
+
+[[burst]]
+from = "03:00:30"
+to = "06:34:00"
+count = 30
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+message = "send handed to email provider"
+
+[[burst]]
+from = "06:35:20"
+to = "06:44:30"
+count = 8
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+message = "send handed to email provider"

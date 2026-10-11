@@ -1,0 +1,45 @@
+# Synthetic logs for INC-0182. Pool size 25 per pod; ORD-5003 only after the pool is full.
+[[burst]]
+from = "10:06:00"
+to = "10:14:59"
+count = 6
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "pg pool in use {int:6-14} of 25"
+
+[[burst]]
+from = "10:15:00"
+to = "10:17:00"
+count = 5
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "pg pool in use {ramp:15-25} of 25, waiting requests {ramp:0-12}"
+
+[[burst]]
+from = "10:17:30"
+to = "10:39:00"
+count = 12
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "pg pool in use 25 of 25, waiting requests {int:10-40}"
+
+[[burst]]
+from = "10:17:40"
+to = "10:39:30"
+count = 50
+service = "orders-api"
+level = "ERROR"
+hosts = ["orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "ORD-5003 database call failed from orders-api: no pool connection became free"
+
+[[burst]]
+from = "10:40:30"
+to = "10:49:00"
+count = 6
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "pg pool in use {int:6-14} of 25"

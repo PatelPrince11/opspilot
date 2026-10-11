@@ -1,0 +1,39 @@
+# Synthetic logs for INC-0159. Everything is our own service format.
+[[line]]
+at = "06:55:03"
+service = "card-processor-proxy"
+host = "card-processor-proxy-01.prod.internal"
+level = "WARN"
+message = "CPX-W429 processor rate limit hit; request delayed or rejected"
+
+[[line]]
+at = "06:55:05"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "WARN"
+message = "CPX-W429 processor rate limit hit; request delayed or rejected"
+
+[[line]]
+at = "07:05:20"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "INFO"
+message = "processor responses normal again; no CPX-W429 since 07:04"
+
+[[burst]]
+from = "06:55:10"
+to = "07:04:40"
+count = 40
+service = "card-processor-proxy"
+level = "WARN"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "CPX-W429 processor rate limit hit; request delayed or rejected"
+
+[[burst]]
+from = "06:45:00"
+to = "06:54:50"
+count = 10
+service = "card-processor-proxy"
+level = "INFO"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "forwarded payment request to processor in {int:80-260}ms"

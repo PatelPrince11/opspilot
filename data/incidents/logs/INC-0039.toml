@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0039. Kill times are a sample; no kill count is implied.
+[[burst]]
+from = "12:25:00"
+to = "12:34:59"
+count = 4
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal"]
+message = "login ok in {int:40-140}ms"
+
+[[burst]]
+from = "12:35:00"
+to = "21:24:00"
+count = 3
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-01.prod.internal"]
+message = "container terminated: reason OOMKilled, exit code 137; pod restarting"
+
+[[burst]]
+from = "12:36:00"
+to = "21:24:00"
+count = 40
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal"]
+message = "login ok in {int:40-140}ms"
+
+[[burst]]
+from = "21:26:00"
+to = "21:34:00"
+count = 4
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal"]
+message = "login ok in {int:40-140}ms"

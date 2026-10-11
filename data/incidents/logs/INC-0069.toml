@@ -1,0 +1,38 @@
+# Synthetic logs for INC-0069. Kill times are a sample; no restart count is implied.
+[[burst]]
+from = "23:15:00"
+to = "23:24:59"
+count = 4
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-03.prod.internal"]
+message = "GET /orders {int:60-220}ms"
+
+[[burst]]
+from = "23:25:00"
+to = "23:59:59"
+count = 1
+service = "orders-api"
+level = "ERROR"
+hosts = ["orders-api-03.prod.internal"]
+message = "container terminated: reason OOMKilled, exit code 137; pod restarting"
+
+[[burst]]
+from = "00:00:00"
+to = "11:34:00"
+count = 2
+service = "orders-api"
+level = "ERROR"
+hosts = ["orders-api-03.prod.internal"]
+date = "2025-08-10"
+message = "container terminated: reason OOMKilled, exit code 137; pod restarting"
+
+[[burst]]
+from = "00:00:00"
+to = "11:34:00"
+count = 40
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-03.prod.internal"]
+date = "2025-08-10"
+message = "GET /orders {int:60-220}ms"

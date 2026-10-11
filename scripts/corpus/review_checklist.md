@@ -36,3 +36,14 @@ From batch 8 review (A/B/C):
   as commentary. Give each idiom to one document at most.
 - Twin documents (same service and cause) don't share their closing list or their argument order.
 - A history reference may only name events before the incident (validator now checks "Month YYYY").
+
+From batch 9 review (A/B/C):
+- Log samples must not imply what the prose says wasn't recorded: no per-minute counts of handshakes,
+  requests or errors, no "oldest query N s", and only 2-3 kill or retry lines when the count is unknown.
+- Error lines start only after the ramp they depend on reaches its ceiling (pool full, then E1042).
+- A sibling incident (same service, same cause) is never referenced, even undated ("the earlier one").
+- A mechanism explanation shared by several documents (Node event loop, ndots search list, OOMKilled
+  137 vs reason, Redis write refusals) goes in one document; the others state it in a clause.
+- Don't apply one runtime's behaviour to a service whose runtime isn't stated (glibc attempts:2).
+- Name the team that took an incident only if a source gives it; otherwise "the on-call".
+- A planned operation's documented command is cited as the documented way, not as what was typed.

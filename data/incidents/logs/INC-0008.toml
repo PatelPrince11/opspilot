@@ -1,0 +1,27 @@
+# Synthetic logs for INC-0008. Lines are our own wording; edge-gateway lines summarise access-log counts.
+[[burst]]
+from = "18:00:30"
+to = "18:09:59"
+count = 8
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "POST /v1/payments handled in {int:80-300}ms"
+
+[[burst]]
+from = "18:10:10"
+to = "19:14:30"
+count = 44
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "POST /v1/payments outlived the 15s route timeout, edge returns 504"
+
+[[burst]]
+from = "19:15:20"
+to = "19:24:30"
+count = 8
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "POST /v1/payments handled in {int:80-300}ms"

@@ -1,0 +1,41 @@
+# Synthetic logs for INC-0165. Everything is our own service format.
+[[line]]
+at = "23:35:10"
+service = "ledger-service"
+host = "ledger-service-01.prod.internal"
+level = "WARN"
+message = "LEDGER-W210 HikariCP active connections above 90% of pool"
+
+[[line]]
+at = "23:35:02"
+service = "ledger-service"
+host = "ledger-service-01.prod.internal"
+level = "INFO"
+message = "http-nio-8080-exec-4 serializing month-end reconciliation result"
+
+[[line]]
+date = "2026-06-02"
+at = "00:44:50"
+service = "ledger-service"
+host = "ledger-service-01.prod.internal"
+level = "INFO"
+message = "CPU use back at its usual level"
+
+[[burst]]
+from = "23:35:20"
+to_date = "2026-06-02"
+to = "00:43:00"
+count = 30
+service = "ledger-service"
+level = "WARN"
+hosts = ["ledger-service-01.prod.internal"]
+message = "LEDGER-W210 HikariCP active connections above 90% of pool"
+
+[[burst]]
+from = "23:25:00"
+to = "23:34:50"
+count = 12
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal"]
+message = "published entry to ledger.entries partition={int:0-11}"

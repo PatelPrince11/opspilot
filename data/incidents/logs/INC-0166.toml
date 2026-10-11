@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0166. Edge route timeout is 15 s; UT is Envoy's upstream-timeout flag.
+[[burst]]
+from = "12:56:00"
+to = "13:04:59"
+count = 14
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal"]
+message = "POST /checkout 200 {int:90-260}ms"
+
+[[burst]]
+from = "13:05:00"
+to = "13:29:00"
+count = 5
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-01.prod.internal"]
+message = "event loop busy; request handlers waiting"
+
+[[burst]]
+from = "13:05:30"
+to = "13:29:30"
+count = 8
+service = "edge-gateway"
+level = "ERROR"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "POST /checkout 504 UT duration=15000ms upstream=orders-api-01"
+
+[[burst]]
+from = "13:30:30"
+to = "13:39:00"
+count = 14
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal"]
+message = "POST /checkout 200 {int:90-260}ms"

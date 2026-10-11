@@ -1,0 +1,41 @@
+# Synthetic logs for INC-0054. Lines are our own wording.
+[[line]]
+at = "02:25:10"
+service = "redis-cache"
+host = "redis-cache-01.prod.internal"
+level = "INFO"
+message = "primary role for cache being handed to redis-cache-02.prod.internal"
+
+[[line]]
+at = "02:25:11"
+service = "redis-cache"
+host = "redis-cache-02.prod.internal"
+level = "INFO"
+message = "taking over as primary for cache"
+
+[[burst]]
+from = "02:25:12"
+to = "02:25:59"
+count = 6
+service = "catalog-api"
+level = "WARN"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "CAT-E301 cache unavailable, reading through to catalog-db"
+
+[[burst]]
+from = "02:15:30"
+to = "02:24:59"
+count = 14
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "GET /products served from cache in {int:4-20}ms"
+
+[[burst]]
+from = "02:26:10"
+to = "02:49:30"
+count = 24
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "GET /products served from cache in {int:4-20}ms"

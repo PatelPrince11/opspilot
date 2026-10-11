@@ -1,0 +1,27 @@
+# Synthetic logs for INC-0117. edge-gateway lines are our own summaries of Envoy access-log counts.
+[[burst]]
+from = "11:35:30"
+to = "11:44:59"
+count = 10
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "access summary last minute: responses ok"
+
+[[burst]]
+from = "11:45:10"
+to = "12:24:30"
+count = 40
+service = "edge-gateway"
+level = "WARN"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "access summary last minute: responses include 504"
+
+[[burst]]
+from = "12:25:20"
+to = "12:34:30"
+count = 10
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "access summary last minute: responses ok"

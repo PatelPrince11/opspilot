@@ -71,12 +71,19 @@ BATCH8 = {
     *("INC-0095", "INC-0065", "INC-0049", "INC-0074", "INC-0186", "INC-0195", "INC-0167"),
     *("INC-0028", "INC-0005", "INC-0145", "INC-0155", "INC-0123", "INC-0022"),
 }
+BATCH9 = {
+    *("INC-0035", "INC-0182", "INC-0136", "INC-0043", "INC-0082", "INC-0126", "INC-0166"),
+    *("INC-0088", "INC-0187", "INC-0146", "INC-0014", "INC-0159", "INC-0196", "INC-0179"),
+    *("INC-0076", "INC-0008", "INC-0037", "INC-0165", "INC-0169", "INC-0184", "INC-0054"),
+    *("INC-0069", "INC-0039", "INC-0006", "INC-0083", "INC-0112", "INC-0117"),
+}
 # most uses of one format
 FORMAT_CAP = {
     "batch5": (BATCH5, 2),
     "batch6": (BATCH6, 4),
     "batch7": (BATCH7, 4),
     "batch8": (BATCH8, 4),
+    "batch9": (BATCH9, 4),
 }
 
 
@@ -128,7 +135,7 @@ def events(rows, docs, services_doc):
 
 
 def test_batch_documents_validate(docs, rows, services_doc, rb_ids):
-    assert BATCH5 <= set(docs) <= BATCH5 | BATCH6 | BATCH7 | BATCH8
+    assert BATCH5 <= set(docs) <= BATCH5 | BATCH6 | BATCH7 | BATCH8 | BATCH9
     validate_documents(list(docs.values()), rows, services_doc, rb_ids)
 
 
@@ -202,6 +209,9 @@ def body_replace(old, new):
         ("INC-0048", body_add("Their status page confirmed it."), "unsupported claim"),
         ("INC-0055", body_add("Redis said the dataset is being loaded."), "unverified real-world"),
         ("INC-0055", body_add("Like the August 2025 case."), "after the write-up date"),
+        ("INC-0055", body_add("The row is filed as a pool problem."), "unsupported claim"),
+        ("INC-0055", body_add("The row for this incident says sev2."), "unsupported claim"),
+        ("INC-0099", body_add("sentinel: failover requested."), "unverified real-world"),
         ("INC-0055", body_add("PgBouncer listens on 6432."), "demo guard"),
         ("INC-0055", body_add("We checked again at 03:15."), "outside start-2h"),
         ("INC-0055", body_add("- 13:00 · late entry"), "timeline goes backwards"),
@@ -387,8 +397,17 @@ def test_batch8_limiter_fact_rejects_contradictions(contradiction):
     assert not fact_errors("search-cluster-02 rejected searches.", {"facts": {"limiter": False}})
 
 
+@pytest.mark.parametrize(
+    "contradiction",
+    ["The release went out on time at 20:40.", "The deploy was not delayed by the migration."],
+)
+def test_batch9_release_delayed_fact_rejects_contradictions(contradiction):
+    assert fact_errors(contradiction, {"facts": {"release_delayed": True}})
+    assert not fact_errors("The migration retried twice.", {"facts": {"release_delayed": True}})
+
+
 def test_every_written_boolean_fact_has_a_pattern(side):
-    for i in BATCH5 | BATCH6 | BATCH7 | BATCH8:
+    for i in BATCH5 | BATCH6 | BATCH7 | BATCH8 | BATCH9:
         for k, v in side[i].get("facts", {}).items():
             assert not isinstance(v, bool) or k in FORBIDDEN_BY_FACT, (i, k)
 
@@ -520,6 +539,39 @@ ARITHMETIC = [
     ("INC-0155", at("20:45") - at("19:25"), "80", 0),
     ("INC-0123", at("02:00") - at("01:50"), "10", 0),
     ("INC-0022", at("18:35") - at("18:15"), "20", 0),
+    # batch 9
+    ("INC-0035", 4 * 40, "160", 0),
+    ("INC-0035", 2 * 40, "80", 0),
+    ("INC-0035", at("02:20") - at("01:55"), "25", 0),
+    ("INC-0182", 2 * 25, "50", 0),
+    ("INC-0182", 3 * 25, "75", 0),
+    ("INC-0083", 4 * 40, "160", 0),
+    ("INC-0083", 2 * 40, "80", 0),
+    ("INC-0182", at("10:40") - at("10:15"), "25", 0),
+    ("INC-0136", 2 * 20, "40", 0),
+    ("INC-0136", 0.9 * 20, "18", 0),
+    ("INC-0088", at("04:25") - at("03:50"), "35", 0),
+    ("INC-0166", at("13:30") - at("13:05"), "25", 0),
+    ("INC-0112", at("21:42") - at("20:37"), "65", 0),
+    ("INC-0039", at("21:25") - at("12:35"), "530", 0),
+    ("INC-0043", at("16:32") - at("16:07"), "25", 0),
+    ("INC-0082", at("15:05") - at("10:45"), "260", 0),
+    ("INC-0126", at("09:55") - at("09:00"), "55", 0),
+    ("INC-0076", at("11:35") - at("11:20"), "15", 0),
+    ("INC-0196", at("22:40") - at("17:55"), "285", 0),
+    ("INC-0179", at("06:35") - at("03:00"), "215", 0),
+    ("INC-0117", at("12:25") - at("11:45"), "40", 0),
+    ("INC-0054", at("02:40") - at("02:25"), "15", 0),
+    ("INC-0008", at("19:15") - at("18:10"), "65", 0),
+    ("INC-0146", at("11:45") - at("11:05"), "40", 0),
+    ("INC-0014", at("07:45") - at("07:00"), "45", 0),
+    ("INC-0187", at("10:32") - at("09:47"), "45", 0),
+    ("INC-0169", at("13:20") - at("11:35"), "105", 0),
+    ("INC-0169", 32 - 24, "8", 0),
+    ("INC-0184", at("06:05") - at("04:10"), "115", 0),
+    ("INC-0037", at("23:00") - at("21:55"), "65", 0),
+    ("INC-0165", at("24:45") - at("23:35"), "70", 0),
+    ("INC-0006", at("24:40") - at("23:40"), "60", 0),
 ]
 
 

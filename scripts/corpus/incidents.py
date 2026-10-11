@@ -204,6 +204,9 @@ BLOCKED_PHRASES = [
     "on its behalf",
     "notes from the night",
     "status page",
+    # batch 9: talk about the skeleton row itself
+    "the row is filed",
+    "the row for this incident",
 ]
 # Earlier write-ups that break a batch 8 phrase rule: reported to Prince, not edited.
 BLOCKED_EXEMPT = {
@@ -220,6 +223,7 @@ UNVERIFIED_STRINGS = [
     "+switch-master",
     "Started coredns.service",  # systemd job.c prints the Description=, unknown for coredns
     "dataset is being loaded",  # batch 8: only the LOADING token is verified, not Redis's sentence
+    "sentinel: failover",  # batch 9: a Sentinel event line in our words is still one
 ]
 # Runbooks written as the story of one incident did not exist before it (skeleton test and
 # write-up validator): a write-up may not cite one for an incident that started earlier.

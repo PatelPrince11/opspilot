@@ -48,6 +48,12 @@ FORBIDDEN_BY_FACT = {
         r"\b(?:edge|local)\s+(?:rate[- ])?limit(?:er)?\s+"
         r"(?:rejected|kicked in|fired|tripped|was hit|throttled)"
     ],
+    # batch 9: the catalog-api release waited on its migration's lock timeout
+    "release_delayed": [
+        r"\b(?:release|deploy|rollout)\w*\s+(?:went out|shipped|finished|completed)\s+"
+        r"on (?:time|schedule)",
+        r"\b(?:was|were)\s+not\s+delayed\b",
+    ],
 }
 DUR_RE = re.compile(r"\b(\d+)[ -](?:minutes?|min|hours?|h)\b")
 DURATION_WHITELIST = {"INC-0171": {23, 168}}

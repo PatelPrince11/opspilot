@@ -1145,6 +1145,172 @@ quotes; OpenSearch rejection exception text; Postgres lock-wait log wording.
   silently applied.
 - Why the coordinator screens rows for facts a write-up would have to invent before selecting them.
 
+## 2026-10-11: Phase 1 step 3, batch 9 (27 incident write-ups)
+
+**Built:**
+- 27 write-ups plus log specs, selected after batch 8 landed: 0006, 0008, 0014, 0035, 0037, 0039, 0043,
+  0054, 0069, 0076, 0082, 0083, 0088, 0112, 0117, 0126, 0136, 0146, 0159, 0165, 0166, 0169, 0179, 0182,
+  0184, 0187, 0196
+- Selection: no writable deferrals and no unwritten hard-negative rows were left, so the batch is pure
+  balance: +3 for each of the 9 non-disk cause types. Severity +2/8/10/7. Formats 3 each. Rows with no
+  runbook: 0159, 0182.
+- Corpus: 117 incidents, 8,439 synthetic log lines, 1,170 LogHub lines placed.
+- **Validator**, each with a broken-input test:
+  - `FORBIDDEN_BY_FACT` gains `release_delayed` (0112: never "went out on time" / "not delayed").
+  - `BLOCKED_PHRASES` gains "the row is filed" and "the row for this incident" (talk about the
+    skeleton row). "this row" stays allowed: 0068/0086 use it for RB-025's table row.
+  - `UNVERIFIED_STRINGS` gains "sentinel: failover" (a Sentinel event line reworded is still one).
+- **Tests:** `BATCH9` set and cap 4; 32 ARITHMETIC rows; 383 tests.
+- `review_checklist.md`: batch 9 judgement rules appended.
+
+**Decisions**
+- **Process:** as batch 8, with fresh writers (pilot 0043 read before the others launched), fresh
+  reviewers and new canaries.
+- **No post-dated runbooks.** RB-013 (0136), RB-021 (0179, 0196), RB-028 (0112) and RB-030 (0146) all
+  predate their rows; no linked runbook's dated history line is one of these events. `NARRATIVE` unchanged.
+- **No fixes are sourced** in batch 9: every resolution names who took it (a runbook's owner team, or
+  "the on-call") and when the errors stopped.
+- **RB-021 rows 0179/0196** rest on RB-021's statement that only orders-api sets its own ndots; neither
+  claims a resolver library, the 8-query figure or retry counts.
+- **0054** keeps redis-cache's primary history unstated (the reason redis-cache primary-loss rows were
+  screened out). `SENTINEL FAILOVER <master name>` is cited as the documented way, not as what was typed.
+- **Log samples** no longer carry per-minute counts, query ages or a dozen kill lines when the prose says
+  the count wasn't recorded (review finding class; checklist rule).
+
+**Errors and fixes**
+- *Usage limit* stopped all three writers (about 01:30 to 10:20 MDT on 2026-10-11) with 16 of 27 drafts
+  passing; resumed from `progress.toml`, nothing redone.
+- *Pilot 0043:* invented "until clients complained", an absolute about monitoring, "the record", and a
+  renewal trigger nobody recorded. The coordinator's fix pushed Jaccard vs 0068 to 0.0254; the writer
+  restructured it. Coordinator error: I marked 0043 selfchecked in `progress.toml` before the rewrite
+  passed (it did pass before landing).
+- *Canaries:* 0035 4×40=120, 0126 a rejected connection at 08:51 before the 09:00 start, 0159 the
+  processor's account team blaming maintenance, 0169 team-risk deleting keys at 12:55, 0179 RB-021 walked
+  in order. A caught its two, B its two, C its one; each also caught others. No rerun.
+- *Review: 149 findings* (A 37, B 70, C 42). Main classes: log samples implying unrecorded counts, and
+  errors before their ramp's ceiling (A); invented reasoning, check times, "the row" meta-talk (B);
+  mechanism explanations repeated across siblings (event loop 0037/0166, ndots 0179/0196, the
+  redis-features trio's argument order), runbook retellings, 0182's nod to "the earlier orders-api pool
+  incident" (C). A also found 0054 logging a Sentinel event from redis-cache-01, which runs no Sentinel.
+  Fixed in one round; 0054 dropped below its word minimum after the coordinator cut an inference and got
+  a sourced Sentinel-quorum sentence.
+- *Gate:* passed on the first run.
+
+**Verified:**
+- `make corpus` twice gave a byte-identical MANIFEST
+- `make corpus-check` ok
+- `make test`: 383 passed
+- `make lint` clean
+- `git diff phase-1/scaffold` on runbooks, skeleton and `eval/` is empty; only the 27 batch 9
+  write-ups and log specs changed under `data/incidents/`
+
+**Jaccard after the fixes** (top 10, batch 9 write-up vs anything):
+
+| Pair | Score |
+|---|---|
+| 0136/0077 | 0.0240 |
+| 0126/0073 | 0.0233 |
+| 0112/0091 | 0.0228 |
+| 0054/RB-017 | 0.0211 |
+| 0146/0028 | 0.0210 |
+| 0146/0014 | 0.0202 |
+| 0035/0083 | 0.0196 |
+| 0043/0068 | 0.0195 |
+| 0076/RB-020 | 0.0185 |
+| 0184/0152 | 0.0181 |
+
+No 8-word run is shared with any runbook or write-up.
+
+**Real-world texts:** none newly verified. Used: RB-025's openssl verify code 21, `SENTINEL FAILOVER
+<master name>` (batch 7), RB-028's `PGOPTIONS='-c lock_timeout=5s'`, HikariCP's `request timed out after
+30000ms.`, catalog tokens. **Unverified (kept out):** Sentinel and CoreDNS log lines, Go x509
+name-mismatch text, `getaddrinfo EAI_AGAIN` for services whose runtime isn't stated, Postgres lock-timeout
+error text, Alembic output.
+
+**Eval notes (for Phase 1 step 4):**
+- **Rows that retell a runbook's history:** none in batch 9.
+- **Twin pairs, with what tells them apart:**
+  - 0043/0086: intermediate missing on all three edge pods, sev1, 2025-05-15 vs sev3, 2025-10-06
+  - 0082/0007/0061: client clock, edge-gateway-03 2025-09-21 vs edge-gateway-03 2025-01-19 vs
+    edge-gateway-01 2025-07-17. **0082/0007 share host and cause: questions must name the date.**
+  - 0126/0073: auth-db name mismatch, sev2 2026-02-08 vs sev3 2025-08-21
+  - 0035/0156/0055/0095: payments pool, 2025-04-24 slow queries on -03/-04 vs 2026 slow queries vs
+    PgBouncer export vs long transactions with query_wait_timeout
+  - 0083/0035: release regression filling pools on -01/-03, 2025-09-23 vs slow queries on -03/-04
+  - 0136/0077/0124: ledger Hikari slow queries, ledger-service-02 2026-03-08 vs -01 2025-09-08 vs month-end
+  - 0182/0134: orders-api pool, 2026-08-08 -02/-03 vs month-end order summaries 2026-02-28 -01/-03
+  - 0169/0184/0155/0152: redis-features maxmemory, 2026-06-17 vs 2026-08-11 vs 2026-05-03 vs 2026-04-26
+  - 0146/0014/0028: search-cluster pool rejections, campaign 2026-04-15 vs 2025-02-19 (-01/-03) vs
+    2025-03-26 (-02/-03)
+  - 0187/0107: search-cluster GC pauses vs 0107's row
+  - 0159 and the six card-processor-proxy rate rows: a 10-minute CPX-W429 blip on 2026-05-19, no PAYAPI-E1107
+  - 0179/0196: ndots search-list latency, notification-worker 2026-07-23 vs catalog-api 2026-09-15
+  - 0076 and the internal-dns rows: SERVFAIL (zone not loaded) on internal-dns-01, 2025-09-02
+  - 0054/0108/0094: planned redis-cache failover 2025-06-19 vs VM loss 2025-12-09 vs 0094's row
+  - 0165/0093: ledger-service-01 month-end serialization CPU 2026-06-01 vs retry spin 2025-10
+  - 0006/0133: notification-worker-01 template cache 2025-01-18 vs Monday batch 2026-02
+  - 0037/0166: orders-api CPU-bound event loop, -02/-03 2025-04-29 vs crypto on -01 2026-06-09
+  - 0069/0039: OOMKilled, orders-api-03 Node heap vs auth-service-01 goroutines
+- **Unanswerable resolutions:** all 27. No question may ask what fixed a batch 9 incident.
+- **Short documents:** briefs 0014 (106 words), 0037 (117), 0117 (164): host, code or date lookups only.
+
+**Deferrals:** none.
+
+**Status:** 117 of 200 incidents written (see the scope cut below).
+
+**What to be able to explain in an interview**
+- Why canaries change every wave: a reviewer that saw last wave's flaws could match on them.
+- Why synthetic log samples can leak claims the prose avoids (counts, durations), and how the review
+  caught it.
+- Why one sibling document "owns" a shared mechanism explanation: retrieval would otherwise see several
+  near-identical passages for one question.
+
+## Scope cut 2026-10-09
+
+**Decision:** the incident corpus stops at **117 written incidents** (batches 5 to 9). The 83 unwritten
+skeleton rows **stay in `data/incidents/skeleton.toml`** (and their sidecar entries in `eval/`), so ids,
+the skeleton tests and the constraint rows don't change, but they **get no document and are never
+ingested**: step 5's `make ingest` loads only rows that have a write-up (the same set `incidents.jsonl`
+already holds), and no eval question may target an unwritten row.
+
+**Reason:** time. Each 27-row batch costs a full write/review/fix/gate cycle, and Phase 1 still needs the
+eval set (step 4) and ingestion (step 5). 117 incidents plus 30 runbooks (147 documents) keeps the corpus
+large enough for the Phase 2 retrieval ablation (dense vs keyword vs hybrid vs reranked), with every cause
+type at 11 or more incidents.
+
+**Final written counts**
+
+| Cause type | Written | Skeleton |
+|---|---|---|
+| api_latency | 12 | 23 |
+| bad_deploy | 11 | 25 |
+| conn_pool_exhaustion | 12 | 22 |
+| disk_full | 14 | 20 |
+| dns_failure | 11 | 20 |
+| high_cpu | 11 | 20 |
+| memory_leak | 11 | 20 |
+| rate_limiting | 12 | 16 |
+| redis_down | 11 | 20 |
+| tls_expired | 12 | 14 |
+| **total** | **117** | **200** |
+
+| Severity | Written | Skeleton |
+|---|---|---|
+| sev1 | 9 | 15 |
+| sev2 | 33 | 57 |
+| sev3 | 51 | 87 |
+| sev4 | 24 | 41 |
+
+Formats: postmortem 14, handoff 12, the other seven 13 each. Rows with no runbook: 8. Hard-negative
+rows: all 14 are written. Every past-events constraint row is written.
+
+**Consequences for later steps**
+- Step 4 (questions): gold sets may cite only the 117 written incidents and the 30 runbooks. The
+  per-batch eval notes (twins, retelling rows, unanswerable resolutions, short documents) apply.
+- LogHub: 117 windows × 10 lines = 1,170 of the 2,000 lines are placed; the rest stay unused.
+- The skeleton's balance tests still describe all 200 rows; nothing claims the written subset matches
+  them beyond the counts above.
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.
