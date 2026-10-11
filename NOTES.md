@@ -1487,6 +1487,16 @@ bouncer (F1: no fallback)". The header cites F1-F6 and the 2026-10-11 runtime ch
   "within minutes of every restart". W1-005's second fact wasn't checked against the docs, so it was
   dropped.
 
+**Human/Gemini sheet (step 7):** `eval/human_sheet.md` and `docs/gemini_prompt.md` list 40 targets.
+- Targets are the least-covered incidents, 4 per cause type, taken round-robin from the least-asked
+  cause types first.
+- Each target shows structured fields only: service, symptom services, date, failure types, short
+  hosts, codes. No titles, symptoms lines or prose.
+- 14 targets say "use this exact token". Specific codes come first and bare HTTP numbers last. 8
+  targets are marked "multi-doc: also RB-NNN" (from the row's runbook_ids).
+- Twin, no-fix (d) and short-doc (e) targets carry their rule.
+- Gemini outputs exactly 40 `N<tab>question` lines.
+
 **Counts (160):** exact-token 82, multi-doc 47, paraphrase 31.
 - Per cause type (the first failure type of each gold incident; runbook-only questions use the
   runbook's): api_latency 17, bad_deploy 17, conn_pool 18, disk_full 18, dns 17, high_cpu 18,
