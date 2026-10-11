@@ -30,6 +30,7 @@ from scripts.corpus.checks import (
 )
 from scripts.corpus.common import DATA, SIDECAR
 from scripts.corpus.incidents import (
+    BLOCKED_EXEMPT,
     DOC_FORMATS,
     doc_text,
     load_documents,
@@ -137,6 +138,10 @@ def events(rows, docs, services_doc):
 def test_batch_documents_validate(docs, rows, services_doc, rb_ids):
     assert BATCH5 <= set(docs) <= BATCH5 | BATCH6 | BATCH7 | BATCH8 | BATCH9
     validate_documents(list(docs.values()), rows, services_doc, rb_ids)
+
+
+def test_no_blocked_phrase_exemptions():
+    assert BLOCKED_EXEMPT == set()
 
 
 def body_add(text):

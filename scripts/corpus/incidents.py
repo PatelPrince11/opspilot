@@ -208,12 +208,8 @@ BLOCKED_PHRASES = [
     "the row is filed",
     "the row for this incident",
 ]
-# Earlier write-ups that break a batch 8 phrase rule: reported to Prince, not edited.
-BLOCKED_EXEMPT = {
-    ("INC-0034", "this write-up"),
-    ("INC-0089", "this write-up"),
-    ("INC-0125", "this write-up"),
-}
+# (id, phrase) pairs allowed despite BLOCKED_PHRASES. Kept empty: a test asserts it.
+BLOCKED_EXEMPT: set[tuple[str, str]] = set()
 # Real-world log formats seen in drafts but never checked against a source (batch 7 review).
 # A write-up or synthetic log line may not carry them; describe the event in words instead.
 UNVERIFIED_STRINGS = [
