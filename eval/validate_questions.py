@@ -96,7 +96,7 @@ TWINS = [
     "0069 0039",
 ]
 
-# (b): write-ups that retell a runbook's history; the gold set lists both or neither.
+# (b): write-ups that retell a runbook's history; a gold write-up brings its runbook.
 RETELLINGS = (
     "0185/RB-027 0168/RB-021 0055/RB-011 0023/RB-025 0016/RB-022 0024/RB-002 0031/RB-024 "
     "0178/RB-026 0197/RB-029 0004/RB-023 0042/RB-028 0059/RB-015 0070/RB-008 0078/RB-019 "
@@ -257,8 +257,10 @@ def check_question(q: dict, c: Corpus) -> list[str]:
             if not any(has(text, t) for t in dist):
                 errs.append(f"{g} is a twin of {p}: add both or name a host, date or service")
 
+    # One way: the runbook tells the write-up's events, so it answers whatever the write-up
+    # answers. A runbook-only question (its procedure) need not list the write-up.
     for i, rb in c.retell:
-        if (i in gold) != (rb in gold):
+        if i in gold and rb not in gold:
             errs.append(f"{i} retells {rb}: list both")
 
     if FIX_WORDS.search(text) and set(gold) & c.no_fix:

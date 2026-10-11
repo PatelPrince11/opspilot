@@ -1436,6 +1436,64 @@ The process kept running (checked with `kill -0` 2 s later) and exited 0 on SIGI
 **Step 5 (ingest) must load** `log_events.live.jsonl` with the other log events, and nothing else
 from the demo.
 
+## 2026-10-11: Demo spec wording; Phase 1 step 4a (eval set, 160 drafted)
+
+**Demo spec (Prince approved the edit):** `no_payapi_e1042` is now an observation only ("the demo logs
+contain no PAYAPI-E1042 and no 53300"), and a test checks it against the live logs. The mechanism claim
+about `DB_ACQUIRE_TIMEOUT` is gone. `related_incidents` no longer calls the zone-push rows Type=simple
+(their coredns unit type is unstated). The forbidden claim is now "payments-api falls back to the other
+bouncer (F1: no fallback)". The header cites F1-F6 and the 2026-10-11 runtime check.
+
+**Built:**
+- `eval/validate_questions.py` (+ tests). Partial mode checks every line present. `--final` also
+  needs 200 lines, 40 by prince/gemini, ≥60 exact-token (≥12 of the 40), and the seeded split.
+  `--write-split` fills the split. The split is 100/100 with `SEED`, stratified by (difficulty,
+  author): one toggle across strata keeps every stratum within one of even.
+- `eval/questions.jsonl`: 160 questions (author claude, split null). Three Sonnet writers split by
+  cause type, then one Opus reviewer checked every label against its docs.
+- `eval/label_spotcheck.md`: 40 of the 160 for Prince to check, seeded (`SEED`) and stratified by
+  difficulty (exact-token 20, multi-doc 12, paraphrase 8).
+
+**Decisions:**
+- **Retelling rule (b) is one way.** A gold retelling write-up brings its runbook. A runbook may be
+  gold alone for a procedure question. The first version required both in both directions, and the
+  writers dropped runbooks that answered the question to satisfy it (W1 reported it). The reverse
+  direction is the reviewer's call.
+- **Twin rule, made concrete:** for each gold twin whose partner is not gold, the question must contain
+  a token the gold doc has and the partner lacks: a full or short host, a service, a code, or a date
+  form (ISO date, year-month, month name, month plus year, month plus day, or a bare year). A bare
+  "may" doesn't count.
+- 5-word runs are over the title, symptoms, root cause, resolution and body, lower-cased, using the
+  word regex in the validator.
+- (g) colour in key facts: any `team-*`, on-call, follow-up, reporter or owner wording, plus 0025's
+  15:15/15:26/15:31/diff. (f): no `inventory-db-01` in a question when 0142 is gold.
+
+**Review (Opus): 34 findings, all fixed.**
+- 11 wrong:
+  - 9 broke the short-doc rule (e) by asking a diagnosis or a count of a doc under 170 words. They
+    became host, date or window lookups.
+  - W1-029 had a false premise: 0083's release change is unknown.
+  - W1-023 gave its answer away.
+- 7 tags: six paraphrase questions are really exact-token, and W1-037 is single-doc.
+- 5 missing gold: RB-008 on the journal-pattern question, RB-020, RB-011, RB-001, and INC-0179 on the
+  ndots comparison.
+- 3 extra gold: RB-007-only facts on 0084/0174, and RB-025/RB-024 holding no severity or duration.
+- 4 fact: W1-005 planted a CPU reading 0049 doesn't record. W2-009 claimed "never rotated", which 0070
+  leaves unconfirmed. W1-051 and W3-001 were near-duplicates; W3-001 also leaned on a follow-up.
+- 4 voice: W3-002 handed over the numbers, W3-013 was garbled, W2-032 read backwards, and W1-031 gave
+  its answer away.
+- W3-018 duplicated W1-035 and was given a new angle.
+- Two reviewer fixes were not taken as written. W3-002's "about 11 minutes" isn't in 0163; it became
+  "within minutes of every restart". W1-005's second fact wasn't checked against the docs, so it was
+  dropped.
+
+**Counts (160):** exact-token 82, multi-doc 47, paraphrase 31.
+- Per cause type (the first failure type of each gold incident; runbook-only questions use the
+  runbook's): api_latency 17, bad_deploy 17, conn_pool 18, disk_full 18, dns 17, high_cpu 18,
+  memory_leak 14, rate_limiting 14, redis_down 13, tls_expired 14.
+- Gold doc types: incident + runbook 100, incident only 57, runbook only 3.
+- All 30 runbooks and all 117 written incidents are gold at least once.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -1719,7 +1777,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Next is step 4.
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4a: 160 drafted questions with labels; the 40 hand-written (or Gemini) questions, their labels and the split are next.
 - Phase 0 accounts (AWS, Groq, Gemini, Langfuse Cloud, Anthropic credits, GitHub): **not done**. Prince is doing these in parallel. Repo files only until then.
 
 ## Unverified claims (check in Phase 0, record results here)

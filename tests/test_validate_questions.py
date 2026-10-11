@@ -4,7 +4,12 @@ import copy
 
 import pytest
 
-from eval.validate_questions import Corpus, check_all, check_question, split
+from eval.validate_questions import (
+    Corpus,
+    check_all,
+    check_question,
+    split,
+)
 
 
 @pytest.fixture(scope="module")
@@ -65,6 +70,8 @@ def test_twin_needs_its_partner_or_a_distinguishing_detail(corpus):
 def test_retelling_lists_both(corpus):
     e = errs(corpus, relevant_doc_ids=["INC-0185"])
     assert any("retells RB-027" in x for x in e)
+    procedure = "kafka-01 didn't start after a config push, how do I check the daemon is really up?"
+    assert errs(corpus, question=procedure, relevant_doc_ids=["RB-027"]) == []
 
 
 def test_no_fix_question_for_unanswerable_rows(corpus):
