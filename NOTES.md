@@ -1333,14 +1333,14 @@ commit and has the same `src/main.c` lines below. Read on 2026-10-11; nothing wa
   running (`src/main.c:441`). Only a start or restart exits.
 
 **Exact text** for the demo's file:
-- `invalid value "transction" for parameter pool_mode in configuration (/etc/pgbouncer/pgbouncer.ini:12)` (ERROR)
+- `invalid value "transction" for parameter pool_mode in configuration (/etc/pgbouncer/pgbouncer.ini:11)` (ERROR; `:12` before the runtime check)
 - `cannot load config file` (FATAL)
 - exit status 1, so systemd's verified line is `pgbouncer.service: Main process exited, code=exited, status=1/FAILURE`.
 
-**Line-number quirk** (read, not run): `count_lines(buf, p)` is taken after the parser has skipped the
-value's newline and any following whitespace, so the number is the line *after* the bad one (more if
-blank lines follow). The demo fixes `pool_mode` on line 11 of `/etc/pgbouncer/pgbouncer.ini`, followed
-by a non-blank line 12, so the log says `:12`.
+**Line-number quirk** (read, not run; **contradicted by the 2026-10-11 runtime check below**): this
+entry said the number would be the line *after* the bad one (`:12`). The run printed `:11`. The reading
+missed that `val[vlen] = 0` overwrites the value's own newline before `count_lines(buf, p)` runs, so
+that newline isn't counted.
 
 **Prefix:** `logging_prefix_cb` is set only after `load_config` (`src/main.c:989`), so these lines carry
 no connection prefix. Built `--with-systemd` with stderr on the journal, the message goes through
@@ -1352,10 +1352,53 @@ under the identifier `pgbouncer`, as the repo's other logs do.
 stands, and the "may differ" note is now confirmed.
 
 **Still unverified:**
-- Behaviour of a real 1.22 binary (nothing built or run), including the line-number quirk.
+- Behaviour of a real 1.22 binary: now run (entry below); text and exit status confirmed, line number corrected.
 - Whether our build uses `--with-systemd` (decides bare text vs. the stderr prefix in the journal).
 - Whether a `logfile =` setting earlier in the file would also receive the lines (not used in the demo).
 - systemd's `Failed with result 'exit-code'` and `Started …` lines: not checked, so not written.
+
+## 2026-10-11: PgBouncer 1.22 startup failure, verified by running it
+
+**Binary:** PgBouncer **1.22.1**, built from the release tarball
+`https://www.pgbouncer.org/downloads/files/1.22.1/pgbouncer-1.22.1.tar.gz` (its published `.sha256`
+checked) in a throwaway `debian:bookworm-slim` container: `./configure --prefix=/usr/local` (no
+`--with-systemd`), libevent 2.1.12, OpenSSL 3.0. `pgbouncer --version` printed `PgBouncer 1.22.1`.
+Run as a non-root user. The Dockerfile is in `scratchpad/pgb122/` (not committed). Container and image
+removed afterwards.
+
+**Config:** a 12-line `pgbouncer.ini` (`[databases]`, a blank line, `[pgbouncer]`, …) with line 11
+`pool_mode = transction` and a non-blank line 12 (`max_prepared_statements = 200`), started as
+`pgbouncer pgbouncer.ini`.
+
+**Start with the bad file**, stderr verbatim (timestamp and pid are the run's):
+```
+2026-10-11 22:33:35.022 UTC [10] ERROR invalid value "transction" for parameter pool_mode in configuration (pgbouncer.ini:11)
+2026-10-11 22:33:35.023 UTC [10] FATAL cannot load config file
+```
+Exit status **1**.
+
+**Reload:** started with `pool_mode = transaction`, swapped in the bad file, sent SIGHUP:
+```
+2026-10-11 22:33:37.029 UTC [12] LOG got SIGHUP, re-reading config
+2026-10-11 22:33:37.029 UTC [12] ERROR invalid value "transction" for parameter pool_mode in configuration (pgbouncer.ini:11)
+2026-10-11 22:33:37.029 UTC [12] WARNING config file loading failed
+```
+The process kept running (checked with `kill -0` 2 s later) and exited 0 on SIGINT.
+
+**Against the source reading:**
+- Message text, ERROR then FATAL, and exit status 1: **verified**.
+- Reload only warns and keeps running: **verified**.
+- Line number: **contradicted**. Printed `:11` (the bad line itself), not `:12`. The demo logs and
+  `demo_answer.toml` now say `:11`.
+- The `%s` in the message is the path as given on the command line (`pgbouncer.ini` here). The demo
+  keeps `/etc/pgbouncer/pgbouncer.ini`, which assumes our unit's `ExecStart` passes that path, as
+  upstream's unit does.
+
+**Still unverified:**
+- The `--with-systemd` journal path (bare message, no timestamp/pid/level). This build had no systemd
+  support, so it printed the stderr prefix. The demo keeps the bare text under identifier `pgbouncer`.
+- A trailing space after the bad value. The source reading suggests the newline is counted then
+  (`:12`), but this wasn't run. The demo's line has none.
 
 ## 2026-10-11: Demo incident INC-LIVE-001 (spec and logs)
 

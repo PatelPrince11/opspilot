@@ -800,7 +800,7 @@ def test_demo_spec_is_consistent(demo, rows, runbooks):
     assert demo["binding_constraint"]["gate_live_since"].isoformat() == "2026-08-20"
     assert demo["binding_constraint"]["pgbouncer_enrolled"] is False
     assert "pgbouncer" not in runbooks["RB-027"]["body"]  # not in the gate's probe table
-    assert demo["cause"]["mechanism_status"].startswith("verified from source")
+    assert demo["cause"]["mechanism_status"].startswith("verified by running")
     assert set(demo["evidence"]["runbooks"]) <= set(runbooks)
 
 

@@ -1,7 +1,7 @@
 # Demo logs for the open incident INC-LIVE-001 (eval/corpus/demo_answer.toml). SYNTHETIC.
 # Never a document, never in incidents.jsonl, no LogHub noise; events carry no incident_id.
-# Texts checked: PgBouncer 1.22 config error and "cannot load config file" (NOTES 2026-10-11,
-# lib/usual/cfparser.c:167, src/main.c:439); systemd "Main process exited, code=exited,
+# Texts checked: PgBouncer 1.22 config error and "cannot load config file" (NOTES 2026-10-11:
+# source, and run on 1.22.1, which printed the bad line itself, :11); systemd "Main process exited, code=exited,
 # status=1/FAILURE" (unit.c). rollout lines are our tool's own journal lines (F4). payments-api's
 # errno field is our logger's (F2). No systemd "Started" or "Failed with result" line.
 date = 2026-10-06
@@ -41,7 +41,7 @@ at = "14:30:41"
 service = "payments-pgbouncer"
 host = "payments-pgbouncer-01.prod.internal"
 level = "ERROR"
-message = 'pgbouncer: invalid value "transction" for parameter pool_mode in configuration (/etc/pgbouncer/pgbouncer.ini:12)'
+message = 'pgbouncer: invalid value "transction" for parameter pool_mode in configuration (/etc/pgbouncer/pgbouncer.ini:11)'
 
 [[line]]
 at = "14:30:41"

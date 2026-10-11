@@ -2,7 +2,7 @@
 # never in incidents.jsonl, and none of the 200 incidents. Evidence lives only in the demo logs
 # (data/live/INC-LIVE-001.toml -> data/processed/log_events.live.jsonl) and in the services.toml
 # status snapshot. Every fact below is a NOTES Fictional fact (F1-F5, rollout tool, PgBouncer)
-# or the 2026-10-11 PgBouncer 1.22 source check; pgx's own behaviour on a failed dial is unverified
+# or the 2026-10-11 PgBouncer 1.22 source and runtime checks; pgx's own behaviour on a failed dial is unverified
 # and never relied on.
 
 id = "INC-LIVE-001"
@@ -22,9 +22,9 @@ port = 6432
 healthy_peer = "payments-pgbouncer-02.prod.internal"
 trigger = "rollout-tool run scoped to payments-pgbouncer-01 only (F5), writing /etc/pgbouncer/pgbouncer.ini"
 mechanism = "pool_mode = transction (misspelled) on line 11 of /etc/pgbouncer/pgbouncer.ini: PgBouncer 1.22 logs the invalid value, then dies at startup with exit status 1"
-mechanism_status = "verified from source: PgBouncer pgbouncer_1_22_0 (lib/usual/cfparser.c:167, src/main.c:439); not run (NOTES 2026-10-11)"
+mechanism_status = "verified by running PgBouncer 1.22.1 (release tarball): ERROR line, FATAL cannot load config file, exit status 1; source pgbouncer_1_22_0 lib/usual/cfparser.c:167, src/main.c:439 (NOTES 2026-10-11)"
 pgbouncer_lines = [
-  'invalid value "transction" for parameter pool_mode in configuration (/etc/pgbouncer/pgbouncer.ini:12)',
+  'invalid value "transction" for parameter pool_mode in configuration (/etc/pgbouncer/pgbouncer.ini:11)',
   "cannot load config file",
 ]
 systemd_line = "pgbouncer.service: Main process exited, code=exited, status=1/FAILURE"

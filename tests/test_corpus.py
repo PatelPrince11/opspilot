@@ -3,6 +3,7 @@ with the same columns as the real file, and a fake fetch function."""
 
 import copy
 import re
+import tomllib
 from datetime import UTC, datetime, timedelta
 from itertools import combinations
 from pathlib import Path
@@ -12,7 +13,7 @@ import pytest
 from scripts import build_corpus
 from scripts.corpus import loghub, synthetic_logs
 from scripts.corpus.checks import TRIGRAM_JACCARD_THRESHOLD, leaks_demo, trigrams
-from scripts.corpus.common import DATA, PROCESSED, rng_for, sha256_bytes
+from scripts.corpus.common import DATA, PROCESSED, SIDECAR, rng_for, sha256_bytes
 from scripts.corpus.runbooks import (
     headings,
     load_runbooks,
@@ -259,6 +260,15 @@ def test_demo_logs_exist_and_carry_the_leak_combination(live):
     assert {e["message"].split(" ", 1)[0] for e in refused} == {
         f"payments-api-0{n}.prod.internal" for n in (1, 2, 3, 4)
     }
+
+
+def test_demo_logs_quote_the_observed_pgbouncer_lines(live):
+    """demo_answer.toml's PgBouncer lines (observed on 1.22.1, NOTES 2026-10-11) are the logs'."""
+    spec = tomllib.loads((SIDECAR / "demo_answer.toml").read_text())["cause"]
+    messages = [e["message"] for e in live]
+    for text in [*spec["pgbouncer_lines"], spec["systemd_line"]]:
+        assert any(m.endswith(text) for m in messages), text
+    assert any(m.endswith("(/etc/pgbouncer/pgbouncer.ini:11)") for m in messages)
 
 
 def test_demo_log_hosts_are_in_services_toml(live, services_doc):
