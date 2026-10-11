@@ -1446,7 +1446,8 @@ bouncer (F1: no fallback)". The header cites F1-F6 and the 2026-10-11 runtime ch
 
 **Built:**
 - `eval/validate_questions.py` (+ tests). Partial mode checks every line present. `--final` also
-  needs 200 lines, 40 by prince/gemini, ≥60 exact-token (≥12 of the 40), and the seeded split.
+  needs 200 lines, 40 by prince/gemini, ≥30% exact-token overall, ≥20 paraphrase among the 40, and
+  the seeded split.
   `--write-split` fills the split. The split is 100/100 with `SEED`, stratified by (difficulty,
   author): one toggle across strata keeps every stratum within one of even.
 - `eval/questions.jsonl`: 160 questions (author claude, split null). Three Sonnet writers split by
@@ -1455,7 +1456,7 @@ bouncer (F1: no fallback)". The header cites F1-F6 and the 2026-10-11 runtime ch
   difficulty (exact-token 20, multi-doc 12, paraphrase 8).
 
 **Decisions:**
-- **Retelling rule (b) is one way.** A gold retelling write-up brings its runbook. A runbook may be
+- **Retelling rule (b) is one way (Prince approved).** A gold retelling write-up brings its runbook. A runbook may be
   gold alone for a procedure question. The first version required both in both directions, and the
   writers dropped runbooks that answered the question to satisfy it (W1 reported it). The reverse
   direction is the reviewer's call.
@@ -1492,8 +1493,10 @@ bouncer (F1: no fallback)". The header cites F1-F6 and the 2026-10-11 runtime ch
   cause types first.
 - Each target shows structured fields only: service, symptom services, date, failure types, short
   hosts, codes. No titles, symptoms lines or prose.
-- 14 targets say "use this exact token". Specific codes come first and bare HTTP numbers last. 8
-  targets are marked "multi-doc: also RB-NNN" (from the row's runbook_ids).
+- Mix (rebalanced): 24 paraphrase targets, marked "paraphrase: no code, no hostname"; 8 say "use
+  this exact token" (specific codes first, bare HTTP numbers last); 8 are marked "multi-doc: also
+  RB-NNN" (from the row's runbook_ids). The 160 already give 82 exact-token, so the human slice
+  leans paraphrase. `--final` needs ≥20 paraphrase among the 40 and ≥30% exact-token overall.
 - Twin, no-fix (d) and short-doc (e) targets carry their rule.
 - Gemini outputs exactly 40 `N<tab>question` lines.
 
@@ -1504,12 +1507,15 @@ lines as H001..H040, with empty labels, difficulty null and split null.
 - Partial mode accepts unlabelled lines; `--final` rejects them.
 - No split yet.
 
-**Counts (160):** exact-token 82, multi-doc 47, paraphrase 31.
+**Counts (160):** exact-token 82, multi-doc 47, paraphrase 31. Questions with 2+ gold docs: 108.
 - Per cause type (the first failure type of each gold incident; runbook-only questions use the
   runbook's): api_latency 17, bad_deploy 17, conn_pool 18, disk_full 18, dns 17, high_cpu 18,
   memory_leak 14, rate_limiting 14, redis_down 13, tls_expired 14.
 - Gold doc types: incident + runbook 100, incident only 57, runbook only 3.
 - All 30 runbooks and all 117 written incidents are gold at least once.
+
+**Phase 2 requirement:** Retrieval eval also reports all-gold Recall@k for questions with 2+ gold
+docs, because at-least-one recall flatters multi-gold questions (108 of 160).
 
 ## Standing rules (write-ups)
 
