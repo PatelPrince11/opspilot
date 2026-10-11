@@ -443,7 +443,7 @@ No new committed output yet: MANIFEST is unchanged, and `incidents.jsonl` arrive
 **Errors and fixes**
 - *INC-0124 host ownership.* The validator rejected `ledger-db-01` because ledger-db wasn't among the row's services. Root cause: the outline listed the host but not ledger-db as a symptom. Fix: `symptom_services = ["payments-api", "ledger-db"]`, a deviation from the approved outline table.
 - *inventory-db never a cause* (`3 <= 0` in the bounds test). Root cause: my templates never used it, although the outline targeted 6. Fix: 3 rows moved to inventory-db (a `/var` row, a table-bloat latency row, a 53300 row). It now sits at 3, the lower bound.
-- *Severity skew.* The first draw gave sev1 5 and sev3 107 against targets of 16 and 90 (±5). Root cause: the template defaults leaned to sev3. Fixed per template: final 16/56/87/41.
+- *Severity skew.* The first draw gave sev1 5 and sev3 107 against targets of 16 and 90 (±5). Root cause: the template defaults leaned to sev3. Fixed per template: final 15/57/87/41. (This entry first said 16/56/87/41; the figure changed in the 0100/0122 sev2 follow-up.)
 - *RB-028 and RB-030 under 3 links.* RB-028 was linked to a QueuePool row and a post-2025-05-16 `lock_timeout` retry row; RB-030 to a campaign-driven `SRCH-E502` row. Neither creates a hard-negative pair.
 - *Narrative conflicts found in the spot check* (e.g. a 2025-01 `MISCONF` row linking RB-019, whose history lists only 2025-09). Fixed by the placement rule above.
 
@@ -1265,7 +1265,7 @@ error text, Alembic output.
 - Why one sibling document "owns" a shared mechanism explanation: retrieval would otherwise see several
   near-identical passages for one question.
 
-## Scope cut 2026-10-09
+## Scope cut 2026-10-11
 
 **Decision:** the incident corpus stops at **117 written incidents** (batches 5 to 9). The 83 unwritten
 skeleton rows **stay in `data/incidents/skeleton.toml`** (and their sidecar entries in `eval/`), so ids,
@@ -1587,6 +1587,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
+- Incidents: 117 of 200 written. The step 3 corpus is complete. Next is the demo incident spec, then step 4.
 - Phase 0 accounts (AWS, Groq, Gemini, Langfuse Cloud, Anthropic credits, GitHub): **not done**. Prince is doing these in parallel. Repo files only until then.
 
 ## Unverified claims (check in Phase 0, record results here)
