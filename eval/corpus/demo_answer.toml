@@ -1,9 +1,9 @@
 # Eval-only: the open demo incident INC-LIVE-001. SYNTHETIC. Never ingested as a document,
 # never in incidents.jsonl, and none of the 200 incidents. Evidence lives only in the demo logs
 # (data/live/INC-LIVE-001.toml -> data/processed/log_events.live.jsonl) and in the services.toml
-# status snapshot. Every fact below is a NOTES Fictional fact (F1-F5, rollout tool, PgBouncer)
-# or the 2026-10-11 PgBouncer 1.22 source and runtime checks; pgx's own behaviour on a failed dial is unverified
-# and never relied on.
+# status snapshot. Every fact below is a NOTES Fictional fact (F1-F6, rollout tool, PgBouncer),
+# the 2026-10-11 PgBouncer 1.22 source check, or the 2026-10-11 runtime check (1.22.1 run); pgx's
+# own behaviour on a failed dial is unverified and never relied on.
 
 id = "INC-LIVE-001"
 question = "The payment API is returning connection-refused errors. What likely happened, what evidence supports it, and what should I check next?"
@@ -34,7 +34,7 @@ systemd_line = "pgbouncer.service: Main process exited, code=exited, status=1/FA
 policy = "alternate per new connection, no fallback"
 normal_split = "about half each: 4 x 40 = 160 client connections, about 80 per bouncer"
 log_errno_field = "errno=ECONNREFUSED"  # F2: our logger's field; Go itself prints "connection refused"
-no_payapi_e1042 = true  # the connect is refused at once; nothing waits on DB_ACQUIRE_TIMEOUT=500ms
+no_payapi_e1042 = "the demo logs contain no PAYAPI-E1042 and no 53300"  # observation only
 
 [timeline]  # UTC
 date = 2026-10-06
@@ -77,7 +77,7 @@ log_chain = [
 ]
 runbooks = ["RB-027", "RB-011"]  # config push to a VM daemon that doesn't come back; PgBouncer ops
 analog_incident = "INC-0185"  # rollout push, restart exited 0, daemon quit at startup on a bad setting
-related_incidents = ["INC-0025", "INC-0033", "INC-0038", "INC-0081"]  # scoped rollout pushes past a Type=simple restart (the daemon stayed up there)
+related_incidents = ["INC-0025", "INC-0033", "INC-0038", "INC-0081"]  # rollout-tool zone pushes whose restart succeeded and whose daemon stayed up (coredns unit type unstated)
 contrast_incidents = ["INC-0055", "INC-0095", "INC-0026"]  # bouncer saturation/CPU: PAYAPI-E1042, never a refused connect
 near_miss_runbooks = ["RB-010", "RB-012", "RB-007", "RB-020", "RB-017"]
 get_service_status = "payments-api degraded; payments-pgbouncer degraded; payments-db healthy; search-api degraded"
@@ -93,7 +93,7 @@ key_facts = [
   "systemd did not restart it (F6)",
   "pgbouncer is not enrolled in the 2026-08-20 rollout health gate, so only the restart exit status was checked",
   "payments-api alternates bouncers per new connection with no fallback, so about half of new connections fail",
-  "payments-db is healthy; this is not pool exhaustion (no PAYAPI-E1042, no 53300)",
+  "payments-db is healthy; the demo logs contain no PAYAPI-E1042 and no 53300",
 ]
 
 next_checks = [
@@ -114,6 +114,6 @@ forbidden_claims = [
   "payments-pgbouncer-02 is down or failing",
   "the rollout health gate checked or should have stopped this run",
   "systemctl restart pgbouncer failed",
-  "pgx retries or fails over to the other bouncer",
+  "payments-api falls back to the other bouncer (F1: no fallback)",
   "every payments-api request fails",
 ]

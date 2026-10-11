@@ -271,6 +271,14 @@ def test_demo_logs_quote_the_observed_pgbouncer_lines(live):
     assert any(m.endswith("(/etc/pgbouncer/pgbouncer.ini:11)") for m in messages)
 
 
+def test_demo_spec_observation_holds_in_the_logs(live):
+    spec = tomllib.loads((SIDECAR / "demo_answer.toml").read_text())
+    assert spec["bouncer_selection"]["no_payapi_e1042"] == (
+        "the demo logs contain no PAYAPI-E1042 and no 53300"
+    )
+    assert not [e for e in live if "PAYAPI-E1042" in e["message"] or "53300" in e["message"]]
+
+
 def test_demo_log_hosts_are_in_services_toml(live, services_doc):
     hosts = {h["name"] for s in services_doc["services"] for h in s["hosts"]}
     used = {e["message"].split(" ", 1)[0] for e in live}
