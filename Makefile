@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint fmt migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human
+.PHONY: up down logs test lint fmt migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -72,6 +72,15 @@ packet:
 #   make import-human FILE=path AUTHOR=prince|gemini
 import-human:
 	@uv run python eval/validate_questions.py --import-human $(FILE) --author $(AUTHOR)
+
+# Gemini label audit, pasted by hand into AI Studio (no LLM calls from code):
+#   make audit-pack            -> scratchpad/gemini_audit/corpus.md, batch_01..08.md
+#   make import-audit FILE=path -> eval/label_audit.md
+audit-pack:
+	@uv run python eval/label_audit.py pack
+
+import-audit:
+	@uv run python eval/label_audit.py import $(FILE)
 
 ingest:
 	@echo "ingest: not implemented (Phase 1 step 5)"

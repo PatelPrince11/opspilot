@@ -1514,6 +1514,14 @@ lines as H001..H040, with empty labels, difficulty null and split null.
 - Gold doc types: incident + runbook 100, incident only 57, runbook only 3.
 - All 30 runbooks and all 117 written incidents are gold at least once.
 
+**Gemini label audit (by hand, no LLM calls from code):** `make audit-pack` writes
+`scratchpad/gemini_audit/corpus.md` (the 147 docs under `=== <ID> ===`, same text the validator checks;
+about 447 KB) and `batch_01..08.md` (20 questions each, fixed instructions, numbered key facts).
+`make import-audit FILE=path` parses Gemini's `<qid> | OK/WRONG | missing_gold | unsupported_facts |
+reason` lines into `eval/label_audit.md`: every flagged question plus 10 seeded OK ones, each with a
+Prince AGREE/DISAGREE line. Malformed, duplicate or unknown-id lines fail the import; missing ids are
+listed. No question or label changed.
+
 **Phase 2 requirement:** Retrieval eval also reports all-gold Recall@k for questions with 2+ gold
 docs, because at-least-one recall flatters multi-gold questions (108 of 160).
 

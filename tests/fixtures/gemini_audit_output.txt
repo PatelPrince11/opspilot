@@ -1,0 +1,11 @@
+Q001 | OK | missing_gold: none | unsupported_facts: none | reason: Both facts are in INC-0107.
+Q002 | WRONG | missing_gold: RB-014 | unsupported_facts: 2 | reason: Fact 2 is not stated in the gold docs.
+Q003 | OK | missing_gold: INC-0022 | unsupported_facts: none | reason: INC-0022 also answers it.
+
+Q004 | OK | missing_gold: None | unsupported_facts: None | reason: Gold answers it.
+Q005 | MAYBE | missing_gold: none | unsupported_facts: none | reason: unsure
+Q006 | OK | missing_gold: kafka-02 | unsupported_facts: none | reason: bad id
+Q007 | OK | missing_gold: none | unsupported_facts: 9 | reason: no fact 9
+Q001 | OK | missing_gold: none | unsupported_facts: none | reason: duplicate
+Q999 | OK | missing_gold: none | unsupported_facts: none | reason: unknown id
+Here are the results:
