@@ -213,7 +213,6 @@ BLOCKED_EXEMPT = {
     ("INC-0034", "this write-up"),
     ("INC-0089", "this write-up"),
     ("INC-0125", "this write-up"),
-    ("INC-0171", "status page"),
 }
 # Real-world log formats seen in drafts but never checked against a source (batch 7 review).
 # A write-up or synthetic log line may not carry them; describe the event in words instead.
