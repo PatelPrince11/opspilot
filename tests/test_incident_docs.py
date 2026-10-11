@@ -120,11 +120,6 @@ def runbooks():
 
 
 @pytest.fixture(scope="module")
-def rb_ids(runbooks):
-    return {r["meta"]["id"] for r in runbooks}
-
-
-@pytest.fixture(scope="module")
 def events(rows, docs, services_doc):
     out = {}
     for e in build_corpus.synthetic_events(rows, list(docs.values()), services_doc):
@@ -135,9 +130,9 @@ def events(rows, docs, services_doc):
 # ------------------------------------------------------------------ validator
 
 
-def test_batch_documents_validate(docs, rows, services_doc, rb_ids):
+def test_batch_documents_validate(docs, rows, services_doc, runbooks):
     assert BATCH5 <= set(docs) <= BATCH5 | BATCH6 | BATCH7 | BATCH8 | BATCH9
-    validate_documents(list(docs.values()), rows, services_doc, rb_ids)
+    validate_documents(list(docs.values()), rows, services_doc, runbooks)
 
 
 def test_no_blocked_phrase_exemptions():
@@ -217,27 +212,31 @@ def body_replace(old, new):
         ("INC-0055", body_add("The row is filed as a pool problem."), "unsupported claim"),
         ("INC-0055", body_add("The row for this incident says sev2."), "unsupported claim"),
         ("INC-0099", body_add("sentinel: failover requested."), "unverified real-world"),
+        # a team is named only if it owns an involved service or a cited runbook names it
+        ("INC-0055", body_add("Paged team-growth as well."), "team-growth owns no involved"),
         ("INC-0055", body_add("PgBouncer listens on 6432."), "demo guard"),
         ("INC-0055", body_add("We checked again at 03:15."), "outside start-2h"),
         ("INC-0055", body_add("- 13:00 · late entry"), "timeline goes backwards"),
         ("INC-0055", body_replace("14:05", "about two"), "14:05 (start/end) not stated"),
     ],
 )
-def test_validator_rejects_broken_documents(docs, rows, services_doc, rb_ids, inc, mutate, message):
+def test_validator_rejects_broken_documents(
+    docs, rows, services_doc, runbooks, inc, mutate, message
+):
     d = copy.deepcopy(docs[inc])
     mutate(d)
     with pytest.raises(CorpusError, match=re.escape(message)):
-        validate_documents([d], rows, services_doc, rb_ids)
+        validate_documents([d], rows, services_doc, runbooks)
 
 
-def test_validator_rejects_bad_front_matter(docs, rows, services_doc, rb_ids):
+def test_validator_rejects_bad_front_matter(docs, rows, services_doc, runbooks):
     d = copy.deepcopy(docs["INC-0048"])
     d["meta"]["format"] = "essay"
     with pytest.raises(CorpusError, match="format"):
-        validate_documents([d], rows, services_doc, rb_ids)
+        validate_documents([d], rows, services_doc, runbooks)
     del d["meta"]["root_cause"]
     with pytest.raises(CorpusError, match="root_cause"):
-        validate_documents([d], rows, services_doc, rb_ids)
+        validate_documents([d], rows, services_doc, runbooks)
 
 
 def log_mut(field, value=None, fn=None):

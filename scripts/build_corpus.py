@@ -50,7 +50,7 @@ def build_committed() -> tuple[dict[str, bytes], dict]:
     skeleton = load_skeleton(DATA / "incidents" / "skeleton.toml")
     validate_skeleton(skeleton, doc, {r["id"] for r in rb_rows})
     docs = load_documents(DATA / "incidents")
-    validate_documents(docs, skeleton, doc, {r["id"] for r in rb_rows})
+    validate_documents(docs, skeleton, doc, runbooks)
     inc_rows = incidents_output(docs, skeleton)
     events = synthetic_events(skeleton, docs, doc)
     outputs = {

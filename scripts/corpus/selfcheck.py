@@ -26,6 +26,7 @@ from scripts.corpus.incidents import (
     load_documents,
     load_skeleton,
     short_host_re,
+    team_sources,
 )
 from scripts.corpus.runbooks import load_runbooks, parse_runbook
 from scripts.corpus.services import CorpusError, load_services
@@ -65,7 +66,9 @@ def run(
         return [("front matter", fm)], []
     row, text = rows[inc_id], doc_text(doc)
 
-    groups = document_errors(doc, row, code_finder(services), short_host_re(services))
+    groups = document_errors(
+        doc, row, code_finder(services), short_host_re(services), team_sources(services, runbooks)
+    )
     results = [(name, groups.get(name, [])) for name in DOC_CHECKS]
 
     spec_path = path.parent / "logs" / f"{inc_id}.toml"

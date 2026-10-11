@@ -300,6 +300,27 @@ def code_finder(services_doc: dict):
     return find
 
 
+TEAM_RE = re.compile(r"\bteam-[a-z]+\b")
+
+
+def team_sources(services_doc: dict, runbooks: list[dict]):
+    """Teams a write-up may name: the owner of the row's cause or a symptom service
+    (services.toml), or a team a runbook it cites names (post-dated runbooks don't count)."""
+    owner = {s["name"]: s["owner"] for s in services_doc["services"]}
+    named_in = {
+        r["meta"]["id"]: set(TEAM_RE.findall(f"{r['meta'].get('owner', '')}\n{r['body']}"))
+        for r in runbooks
+    }
+
+    def allowed(row: dict) -> set[str]:
+        teams = {owner[s] for s in (row["service"], *row["symptom_services"])}
+        for rb in set(row["runbook_ids"]) - postdated(row):
+            teams |= named_in[rb]
+        return teams
+
+    return allowed
+
+
 def short_host_re(services_doc: dict) -> re.Pattern:
     names = sorted((s["name"] for s in services_doc["services"]), key=len, reverse=True)
     return re.compile(rf"(?<![\w-])((?:{'|'.join(map(re.escape, names))})-\d{{2}})(?![\w-]|\.\w)")
@@ -362,12 +383,13 @@ DOC_CHECKS = (
     "labels",
     "anachronisms",
     "blocklist",
+    "teams",
     "demo guard",
     "times",
 )
 
 
-def document_errors(doc: dict, row: dict, find_codes, short_re) -> dict[str, list[str]]:
+def document_errors(doc: dict, row: dict, find_codes, short_re, teams) -> dict[str, list[str]]:
     """Every validator rule for one write-up against its row, grouped by check name (the
     build flattens the groups; `make selfcheck` prints one line per group)."""
     meta, where = doc["meta"], doc["file"]
@@ -421,6 +443,8 @@ def document_errors(doc: dict, row: dict, find_codes, short_re) -> dict[str, lis
     for string in UNVERIFIED_STRINGS:
         if string in text:
             err("blocklist", f"unverified real-world string {string!r}")
+    for team in sorted(set(TEAM_RE.findall(text)) - teams(row)):
+        err("teams", f"{team} owns no involved service and no cited runbook names it")
     if row["service"] == "payments-pgbouncer" or any("pgbouncer" in h for h in row_hosts):
         if "ECONNREFUSED" in text or "6432" in text:
             err("demo guard", "demo guard: pgbouncer with ECONNREFUSED or 6432")
@@ -442,18 +466,19 @@ def front_matter_errors(doc: dict, by_id: dict) -> list[str]:
 
 
 def validate_documents(
-    docs: list[dict], rows: list[dict], services_doc: dict, runbook_ids: set[str]
+    docs: list[dict], rows: list[dict], services_doc: dict, runbooks: list[dict]
 ) -> None:
     by_id = {r["id"]: r for r in rows}
     find_codes = code_finder(services_doc)
     short_re = short_host_re(services_doc)
+    teams = team_sources(services_doc, runbooks)
     errors = []
     for doc in docs:
         if fm := front_matter_errors(doc, by_id):
             errors += fm
             continue
         row = by_id[doc["meta"]["id"]]
-        for group in document_errors(doc, row, find_codes, short_re).values():
+        for group in document_errors(doc, row, find_codes, short_re, teams).values():
             errors += group
     if errors:
         raise CorpusError("incident documents:\n  " + "\n  ".join(errors))
