@@ -311,10 +311,10 @@ def check_all(questions: list[dict], c: Corpus, final: bool = False) -> list[str
         errs.append(f"final: {len(questions)} questions, need 200")
     if len(human) != 40:
         errs.append(f"final: {len(human)} by prince or gemini, need 40")
-    if len(exact) < 60:
-        errs.append(f"final: {len(exact)} exact-token, need 60")
-    if sum(q in exact for q in human) < 12:
-        errs.append("final: fewer than 12 exact-token among the 40 human questions")
+    if len(exact) < 0.3 * len(questions):
+        errs.append(f"final: {len(exact)} exact-token, need 30% ({len(questions)} questions)")
+    if sum(q.get("difficulty") == "paraphrase" for q in human) < 20:
+        errs.append("final: fewer than 20 paraphrase among the 40 human questions")
     unlabelled = [q["id"] for q in questions if not labelled(q)]
     if unlabelled:
         errs.append(f"final: unlabelled {unlabelled}")

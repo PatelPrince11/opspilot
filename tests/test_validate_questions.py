@@ -102,6 +102,20 @@ def test_final_counts(corpus):
     assert any("need 200" in x for x in e) and any("need 40" in x for x in e)
 
 
+def test_final_mix_rules(corpus):
+    claude = [q(id=f"Q{i:03}", difficulty="paraphrase") for i in range(160)]
+    human = [q(id=f"H{i:03}", author="prince") for i in range(40)]  # all exact-token
+    e = check_all(claude + human, corpus, final=True)
+    assert any("need 30%" in x for x in e)  # 40 of 200 exact-token
+    assert any("20 paraphrase" in x for x in e)
+    for x in human[:20]:
+        x["difficulty"] = "paraphrase"
+    for x in claude[:60]:
+        x["difficulty"] = "exact-token"
+    e = check_all(claude + human, corpus, final=True)
+    assert not any("30%" in x or "20 paraphrase" in x for x in e)
+
+
 def test_split_is_seeded_even_and_stratified():
     qs = []
     for i in range(200):
