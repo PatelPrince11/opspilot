@@ -43,6 +43,11 @@ FORBIDDEN_BY_FACT = {
     ],
     "payments_inventory_extra_db_reads": [r"(?<!no )(?<!without )extra (?:DB|database) reads"],
     "intermittent": [r"\bevery (?:lookup|query|resolution) (?:failed|returned)"],
+    # batch 8: search-cluster pool rejections, not the edge's /search limit
+    "limiter": [
+        r"\b(?:edge|local)\s+(?:rate[- ])?limit(?:er)?\s+"
+        r"(?:rejected|kicked in|fired|tripped|was hit|throttled)"
+    ],
 }
 DUR_RE = re.compile(r"\b(\d+)[ -](?:minutes?|min|hours?|h)\b")
 DURATION_WHITELIST = {"INC-0171": {23, 168}}

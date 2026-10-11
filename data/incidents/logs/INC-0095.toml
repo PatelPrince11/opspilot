@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0095. query_wait_timeout is PgBouncer's token; log line as verified.
+[[burst]]
+from = "10:55:00"
+to = "11:04:59"
+count = 10
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "POST /v1/payments ok latency_ms={int:60-180} req={hex8}"
+
+[[burst]]
+from = "11:05:00"
+to = "11:39:00"
+count = 14
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "PAYAPI-E1042 no database connection within the acquire deadline req={hex8}"
+
+[[burst]]
+from = "11:08:00"
+to = "11:38:00"
+count = 12
+service = "payments-pgbouncer"
+level = "ERROR"
+hosts = ["payments-pgbouncer-01.prod.internal", "payments-pgbouncer-02.prod.internal"]
+message = "pooler error: query_wait_timeout"
+
+[[burst]]
+from = "11:41:00"
+to = "11:49:00"
+count = 8
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "POST /v1/payments ok latency_ms={int:60-180} req={hex8}"

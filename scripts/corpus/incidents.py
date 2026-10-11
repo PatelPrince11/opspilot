@@ -196,7 +196,22 @@ BLOCKED_PHRASES = [
     "told us it saw",
     "the processor said",
     "the processor told",
+    # batch 8: talk about the write-up or its sources, and outside confirmations
+    "this document",
+    "this write-up",
+    "the sources do not",
+    "does not guess",
+    "on its behalf",
+    "notes from the night",
+    "status page",
 ]
+# Earlier write-ups that break a batch 8 phrase rule: reported to Prince, not edited.
+BLOCKED_EXEMPT = {
+    ("INC-0034", "this write-up"),
+    ("INC-0089", "this write-up"),
+    ("INC-0125", "this write-up"),
+    ("INC-0171", "status page"),
+}
 # Real-world log formats seen in drafts but never checked against a source (batch 7 review).
 # A write-up or synthetic log line may not carry them; describe the event in words instead.
 UNVERIFIED_STRINGS = [
@@ -204,6 +219,7 @@ UNVERIFIED_STRINGS = [
     "+odown",
     "+switch-master",
     "Started coredns.service",  # systemd job.c prints the Description=, unknown for coredns
+    "dataset is being loaded",  # batch 8: only the LOADING token is verified, not Redis's sentence
 ]
 # Runbooks written as the story of one incident did not exist before it (skeleton test and
 # write-up validator): a write-up may not cite one for an incident that started earlier.
@@ -216,6 +232,10 @@ NARRATIVE = {
     "RB-030": "2026-03-10",
 }
 WRITE_UP_DAYS = 7
+MONTHS = (
+    "January February March April May June July August September October November December"
+).split()
+MONTH_YEAR_RE = re.compile(rf"\b({'|'.join(MONTHS)}) (20\d\d)\b")
 
 
 def postdated(row: dict) -> set[str]:
@@ -237,6 +257,11 @@ def anachronisms(text: str, row: dict) -> list[str]:
     for pat in NEVER:
         if m := re.search(pat, text):
             errors.append(f"{m.group(0)!r} is never true here")
+    # batch 8: a history reference ("July 2025") to a month that starts after the write-up date
+    for m in MONTH_YEAR_RE.finditer(text):
+        first = f"{m.group(2)}-{MONTHS.index(m.group(1)) + 1:02d}-01"
+        if first > written:
+            errors.append(f"{m.group(0)!r} is after the write-up date {written}")
     return errors
 
 
@@ -392,7 +417,7 @@ def document_errors(doc: dict, row: dict, find_codes, short_re) -> dict[str, lis
         err("anachronisms", e)
     low = text.lower()
     for phrase in BLOCKED_PHRASES:
-        if phrase in low:
+        if phrase in low and (row["id"], phrase) not in BLOCKED_EXEMPT:
             err("blocklist", f"unsupported claim {phrase!r}")
     for string in UNVERIFIED_STRINGS:
         if string in text:

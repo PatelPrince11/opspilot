@@ -1,0 +1,45 @@
+# Synthetic logs for INC-0046. Our own service formats.
+[[burst]]
+from = "21:22:00"
+to = "21:31:59"
+count = 10
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login ok latency_ms={int:40-120} req={hex8}"
+
+[[burst]]
+from = "21:32:00"
+to = "21:35:59"
+count = 5
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "pgxpool: all 30 connections in use, logins waiting={ramp:5-34}"
+
+[[burst]]
+from = "21:36:00"
+to = "21:51:30"
+count = 8
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "pgxpool: all 30 connections in use, logins waiting={ramp:34-35}"
+
+[[burst]]
+from = "21:36:05"
+to = "21:51:30"
+count = 16
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login 503 too many logins in flight req={hex8}"
+
+[[burst]]
+from = "21:53:00"
+to = "22:01:00"
+count = 8
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login ok latency_ms={int:40-120} req={hex8}"

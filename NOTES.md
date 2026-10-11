@@ -996,6 +996,155 @@ No 8-word run is shared with any runbook or write-up.
 - A writer never infers a fix from a cause. With no sourced fix, the resolution states only who took the incident and when the errors stopped.
 - Any runbook that retells a row's event as the reason it was written gets a `NARRATIVE` date, and is then a label only for that row (as RB-013, 016, 021, 023, 028 and 030 are).
 
+## 2026-10-10: Phase 1 step 3, batch 8 (27 incident write-ups)
+
+**Built:**
+- 27 write-ups plus log specs:
+  - writable deferrals: 0103, 0134 (batch 7 cleanup facts)
+  - every unwritten hard-negative row: 0033, 0038, 0081 (RB-020/RB-027)
+  - balance rows: 0005, 0022, 0028, 0046, 0049, 0061, 0065, 0068, 0073, 0074, 0077, 0086, 0091, 0095,
+    0110, 0119, 0123, 0145, 0155, 0167, 0186, 0195
+- Coverage: cause type written conn_pool 9, tls 9, api_latency 9, rate_limiting 9, dns 8, high_cpu 8,
+  redis_down 8, memory_leak 8, bad_deploy 8, disk_full 14. Formats 3 each of the 9. Rows with no
+  runbook: 0022, 0134.
+- Corpus: 90 incidents, 6,568 synthetic log lines, 900 LogHub lines placed.
+- **Validator** (`scripts/corpus/incidents.py`, `checks.py`), each with a broken-input test:
+  - `FORBIDDEN_BY_FACT` gains `limiter` (0028: the edge /search limit was not involved).
+  - `BLOCKED_PHRASES` gains meta-talk and outside confirmations: "this document", "this write-up",
+    "the sources do not", "does not guess", "on its behalf", "notes from the night", "status page".
+  - `BLOCKED_EXEMPT`: four earlier write-ups break the new phrases and are exempt by name, not edited
+    (open item below).
+  - `UNVERIFIED_STRINGS` gains "dataset is being loaded" (Redis's LOADING sentence; only the token is verified).
+  - Anachronisms: a "Month YYYY" history reference later than the write-up date (resolved + 7 days) fails.
+    ISO dates are not checked: a certificate `notAfter` (0007) is a legitimate future date.
+- **Tests:** `BATCH8` set and format cap 4; 37 ARITHMETIC rows; 346 tests.
+- `scripts/corpus/review_checklist.md`: batch 8 judgement rules appended.
+
+**Decisions**
+- **Process:** same as batch 7 (3 Sonnet writers split by domain, one-row pilot 0081 read before the
+  others launched, a writer's set landed only when all of it passed, reviewers A Opus / B, C Sonnet on
+  `make packet` output). Subagents authorised by Prince for this run.
+- **Severity is balanced against `skeleton.toml`, which is 15/57/87/41.** The "16/56/87/41" in the batch 4
+  entry predates the 0100/0122 sev2 follow-up. Batch 8 added 3/7/11/6.
+- **Screened out before selection** (so not deferrals): sessions_failover rows 0121/0143/0154/0164 (no fact
+  says why or which way the primary moved, and "-02 a replica since 2025-11-12" would flip); redis-cache
+  primary losses 0041/0062/0090 (each needs an unrecorded failback); 0153 (ECONNREFUSED near the demo);
+  0116 (fd limit unstated); max_connections_adhoc rows (who held the slots, the 0103 gap); 0113 (a roll
+  hits both pods, so -02 being spared would be invented); 0102 (what filled the disk; R18 rules out the
+  unrotated log).
+- **No post-dated runbooks.** No row starts on or before a NARRATIVE date of its runbooks, and no linked
+  runbook's dated history line is one of these events. `NARRATIVE` unchanged.
+- **Fixes:** only 0103 and 0134 have sourced fixes. Every other resolution names who took it and when the
+  errors stopped. A runbook's remedy for the case may be cited as the runbook's (0068, 0081), never as applied.
+- **DNS trio (0033/0038/0081):** the bad zone file is named on the row's one internal-dns host only;
+  no scoped run, no word about the other server. `Type=simple` appears only as RB-027's statement about
+  the `kafka` unit. Per-host rollout log lines don't say "run complete" (pre-2026-08-20 pacing would then
+  imply the other server got the file first).
+- **Log hosts:** reviewer B flagged log lines from symptom-service hosts that aren't row hosts. Rejected:
+  the batch 5 rule allows any host of the row's service or symptom services. Reviewer A agreed.
+- **Owner teams:** 0073 (team-dba) and 0110 (team-payments) name the linked runbook's owner as the team
+  that took the incident. Narrative colour, not a fact.
+
+**Errors and fixes**
+- *Coordinator: packets for 0068 and 0086 were never generated.* Root cause: I swapped them in for
+  0043/0113 after generating packets. W2 drafted from the skeleton, sidecar and RB-025; the packets were
+  generated before review and the stale 0043/0113 packets removed.
+- *Coordinator: rows.md named fraud-scorer-02 for 0074;* the row says fraud-scorer-01. The writer
+  followed the skeleton.
+- *Heading collision 0038/0119* (both tickets, same writer) failed `test_headings_never_repeat` after
+  landing; 0119's headings renamed, later rebuilt in the fix round.
+- *Machine sleep* killed the writers four times (one pilot, three sets). Keep-awake doesn't cover a closed
+  lid. Resumed from `progress.toml` with drafts intact; nothing was redone.
+- *Pilot 0081:* talk about "the sources", rollout pacing that implied the other server got the file, and
+  0025's closing list. Fixed by the coordinator; the lessons went into the brief before the others started.
+- *Canaries:* 5 planted (0049 2×20=60, 0110 errors from 21:31 before the 21:37 start, 0022 the processor's
+  status page "confirmed", 0065 an invented VACUUM FULL, 0123 RB-019 walked top to bottom). A caught its
+  two, B its two, C its one; each also caught the others'. No rerun.
+- *Review: 202 findings* (A 28, B 118, C 56). Main classes: invented check results, check times and
+  outside reports (B); runbooks retold in order: RB-003 in 0028, the RB-020 remedy steps in all three DNS
+  rows, RB-019 in 0155, RB-024's Q&A in 0073 (C); stock idioms across the batch (C); log ramps past
+  their trigger (0046), 503s before the timeouts that cause them (0077), July 2025 cited in a June 2025
+  incident (0049) (A). Fixed in one round. Script-catchable classes became the rules above.
+- *Gate, first run:* `make corpus` failed: INC-0089 (batch 6) says "this write-up". Root cause: my
+  pre-rule scan flagged it but the line was cut off in my output and I missed it in the exempt list.
+  Added and reported. Then one test failed: the "July 2025" mutation on INC-0055 is legal (its write-up
+  date is 2025-07-01); the test case moved to "August 2025". The validator was right.
+
+**Verified:**
+- `make corpus` twice gave a byte-identical MANIFEST
+- `make corpus-check` ok
+- `make test`: 346 passed
+- `make lint` clean
+- `git diff phase-1/scaffold` on runbooks, skeleton and `eval/` is empty; only the 27 batch 8 write-ups
+  and log specs changed under `data/incidents/`
+
+**Jaccard after the fixes** (top 10, batch 8 write-up vs anything):
+
+| Pair | Score |
+|---|---|
+| 0186/0177 | 0.0224 |
+| 0195/0162 | 0.0207 |
+| 0145/0107 | 0.0207 |
+| 0186/0048 | 0.0200 |
+| 0186/0110 | 0.0197 |
+| 0081/0033 | 0.0196 |
+| 0155/0152 | 0.0194 |
+| 0081/0025 | 0.0183 |
+| 0081/0038 | 0.0182 |
+| 0119/0060 | 0.0182 |
+
+No 8-word run is shared with any runbook or write-up.
+
+**Real-world texts:** none newly verified. Used only what NOTES or a linked runbook already quotes:
+HikariCP `request timed out after 30000ms.`, SQLAlchemy QueuePool text, PgBouncer `pooler error:
+query_wait_timeout` / `08P01`, RB-012's 53300 message, RB-025's openssl verify codes 10 and 21, catalog
+tokens `OOM command not allowed` and `LOADING`.
+
+**Unverified (kept out):** Redis's full LOADING and OOM replies; Go x509 texts other than RB-023/RB-024
+quotes; OpenSearch rejection exception text; Postgres lock-wait log wording.
+
+**Eval notes (for Phase 1 step 4):**
+- **Rows that retell a runbook's history:** none in batch 8.
+- **Twin pairs, with what tells them apart:**
+  - 0081/0033/0038 and 0025/0142: zone push NXDOMAIN. 0033 auth-service-01, internal-dns-02, 2025-04-21;
+    0038 ledger-service-01, internal-dns-01, 2025-05-02; 0081 catalog-api-02, internal-dns-02, 2025-09-19;
+    0025 orders-api-02, internal-dns-01, 2025-03-19; 0142 inventory-service, internal-dns-02, 2026-03-24
+  - 0068/0086/0061 and 0007/0023 (edge TLS): intermediate expired, all pods, sev1, 2025-08-07 vs
+    intermediate missing, 2025-10-06 vs client clock on edge-gateway-01, 2025-07-17 vs client clock,
+    edge-gateway-03, 2025-01-19 vs missed pod, 2025-03-16
+  - 0110/0004: processor-side CA rotation, 2025-12-19 vs our client certificate expired, 2025-01-14
+  - 0073/0031: auth-db certificate name mismatch, 2025-08-21 vs renewed but unloaded, 2025-04-08
+  - 0186/0195/0048/0162/0177/0197: CPX-W430 from both pods (traffic above 360), 2026-08-13 vs CPX-W429
+    blip 2026-09-12 vs 2025 blip vs retry storm vs rollout restart vs cordon
+  - 0167/0137: crawler at 250/pod, 2026-06-13 vs campaign at 100/pod, 2026-03-10
+  - 0119/0060: edge-gateway-03 node pressure, 2026-01-16 vs the earlier edge latency row
+  - 0155/0152 and 0078/0123: redis-features maxmemory 2026-05-03 vs 2026-04-26; overcommit 2025-09;
+    LOADING after a restart 2026-01-25
+  - 0095/0055/0156: payments PgBouncer long transactions with query_wait_timeout, 2025-10-27 vs refunds
+    export, 2025-06-24 vs pgx slow queries, 2026
+  - 0077/0124: ledger Hikari slow queries, 2025-09-08 vs month-end reconciliation, 2026-01-31
+  - 0022/0015: processor latency, 2025-03-15 vs the earlier processor-latency row
+  - 0145/0107: search-cluster-02 segment merges vs 0107's row (same shape, different cause)
+- **Unanswerable resolutions:** every batch 8 row except 0103 and 0134. No question may ask what fixed
+  them.
+- **Short documents:** briefs 0061 (147 words), 0065 (136), 0145 (108): host, code or date lookups only.
+
+**Deferrals:** none.
+
+**Open (needs Prince):**
+- Four earlier write-ups break the new phrase rules and are exempt by name, not edited: 0034, 0089 and
+  0125 ("this write-up", meta-talk); **0171 (batch 5) states an outside party's statement** ("the
+  provider's status page acknowledges degraded API latency"), the class blocked since batch 7.
+
+**Status:** 90 of 200 incidents written.
+
+**What to be able to explain in an interview**
+- Why a pilot document is read before the other writers start: its mistakes become brief rules once,
+  instead of 26 review findings.
+- Why a new rule that hits old documents is exempted by name and reported, not silently relaxed or
+  silently applied.
+- Why the coordinator screens rows for facts a write-up would have to invent before selecting them.
+
 ## Fictional facts (standing: later runbooks, incidents and logs must agree)
 
 Invented details of the fictional company, introduced in batch 1. Reuse them as-is, and don't contradict them. Add new ones here as batches introduce them.

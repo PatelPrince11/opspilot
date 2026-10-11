@@ -65,8 +65,19 @@ BATCH7 = {
     *("INC-0060", "INC-0128", "INC-0059", "INC-0151", "INC-0142", "INC-0125", "INC-0078"),
     *("INC-0087", "INC-0108", "INC-0070", "INC-0120", "INC-0107", "INC-0133"),
 }
+BATCH8 = {
+    *("INC-0081", "INC-0033", "INC-0038", "INC-0068", "INC-0086", "INC-0061", "INC-0110"),
+    *("INC-0073", "INC-0119", "INC-0103", "INC-0134", "INC-0046", "INC-0077", "INC-0091"),
+    *("INC-0095", "INC-0065", "INC-0049", "INC-0074", "INC-0186", "INC-0195", "INC-0167"),
+    *("INC-0028", "INC-0005", "INC-0145", "INC-0155", "INC-0123", "INC-0022"),
+}
 # most uses of one format
-FORMAT_CAP = {"batch5": (BATCH5, 2), "batch6": (BATCH6, 4), "batch7": (BATCH7, 4)}
+FORMAT_CAP = {
+    "batch5": (BATCH5, 2),
+    "batch6": (BATCH6, 4),
+    "batch7": (BATCH7, 4),
+    "batch8": (BATCH8, 4),
+}
 
 
 @pytest.fixture(scope="module")
@@ -117,7 +128,7 @@ def events(rows, docs, services_doc):
 
 
 def test_batch_documents_validate(docs, rows, services_doc, rb_ids):
-    assert BATCH5 <= set(docs) <= BATCH5 | BATCH6 | BATCH7
+    assert BATCH5 <= set(docs) <= BATCH5 | BATCH6 | BATCH7 | BATCH8
     validate_documents(list(docs.values()), rows, services_doc, rb_ids)
 
 
@@ -182,6 +193,15 @@ def body_replace(old, new):
         ("INC-0055", body_add("The hosting provider blamed a hypervisor."), "unsupported claim"),
         ("INC-0048", body_add("The processor said all was well."), "unsupported claim"),
         ("INC-0099", body_add("Sentinel logged +switch-master."), "unverified real-world string"),
+        # batch 8 review: meta-talk, outside confirmations, unverified Redis text, future history
+        ("INC-0055", body_add("This document does not say."), "unsupported claim"),
+        ("INC-0055", body_add("The sources do not record it."), "unsupported claim"),
+        ("INC-0055", body_add("This log does not guess."), "unsupported claim"),
+        ("INC-0055", body_add("I will not explain it on its behalf."), "unsupported claim"),
+        ("INC-0055", body_add("The notes from the night are thin."), "unsupported claim"),
+        ("INC-0048", body_add("Their status page confirmed it."), "unsupported claim"),
+        ("INC-0055", body_add("Redis said the dataset is being loaded."), "unverified real-world"),
+        ("INC-0055", body_add("Like the August 2025 case."), "after the write-up date"),
         ("INC-0055", body_add("PgBouncer listens on 6432."), "demo guard"),
         ("INC-0055", body_add("We checked again at 03:15."), "outside start-2h"),
         ("INC-0055", body_add("- 13:00 · late entry"), "timeline goes backwards"),
@@ -358,8 +378,17 @@ def test_batch7_boolean_facts_reject_contradictions(key, contradiction):
     assert not fact_errors("A neutral sentence.", {"facts": {key: val}}), key
 
 
+@pytest.mark.parametrize(
+    "contradiction",
+    ["The edge rate limiter rejected the crawler.", "Then the local limit kicked in at 12:40."],
+)
+def test_batch8_limiter_fact_rejects_contradictions(contradiction):
+    assert fact_errors(contradiction, {"facts": {"limiter": False}})
+    assert not fact_errors("search-cluster-02 rejected searches.", {"facts": {"limiter": False}})
+
+
 def test_every_written_boolean_fact_has_a_pattern(side):
-    for i in BATCH5 | BATCH6 | BATCH7:
+    for i in BATCH5 | BATCH6 | BATCH7 | BATCH8:
         for k, v in side[i].get("facts", {}).items():
             assert not isinstance(v, bool) or k in FORBIDDEN_BY_FACT, (i, k)
 
@@ -453,6 +482,44 @@ ARITHMETIC = [
     ("INC-0108", 40 - 30, "10", 0),
     ("INC-0108", hm("03:12") + 30 / 60, "03:12:30", 0),
     ("INC-0108", hm("03:12:30") + 10 / 60, "03:12:40", 0),
+    # batch 8
+    ("INC-0081", at("21:40") - at("20:25"), "75", 0),
+    ("INC-0033", at("01:40") - at("01:15"), "25", 0),
+    ("INC-0038", at("07:45") - at("06:30"), "75", 0),
+    ("INC-0068", at("06:55") - at("04:10"), "165", 0),
+    ("INC-0086", at("19:25") - at("18:20"), "65", 0),
+    ("INC-0061", at("21:25") - at("17:20"), "245", 0),
+    ("INC-0110", at("22:47") - at("21:37"), "70", 0),
+    ("INC-0073", at("16:40") - at("16:05"), "35", 0),
+    ("INC-0119", at("22:25") - at("21:25"), "60", 0),
+    ("INC-0103", 3 * 25, "75", 0),
+    ("INC-0103", 300 - 3, "297", 0),
+    ("INC-0103", 222 + 75, "297", 0),
+    ("INC-0103", at("22:45") - at("22:15"), "30", 0),
+    ("INC-0134", 2 * 25, "50", 0),
+    ("INC-0046", 2 * 30, "60", 0),
+    ("INC-0073", 2 * 30, "60", 0),
+    ("INC-0046", at("21:52") - at("21:32"), "20", 0),
+    ("INC-0077", 2 * 20, "40", 0),
+    ("INC-0077", 200 - 3, "197", 0),
+    ("INC-0077", at("11:35") - at("10:05"), "90", 0),
+    ("INC-0091", 2 * (10 + 5), "30", 0),
+    ("INC-0091", at("22:10") - at("21:30"), "40", 0),
+    ("INC-0091", 30 - 15, "15", 0),
+    ("INC-0095", at("11:40") - at("11:05"), "35", 0),
+    ("INC-0065", at("09:45") - at("06:50"), "175", 0),
+    ("INC-0049", 2 * 20, "40", 0),
+    ("INC-0049", 100 - 3, "97", 0),
+    ("INC-0074", at("04:00") - at("03:35"), "25", 0),
+    ("INC-0186", 2 * 180, "360", 0),
+    ("INC-0186", at("22:07") - at("21:52"), "15", 0),
+    ("INC-0167", 3 * 250, "750", 0),
+    ("INC-0167", at("11:20") - at("10:55"), "25", 0),
+    ("INC-0028", at("13:00") - at("12:30"), "30", 0),
+    ("INC-0005", at("23:40") - at("22:30"), "70", 0),
+    ("INC-0155", at("20:45") - at("19:25"), "80", 0),
+    ("INC-0123", at("02:00") - at("01:50"), "10", 0),
+    ("INC-0022", at("18:35") - at("18:15"), "20", 0),
 ]
 
 

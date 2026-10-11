@@ -1,0 +1,50 @@
+# Synthetic logs for INC-0081. rollout lines are our tool's own journal lines.
+[[burst]]
+from = "20:15:00"
+to = "20:24:59"
+count = 10
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "GET /v1/products ok latency_ms={int:20-90} req={hex8}"
+
+[[line]]
+at = "20:25:02"
+service = "internal-dns"
+host = "internal-dns-02.prod.internal"
+level = "INFO"
+message = "rollout: placed /etc/coredns/zones/prod.internal.db"
+
+[[line]]
+at = "20:25:06"
+service = "internal-dns"
+host = "internal-dns-02.prod.internal"
+level = "INFO"
+message = "rollout: systemctl restart coredns exit=0"
+
+[[burst]]
+from = "20:25:20"
+to = "21:39:40"
+count = 30
+service = "catalog-api"
+level = "ERROR"
+hosts = ["catalog-api-02.prod.internal"]
+message = "database connect failed: hostname lookup answered NXDOMAIN req={hex8}"
+
+[[burst]]
+from = "20:25:30"
+to = "21:39:50"
+count = 20
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "GET /v1/products ok latency_ms={int:20-110} req={hex8}"
+
+[[burst]]
+from = "21:40:10"
+to = "21:49:00"
+count = 8
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "GET /v1/products ok latency_ms={int:20-90} req={hex8}"

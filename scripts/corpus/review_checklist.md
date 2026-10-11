@@ -19,3 +19,20 @@ From batch 7 review (A/B/C), for writers and reviewers:
 - VM config pushes before 2026-08-20: hosts are about 5 min apart (fixed wait).
 - A Deployment roll replaces every instance in turn; don't name one instance as the survivor of the whole roll.
 - A sidecar string blocked by the host rule (e.g. a non-row hostname) is paraphrased; the coordinator records it.
+
+From batch 8 review (A/B/C):
+- No invented check results, mid-incident check times, outside reports or rationale for the severity.
+  A step nobody recorded doesn't get a clock time.
+- No numeric thresholds in log lines ("back under 200ms", "cpu 94%") that no source gives.
+- A runbook's remedy is cited as the runbook's in one clause, without its steps (e.g. not "restore,
+  bump the serial, push to both").
+- A log ramp respects the ceiling that triggers the alert or error (in-flight caps, pool sizes).
+- Pacing: before 2026-08-20 the rollout tool waits 5 min between hosts; a per-host line that also
+  ends the run implies there was no next host. Don't let logs imply what prose may not say.
+- A client-side cause (device clock) fails against every pod behind an even load balancer; name the
+  pod only as where it was logged.
+- Stock idioms spread across a batch are overlap even under Jaccard: "alert on X so the page ...",
+  "What is not known", "for whoever picks this up", "summary for the channel", "not recorded" said
+  as commentary. Give each idiom to one document at most.
+- Twin documents (same service and cause) don't share their closing list or their argument order.
+- A history reference may only name events before the incident (validator now checks "Month YYYY").

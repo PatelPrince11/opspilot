@@ -1,0 +1,27 @@
+# Synthetic logs for INC-0068. edge-gateway lines are our own summaries of Envoy listener stats.
+[[burst]]
+from = "04:00:30"
+to = "04:09:59"
+count = 12
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "listener summary: tls handshakes last minute={int:1800-2600} requests last minute={int:1700-2500}"
+
+[[burst]]
+from = "04:10:20"
+to = "06:54:30"
+count = 24
+service = "edge-gateway"
+level = "WARN"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "listener summary: tls handshakes last minute={int:0-12} requests last minute={int:0-10}"
+
+[[burst]]
+from = "06:55:20"
+to = "07:04:30"
+count = 8
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "listener summary: tls handshakes last minute={int:1700-2500} requests last minute={int:1600-2400}"

@@ -1,0 +1,45 @@
+# Synthetic logs for INC-0077. Hikari timeout text as 5.0.1 prints it.
+[[burst]]
+from = "09:55:00"
+to = "10:04:59"
+count = 10
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal"]
+message = "ledger entry committed id={hex8}"
+
+[[burst]]
+from = "10:05:00"
+to = "11:34:00"
+count = 14
+service = "ledger-service"
+level = "WARN"
+hosts = ["ledger-service-01.prod.internal"]
+message = "LEDGER-W210 HikariPool-1 active connections above 90% of pool, pending={ramp:3-38}"
+
+[[burst]]
+from = "10:05:30"
+to = "11:34:00"
+count = 16
+service = "ledger-service"
+level = "ERROR"
+hosts = ["ledger-service-01.prod.internal"]
+message = "HikariPool-1 - Connection is not available, request timed out after 30000ms."
+
+[[burst]]
+from = "10:05:40"
+to = "11:34:00"
+count = 10
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal"]
+message = "ledger call failed: 503 from ledger-service req={hex8}"
+
+[[burst]]
+from = "11:36:00"
+to = "11:44:00"
+count = 8
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal"]
+message = "ledger entry committed id={hex8}"

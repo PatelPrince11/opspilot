@@ -1,0 +1,48 @@
+# Synthetic logs for INC-0155. Everything is our own service format.
+[[line]]
+at = "19:25:11"
+service = "fraud-scorer"
+host = "fraud-scorer-01.prod.internal"
+level = "ERROR"
+message = "FRD-E140 velocity counter write refused by redis-features-01 (OOM command not allowed)"
+
+[[line]]
+at = "19:25:19"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "ERROR"
+message = "FRD-E140 velocity counter write refused by redis-features-01 (OOM command not allowed)"
+
+[[line]]
+at = "20:45:05"
+service = "fraud-scorer"
+host = "fraud-scorer-01.prod.internal"
+level = "INFO"
+message = "velocity counter writes accepted again"
+
+[[burst]]
+from = "19:25:30"
+to = "20:44:30"
+count = 60
+service = "fraud-scorer"
+level = "ERROR"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "FRD-E140 velocity counter write refused by redis-features-01 (OOM command not allowed)"
+
+[[burst]]
+from = "19:25:30"
+to = "20:44:30"
+count = 30
+service = "redis-features"
+level = "WARN"
+hosts = ["redis-features-01.prod.internal"]
+message = "write refused: OOM command not allowed (used memory at maxmemory 24gb, policy noeviction)"
+
+[[burst]]
+from = "19:15:00"
+to = "19:24:50"
+count = 10
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "velocity counter updated"

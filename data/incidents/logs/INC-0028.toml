@@ -1,0 +1,48 @@
+# Synthetic logs for INC-0028. Everything is our own service format.
+[[line]]
+at = "12:30:07"
+service = "search-api"
+host = "search-api-02.prod.internal"
+level = "ERROR"
+message = "SRCH-E502 search failed: cluster rejected the query (search queue full)"
+
+[[line]]
+at = "12:33:40"
+service = "search-api"
+host = "search-api-02.prod.internal"
+level = "INFO"
+message = "operator listed search thread pools: rejected rising on search-cluster-02 and search-cluster-03"
+
+[[line]]
+at = "12:58:30"
+service = "search-cluster"
+host = "search-cluster-03.prod.internal"
+level = "INFO"
+message = "search thread pool: rejected count steady"
+
+[[burst]]
+from = "12:30:10"
+to = "12:57:30"
+count = 45
+service = "search-api"
+level = "ERROR"
+hosts = ["search-api-02.prod.internal"]
+message = "SRCH-E502 search failed: cluster rejected the query (search queue full)"
+
+[[burst]]
+from = "12:30:00"
+to = "12:57:30"
+count = 40
+service = "search-cluster"
+level = "WARN"
+hosts = ["search-cluster-02.prod.internal", "search-cluster-03.prod.internal"]
+message = "search thread pool queue full; rejected {ramp:1-900} queries since node start"
+
+[[burst]]
+from = "12:20:00"
+to = "12:29:50"
+count = 10
+service = "search-api"
+level = "INFO"
+hosts = ["search-api-02.prod.internal"]
+message = "search request served in {int:40-220}ms"

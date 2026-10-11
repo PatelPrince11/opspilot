@@ -1,0 +1,64 @@
+# Synthetic logs for INC-0123. Everything is our own service format.
+[[line]]
+at = "01:50:02"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "server started; loading dataset from disk"
+
+[[line]]
+at = "01:50:20"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "WARN"
+message = "command refused: LOADING"
+
+[[line]]
+at = "01:51:05"
+service = "fraud-scorer"
+host = "fraud-scorer-01.prod.internal"
+level = "WARN"
+message = "FRD-W118 redis-features lookup did not return in time"
+
+[[line]]
+at = "01:59:55"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "dataset loaded; ready to accept commands"
+
+[[burst]]
+from = "01:50:25"
+to = "01:59:50"
+count = 25
+service = "redis-features"
+level = "WARN"
+hosts = ["redis-features-01.prod.internal"]
+message = "command refused: LOADING"
+
+[[burst]]
+from = "01:51:10"
+to = "01:59:50"
+count = 25
+service = "fraud-scorer"
+level = "WARN"
+hosts = ["fraud-scorer-01.prod.internal"]
+message = "FRD-W118 redis-features lookup did not return in time"
+
+[[burst]]
+from = "01:40:00"
+to = "01:49:50"
+count = 8
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal"]
+message = "scored payment {hex8}"
+
+[[burst]]
+from = "02:00:10"
+to = "02:09:50"
+count = 8
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal"]
+message = "scored payment {hex8}"

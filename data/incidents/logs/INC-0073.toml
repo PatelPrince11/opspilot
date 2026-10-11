@@ -1,0 +1,45 @@
+# Synthetic logs for INC-0073. Messages are our own formats; no TLS library wording is reproduced.
+[[burst]]
+from = "15:55:30"
+to = "16:04:59"
+count = 10
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login ok latency_ms={int:40-160} req={hex8}"
+
+[[burst]]
+from = "16:05:10"
+to = "16:39:40"
+count = 30
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "new connection to auth-db-01 rejected: server certificate does not match the host name checked; login unavailable req={hex8}"
+
+[[burst]]
+from = "16:05:20"
+to = "16:39:50"
+count = 20
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login returned 503 req={hex8}"
+
+[[burst]]
+from = "16:05:30"
+to = "16:39:50"
+count = 14
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login ok latency_ms={int:40-200} req={hex8}"
+
+[[burst]]
+from = "16:40:10"
+to = "16:49:00"
+count = 10
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login ok latency_ms={int:40-160} req={hex8}"

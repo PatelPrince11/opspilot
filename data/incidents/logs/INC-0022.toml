@@ -1,0 +1,48 @@
+# Synthetic logs for INC-0022. Everything is our own service format.
+[[line]]
+at = "18:15:20"
+service = "card-processor-proxy"
+host = "card-processor-proxy-01.prod.internal"
+level = "WARN"
+message = "processor call slow: {int:6000-9000}ms"
+
+[[line]]
+at = "18:15:31"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "WARN"
+message = "processor call slow: {int:6000-9000}ms"
+
+[[line]]
+at = "18:35:10"
+service = "card-processor-proxy"
+host = "card-processor-proxy-01.prod.internal"
+level = "INFO"
+message = "processor call durations back to normal"
+
+[[burst]]
+from = "18:15:40"
+to = "18:34:30"
+count = 40
+service = "card-processor-proxy"
+level = "WARN"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "processor call slow: {int:6000-9000}ms"
+
+[[burst]]
+from = "18:15:45"
+to = "18:34:30"
+count = 25
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "card payment {hex8} returned 504 to caller; processor call timed out"
+
+[[burst]]
+from = "18:05:00"
+to = "18:14:50"
+count = 10
+service = "card-processor-proxy"
+level = "INFO"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "processor call ok in {int:90-300}ms"
