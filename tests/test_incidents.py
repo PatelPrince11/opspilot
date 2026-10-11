@@ -10,7 +10,13 @@ from datetime import UTC, datetime
 import pytest
 
 from scripts.corpus.common import DATA, SIDECAR
-from scripts.corpus.incidents import NARRATIVE, load_skeleton, postdated, validate_skeleton
+from scripts.corpus.incidents import (
+    NARRATIVE,
+    code_finder,
+    load_skeleton,
+    postdated,
+    validate_skeleton,
+)
 from scripts.corpus.runbooks import load_runbooks, runbooks_output
 from scripts.corpus.services import CorpusError, load_services
 
@@ -794,5 +800,14 @@ def test_demo_spec_is_consistent(demo, rows, runbooks):
     assert demo["binding_constraint"]["gate_live_since"].isoformat() == "2026-08-20"
     assert demo["binding_constraint"]["pgbouncer_enrolled"] is False
     assert "pgbouncer" not in runbooks["RB-027"]["body"]  # not in the gate's probe table
-    assert demo["cause"]["mechanism_status"].startswith("placeholder")
+    assert demo["cause"]["mechanism_status"].startswith("verified from source")
     assert set(demo["evidence"]["runbooks"]) <= set(runbooks)
+
+
+def test_demo_spec_cites_written_incidents_and_catalog_codes(demo, services_doc):
+    written = {p.stem for p in (DATA / "incidents").glob("INC-*.md")}
+    ev = demo["evidence"]
+    cited = {ev["analog_incident"], *ev["related_incidents"], *ev["contrast_incidents"]}
+    assert cited <= written
+    text = (SIDECAR / "demo_answer.toml").read_text()
+    assert not code_finder(services_doc)(text)[1]  # no invented internal code

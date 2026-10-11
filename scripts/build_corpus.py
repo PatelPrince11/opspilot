@@ -5,7 +5,8 @@ Runs in the app container via `make corpus`; `make corpus-check` validates the s
 and checks the committed outputs are up to date, without writing or downloading.
 
 Committed outputs (hashed in MANIFEST.json): data/processed/services.json,
-runbooks.jsonl, incidents.jsonl (incidents with a write-up) and log_events.synthetic.jsonl.
+runbooks.jsonl, incidents.jsonl (incidents with a write-up), log_events.synthetic.jsonl and
+log_events.live.jsonl (the open demo incident's logs from data/live/: never a document, no noise).
 Not committed: LogHub-derived noise (license requires its notice in every copy).
 """
 
@@ -37,6 +38,7 @@ from scripts.corpus.services import CorpusError, load_services, services_output,
 MANIFEST = "MANIFEST.json"
 LOGHUB_OUT = "log_events.loghub.jsonl"
 SYNTHETIC_OUT = "log_events.synthetic.jsonl"
+LIVE_OUT = "log_events.live.jsonl"
 
 
 def build_committed() -> tuple[dict[str, bytes], dict]:
@@ -53,17 +55,20 @@ def build_committed() -> tuple[dict[str, bytes], dict]:
     validate_documents(docs, skeleton, doc, runbooks)
     inc_rows = incidents_output(docs, skeleton)
     events = synthetic_events(skeleton, docs, doc)
+    live = synthetic_logs.live_events(DATA / "live" / "INC-LIVE-001.toml", doc)
     outputs = {
         "services.json": json_bytes(services),
         "runbooks.jsonl": jsonl_bytes(rb_rows),
         "incidents.jsonl": jsonl_bytes(inc_rows),
         SYNTHETIC_OUT: jsonl_bytes({**e, "ts": iso(e["ts"])} for e in events),
+        LIVE_OUT: jsonl_bytes({**e, "ts": iso(e["ts"])} for e in live),
     }
     counts = {
         "services": len(services),
         "runbooks": len(rb_rows),
         "incidents": len(inc_rows),
         "synthetic_log_events": len(events),
+        "live_log_events": len(live),
     }
     return outputs, counts
 

@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from scripts import build_corpus
-from scripts.corpus import loghub
+from scripts.corpus import loghub, synthetic_logs
 from scripts.corpus.checks import TRIGRAM_JACCARD_THRESHOLD, leaks_demo, trigrams
 from scripts.corpus.common import DATA, PROCESSED, rng_for, sha256_bytes
 from scripts.corpus.runbooks import (
@@ -243,6 +243,42 @@ def test_runbooks_do_not_leak_the_demo_combination(runbooks):
     assert not [r["meta"]["id"] for r in runbooks if leaks_demo(r["body"])]
 
 
+@pytest.fixture(scope="module")
+def live(services_doc):
+    return synthetic_logs.live_events(DATA / "live" / "INC-LIVE-001.toml", services_doc)
+
+
+def test_demo_logs_exist_and_carry_the_leak_combination(live):
+    assert leaks_demo("\n".join(e["message"] for e in live))
+    assert any(leaks_demo(e["message"]) for e in live)  # one payments-api line has all three
+    assert all(e["incident_id"] is None and e["source"] == "synthetic" for e in live)
+    assert not any("Started" in e["message"] for e in live)
+    refused = [e for e in live if "ECONNREFUSED" in e["message"]]
+    exited = next(e for e in live if "Main process exited" in e["message"])
+    assert min(e["ts"] for e in refused) > exited["ts"]
+    assert {e["message"].split(" ", 1)[0] for e in refused} == {
+        f"payments-api-0{n}.prod.internal" for n in (1, 2, 3, 4)
+    }
+
+
+def test_demo_log_hosts_are_in_services_toml(live, services_doc):
+    hosts = {h["name"] for s in services_doc["services"] for h in s["hosts"]}
+    used = {e["message"].split(" ", 1)[0] for e in live}
+    used |= {h for e in live for h in re.findall(r"[a-z][a-z0-9-]*\.prod\.internal", e["message"])}
+    assert used <= hosts
+
+
+def test_live_logs_reject_an_unknown_host(tmp_path, services_doc):
+    spec = tmp_path / "INC-LIVE-001.toml"
+    spec.write_text(
+        'date = 2026-10-06\n[[line]]\nat = "14:30:00"\nservice = "payments-api"\n'
+        'host = "payments-api-01.prod.internal"\nlevel = "INFO"\n'
+        'message = "db: new connection via payments-pgbouncer-03.prod.internal ok"\n'
+    )
+    with pytest.raises(CorpusError, match="payments-pgbouncer-03"):
+        synthetic_logs.live_events(spec, services_doc)
+
+
 # --------------------------------------------------------------------- LogHub
 
 
@@ -370,6 +406,7 @@ def test_manifest_hashes_committed_outputs_only():
         "runbooks.jsonl",
         "incidents.jsonl",
         build_corpus.SYNTHETIC_OUT,
+        build_corpus.LIVE_OUT,
     }
 
 

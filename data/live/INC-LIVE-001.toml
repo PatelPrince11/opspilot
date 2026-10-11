@@ -1,0 +1,154 @@
+# Demo logs for the open incident INC-LIVE-001 (eval/corpus/demo_answer.toml). SYNTHETIC.
+# Never a document, never in incidents.jsonl, no LogHub noise; events carry no incident_id.
+# Texts checked: PgBouncer 1.22 config error and "cannot load config file" (NOTES 2026-10-11,
+# lib/usual/cfparser.c:167, src/main.c:439); systemd "Main process exited, code=exited,
+# status=1/FAILURE" (unit.c). rollout lines are our tool's own journal lines (F4). payments-api's
+# errno field is our logger's (F2). No systemd "Started" or "Failed with result" line.
+date = 2026-10-06
+
+# --- payments-pgbouncer-01: the scoped rollout run and the startup failure
+
+[[line]]
+at = "14:30:00"
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+level = "INFO"
+message = "rollout: run started for unit pgbouncer, scope payments-pgbouncer-01.prod.internal (1 host)"
+
+[[line]]
+at = "14:30:39"
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+level = "INFO"
+message = "rollout: wrote /etc/pgbouncer/pgbouncer.ini"
+
+[[line]]
+at = "14:30:40"
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+level = "INFO"
+message = "rollout: systemctl restart pgbouncer exited 0"
+
+[[line]]
+at = "14:30:40"
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+level = "INFO"
+message = "rollout: run finished, 1 of 1 hosts done, 0 failed"
+
+[[line]]
+at = "14:30:41"
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+level = "ERROR"
+message = 'pgbouncer: invalid value "transction" for parameter pool_mode in configuration (/etc/pgbouncer/pgbouncer.ini:12)'
+
+[[line]]
+at = "14:30:41"
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+level = "FATAL"
+message = "pgbouncer: cannot load config file"
+
+[[line]]
+at = "14:30:41"
+service = "payments-pgbouncer"
+host = "payments-pgbouncer-01.prod.internal"
+level = "WARN"
+message = "systemd: pgbouncer.service: Main process exited, code=exited, status=1/FAILURE"
+
+[[line]]
+at = "14:30:42"
+service = "payments-api"
+host = "payments-api-02.prod.internal"
+level = "ERROR"
+message = "db: new connection via payments-pgbouncer-01.prod.internal (10.0.4.21:6432) failed: connection refused errno=ECONNREFUSED req={hex8}"
+
+# --- payments-pgbouncer-01 before the run, -02 throughout: normal pool status
+
+[[burst]]
+from = "14:20:00"
+to = "14:29:59"
+count = 4
+service = "payments-pgbouncer"
+level = "INFO"
+hosts = ["payments-pgbouncer-01.prod.internal"]
+message = "pool status: cl_active={int:70-90} cl_waiting=0 sv_active={int:8-16}"
+
+[[burst]]
+from = "14:20:00"
+to = "14:52:00"
+count = 14
+service = "payments-pgbouncer"
+level = "INFO"
+hosts = ["payments-pgbouncer-02.prod.internal"]
+message = "pool status: cl_active={int:70-95} cl_waiting=0 sv_active={int:8-18}"
+
+# --- payments-api: new connections alternate between bouncers (F1)
+
+[[burst]]
+from = "14:20:00"
+to = "14:30:40"
+count = 12
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "db: new connection via {choice:payments-pgbouncer-01.prod.internal (10.0.4.21:6432)|payments-pgbouncer-02.prod.internal (10.0.4.22:6432)} ok"
+
+[[burst]]
+from = "14:30:43"
+to = "14:52:00"
+count = 30
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "db: new connection via payments-pgbouncer-01.prod.internal (10.0.4.21:6432) failed: connection refused errno=ECONNREFUSED req={hex8}"
+
+[[burst]]
+from = "14:30:43"
+to = "14:52:00"
+count = 30
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "db: new connection via payments-pgbouncer-02.prod.internal (10.0.4.22:6432) ok"
+
+[[burst]]
+from = "14:20:00"
+to = "14:52:00"
+count = 24
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "POST /v1/payments status=200 latency_ms={int:35-120} req={hex8}"
+
+# --- payments-db: healthy
+
+[[burst]]
+from = "14:20:00"
+to = "14:52:00"
+count = 8
+service = "payments-db"
+level = "INFO"
+hosts = ["payments-db-01.prod.internal"]
+message = "health: accepting connections, {int:20-40} active backends"
+
+# --- distractor: search-api degraded since 13:10 by expensive /search queries (RB-003 pattern)
+
+[[burst]]
+from = "14:20:00"
+to = "14:52:00"
+count = 12
+service = "search-api"
+level = "WARN"
+hosts = ["search-api-01.prod.internal", "search-api-02.prod.internal"]
+message = "slow query: /search took {int:1500-4200}ms (expensive query)"
+
+[[burst]]
+from = "14:20:00"
+to = "14:52:00"
+count = 4
+service = "search-api"
+level = "ERROR"
+hosts = ["search-api-01.prod.internal", "search-api-02.prod.internal"]
+message = "SRCH-E502 search failed: cluster rejected the query (search queue full)"

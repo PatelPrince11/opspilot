@@ -133,3 +133,37 @@ def validate_logs(events: list[dict], row: dict, services_doc: dict) -> None:
         errors.append(f"{where}: row code {c!r} never logged")
     if errors:
         raise CorpusError("synthetic logs:\n  " + "\n  ".join(dict.fromkeys(errors)))
+
+
+def live_events(spec_path: Path, services_doc: dict) -> list[dict]:
+    """The open demo incident's logs (data/live/): same generator, but no incident_id (it is
+    no incident row) and no row to check against, so every host, ip:port and code is checked
+    against services.toml alone. The demo guard doesn't apply: these logs must carry it."""
+    spec = load_spec(spec_path)
+    events = [{**e, "incident_id": None} for e in generate(spec_path.stem, spec, spec["date"])]
+    services = {s["name"]: s for s in services_doc["services"]}
+    host_owner = {h["name"]: s["name"] for s in services.values() for h in s["hosts"]}
+    ip_owner = {h["ip"]: s["name"] for s in services.values() for h in s["hosts"]}
+    find_codes = code_finder(services_doc)
+    where, errors = spec_path.stem, []
+    for e in events:
+        msg = e["message"]
+        if host_owner.get(msg.split(" ", 1)[0]) != e["service"]:
+            errors.append(f"{where}: line must start with a host of {e['service']}: {msg[:60]!r}")
+        for h in HOST_RE.findall(msg):
+            if h not in host_owner:
+                errors.append(f"{where}: host {h!r} not in services.toml")
+        for ip, port in IP_PORT_RE.findall(msg):
+            owner = ip_owner.get(ip)
+            if owner is None or (port and int(port) != services[owner]["port"]):
+                errors.append(f"{where}: {ip}:{port} is not a services.toml host and port")
+        if unknown := find_codes(msg)[1]:
+            errors.append(f"{where}: codes not in the catalog {sorted(unknown)}")
+        if e["level"] not in LEVELS:
+            errors.append(f"{where}: level {e['level']!r}")
+        for string in UNVERIFIED_STRINGS:
+            if string in msg:
+                errors.append(f"{where}: unverified real-world string {string!r}")
+    if errors:
+        raise CorpusError("live logs:\n  " + "\n  ".join(dict.fromkeys(errors)))
+    return events

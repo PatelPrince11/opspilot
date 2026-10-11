@@ -1357,6 +1357,42 @@ stands, and the "may differ" note is now confirmed.
 - Whether a `logfile =` setting earlier in the file would also receive the lines (not used in the demo).
 - systemd's `Failed with result 'exit-code'` and `Started …` lines: not checked, so not written.
 
+## 2026-10-11: Demo incident INC-LIVE-001 (spec and logs)
+
+**Built:**
+- `eval/corpus/demo_answer.toml` filled: `likely_cause`, the mechanism (verified, entry above), the log
+  chain, runbooks (RB-027, RB-011), the analog (INC-0185), related scoped config pushes (0025, 0033,
+  0038, 0081), contrast bouncer incidents (0055, 0095, 0026), `key_facts`, `next_checks`,
+  `forbidden_claims` and the `leak_combination`.
+- `data/live/INC-LIVE-001.toml`: the demo's log spec, run through the same seeded generator
+  (`rng_for("logs:INC-LIVE-001")`) into `data/processed/log_events.live.jsonl` (146 lines), hashed in
+  MANIFEST (`live_log_events`). Not a document, not in `incidents.jsonl`, no LogHub noise, and
+  `incident_id` is empty (the `log_events.incident_id` foreign key has no INC-LIVE-001 row, and a
+  label would give the answer away).
+- `synthetic_logs.live_events`: hosts, ip:port and codes checked against `services.toml` alone; the
+  per-row demo guard doesn't apply, since these logs must carry the combination.
+- Tests: the live logs exist and contain the combination; every host in them is in `services.toml`; an
+  unknown host is rejected; refused lines come from all 4 payments-api pods and only after
+  pgbouncer's exit; the spec cites only written incidents and no invented code; the existing leak tests
+  still pass.
+
+**Decisions:**
+- Facts used: F1 to F5, the rollout-tool pacing for units outside the 2026-08-20 gate, and the
+  PgBouncer 1.22 source check. pgx's behaviour on a failed dial is not used.
+- **No `503` in the demo.** The old placeholder said the refused connections "return 503", but no fact
+  says what payments-api returns when a new connection is refused (only `PAYAPI-E1042` maps to 503).
+  The spec and logs say only that the connection fails.
+- **INC-0153 dropped** as the near-miss incident: it is unwritten, and eval may cite only written rows.
+- First refused line at 14:30:42 (was 14:30:41), so it always follows pgbouncer's exit line whatever the
+  millisecond jitter.
+- Logs have about as many refused connects via -01 as successful ones via -02 (30 each), matching F1's
+  even split. Logs are a sample; the split is not a measured count.
+- payments-pgbouncer-02 and payments-db lines are our own status wording, not PgBouncer or Postgres log
+  formats (those remain unverified).
+
+**Step 5 (ingest) must load** `log_events.live.jsonl` with the other log events, and nothing else
+from the demo.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -1639,7 +1675,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. Next is the demo incident spec, then step 4.
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Next is step 4.
 - Phase 0 accounts (AWS, Groq, Gemini, Langfuse Cloud, Anthropic credits, GitHub): **not done**. Prince is doing these in parallel. Repo files only until then.
 
 ## Unverified claims (check in Phase 0, record results here)

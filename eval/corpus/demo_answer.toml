@@ -1,40 +1,48 @@
-# Eval-only: the open demo incident INC-LIVE-001. SYNTHETIC. Never ingested, never a
-# document, and none of the 200 incidents. Evidence lives only in logs (data/live/, a later
-# batch) and in the services.toml status snapshot.
+# Eval-only: the open demo incident INC-LIVE-001. SYNTHETIC. Never ingested as a document,
+# never in incidents.jsonl, and none of the 200 incidents. Evidence lives only in the demo logs
+# (data/live/INC-LIVE-001.toml -> data/processed/log_events.live.jsonl) and in the services.toml
+# status snapshot. Every fact below is a NOTES Fictional fact (F1-F5, rollout tool, PgBouncer)
+# or the 2026-10-11 PgBouncer 1.22 source check; pgx's own behaviour on a failed dial is unverified
+# and never relied on.
 
 id = "INC-LIVE-001"
 question = "The payment API is returning connection-refused errors. What likely happened, what evidence supports it, and what should I check next?"
 
-# Demo guard: no document (runbook, incident row or prose) may contain all three.
+# Demo guard: no document (runbook, incident row or prose) may contain all three. The demo logs
+# must contain all three.
 leak_combination = ["payments-pgbouncer-01", "ECONNREFUSED", "6432"]
 
+likely_cause = "A rollout-tool run scoped to payments-pgbouncer-01 pushed a pgbouncer.ini with a misspelled pool_mode; systemctl restart pgbouncer exited 0 (unit is Type=simple), then pgbouncer refused the file at startup and exited with status 1. payments-api alternates new connections between the two bouncers with no fallback, so about half of new connections hit the closed 10.0.4.21:6432 and fail with ECONNREFUSED."
+
 [cause]
-summary = "A rollout-tool run scoped to payments-pgbouncer-01 pushed a bad pgbouncer.ini; `systemctl restart pgbouncer` exited 0 (unit is Type=simple), then pgbouncer exited; payments-api's new connections to 10.0.4.21:6432 that pick -01 are refused and return 503."
 service = "payments-pgbouncer"
 host = "payments-pgbouncer-01.prod.internal"
 ip = "10.0.4.21"
 port = 6432
 healthy_peer = "payments-pgbouncer-02.prod.internal"
-# Placeholder until PgBouncer 1.22 source (src/loader.c, config handling) is read: does an
-# invalid pool_mode make the process exit at startup, and with what exact text?
-mechanism = "invalid setting in pgbouncer.ini (candidate: typo'd pool_mode value)"
-mechanism_status = "placeholder: verify PgBouncer 1.22 loader.c/config handling (invalid pool_mode exits at startup? exact text) before any demo log is written"
+trigger = "rollout-tool run scoped to payments-pgbouncer-01 only (F5), writing /etc/pgbouncer/pgbouncer.ini"
+mechanism = "pool_mode = transction (misspelled) on line 11 of /etc/pgbouncer/pgbouncer.ini: PgBouncer 1.22 logs the invalid value, then dies at startup with exit status 1"
+mechanism_status = "verified from source: PgBouncer pgbouncer_1_22_0 (lib/usual/cfparser.c:167, src/main.c:439); not run (NOTES 2026-10-11)"
+pgbouncer_lines = [
+  'invalid value "transction" for parameter pool_mode in configuration (/etc/pgbouncer/pgbouncer.ini:12)',
+  "cannot load config file",
+]
+systemd_line = "pgbouncer.service: Main process exited, code=exited, status=1/FAILURE"
 
 [bouncer_selection]
-# NOTES Fictional facts F1: payments-api's db package alternates bouncer hosts per new
-# connection, with no fallback (not built). pgx's own behavior on a failed dial is unverified.
+# F1: alternate per new connection, no fallback (not built). Only F1 and F2 are relied on.
 policy = "alternate per new connection, no fallback"
 normal_split = "about half each: 4 x 40 = 160 client connections, about 80 per bouncer"
-demo_load_acquired_per_pod = 8
-log_errno_field = "errno=ECONNREFUSED"  # F2: Go prints "connection refused", never the errno name
-no_payapi_e1042 = true  # the dial fails fast, never reaching DB_ACQUIRE_TIMEOUT=500ms
+log_errno_field = "errno=ECONNREFUSED"  # F2: our logger's field; Go itself prints "connection refused"
+no_payapi_e1042 = true  # the connect is refused at once; nothing waits on DB_ACQUIRE_TIMEOUT=500ms
 
 [timeline]  # UTC
 date = 2026-10-06
 run_started = "14:30:00"
+config_written = "14:30:39"
 restart_exit_0 = "14:30:40"
 pgbouncer_exited = "14:30:41"
-first_refused = "14:30:41"
+first_refused = "14:30:42"
 paged = "14:38:00"
 snapshot = "14:52:00"
 full_run_would_have_reached_02 = "14:35:00"  # older pacing: fixed 5 min; did not happen (run scoped to -01)
@@ -44,8 +52,11 @@ gate_live_since = 2026-08-20
 pgbouncer_enrolled = false
 pacing = "older: canary, fixed 5-minute wait, only the exit status of systemctl restart (RB-027)"
 run_scope = ["payments-pgbouncer-01.prod.internal"]  # F5: runs can be scoped to a subset
+unit_type = "Type=simple"  # F3: restart exits 0 even though pgbouncer dies a second later
+journal_identifier = "rollout"  # F4
 after_last_incident = true  # every skeleton row starts before 2026-10-01
 after_last_runbook_review = "2026-09-29"  # RB-029
+service_status = "unchanged from services.toml: payments-api degraded; payments-pgbouncer degraded; payments-db healthy; search-api degraded"
 
 [distractor]
 service = "search-api"
@@ -54,21 +65,54 @@ reason = "expensive /search queries (RB-003 pattern); slow-query WARNs and occas
 near_miss_runbooks = ["RB-003", "RB-014"]
 
 [evidence]
-runbooks = ["RB-027", "RB-011"]
-analog_incident = "INC-0185"
-contrast_incident = "INC-0055"
+# Log lines that carry the answer, in the order a responder should find them.
+log_chain = [
+  "payments-api-01..04: new connection to payments-pgbouncer-01.prod.internal (10.0.4.21:6432) refused, errno=ECONNREFUSED, from 14:30:42",
+  "payments-api: new connections via payments-pgbouncer-02 (10.0.4.22) keep succeeding",
+  "payments-pgbouncer-01 rollout: wrote /etc/pgbouncer/pgbouncer.ini at 14:30:39 (run scoped to this host)",
+  "payments-pgbouncer-01 rollout: systemctl restart pgbouncer exited 0 at 14:30:40",
+  'payments-pgbouncer-01 pgbouncer: invalid value "transction" for parameter pool_mode ... ; cannot load config file',
+  "payments-pgbouncer-01 systemd: pgbouncer.service: Main process exited, code=exited, status=1/FAILURE",
+  "payments-pgbouncer-02 and payments-db-01: normal lines throughout",
+]
+runbooks = ["RB-027", "RB-011"]  # config push to a VM daemon that doesn't come back; PgBouncer ops
+analog_incident = "INC-0185"  # rollout push, restart exited 0, daemon quit at startup on a bad setting
+related_incidents = ["INC-0025", "INC-0033", "INC-0038", "INC-0081"]  # scoped rollout pushes past a Type=simple restart (the daemon stayed up there)
+contrast_incidents = ["INC-0055", "INC-0095", "INC-0026"]  # bouncer saturation/CPU: PAYAPI-E1042, never a refused connect
 near_miss_runbooks = ["RB-010", "RB-012", "RB-007", "RB-020", "RB-017"]
-near_miss_incident = "redis-cache restart: payments-api ECONNREFUSED on :6379 (sidecar mechanism redis_cache_restart_refused)"
 get_service_status = "payments-api degraded; payments-pgbouncer degraded; payments-db healthy; search-api degraded"
-query_logs_payments_api = "503 lines with 10.0.4.21:6432 and errno=ECONNREFUSED from all 4 pods from 14:30:41; work via 10.0.4.22 continues; no PAYAPI-E1042, no 53300"
-query_logs_payments_pgbouncer = "-01: rollout line writing /etc/pgbouncer/pgbouncer.ini (journal identifier `rollout`, F4), restart, config error, exit status=1, unit failed; -02: normal periodic stats"
+query_logs_payments_api = "refused connects to 10.0.4.21:6432 with errno=ECONNREFUSED from all 4 pods from 14:30:42; work via 10.0.4.22 continues; no PAYAPI-E1042, no 53300"
+query_logs_payments_pgbouncer = "-01: rollout lines (journal identifier rollout, F4), the pool_mode error, cannot load config file, Main process exited status=1; -02: normal stats"
+
+key_facts = [
+  "payments-pgbouncer-01 is down; payments-pgbouncer-02 is healthy",
+  "the refused connections all go to 10.0.4.21:6432 (payments-pgbouncer-01)",
+  "a rollout-tool run scoped to payments-pgbouncer-01 wrote /etc/pgbouncer/pgbouncer.ini at 14:30:39",
+  "systemctl restart pgbouncer exited 0, but the unit is Type=simple, so that proved nothing",
+  "pgbouncer rejected pool_mode value transction and exited with status 1",
+  "pgbouncer is not enrolled in the 2026-08-20 rollout health gate, so only the restart exit status was checked",
+  "payments-api alternates bouncers per new connection with no fallback, so about half of new connections fail",
+  "payments-db is healthy; this is not pool exhaustion (no PAYAPI-E1042, no 53300)",
+]
 
 next_checks = [
-  "journalctl -u pgbouncer -n 100 on payments-pgbouncer-01",
-  "revert by pushing the previous commit to -01 only, then systemctl start pgbouncer",
-  "SHOW POOLS on both bouncers via the admin console",
-  "do not rerun or extend the push to -02",
-  "ask team-platform to enroll pgbouncer in the rollout gate",
-  "add a client-side fallback between bouncers",
+  "journalctl -u pgbouncer on payments-pgbouncer-01, and the rollout journal lines (identifier rollout)",
+  "diff /etc/pgbouncer/pgbouncer.ini on -01 against -02 or the previous commit (pool_mode line)",
+  "push the previous pgbouncer.ini to payments-pgbouncer-01 only, then confirm systemctl is-active pgbouncer and the admin console answers",
+  "do not rerun or extend the push to payments-pgbouncer-02",
+  "SHOW POOLS on payments-pgbouncer-02 via the admin console while -01 is out",
+  "watch payments-api errno=ECONNREFUSED lines stop after -01 is back",
+  "follow-ups: enroll pgbouncer in the rollout health gate; add a client-side fallback between bouncers",
 ]
-forbidden_claims = ["payments-db disk full", "pgx pool exhaustion", "DNS failure", "search-api is the cause"]
+
+forbidden_claims = [
+  "payments-db is the cause (disk full, 53300, max_connections)",
+  "pgx or PgBouncer pool exhaustion (PAYAPI-E1042, query_wait_timeout, cl_waiting)",
+  "DNS failure",
+  "search-api is the cause",
+  "payments-pgbouncer-02 is down or failing",
+  "the rollout health gate checked or should have stopped this run",
+  "systemctl restart pgbouncer failed",
+  "pgx retries or fails over to the other bouncer",
+  "every payments-api request fails",
+]
