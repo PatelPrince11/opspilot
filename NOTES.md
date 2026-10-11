@@ -1311,6 +1311,52 @@ rows: all 14 are written. Every past-events constraint row is written.
 - The skeleton's balance tests still describe all 200 rows; nothing claims the written subset matches
   them beyond the counts above.
 
+## 2026-10-11: PgBouncer 1.22 startup failure, verified from source
+
+**Source:** https://github.com/pgbouncer/pgbouncer at tag `pgbouncer_1_22_0` (commit `e6ce619`), with
+its `lib` submodule (libusual) at `46a78d2`. Tag `pgbouncer_1_22_1` (`de1e9cb`) pins the same libusual
+commit and has the same `src/main.c` lines below. Read on 2026-10-11; nothing was built or run.
+
+**The change:** a misspelled `pool_mode` in `[pgbouncer]`, e.g. `pool_mode = transction`.
+
+**The path at startup:**
+- `src/main.c:280`: `pool_mode` is a `CF_LOOKUP(pool_mode_map)` setting; `src/main.c:214` lists only
+  `session`, `transaction`, `statement`.
+- `lib/usual/cfparser.c` `cf_set_lookup` (line 606): compares with `strcasecmp`, returns false on
+  no match (so `Transaction` would pass; a misspelling fails).
+- `lib/usual/cfparser.c:167`: `parse_ini_file` logs at ERROR and stops loading:
+  `invalid value "%s" for parameter %s in configuration (%s:%d)`
+- `src/main.c:439` (`load_config`, called at startup from `src/main.c:985`): on the first load
+  `die("cannot load config file")`, which is `log_generic(LG_FATAL, ...)` then `exit(1)`
+  (`lib/usual/logging.h:170`).
+- On a later load (SIGHUP reload) the same error only warns `config file loading failed` and keeps
+  running (`src/main.c:441`). Only a start or restart exits.
+
+**Exact text** for the demo's file:
+- `invalid value "transction" for parameter pool_mode in configuration (/etc/pgbouncer/pgbouncer.ini:12)` (ERROR)
+- `cannot load config file` (FATAL)
+- exit status 1, so systemd's verified line is `pgbouncer.service: Main process exited, code=exited, status=1/FAILURE`.
+
+**Line-number quirk** (read, not run): `count_lines(buf, p)` is taken after the parser has skipped the
+value's newline and any following whitespace, so the number is the line *after* the bad one (more if
+blank lines follow). The demo fixes `pool_mode` on line 11 of `/etc/pgbouncer/pgbouncer.ini`, followed
+by a non-blank line 12, so the log says `:12`.
+
+**Prefix:** `logging_prefix_cb` is set only after `load_config` (`src/main.c:989`), so these lines carry
+no connection prefix. Built `--with-systemd` with stderr on the journal, the message goes through
+`sd_journal_print` with no timestamp/pid/level in the text; otherwise stderr gets
+`<time> [<pid>] ERROR <msg>` (`lib/usual/logging.c:227-230`). The demo logs use the bare message text
+under the identifier `pgbouncer`, as the repo's other logs do.
+
+**Upstream unit:** `etc/pgbouncer.service` at the tag is `Type=notify`. Ours is `Type=simple` (F3); F3
+stands, and the "may differ" note is now confirmed.
+
+**Still unverified:**
+- Behaviour of a real 1.22 binary (nothing built or run), including the line-number quirk.
+- Whether our build uses `--with-systemd` (decides bare text vs. the stderr prefix in the journal).
+- Whether a `logfile =` setting earlier in the file would also receive the lines (not used in the demo).
+- systemd's `Failed with result 'exit-code'` and `Started …` lines: not checked, so not written.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -1495,10 +1541,10 @@ Invented details of the fictional company, introduced in batch 1. Reuse them as-
 **Batch 4 facts (demo, approved)**
 - **F1:** payments-api's db package alternates bouncer hosts (payments-pgbouncer-01/02) on each new connection, with **no fallback (not built)**. Each bouncer carries about half (4 × 40 = 160 client connections, about 80 each). **pgx's own behavior on a failed dial is unverified**, so demo logs may rely only on this fact.
 - **F2:** payments-api's logger adds an `errno` field (e.g. `errno=ECONNREFUSED`) when a network error wraps a syscall errno. Go itself prints "connection refused".
-- **F3:** the `pgbouncer` systemd unit is `Type=simple`, so `systemctl restart` exits 0 even if pgbouncer dies seconds later. Upstream's shipped unit may differ (unverified).
+- **F3:** the `pgbouncer` systemd unit is `Type=simple`, so `systemctl restart` exits 0 even if pgbouncer dies seconds later. Upstream's shipped unit differs: `etc/pgbouncer.service` at `pgbouncer_1_22_0` is `Type=notify`.
 - **F4:** the rollout tool logs to each host's journal under the identifier `rollout`.
 - **F5:** a rollout-tool run can be scoped to a subset of hosts (e.g. a canary-only run).
-- Demo: 2026-10-06, a run scoped to payments-pgbouncer-01. The exact config error is **unverified until PgBouncer 1.22 source is read**, and no demo logs are written before then.
+- Demo: 2026-10-06, a run scoped to payments-pgbouncer-01. The config error is a misspelled `pool_mode` (`transction`), verified from 1.22 source in the 2026-10-11 PgBouncer entry.
 
 **Skeleton rules from batch 4** (approved; tested in `tests/test_incidents.py`)
 - R14: no `EDGE-RL01` incident before 2026-03-10 (RB-030, "nobody had looked").
