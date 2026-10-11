@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint fmt migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval
+.PHONY: up down logs test lint fmt migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -67,6 +67,11 @@ selfcheck:
 # Writer packet for one row: make packet ID=INC-NNNN -> scratchpad/packets/INC-NNNN.md
 packet:
 	@uv run python -m scripts.corpus.packet $(ID)
+
+# The 40 hand-written (or Gemini) questions, "N<tab>question" per line, appended unlabelled:
+#   make import-human FILE=path AUTHOR=prince|gemini
+import-human:
+	@uv run python eval/validate_questions.py --import-human $(FILE) --author $(AUTHOR)
 
 ingest:
 	@echo "ingest: not implemented (Phase 1 step 5)"

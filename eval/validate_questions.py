@@ -3,6 +3,7 @@
     python eval/validate_questions.py              # partial: every line present must pass
     python eval/validate_questions.py --final      # also: 200 lines, the author mix, the split
     python eval/validate_questions.py --write-split  # fill `split` (fixed seed), then check --final
+    python eval/validate_questions.py --import-human FILE --author prince|gemini  # 40 lines
 
 Lines imported for hand labelling (empty relevant_doc_ids) skip the label checks in partial
 mode and fail --final.
@@ -329,12 +330,45 @@ def load(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
+def import_human(path: Path, author: str, into: Path) -> list[dict]:
+    """Append 40 "N<tab>question" lines as unlabelled questions H001..H040 (labels later)."""
+    if author not in HUMAN:
+        raise SystemExit(f"AUTHOR must be prince or gemini, not {author!r}")
+    existing = load(into) if into.exists() else []
+    if any(q["author"] in HUMAN for q in existing):
+        raise SystemExit(f"{into} already has human questions; not importing twice")
+    rows = [line.split("\t", 1) for line in path.read_text().splitlines() if line.strip()]
+    if len(rows) != 40 or [r[0].strip() for r in rows] != [str(n) for n in range(1, 41)]:
+        raise SystemExit(f"{path}: need exactly 40 lines numbered 1..40 as N<tab>question")
+    if any(len(r) != 2 or not r[1].strip() for r in rows):
+        raise SystemExit(f"{path}: every line needs N<tab>question")
+    new = [
+        {
+            "id": f"H{int(n):03}",
+            "question": text.strip(),
+            "relevant_doc_ids": [],
+            "expected_key_facts": [],
+            "difficulty": None,
+            "author": author,
+            "split": None,
+        }
+        for n, text in rows
+    ]
+    with into.open("a") as f:
+        f.writelines(json.dumps(q, ensure_ascii=False) + "\n" for q in new)
+    return new
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--file", type=Path, default=QUESTIONS)
     ap.add_argument("--final", action="store_true")
     ap.add_argument("--write-split", action="store_true")
+    ap.add_argument("--import-human", type=Path, metavar="FILE")
+    ap.add_argument("--author")
     args = ap.parse_args()
+    if args.import_human:
+        print(f"imported {len(import_human(args.import_human, args.author, args.file))} questions")
     questions, corpus = load(args.file), Corpus()
     errs = check_all(questions, corpus, final=args.final or args.write_split)
     if args.write_split and all("split differs" in e for e in errs):

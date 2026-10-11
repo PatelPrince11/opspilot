@@ -1,6 +1,7 @@
 """eval/validate_questions.py against the real corpus (data/processed)."""
 
 import copy
+import json
 
 import pytest
 
@@ -8,6 +9,8 @@ from eval.validate_questions import (
     Corpus,
     check_all,
     check_question,
+    import_human,
+    load,
     split,
 )
 
@@ -111,3 +114,19 @@ def test_split_is_seeded_even_and_stratified():
         for author in ("claude", "prince"):
             group = [a[x["id"]] for x in qs if x["difficulty"] == diff and x["author"] == author]
             assert abs(group.count("dev") - group.count("test")) <= 1
+
+
+def test_import_human_appends_40_unlabelled(tmp_path, corpus):
+    src, into = tmp_path / "in.tsv", tmp_path / "q.jsonl"
+    into.write_text(json.dumps(q()) + "\n")
+    src.write_text(
+        "".join(f"{n}\tqueue lag on kafka-02 again, number {n}?\n" for n in range(1, 41))
+    )
+    new = import_human(src, "gemini", into)
+    assert [x["id"] for x in new][:2] == ["H001", "H002"] and len(load(into)) == 41
+    assert check_all(load(into), corpus) == []
+    with pytest.raises(SystemExit, match="twice"):
+        import_human(src, "gemini", into)
+    src.write_text("1\tonly one line\n")
+    with pytest.raises(SystemExit, match="exactly 40"):
+        import_human(src, "prince", tmp_path / "other.jsonl")

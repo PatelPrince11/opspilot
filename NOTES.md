@@ -1497,6 +1497,13 @@ bouncer (F1: no fallback)". The header cites F1-F6 and the 2026-10-11 runtime ch
 - Twin, no-fix (d) and short-doc (e) targets carry their rule.
 - Gemini outputs exactly 40 `N<tab>question` lines.
 
+**Import (step 8):** `make import-human FILE=path AUTHOR=prince|gemini` appends 40 `N<tab>question`
+lines as H001..H040, with empty labels, difficulty null and split null.
+- It refuses anything other than exactly 40 lines numbered 1..40.
+- It refuses a second import.
+- Partial mode accepts unlabelled lines; `--final` rejects them.
+- No split yet.
+
 **Counts (160):** exact-token 82, multi-doc 47, paraphrase 31.
 - Per cause type (the first failure type of each gold incident; runbook-only questions use the
   runbook's): api_latency 17, bad_deploy 17, conn_pool 18, disk_full 18, dns 17, high_cpu 18,
