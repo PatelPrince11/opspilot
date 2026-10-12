@@ -123,7 +123,7 @@ demo:
 # writes eval/results/dev_generation_verify_{on,off}.json. Extra flags via ARGS, e.g.
 #   make gen-eval ARGS="--config verify_on --concurrency 3 --max-spend 4.5"
 gen-eval:
-	@DATABASE_URL=$(HOST_DATABASE_URL) uv run python -m eval.generation_eval run $(ARGS)
+	@DATABASE_URL=$(HOST_DATABASE_URL) PYTHONUNBUFFERED=1 uv run python -m eval.generation_eval run $(ARGS)
 
 # eval/judge_validation.md: 30 seeded, stratified verify-on answers for Prince to label.
 judge-sheet:

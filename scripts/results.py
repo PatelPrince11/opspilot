@@ -354,6 +354,12 @@ def generation_section(questions: list[dict]) -> list[str]:
     ]
     for name, r in (("verify on", on), ("verify off", off)):
         lat = r["latency"]
+        if not lat["llm_call_ms"]["n"]:
+            out.append(
+                f"| all | {name} | - | not measured: every LLM call was a cache hit (verify off"
+                " replays verify on's first pass) | - |"
+            )
+            continue
         for k, unit in (("end_to_end_s", "s"), ("llm_call_ms", "ms"), ("tool_call_ms", "ms")):
             v = lat[k]
             out.append(
