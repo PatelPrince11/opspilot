@@ -28,6 +28,10 @@ class Settings(BaseSettings):
 
     groq_api_key: SecretStr | None = None
     gemini_api_key: SecretStr | None = None
+    openrouter_api_key: SecretStr | None = None
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    # OpenRouter's upstream host for every call, fallbacks off, so a run never mixes backends.
+    openrouter_provider: str = "groq"
     anthropic_api_key: SecretStr | None = None
     ollama_host: str = "http://host.docker.internal:11434"
 

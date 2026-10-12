@@ -47,6 +47,7 @@ def client(provider, handler, **kw):
 def keys(monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     get_settings.cache_clear()
 
 
@@ -259,7 +260,119 @@ def test_no_provider_sdk_or_endpoint_outside_llm():
             ]
         bad += [
             f"{rel}: {u}"
-            for u in ("api.groq.com", "generativelanguage.googleapis.com", "/api/chat")
-            if u in text
+            for u in (
+                "api.groq.com",
+                "generativelanguage.googleapis.com",
+                "/api/chat",
+                "openrouter.ai",
+            )
+            if u in text and not (u == "openrouter.ai" and rel == Path("config.py"))
         ]
     assert bad == []
+
+
+# ---------------------------------------------------------------------- openrouter
+
+
+def openrouter(handler, model="openai/gpt-oss-120b", **kw):
+    return Client(
+        "openrouter",
+        model,
+        transport=httpx.MockTransport(handler),
+        sleep=kw.pop("sleep", None) or (lambda s: None),
+        **kw,
+    )
+
+
+def test_openrouter_pins_one_upstream_with_no_fallback(keys, monkeypatch):
+    monkeypatch.setenv("OPENROUTER_BASE_URL", "https://router.example/api/v1/")
+    get_settings.cache_clear()
+    seen = []
+
+    def handler(req):
+        seen.append(req)
+        return httpx.Response(200, json=openai_reply())
+
+    openrouter(handler).chat(MSGS, TOOLS, json_schema={"type": "object"})
+    body = json.loads(seen[0].content)
+    assert str(seen[0].url) == "https://router.example/api/v1/chat/completions"
+    assert seen[0].headers["authorization"] == "Bearer test-key"
+    assert body["model"] == "openai/gpt-oss-120b" and body["tools"] == TOOLS
+    assert body["provider"] == {
+        "order": ["groq"],
+        "allow_fallbacks": False,
+        "require_parameters": True,
+    }
+    assert body["response_format"]["type"] == "json_schema" and body["temperature"] == 0.0
+
+
+def test_other_providers_send_no_routing_field(keys):
+    seen = []
+    client("groq", lambda req: seen.append(req) or httpx.Response(200, json=openai_reply())).chat(
+        MSGS
+    )
+    assert "provider" not in json.loads(seen[0].content)
+
+
+def test_openrouter_cost_is_read_from_usage(keys):
+    reply = openai_reply()
+    reply["usage"]["cost"] = 0.00042
+    r = openrouter(lambda req: httpx.Response(200, json=reply)).chat(MSGS)
+    assert (r.cost_usd, r.cost_source) == (0.00042, "reported")
+    assert r.log_row()["cost_usd"] == 0.00042
+
+
+def test_openrouter_cost_is_computed_when_not_reported(keys):
+    reply = openai_reply()
+    reply["usage"] = {"prompt_tokens": 1_000_000, "completion_tokens": 100_000}
+    r = openrouter(lambda req: httpx.Response(200, json=reply)).chat(MSGS)
+    assert r.cost_source == "computed" and r.cost_usd == pytest.approx(0.15 + 0.06)
+
+
+def test_free_providers_cost_nothing(keys):
+    r = client("gemini", lambda req: httpx.Response(200, json=openai_reply())).chat(MSGS)
+    assert (r.cost_usd, r.cost_source) == (0.0, "free")
+
+
+def test_openrouter_cache_hit_keeps_cost_but_is_marked_cached(keys, tmp_path):
+    reply, n = openai_reply(), []
+    reply["usage"]["cost"] = 0.001
+    c = openrouter(lambda req: n.append(1) or httpx.Response(200, json=reply), cache_dir=tmp_path)
+    first, second = c.chat(MSGS), c.chat(MSGS)
+    assert len(n) == 1 and second.cached and not first.cached
+    assert second.cost_usd == 0.001  # the eval counts only uncached calls as new spend
+
+
+def test_openrouter_retries_429_then_succeeds(keys):
+    replies = [
+        httpx.Response(429, headers={"retry-after": "3"}),
+        httpx.Response(200, json=openai_reply()),
+    ]
+    slept = []
+    r = openrouter(lambda req: replies.pop(0), sleep=slept.append).chat(MSGS)
+    assert r.content == "ok" and slept == [3.0]
+
+
+def test_openrouter_out_of_credit_is_not_retried(keys):
+    n = []
+
+    def handler(req):
+        n.append(1)
+        return httpx.Response(402, json={"error": {"message": "Insufficient credits"}})
+
+    with pytest.raises(LLMError, match="402"):
+        openrouter(handler).chat(MSGS)
+    assert len(n) == 1
+
+
+def test_openrouter_error_body_with_200_raises(keys):
+    body = {"error": {"message": "Provider returned error", "code": 502}}
+    with pytest.raises(LLMError, match="no choices"):
+        openrouter(lambda req: httpx.Response(200, json=body)).chat(MSGS)
+
+
+def test_openrouter_missing_key_raises(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "")
+    get_settings.cache_clear()
+    with pytest.raises(LLMError, match="OPENROUTER_API_KEY"):
+        openrouter(lambda req: httpx.Response(200, json=openai_reply())).chat(MSGS)

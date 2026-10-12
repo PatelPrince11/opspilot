@@ -4,13 +4,16 @@
     r = llm.chat([{"role": "user", "content": "hi"}], max_tokens=64)
     r.content, r.tool_calls, r.prompt_tokens, r.completion_tokens, r.estimated
 
-- Providers over plain HTTP: groq and gemini through their OpenAI-compatible chat endpoints,
+- Providers over plain HTTP: groq, gemini and openrouter through their OpenAI-compatible chat
+  endpoints (openrouter pinned to one upstream host, OPENROUTER_PROVIDER, with fallbacks off),
   ollama through its native /api/chat, because only that one accepts options.num_ctx (Ollama's
   default context is small and it silently drops the start of longer prompts).
 - Temperature 0 by default.
 - Token budget per call (LLM_TOKEN_BUDGET, 6,000): estimated prompt + max_tokens must fit, or
   BudgetExceeded is raised before any request. Groq's free tier allows 8K tokens per minute, so
   one call near that would stall a run. Callers trim; this module never truncates silently.
+- Cost per call (Response.cost_usd): OpenRouter's usage.cost when reported (cost_source
+  "reported"), else tokens times PRICES_PER_M ("computed"); free tiers and Ollama are 0 ("free").
 - Token counts come from the provider's usage fields. When a provider omits them the estimate
   is used and Response.estimated is True.
 - Retries on 429, 5xx and transport errors: the retry-after header (or Gemini's retryDelay in
@@ -45,7 +48,10 @@ OPENAI_COMPAT = {
     "groq": "https://api.groq.com/openai/v1/chat/completions",
     "gemini": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
 }
-PROVIDERS = (*OPENAI_COMPAT, "ollama")
+PROVIDERS = (*OPENAI_COMPAT, "openrouter", "ollama")
+# USD per 1M (input, output) tokens, for calls whose provider reports no cost. gpt-oss-120b via
+# OpenRouter on Groq: openrouter.ai/openai/gpt-oss-120b and groq.com/pricing, checked 2026-10-12.
+PRICES_PER_M = {("openrouter", "openai/gpt-oss-120b"): (0.15, 0.60)}
 CHARS_PER_TOKEN = 3  # conservative: English and JSON run nearer 4, so this over-estimates
 MAX_ATTEMPTS = 5
 BACKOFF_BASE_S = 1.0
@@ -82,6 +88,8 @@ class Response:
     latency_ms: float = 0.0
     name: str = "chat"
     wait_s: float = 0.0  # time slept on 429/5xx retries, included in latency_ms
+    cost_usd: float = 0.0  # what the call cost when made (a cache hit costs nothing again)
+    cost_source: str = "free"  # reported (by the provider), computed (tokens x price) or free
 
     def log_row(self) -> dict:
         d = asdict(self)
@@ -220,10 +228,19 @@ class Client:
         s = get_settings()
         if self.provider == "ollama":
             return s.ollama_host.rstrip("/") + "/api/chat", {}
-        key = {"groq": s.groq_api_key, "gemini": s.gemini_api_key}[self.provider]
-        if key is None:
+        key = {
+            "groq": s.groq_api_key,
+            "gemini": s.gemini_api_key,
+            "openrouter": s.openrouter_api_key,
+        }[self.provider]
+        if key is None or not key.get_secret_value():  # an empty env var is not a key
             raise LLMError(f"{self.provider.upper()}_API_KEY is not set")
-        return OPENAI_COMPAT[self.provider], {"Authorization": f"Bearer {key.get_secret_value()}"}
+        url = (
+            s.openrouter_base_url.rstrip("/") + "/chat/completions"
+            if self.provider == "openrouter"
+            else OPENAI_COMPAT[self.provider]
+        )
+        return url, {"Authorization": f"Bearer {key.get_secret_value()}"}
 
     def payload(self, messages, tools, json_schema, temperature, max_tokens, stream) -> dict:
         body: dict = {"model": self.model, "messages": messages, "stream": stream}
@@ -239,6 +256,13 @@ class Client:
                 body["messages"] = [ollama_message(m) for m in messages]
             return body
         body |= {"temperature": temperature, "max_tokens": max_tokens}
+        if self.provider == "openrouter":
+            # One upstream host, no fallback, and only if it supports every parameter we send.
+            body["provider"] = {
+                "order": [get_settings().openrouter_provider],
+                "allow_fallbacks": False,
+                "require_parameters": True,
+            }
         if json_schema:
             body["response_format"] = {
                 "type": "json_schema",
@@ -293,6 +317,8 @@ class Client:
                 for i, c in enumerate(msg.get("tool_calls") or [])
             ]
             return self.response(msg.get("content") or "", calls, ollama_usage(raw), estimate)
+        if not raw.get("choices"):  # OpenRouter can report an upstream error with a 200
+            raise LLMError(f"{self.provider}: no choices in reply: {json.dumps(raw)[:500]}")
         msg = raw["choices"][0]["message"]
         calls = []
         for c in msg.get("tool_calls") or []:
@@ -307,7 +333,7 @@ class Client:
         )
 
     def response(self, content, calls, usage: dict, estimate: int) -> Response:
-        return Response(
+        r = Response(
             content=content,
             tool_calls=calls,
             prompt_tokens=usage.get("prompt", estimate),
@@ -317,6 +343,13 @@ class Client:
             provider=self.provider,
             model=self.model,
         )
+        price = PRICES_PER_M.get((self.provider, self.model))
+        if usage.get("cost") is not None:
+            r.cost_usd, r.cost_source = float(usage["cost"]), "reported"
+        elif price:
+            r.cost_usd = (r.prompt_tokens * price[0] + r.completion_tokens * price[1]) / 1e6
+            r.cost_source = "computed"
+        return r
 
     # ------------------------------------------------------------------ cache
 
@@ -373,6 +406,7 @@ class Client:
         gen.update(
             output={"content": r.content, "tool_calls": [asdict(c) for c in r.tool_calls]},
             usage_details={"input": r.prompt_tokens, "output": r.completion_tokens},
+            cost_details={"total": r.cost_usd},
         )
         gen.end()
 
@@ -384,7 +418,8 @@ class Client:
 def openai_usage(u: dict | None) -> dict:
     if not u or u.get("prompt_tokens") is None:
         return {}
-    return {"prompt": u["prompt_tokens"], "completion": u.get("completion_tokens") or 0}
+    out = {"prompt": u["prompt_tokens"], "completion": u.get("completion_tokens") or 0}
+    return out | ({"cost": u["cost"]} if u.get("cost") is not None else {})
 
 
 def ollama_usage(raw: dict) -> dict:
