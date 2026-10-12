@@ -86,6 +86,41 @@ def test_no_fix_question_for_unanswerable_rows(corpus):
     assert any("asks for a fix" in x for x in e)
 
 
+def test_unrecorded_needs_a_matching_not_recorded_fact(corpus):
+    e = errs(corpus, unrecorded=["who made the change"])
+    assert any("needs the key fact" in x for x in e)
+    facts = ["kafka-01 failed to start", "not recorded: who made the change"]
+    assert errs(corpus, unrecorded=["who made the change"], expected_key_facts=facts) == []
+    assert any("list of non-empty" in x for x in errs(corpus, unrecorded="who"))
+
+
+def test_false_premise_needs_a_correcting_fact(corpus):
+    assert errs(corpus, false_premise=True) == []  # the default fact corrects nothing visible,
+    # but it is a real fact; the reviewer judges meaning
+    only_marker = ["not recorded: the cause"]
+    e = errs(corpus, false_premise=True, unrecorded=["the cause"], expected_key_facts=only_marker)
+    assert any("corrects the premise" in x for x in e)
+    assert any("true or false" in x for x in errs(corpus, false_premise="yes"))
+
+
+def test_no_fix_row_passes_when_the_fix_is_unrecorded(corpus):
+    base = dict(
+        question="how was the internal-dns-01 silence on kafka-02 fixed in February 2026?",
+        relevant_doc_ids=["INC-0125", "RB-020"],
+    )
+    assert any("asks for a fix" in x for x in errs(corpus, **base))
+    facts = ["internal-dns-01 stopped answering", "not recorded: the fix"]
+    ok = errs(corpus, unrecorded=["the fix"], expected_key_facts=facts, **base)
+    assert not any("asks for a fix" in x for x in ok)
+    other = errs(
+        corpus,
+        unrecorded=["the owner"],
+        expected_key_facts=facts[:1] + ["not recorded: the owner"],
+        **base,
+    )
+    assert any("asks for a fix" in x for x in other)
+
+
 def test_key_facts_never_narrative_colour(corpus):
     e = errs(corpus, expected_key_facts=["team-platform took it"])
     assert any("narrative colour" in x for x in e)

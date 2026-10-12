@@ -34,6 +34,11 @@ FIELDS = {
     "author",
     "split",
 }
+# Optional: false_premise (bool) marks a question that assumes something the docs contradict; a
+# key fact corrects it. unrecorded (list) names parts the corpus doesn't answer, each matched by a
+# key fact "not recorded: <part>".
+OPTIONAL = {"false_premise", "unrecorded"}
+NOT_RECORDED = "not recorded: "
 DIFFICULTIES = {"exact-token", "paraphrase", "multi-doc"}
 AUTHORS = {"claude", "prince", "gemini"}
 HUMAN = {"prince", "gemini"}
@@ -218,8 +223,8 @@ def labelled(q: dict) -> bool:
 
 def check_question(q: dict, c: Corpus) -> list[str]:
     errs = []
-    if set(q) != FIELDS:
-        return [f"fields {sorted(set(q) ^ FIELDS)} wrong"]
+    if not FIELDS <= set(q) <= FIELDS | OPTIONAL:
+        return [f"fields {sorted((set(q) ^ FIELDS) - OPTIONAL)} wrong"]
     if q["author"] not in AUTHORS:
         errs.append(f"author {q['author']!r}")
     if q["split"] not in ("dev", "test", None):
@@ -264,7 +269,23 @@ def check_question(q: dict, c: Corpus) -> list[str]:
         if i in gold and rb not in gold:
             errs.append(f"{i} retells {rb}: list both")
 
-    if FIX_WORDS.search(text) and set(gold) & c.no_fix:
+    unrecorded = q.get("unrecorded", [])
+    if not isinstance(unrecorded, list) or not all(isinstance(u, str) and u for u in unrecorded):
+        errs.append("unrecorded must be a list of non-empty strings")
+        unrecorded = []
+    facts = q["expected_key_facts"]
+    for u in unrecorded:
+        if f"{NOT_RECORDED}{u}" not in facts:
+            errs.append(f"unrecorded {u!r} needs the key fact {NOT_RECORDED + u!r}")
+    if "false_premise" in q:
+        if not isinstance(q["false_premise"], bool):
+            errs.append("false_premise must be true or false")
+        elif q["false_premise"] and all(f.startswith(NOT_RECORDED) for f in facts):
+            errs.append("false_premise needs a key fact that corrects the premise")
+
+    # (d) passes for a no-fix row only when the fix is marked unrecorded.
+    fix_unrecorded = any(FIX_WORDS.search(u) for u in unrecorded)
+    if FIX_WORDS.search(text) and set(gold) & c.no_fix and not fix_unrecorded:
         errs.append(f"asks for a fix of {sorted(set(gold) & c.no_fix)} (eval_prep (d))")
 
     for fact in q["expected_key_facts"]:
