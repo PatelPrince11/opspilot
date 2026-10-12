@@ -1,13 +1,16 @@
-"""The investigation graph: triage -> plan -> gather -> draft -> verify -> (gather | finish).
+"""The investigation graph: triage -> gather (loop) -> draft -> verify -> (gather | finish).
 
     graph = build_graph(Client.for_role("agent"), tools_conn)
     final = graph.invoke(initial_state("The payment API ...", "2026-10-06T14:52:00Z"))
     final["diagnosis"]                               # a Diagnosis as a dict
 
 - triage (LLM, JSON): services involved, symptoms, log window ending at as_of.
-- plan (LLM with tools): the first tool calls.
-- gather: runs pending tool calls (total capped at AGENT_MAX_TOOL_CALLS). After a failed verify
-  it first asks the LLM for follow-up calls aimed at the unsupported claims.
+- gather (LLM with tools, a loop): each turn the model calls a tool, sees the result and chooses
+  the next call, until it replies without a tool call (done) or the run hits
+  AGENT_MAX_TOOL_CALLS. The full evidence stays in state; each turn's prompt holds a compact
+  index (id plus one line per item) and only the latest result in full (capped), so every turn
+  fits the token budget however much was gathered. After a failed verify the loop resumes with
+  the unsupported claims in the prompt.
 - draft (LLM, JSON): a Diagnosis from trimmed evidence (ids + capped snippets, near-identical log
   lines collapsed), packed to fit the per-call token budget. Invalid JSON gets one retry.
 - verify (no LLM): every claim must cite at least one id, and every cited id must be in the
@@ -36,8 +39,10 @@ from llm.client import Client, estimate_tokens
 MAX_LOOPS = 2
 DRAFT_MAX_TOKENS = 1500
 TRIAGE_MAX_TOKENS = 400
-PLAN_MAX_TOKENS = 800
+GATHER_MAX_TOKENS = 1000  # reasoning models (gpt-oss) spend part of this thinking
+LATEST_RESULT_TOKENS = 1500
 DRAFT_SNIPPET_CHARS = 300
+INDEX_CHARS = 100  # per line of the compact evidence index gather sees
 LOWER = {"high": "medium", "medium": "low", "low": "low"}
 
 
@@ -82,7 +87,6 @@ class State(TypedDict, total=False):
     trace_id: str | None
     started: float
     triage: dict
-    plan: list[dict]  # pending tool calls: {"name", "arguments"}
     evidence: Annotated[dict, merge]  # evidence id -> Evidence dict
     tool_calls: Annotated[list, operator.add]
     llm_calls: Annotated[list, operator.add]
@@ -98,7 +102,6 @@ def initial_state(question: str, as_of: str, trace_id: str | None = None) -> Sta
         as_of=as_of,
         trace_id=trace_id,
         started=time.time(),
-        plan=[],
         evidence={},
         tool_calls=[],
         llm_calls=[],
@@ -116,11 +119,14 @@ SYSTEM = (
     "as_of; there are no logs after it."
 )
 
-PLAN_INSTRUCTIONS = (
-    "Call the tools you need, several at once. Search runbooks and past incidents for the "
-    "symptoms, check service status, and query the logs of the affected service and of the "
-    "services it depends on in the window that ends at as_of (each log query covers at most "
-    "24 hours; times are ISO 8601 UTC). Use exact service names from the known list."
+GATHER_INSTRUCTIONS = (
+    "Investigate step by step: each turn, call a tool (or a few independent ones), read the "
+    "result, then choose the next call. Search runbooks and past incidents for the symptoms, "
+    "check service status, and query the logs of the affected service and of the services it "
+    "depends on in the window that ends at as_of (each log query covers at most 24 hours; times "
+    "are ISO 8601 UTC). Use exact service names from the known list. Do not repeat a call. "
+    "When the evidence explains the cause, or nothing more can be found, reply with the word "
+    "done and no tool call."
 )
 
 DRAFT_INSTRUCTIONS = (
@@ -176,9 +182,10 @@ def log_key(e: dict) -> tuple:
     return (e["metadata"].get("service"), re.sub(r"\b[0-9a-f]{8}\b|\d+", "#", msg))
 
 
-def evidence_lines(evidence: dict) -> list[str]:
+def evidence_lines(evidence: dict, chars: int = DRAFT_SNIPPET_CHARS) -> list[str]:
     """One line per item, status then logs (near-duplicates collapsed) then runbooks then
-    incidents. The collapsed lines' other ids stay valid citations in the evidence map."""
+    incidents, each text cut to `chars`. The collapsed lines' other ids stay valid citations in
+    the evidence map."""
     by_source = defaultdict(list)
     for e in evidence.values():
         by_source[e["source"]].append(e)
@@ -188,12 +195,9 @@ def evidence_lines(evidence: dict) -> list[str]:
         groups[log_key(e)].append(e)
     for g in sorted(groups.values(), key=lambda g: g[0]["text"]):
         more = f" (and {len(g) - 1} similar lines until {g[-1]['text'][:20]})" if len(g) > 1 else ""
-        lines.append(f"[{g[0]['id']}] {g[0]['text']}{more}")
+        lines.append(f"[{g[0]['id']}] {g[0]['text'][:chars]}{more}")
     for src in ("runbook", "incident"):
-        lines += [
-            f"[{e['id']}] {' '.join(e['text'].split())[:DRAFT_SNIPPET_CHARS]}"
-            for e in by_source[src]
-        ]
+        lines += [f"[{e['id']}] {' '.join(e['text'].split())[:chars]}" for e in by_source[src]]
     return lines
 
 
@@ -247,78 +251,98 @@ def build_graph(
         t = structured(llm, msgs, Triage, "triage", TRIAGE_MAX_TOKENS, state, calls)
         return {"triage": t.model_dump(mode="json") if t else {}, "llm_calls": calls}
 
-    def plan(state: State) -> dict:
-        msgs = [
-            {"role": "system", "content": f"{SYSTEM} {PLAN_INSTRUCTIONS}"},
-            {"role": "user", "content": f"{context(state)}\nTriage: {json.dumps(state['triage'])}"},
-        ]
-        r = llm.chat(
-            msgs, tools, max_tokens=PLAN_MAX_TOKENS, name="plan", trace_id=state["trace_id"]
-        )
-        pending = [{"name": c.name, "arguments": c.arguments} for c in r.tool_calls]
-        return {"plan": pending, "llm_calls": [r.log_row()]}
+    def call_line(i: int, row: dict) -> str:
+        got = f"{len(row['ids'])} items" if row["success"] else f"failed: {row['error'][:150]}"
+        return f"{i}. {row['name']} {json.dumps(row['arguments'], default=str)} -> {got}"
 
-    def follow_up(state: State, calls: list) -> list[dict]:
-        bad = state["verify"]["invalid"]
-        have = ", ".join(sorted(state["evidence"])) or "none"
-        msgs = [
-            {"role": "system", "content": f"{SYSTEM} {PLAN_INSTRUCTIONS}"},
-            {
-                "role": "user",
-                "content": f"{context(state)}\nThese claims cite evidence that "
-                f"was not gathered: {json.dumps(bad)}\nGathered evidence ids: {have}\nCall "
-                "tools to find evidence for these claims, if any can exist.",
-            },
-        ]
-        r = llm.chat(
-            msgs,
-            tools,
-            max_tokens=PLAN_MAX_TOKENS,
-            name="gather_follow_up",
-            trace_id=state["trace_id"],
+    def gather_messages(state: State, made: list, evidence: dict, latest: list) -> list[dict]:
+        """One turn's prompt: calls so far, a compact index of older evidence and the latest
+        turn's results in full, both packed to fit the budget (latest first)."""
+        feedback = ""
+        if state["verify"] and not state["verify"]["ok"]:
+            feedback = (
+                "\nThe draft diagnosis had claims the evidence did not support: "
+                f"{json.dumps(state['verify']['invalid'])}\nFind evidence for them, if any can "
+                "exist, then reply done."
+            )
+        so_far = "\n".join(call_line(i, r) for i, r in enumerate(made, 1)) or "none"
+        head = (
+            f"{context(state)}\nTriage: {json.dumps(state['triage'])}{feedback}\n"
+            f"Tool calls so far ({len(made)} of {max_tool_calls}):\n{so_far}\n"
         )
-        calls.append(r.log_row())
-        return [{"name": c.name, "arguments": c.arguments} for c in r.tool_calls]
+        msgs = [
+            {"role": "system", "content": f"{SYSTEM} {GATHER_INSTRUCTIONS}"},
+            {"role": "user", "content": head},
+        ]
+        room = llm.budget - GATHER_MAX_TOKENS - estimate_tokens(msgs, tools) - 60
+        new_ids = {i for r in latest for i in r["ids"]}
+        latest_text, room_left = [], room
+        for r in latest:
+            items = {i: evidence[i] for i in r["ids"]}
+            lines = [f"{r['name']} -> {r['note'] or r['error'] or 'ok'}"]
+            lines += evidence_lines(items, chars=10_000)
+            kept, dropped = pack(lines, min(LATEST_RESULT_TOKENS, room_left))
+            latest_text += kept + ([f"({dropped} more lines not shown)"] if dropped else [])
+            room_left -= estimate_tokens("\n".join(kept)) + 10
+        older = {k: v for k, v in evidence.items() if k not in new_ids}
+        index, dropped = pack(evidence_lines(older, INDEX_CHARS), max(room_left, 0))
+        if dropped:
+            index.append(f"({dropped} more items not shown)")
+        msgs[1]["content"] = (
+            f"{head}Evidence index (older results, one line each):\n"
+            f"{chr(10).join(index) or '(none)'}\n"
+            f"Latest result:\n{chr(10).join(latest_text) or '(none yet)'}"
+        )
+        return msgs
+
+    def run_one(call, write) -> tuple[dict, dict]:
+        write({"event": "tool_call", "name": call.name, "arguments": call.arguments})
+        t0 = time.perf_counter()
+        row = {
+            "name": call.name,
+            "arguments": call.arguments,
+            "success": True,
+            "error": None,
+            "ids": [],
+            "note": "",
+            "output_tokens": 0,
+        }
+        items = {}
+        try:
+            out = run_tool(call.name, call.arguments, conn)
+            items = {e.id: e.model_dump() for e in out.items}
+            row |= {"ids": list(items), "note": out.note, "output_tokens": estimate_tokens(items)}
+        except Exception as exc:  # ToolError or a DB error: reported, never fatal
+            row |= {"success": False, "error": str(exc)[:500]}
+        row["latency_ms"] = (time.perf_counter() - t0) * 1000
+        write({"event": "tool_result", **row})
+        return row, items
 
     def gather(state: State) -> dict:
         write = get_stream_writer()
-        llm_calls: list = []
-        pending = state["plan"]
-        if state["loops"] and not out_of_time(state) and len(state["tool_calls"]) < max_tool_calls:
-            pending = follow_up(state, llm_calls)
-        done, evidence = [], {}
-        for call in pending:
-            n = len(state["tool_calls"]) + len(done)
-            if n >= max_tool_calls or out_of_time(state):
-                why = "tool-call cap" if n >= max_tool_calls else "time cap"
-                write({"event": "error", "message": f"skipped {call['name']}: {why} reached"})
-                continue
-            write({"event": "tool_call", "name": call["name"], "arguments": call["arguments"]})
-            t0 = time.perf_counter()
-            row = {
-                "name": call["name"],
-                "arguments": call["arguments"],
-                "success": True,
-                "error": None,
-                "ids": [],
-                "note": "",
-                "output_tokens": 0,
-            }
-            try:
-                out = run_tool(call["name"], call["arguments"], conn)
-                items = [e.model_dump() for e in out.items]
-                evidence |= {e["id"]: e for e in items}
-                row |= {
-                    "ids": [e["id"] for e in items],
-                    "note": out.note,
-                    "output_tokens": estimate_tokens(items),
-                }
-            except Exception as exc:  # ToolError or a DB error: reported, never fatal
-                row |= {"success": False, "error": str(exc)[:500]}
-            row["latency_ms"] = (time.perf_counter() - t0) * 1000
-            done.append(row)
-            write({"event": "tool_result", **row})
-        return {"plan": [], "evidence": evidence, "tool_calls": done, "llm_calls": llm_calls}
+        llm_calls, done, new = [], [], {}
+        latest: list = []
+        while True:
+            made = state["tool_calls"] + done
+            if len(made) >= max_tool_calls or out_of_time(state):
+                break
+            msgs = gather_messages(state, made, state["evidence"] | new, latest)
+            r = llm.chat(
+                msgs, tools, max_tokens=GATHER_MAX_TOKENS, name="gather", trace_id=state["trace_id"]
+            )
+            llm_calls.append(r.log_row())
+            if not r.tool_calls:  # the model says done
+                break
+            latest = []
+            for call in r.tool_calls:
+                if len(state["tool_calls"]) + len(done) >= max_tool_calls:
+                    write({"event": "error", "message": f"skipped {call.name}: tool-call cap"})
+                    continue
+                row, items = run_one(call, write)
+                new |= items
+                done.append(row)
+                latest.append(row)
+        return {"evidence": new, "tool_calls": done, "llm_calls": llm_calls}
 
     def draft(state: State) -> dict:
         calls: list = []
@@ -411,7 +435,6 @@ def build_graph(
     g = StateGraph(State)
     for name, fn in [
         ("triage", triage),
-        ("plan", plan),
         ("gather", gather),
         ("draft", draft),
         ("verify", verify),
@@ -419,8 +442,7 @@ def build_graph(
     ]:
         g.add_node(name, fn)
     g.add_edge(START, "triage")
-    g.add_edge("triage", "plan")
-    g.add_edge("plan", "gather")
+    g.add_edge("triage", "gather")
     g.add_edge("gather", "draft")
     if verify_enabled:
         g.add_edge("draft", "verify")

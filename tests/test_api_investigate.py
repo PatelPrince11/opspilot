@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from agent import graph as graph_mod
 from api.main import agent_llm, app
 from config import get_settings
-from tests.stub_llm import TRIAGE, StubLLM, calls, draft
+from tests.stub_llm import TRIAGE, StubLLM, calls, draft, say
 from tests.test_graph import LOGS, fake_tool
 from tests.test_schema import ALEMBIC_INI, with_db
 
@@ -68,6 +68,7 @@ def test_sse_event_order_and_persistence(client, db_url):
         [
             TRIAGE,
             calls(("query_logs", LOGS), ("get_service_status", {})),
+            say("done"),
             draft(("refused", ["log:0"])),
         ]
     )
@@ -89,8 +90,8 @@ def test_sse_event_order_and_persistence(client, db_url):
     assert inv["status"] == "done" and inv["as_of"].startswith("2026-10-06T14:52:00")
     assert [t["tool"] for t in inv["tool_calls"]] == ["query_logs", "get_service_status"]
     assert all(t["success"] and t["output_tokens"] > 0 for t in inv["tool_calls"])
-    assert [c["name"] for c in inv["llm_calls"]] == ["triage", "plan", "draft"]
-    assert inv["prompt_tokens"] == 300 and inv["completion_tokens"] == 60
+    assert [c["name"] for c in inv["llm_calls"]] == ["triage", "gather", "gather", "draft"]
+    assert inv["prompt_tokens"] == 400 and inv["completion_tokens"] == 80
     assert inv["llm"] == "ollama:stub" and inv["verify_enabled"] is True
 
 
@@ -104,7 +105,7 @@ def test_tool_calls_have_a_foreign_key(db_url):
 
 
 def test_a_failing_run_streams_an_error_and_is_stored(client):
-    use([TRIAGE])  # the script runs out at plan
+    use([TRIAGE])  # the script runs out at gather
     r = client.post("/investigate", json=BODY)
     events = parse_sse(r.text)
     assert events[-1][0] == "error" and "script ran out" in events[-1][1]["message"]

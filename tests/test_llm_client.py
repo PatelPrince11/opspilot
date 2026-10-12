@@ -126,6 +126,7 @@ def test_retry_honours_retry_after_then_succeeds(keys):
     r = client("groq", lambda req: replies.pop(0), sleep=slept.append).chat(MSGS)
     assert r.content == "ok"
     assert slept[0] == 7.0 and 0 < slept[1] <= 30  # header, then capped backoff with jitter
+    assert r.wait_s == sum(slept) and r.log_row()["wait_s"] == r.wait_s
 
 
 def test_long_retry_after_raises_instead_of_sleeping(keys):

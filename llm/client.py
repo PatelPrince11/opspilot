@@ -79,6 +79,7 @@ class Response:
     cached: bool = False
     latency_ms: float = 0.0
     name: str = "chat"
+    wait_s: float = 0.0  # time slept on 429/5xx retries, included in latency_ms
 
     def log_row(self) -> dict:
         d = asdict(self)
@@ -118,6 +119,7 @@ class Client:
             raise ValueError(f"provider must be one of {PROVIDERS}, not {self.provider!r}")
         self.http = httpx.Client(timeout=180.0, transport=self.transport)
         self._tracer = None
+        self.waited = 0.0  # seconds slept on retries during the last post()
 
     @classmethod
     def from_spec(cls, spec: str, **kw) -> "Client":
@@ -154,7 +156,7 @@ class Client:
         raw = self.post(self.payload(messages, tools, json_schema, temperature, max_tokens, False))
         r = self.parse(raw, estimate)
         r.latency_ms = (time.perf_counter() - t0) * 1000
-        r.name = name
+        r.name, r.wait_s = name, self.waited
         self.cache_put(key, r)
         self.trace(name, trace_id, messages, r, params)
         log.info("llm %s %s:%s %s", name, self.provider, self.model, r.log_row())
@@ -243,6 +245,7 @@ class Client:
 
     def post(self, body: dict) -> dict:
         url, headers = self.endpoint()
+        self.waited = 0.0
         for attempt in range(MAX_ATTEMPTS):
             last = attempt == MAX_ATTEMPTS - 1
             try:
@@ -252,7 +255,9 @@ class Client:
                     raise LLMError(
                         f"{self.provider}: {exc!r} after {MAX_ATTEMPTS} attempts"
                     ) from exc
-                self.sleep(self.backoff(attempt))
+                wait = self.backoff(attempt)
+                self.waited += wait
+                self.sleep(wait)
                 continue
             if resp.status_code == 429 or resp.status_code >= 500:
                 wait = retry_after_seconds(resp.headers)
@@ -263,6 +268,7 @@ class Client:
                     )
                 wait = self.backoff(attempt) if wait is None else wait
                 log.warning("%s %s, retrying in %.1fs", self.provider, resp.status_code, wait)
+                self.waited += wait
                 self.sleep(wait)
                 continue
             if resp.status_code >= 400:
@@ -321,7 +327,7 @@ class Client:
         path = self.cache_dir / f"{key}.json"
         if not path.exists():
             return None
-        return json.loads(path.read_text()) | {"cached": True, "latency_ms": 0.0}
+        return json.loads(path.read_text()) | {"cached": True, "latency_ms": 0.0, "wait_s": 0.0}
 
     def cache_put(self, key: str, r: Response) -> None:
         if self.cache_dir:

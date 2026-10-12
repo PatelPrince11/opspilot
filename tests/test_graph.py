@@ -10,6 +10,7 @@ from tests.stub_llm import TRIAGE, StubLLM, calls, draft, say
 Q = "The payment API is returning connection-refused errors. What happened?"
 AS_OF = "2026-10-06T14:52:00Z"
 LOGS = {"service": "payments-api", "start": "2026-10-06T14:00:00Z", "end": AS_OF}
+DONE = say("done")  # a gather turn with no tool call ends the loop
 
 
 class FakeConn:
@@ -70,42 +71,45 @@ def kinds(events):
 
 
 def test_happy_path_one_pass(monkeypatch):
-    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), draft(("refused", ["log:1"]))])
+    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), DONE, draft(("refused", ["log:1"]))])
     final, events = run(llm, monkeypatch)
     d = final["diagnosis"]
     assert d["citations_verified"] is True and d["claims"][0]["evidence_ids"] == ["log:1"]
     assert final["loops"] == 0 and llm.script == []
     assert kinds(events) == ["tool_call", "tool_result", "sources", "diagnosis"]
-    assert [c["name"] for c in final["llm_calls"]] == ["triage", "plan", "draft"]
+    assert [c["name"] for c in final["llm_calls"]] == ["triage", "gather", "gather", "draft"]
     assert all(c["prompt_tokens"] == 100 and not c["estimated"] for c in final["llm_calls"])
 
 
 def test_verify_loop_fires_on_a_bad_citation_and_stops_at_two(monkeypatch):
     bad = draft(("ok claim", ["log:1"]), ("made up", ["log:999"]), confidence="high")
-    script = [TRIAGE, calls(("query_logs", LOGS))]
+    script = [TRIAGE, calls(("query_logs", LOGS)), DONE]
     for _ in range(MAX_LOOPS):
-        script += [bad, calls()]  # draft, then gather's follow-up call (finds nothing)
+        script += [bad, DONE]  # draft, then a gather turn that finds nothing more
     llm = StubLLM([*script, bad])
     final, _ = run(llm, monkeypatch)
     names = [c["name"] for c in final["llm_calls"]]
     assert final["loops"] == MAX_LOOPS == 2
-    assert names.count("draft") == 3 and names.count("gather_follow_up") == 2
+    assert names.count("draft") == 3 and names.count("gather") == 4
     assert llm.script == []  # no fourth draft
     d = final["diagnosis"]
     assert d["citations_verified"] is False and d["confidence"] == "medium"
     assert [c["text"] for c in d["claims"]] == ["ok claim"]
     assert [c["text"] for c in d["dropped_claims"]] == ["made up"]
     assert "dropped after 2 verify loop(s)" in d["note"]
-    # The redraft is told which ids were invalid.
+    # The resumed gather and the redraft are both told which ids were invalid.
     assert "log:999" in llm.bodies[4]["messages"][1]["content"]
+    assert "log:999" in llm.bodies[5]["messages"][1]["content"]
 
 
 def test_verify_loop_recovers_when_the_redraft_cites_gathered_evidence(monkeypatch):
     script = [
         TRIAGE,
         calls(("query_logs", LOGS)),
+        DONE,
         draft(("x", ["log:999"])),
         calls(("search_runbooks", {"query": "pgbouncer"})),
+        DONE,
         draft(("x", ["search_runbooks:1_0"])),
     ]
     final, _ = run(StubLLM(script), monkeypatch)
@@ -114,19 +118,42 @@ def test_verify_loop_recovers_when_the_redraft_cites_gathered_evidence(monkeypat
 
 
 def test_uncited_claims_fail_verify(monkeypatch):
-    script = [TRIAGE, calls(("query_logs", LOGS)), draft(("no ids", []))]
-    final, _ = run(StubLLM(script), monkeypatch, max_seconds=0)  # out of time: no loop
+    script = [TRIAGE, draft(("no ids", []))]
+    final, _ = run(StubLLM(script), monkeypatch, max_seconds=0)  # out of time: no gather, no loop
     assert final["verify"]["invalid"][0]["bad_ids"] == ["(none cited)"]
     assert final["diagnosis"]["claims"] == []
 
 
 def test_flag_disables_verify(monkeypatch):
-    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), draft(("made up", ["log:999"]))])
+    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), DONE, draft(("made up", ["log:999"]))])
     final, events = run(llm, monkeypatch, verify_enabled=False)
     d = final["diagnosis"]
     assert d["citations_verified"] is None and d["claims"][0]["evidence_ids"] == ["log:999"]
     assert final.get("verify") is None and llm.script == []
     assert kinds(events)[-2:] == ["sources", "diagnosis"]
+
+
+def test_gather_loop_sees_each_result_and_stops_on_done(monkeypatch):
+    rb = ("search_runbooks", {"query": "pgbouncer refused"})
+    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), calls(rb), DONE, draft(("x", ["log:0"]))])
+    final, _ = run(llm, monkeypatch)
+    assert llm.script == [] and len(final["tool_calls"]) == 2
+    prompts = [b["messages"][1]["content"] for b in llm.bodies[1:4]]  # the 3 gather turns
+    assert "Latest result:\n(none yet)" in prompts[0]
+    latest = prompts[1].split("Latest result:")[1]
+    assert "[log:0]" in latest and "Tool calls so far (1 of 8)" in prompts[1]
+    # Turn 3: the logs moved to the one-line index, the runbook result is the latest.
+    index, latest = prompts[2].split("Latest result:")
+    assert "[log:0]" in index and "[search_runbooks:1_0]" in latest
+    assert "[log:0]" not in latest and "Tool calls so far (2 of 8)" in prompts[2]
+
+
+def test_gather_loop_stops_at_the_cap(monkeypatch):
+    # The model never says done: one call per turn until the cap, then no ninth gather turn.
+    llm = StubLLM([TRIAGE, *[calls(("query_logs", LOGS))] * 8, draft(("x", ["log:0"]))])
+    final, _ = run(llm, monkeypatch, max_tool_calls=8)
+    names = [c["name"] for c in final["llm_calls"]]
+    assert len(final["tool_calls"]) == 8 and names.count("gather") == 8 and llm.script == []
 
 
 def test_tool_call_cap_holds(monkeypatch):
@@ -145,25 +172,27 @@ def test_tool_call_cap_holds(monkeypatch):
     assert kinds(events).count("tool_call") == 8
     assert sum("tool-call cap" in e.get("message", "") for e in events) == 4
     # Cap reached: verify loops redraft without asking for more tool calls.
-    assert "gather_follow_up" not in [c["name"] for c in final["llm_calls"]]
+    assert [c["name"] for c in final["llm_calls"]].count("gather") == 1
 
 
 def test_failed_tool_is_recorded_not_fatal(monkeypatch):
-    llm = StubLLM([TRIAGE, calls(("boom", {}), ("query_logs", LOGS)), draft(("x", ["log:1_0"]))])
+    llm = StubLLM(
+        [TRIAGE, calls(("boom", {}), ("query_logs", LOGS)), DONE, draft(("x", ["log:1_0"]))]
+    )
     final, _ = run(llm, monkeypatch)
     assert [t["success"] for t in final["tool_calls"]] == [False, True]
     assert "invalid arguments" in final["tool_calls"][0]["error"]
 
 
 def test_no_call_exceeds_the_token_budget_on_a_full_gather(monkeypatch):
-    # 8 calls, each returning 50 long log lines or 5 long snippets: far more than fits.
-    plan = calls(
-        *[("query_logs", LOGS)] * 4,
-        *[(n, {"query": "q"}) for n in ("search_runbooks", "search_incidents")] * 2,
-    )
-    llm = StubLLM([TRIAGE, plan, draft(("x", ["log:0"]))])
+    # 8 gather turns, each returning 50 long log lines or 5 long snippets: far more than fits.
+    turns = [calls(("query_logs", LOGS)), calls(("search_runbooks", {"query": "q"}))] * 4
+    llm = StubLLM([TRIAGE, *turns, draft(("x", ["log:0"]))])
     final, _ = run(llm, monkeypatch, tool=fake_tool(n_logs=50, text_chars=200))
-    assert llm.checked and max(llm.checked) <= 6000
+    assert len(llm.checked) == 10 and max(llm.checked) <= 6000
+    gathers = [b["messages"][1]["content"] for b in llm.bodies[1:9]]
+    assert "more lines not shown" in gathers[1]  # a 50-line result is capped
+    assert "more items not shown" in gathers[-1]  # the index is packed too
     d = next(c for c in final["llm_calls"] if c["name"] == "draft")
     assert d["evidence_dropped"] > 0 and d["prompt_estimate"] + 1500 <= 6000
 
@@ -183,10 +212,10 @@ def test_near_identical_log_lines_are_collapsed_for_the_draft():
 
 
 def test_invalid_json_gets_one_retry_then_a_fallback(monkeypatch):
-    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), say("not json"), say("{}")])
+    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), DONE, say("not json"), say("{}")])
     final, events = run(llm, monkeypatch, verify_enabled=False)
     names = [c["name"] for c in final["llm_calls"]]
-    assert names == ["triage", "plan", "draft", "draft_retry"]
+    assert names == ["triage", "gather", "gather", "draft", "draft_retry"]
     assert "not valid" in llm.bodies[-1]["messages"][-1]["content"]
     assert final["diagnosis"]["confidence"] == "low" and "error" in kinds(events)
 
@@ -204,6 +233,6 @@ def test_tracing_disabled_run_makes_no_langfuse_calls(monkeypatch, verify_enable
         raise AssertionError("Langfuse must not be constructed when tracing is disabled")
 
     monkeypatch.setattr(langfuse, "Langfuse", boom)
-    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), draft(("x", ["log:0"]))])
+    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), DONE, draft(("x", ["log:0"]))])
     final, _ = run(llm, monkeypatch, verify_enabled=verify_enabled)
     assert final["diagnosis"] and llm._tracer is None
