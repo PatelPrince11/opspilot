@@ -1,0 +1,431 @@
+"""The investigation graph: triage -> plan -> gather -> draft -> verify -> (gather | finish).
+
+    graph = build_graph(Client.for_role("agent"), tools_conn)
+    final = graph.invoke(initial_state("The payment API ...", "2026-10-06T14:52:00Z"))
+    final["diagnosis"]                               # a Diagnosis as a dict
+
+- triage (LLM, JSON): services involved, symptoms, log window ending at as_of.
+- plan (LLM with tools): the first tool calls.
+- gather: runs pending tool calls (total capped at AGENT_MAX_TOOL_CALLS). After a failed verify
+  it first asks the LLM for follow-up calls aimed at the unsupported claims.
+- draft (LLM, JSON): a Diagnosis from trimmed evidence (ids + capped snippets, near-identical log
+  lines collapsed), packed to fit the per-call token budget. Invalid JSON gets one retry.
+- verify (no LLM): every claim must cite at least one id, and every cited id must be in the
+  evidence map. On failure it loops back to gather at most MAX_LOOPS times; after that, claims
+  with invalid citations are dropped, confidence goes down one level and the diagnosis is marked
+  unverified. VERIFY_ENABLED=false routes draft straight to finish.
+Events (tool_call, tool_result, sources, diagnosis, error) go to LangGraph's custom stream.
+"""
+
+import json
+import operator
+import re
+import time
+from collections import defaultdict
+from datetime import datetime
+from typing import Annotated, Literal, TypedDict
+
+from langgraph.config import get_stream_writer
+from langgraph.graph import END, START, StateGraph
+from pydantic import BaseModel, Field, ValidationError
+
+from agent.tools import run_tool, tool_schemas
+from config import get_settings
+from llm.client import Client, estimate_tokens
+
+MAX_LOOPS = 2
+DRAFT_MAX_TOKENS = 1500
+TRIAGE_MAX_TOKENS = 400
+PLAN_MAX_TOKENS = 800
+DRAFT_SNIPPET_CHARS = 300
+LOWER = {"high": "medium", "medium": "low", "low": "low"}
+
+
+# ---------------------------------------------------------------------- output models
+
+
+class Triage(BaseModel):
+    services: list[str] = Field(description="Service names involved, from the known list")
+    symptoms: str = Field(description="The reported symptoms in a few words")
+    window_start: datetime = Field(description="Start of the log window to inspect, ISO 8601 UTC")
+    window_end: datetime = Field(description="End of the log window, ISO 8601 UTC, <= as_of")
+
+
+class Claim(BaseModel):
+    text: str
+    evidence_ids: list[str] = Field(description="Ids of gathered evidence supporting the claim")
+
+
+class Draft(BaseModel):
+    summary: str
+    likely_cause: str
+    confidence: Literal["low", "medium", "high"]
+    claims: list[Claim]
+    next_checks: list[str]
+
+
+class Diagnosis(Draft):
+    """Draft plus what verify decided. citations_verified is None when verify is disabled."""
+
+    citations_verified: bool | None = None
+    dropped_claims: list[Claim] = []
+    note: str = ""
+
+
+def merge(a: dict, b: dict) -> dict:
+    return {**a, **b}
+
+
+class State(TypedDict, total=False):
+    question: str
+    as_of: str
+    trace_id: str | None
+    started: float
+    triage: dict
+    plan: list[dict]  # pending tool calls: {"name", "arguments"}
+    evidence: Annotated[dict, merge]  # evidence id -> Evidence dict
+    tool_calls: Annotated[list, operator.add]
+    llm_calls: Annotated[list, operator.add]
+    draft: dict | None
+    verify: dict | None
+    loops: int
+    diagnosis: dict
+
+
+def initial_state(question: str, as_of: str, trace_id: str | None = None) -> State:
+    return State(
+        question=question,
+        as_of=as_of,
+        trace_id=trace_id,
+        started=time.time(),
+        plan=[],
+        evidence={},
+        tool_calls=[],
+        llm_calls=[],
+        draft=None,
+        verify=None,
+        loops=0,
+    )
+
+
+# ---------------------------------------------------------------------- prompts
+
+SYSTEM = (
+    "You are OpsPilot, an incident investigator for an on-call engineer. You can only read: "
+    "runbooks, past incident write-ups, service logs and service status. The current time is "
+    "as_of; there are no logs after it."
+)
+
+PLAN_INSTRUCTIONS = (
+    "Call the tools you need, several at once. Search runbooks and past incidents for the "
+    "symptoms, check service status, and query the logs of the affected service and of the "
+    "services it depends on in the window that ends at as_of (each log query covers at most "
+    "24 hours; times are ISO 8601 UTC). Use exact service names from the known list."
+)
+
+DRAFT_INSTRUCTIONS = (
+    "Write the diagnosis as JSON with keys summary, likely_cause, confidence (low, medium or "
+    "high), claims (each {text, evidence_ids}) and next_checks. Every claim must cite one or "
+    "more evidence ids exactly as written in square brackets below. Cite only ids listed "
+    "below. Do not claim what the evidence does not show; say what is unknown in next_checks."
+)
+
+
+def json_content(text: str) -> str:
+    """The JSON object in a reply: fences and prose around it are dropped."""
+    text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip())
+    start, end = text.find("{"), text.rfind("}")
+    return text[start : end + 1] if start != -1 and end > start else text
+
+
+def structured(llm: Client, messages, model, name, max_tokens, state, calls) -> BaseModel | None:
+    """One call for a JSON object of `model`, one retry with the validation error."""
+    schema = model.model_json_schema()
+    for attempt in range(2):
+        r = llm.chat(
+            messages,
+            json_schema=schema,
+            max_tokens=max_tokens,
+            name=name if attempt == 0 else f"{name}_retry",
+            trace_id=state["trace_id"],
+        )
+        calls.append(r.log_row())
+        try:
+            return model.model_validate_json(json_content(r.content))
+        except ValidationError as exc:
+            errs = "; ".join(
+                f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors()[:5]
+            )
+            messages = [
+                *messages,
+                {
+                    "role": "user",
+                    "content": f"Your reply was not valid ({errs}). Reply with the JSON "
+                    "object only.",
+                },
+            ]
+    return None
+
+
+# ---------------------------------------------------------------------- evidence for the draft
+
+
+def log_key(e: dict) -> tuple:
+    """Log lines that differ only in numbers or hex ids (timestamps, hosts, request ids)."""
+    msg = e["text"].split(" ", 1)[1]  # drop the timestamp
+    return (e["metadata"].get("service"), re.sub(r"\b[0-9a-f]{8}\b|\d+", "#", msg))
+
+
+def evidence_lines(evidence: dict) -> list[str]:
+    """One line per item, status then logs (near-duplicates collapsed) then runbooks then
+    incidents. The collapsed lines' other ids stay valid citations in the evidence map."""
+    by_source = defaultdict(list)
+    for e in evidence.values():
+        by_source[e["source"]].append(e)
+    lines = [f"[{e['id']}] {e['text']}" for e in by_source["status"]]
+    groups: dict[tuple, list[dict]] = defaultdict(list)
+    for e in sorted(by_source["log"], key=lambda e: (e["text"], e["id"])):
+        groups[log_key(e)].append(e)
+    for g in sorted(groups.values(), key=lambda g: g[0]["text"]):
+        more = f" (and {len(g) - 1} similar lines until {g[-1]['text'][:20]})" if len(g) > 1 else ""
+        lines.append(f"[{g[0]['id']}] {g[0]['text']}{more}")
+    for src in ("runbook", "incident"):
+        lines += [
+            f"[{e['id']}] {' '.join(e['text'].split())[:DRAFT_SNIPPET_CHARS]}"
+            for e in by_source[src]
+        ]
+    return lines
+
+
+def pack(lines: list[str], allowance: int) -> tuple[list[str], int]:
+    """Lines in order until the token allowance is spent; returns (kept, dropped count)."""
+    kept, used = [], 0
+    for line in lines:
+        cost = estimate_tokens(line) + 1
+        if used + cost > allowance:
+            break
+        kept.append(line)
+        used += cost
+    return kept, len(lines) - len(kept)
+
+
+# ---------------------------------------------------------------------- graph
+
+
+def build_graph(
+    llm: Client,
+    conn,
+    *,
+    verify_enabled: bool | None = None,
+    max_tool_calls: int | None = None,
+    max_seconds: float | None = None,
+):
+    s = get_settings()
+    verify_enabled = s.verify_enabled if verify_enabled is None else verify_enabled
+    max_tool_calls = s.agent_max_tool_calls if max_tool_calls is None else max_tool_calls
+    max_seconds = s.agent_max_seconds if max_seconds is None else max_seconds
+    tools = tool_schemas()
+
+    def out_of_time(state) -> bool:
+        return time.time() - state["started"] > max_seconds
+
+    def context(state) -> str:
+        return f"as_of: {state['as_of']}\nQuestion: {state['question']}"
+
+    def triage(state: State) -> dict:
+        known = ", ".join(r[0] for r in conn.execute("SELECT name FROM services ORDER BY name"))
+        calls: list = []
+        msgs = [
+            {"role": "system", "content": SYSTEM},
+            {
+                "role": "user",
+                "content": f"{context(state)}\nKnown services: {known}\n"
+                "Reply with JSON: services involved, symptoms, and a log window of about one "
+                "hour ending at as_of.",
+            },
+        ]
+        t = structured(llm, msgs, Triage, "triage", TRIAGE_MAX_TOKENS, state, calls)
+        return {"triage": t.model_dump(mode="json") if t else {}, "llm_calls": calls}
+
+    def plan(state: State) -> dict:
+        msgs = [
+            {"role": "system", "content": f"{SYSTEM} {PLAN_INSTRUCTIONS}"},
+            {"role": "user", "content": f"{context(state)}\nTriage: {json.dumps(state['triage'])}"},
+        ]
+        r = llm.chat(
+            msgs, tools, max_tokens=PLAN_MAX_TOKENS, name="plan", trace_id=state["trace_id"]
+        )
+        pending = [{"name": c.name, "arguments": c.arguments} for c in r.tool_calls]
+        return {"plan": pending, "llm_calls": [r.log_row()]}
+
+    def follow_up(state: State, calls: list) -> list[dict]:
+        bad = state["verify"]["invalid"]
+        have = ", ".join(sorted(state["evidence"])) or "none"
+        msgs = [
+            {"role": "system", "content": f"{SYSTEM} {PLAN_INSTRUCTIONS}"},
+            {
+                "role": "user",
+                "content": f"{context(state)}\nThese claims cite evidence that "
+                f"was not gathered: {json.dumps(bad)}\nGathered evidence ids: {have}\nCall "
+                "tools to find evidence for these claims, if any can exist.",
+            },
+        ]
+        r = llm.chat(
+            msgs,
+            tools,
+            max_tokens=PLAN_MAX_TOKENS,
+            name="gather_follow_up",
+            trace_id=state["trace_id"],
+        )
+        calls.append(r.log_row())
+        return [{"name": c.name, "arguments": c.arguments} for c in r.tool_calls]
+
+    def gather(state: State) -> dict:
+        write = get_stream_writer()
+        llm_calls: list = []
+        pending = state["plan"]
+        if state["loops"] and not out_of_time(state) and len(state["tool_calls"]) < max_tool_calls:
+            pending = follow_up(state, llm_calls)
+        done, evidence = [], {}
+        for call in pending:
+            n = len(state["tool_calls"]) + len(done)
+            if n >= max_tool_calls or out_of_time(state):
+                why = "tool-call cap" if n >= max_tool_calls else "time cap"
+                write({"event": "error", "message": f"skipped {call['name']}: {why} reached"})
+                continue
+            write({"event": "tool_call", "name": call["name"], "arguments": call["arguments"]})
+            t0 = time.perf_counter()
+            row = {
+                "name": call["name"],
+                "arguments": call["arguments"],
+                "success": True,
+                "error": None,
+                "ids": [],
+                "note": "",
+                "output_tokens": 0,
+            }
+            try:
+                out = run_tool(call["name"], call["arguments"], conn)
+                items = [e.model_dump() for e in out.items]
+                evidence |= {e["id"]: e for e in items}
+                row |= {
+                    "ids": [e["id"] for e in items],
+                    "note": out.note,
+                    "output_tokens": estimate_tokens(items),
+                }
+            except Exception as exc:  # ToolError or a DB error: reported, never fatal
+                row |= {"success": False, "error": str(exc)[:500]}
+            row["latency_ms"] = (time.perf_counter() - t0) * 1000
+            done.append(row)
+            write({"event": "tool_result", **row})
+        return {"plan": [], "evidence": evidence, "tool_calls": done, "llm_calls": llm_calls}
+
+    def draft(state: State) -> dict:
+        calls: list = []
+        feedback = ""
+        if state["verify"] and not state["verify"]["ok"]:
+            feedback = (
+                "\nYour previous draft cited ids that are not in the evidence: "
+                f"{json.dumps(state['verify']['invalid'])}. Cite only listed ids, or "
+                "drop the claim."
+            )
+        head = f"{context(state)}{feedback}\nEvidence:\n"
+        base = [
+            {"role": "system", "content": f"{SYSTEM} {DRAFT_INSTRUCTIONS}"},
+            {"role": "user", "content": head},
+        ]
+        fixed = estimate_tokens(base, Draft.model_json_schema())
+        # Room for one validation retry message (about 80 tokens) is kept free.
+        allowance = llm.budget - DRAFT_MAX_TOKENS - fixed - 80
+        lines, dropped = pack(evidence_lines(state["evidence"]), allowance)
+        base[1]["content"] = head + ("\n".join(lines) or "(none gathered)")
+        d = structured(llm, base, Draft, "draft", DRAFT_MAX_TOKENS, state, calls)
+        if calls:
+            calls[0]["evidence_lines"], calls[0]["evidence_dropped"] = len(lines), dropped
+        if d is None:
+            get_stream_writer()(
+                {
+                    "event": "error",
+                    "message": "the model returned no valid diagnosis after one retry",
+                }
+            )
+            d = Draft(
+                summary="No valid diagnosis was produced.",
+                likely_cause="unknown",
+                confidence="low",
+                claims=[],
+                next_checks=[],
+            )
+        return {"draft": d.model_dump(), "llm_calls": calls}
+
+    def verify(state: State) -> dict:
+        invalid = []
+        for i, c in enumerate(state["draft"]["claims"]):
+            bad = [x for x in c["evidence_ids"] if x not in state["evidence"]]
+            if bad or not c["evidence_ids"]:
+                invalid.append({"claim": i, "text": c["text"], "bad_ids": bad or ["(none cited)"]})
+        retry = bool(invalid) and state["loops"] < MAX_LOOPS and not out_of_time(state)
+        return {
+            "verify": {"ok": not invalid, "invalid": invalid, "retry": retry},
+            "loops": state["loops"] + retry,
+        }
+
+    def after_verify(state: State) -> str:
+        return "gather" if state["verify"]["retry"] else "finish"
+
+    def finish(state: State) -> dict:
+        write = get_stream_writer()
+        d = Diagnosis(**state["draft"])
+        v = state["verify"]
+        if v is not None:
+            d.citations_verified = v["ok"]
+            if not v["ok"]:
+                bad = {x["claim"] for x in v["invalid"]}
+                d.dropped_claims = [c for i, c in enumerate(d.claims) if i in bad]
+                d.claims = [c for i, c in enumerate(d.claims) if i not in bad]
+                d.confidence = LOWER[d.confidence]
+                d.note = (
+                    f"{len(bad)} claim(s) dropped after {state['loops']} verify loop(s): "
+                    "they cited evidence that was not gathered. Confidence lowered."
+                )
+        cited = {x for c in d.claims for x in c.evidence_ids}
+        write(
+            {
+                "event": "sources",
+                "items": [
+                    {
+                        "id": e["id"],
+                        "source": e["source"],
+                        "text": e["text"][:200],
+                        "metadata": e["metadata"],
+                        "cited": e["id"] in cited,
+                    }
+                    for e in state["evidence"].values()
+                ],
+            }
+        )
+        diagnosis = d.model_dump()
+        write({"event": "diagnosis", "diagnosis": diagnosis})
+        return {"diagnosis": diagnosis}
+
+    g = StateGraph(State)
+    for name, fn in [
+        ("triage", triage),
+        ("plan", plan),
+        ("gather", gather),
+        ("draft", draft),
+        ("verify", verify),
+        ("finish", finish),
+    ]:
+        g.add_node(name, fn)
+    g.add_edge(START, "triage")
+    g.add_edge("triage", "plan")
+    g.add_edge("plan", "gather")
+    g.add_edge("gather", "draft")
+    if verify_enabled:
+        g.add_edge("draft", "verify")
+        g.add_conditional_edges("verify", after_verify, ["gather", "finish"])
+    else:
+        g.add_edge("draft", "finish")
+    g.add_edge("finish", END)
+    return g.compile()

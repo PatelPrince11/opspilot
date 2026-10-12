@@ -58,7 +58,11 @@ class QueryLogsInput(BaseModel):
     start: datetime = Field(description="Window start, ISO 8601 UTC")
     end: datetime = Field(description="Window end, ISO 8601 UTC; at most 24 h after start")
     level: Literal[LEVELS] | None = Field(None, description="Minimum level, e.g. WARN")
-    text: str | None = Field(None, max_length=100, description="Substring to match, any case")
+    text: str | None = Field(
+        None,
+        max_length=100,
+        description="Exact substring to match, any case; omit unless you know the exact wording",
+    )
 
     @field_validator("start", "end")
     @classmethod
