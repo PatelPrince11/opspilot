@@ -55,6 +55,8 @@ def word(*ns) -> str:
 
 
 def run(llm, monkeypatch, tool=None, **kw):
+    """The id-check tests run with the quote check off; the quote tests turn it on."""
+    kw.setdefault("verify_quotes", False)
     monkeypatch.setattr(graph_mod, "run_tool", tool or fake_tool())
     g = build_graph(llm, FakeConn(), **kw)
     events, final = [], None
@@ -236,3 +238,64 @@ def test_tracing_disabled_run_makes_no_langfuse_calls(monkeypatch, verify_enable
     llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), DONE, draft(("x", ["log:0"]))])
     final, _ = run(llm, monkeypatch, verify_enabled=verify_enabled)
     assert final["diagnosis"] and llm._tracer is None
+
+
+# ---------------------------------------------------------------------- quote check
+# fake_tool's first query_logs returns log:0 = "2026-10-06T14:00:00Z ERROR aaz xxx...".
+
+
+def test_a_real_quote_passes(monkeypatch):
+    claim = ("refused", ["log:0"], "ERROR aaz xxxxxxxxxx")
+    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), DONE, draft(claim)])
+    final, _ = run(llm, monkeypatch, verify_quotes=True)
+    assert final["diagnosis"]["citations_verified"] is True and final["loops"] == 0
+    assert final["verify_log"] == [{"claims": 1, "bad_ids": 0, "bad_quotes": 0}]
+
+
+def test_an_invented_quote_fails_loops_then_drops_the_claim(monkeypatch):
+    real = ("ok", ["log:0"], "ERROR aaz xxxxxxxxxx")
+    fake = ("pool exhausted", ["log:0"], "PAYAPI-E1042 pool exhausted on payments-api")
+    bad = draft(real, fake, confidence="high")
+    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), DONE, bad, DONE, bad, DONE, bad])
+    final, _ = run(llm, monkeypatch, verify_quotes=True)
+    d = final["diagnosis"]
+    assert final["loops"] == MAX_LOOPS and llm.script == []
+    assert [c["text"] for c in d["dropped_claims"]] == ["pool exhausted"]
+    assert d["citations_verified"] is False and d["confidence"] == "medium"
+    assert final["verify_log"][-1] == {"claims": 2, "bad_ids": 0, "bad_quotes": 1}
+    assert '"quote_found": false' in llm.bodies[-1]["messages"][1]["content"]  # redraft told
+
+
+def test_quote_check_flag_off_keeps_only_the_id_check(monkeypatch):
+    fake = ("pool exhausted", ["log:0"], "PAYAPI-E1042 pool exhausted on payments-api")
+    llm = StubLLM([TRIAGE, calls(("query_logs", LOGS)), DONE, draft(fake)])
+    final, _ = run(llm, monkeypatch, verify_quotes=False)
+    assert final["diagnosis"]["citations_verified"] is True
+
+
+@pytest.mark.parametrize(
+    "quote, ok",
+    [
+        ("Main process exited, code=exited", True),
+        ("  main   PROCESS\n exited,  CODE=exited ", True),  # whitespace and case
+        ("\u201cMain process exited, code=exited\u2026\u201d", True),  # curly quotes, ellipsis
+        ("Main process crashed, code=exited", False),  # one word changed
+        ("Main process", False),  # too short to mean anything
+        ("", False),
+    ],
+)
+def test_quote_normalization(quote, ok):
+    ev = {
+        "log:7": {
+            "text": "2026-10-06T14:30:41Z ERROR pgbouncer.service: Main process exited, "
+            "code=exited, status=1/FAILURE"
+        }
+    }
+    assert graph_mod.quote_found(quote, ["log:7"], ev) is ok
+    assert graph_mod.quote_found(quote, ["log:8"], ev) is False  # an uncited/ungathered id
+
+
+def test_quote_must_come_from_a_cited_item_not_any_item():
+    ev = {"a": {"text": "disk usage at 99 percent on payments-db-01"}, "b": {"text": "all fine"}}
+    assert graph_mod.quote_found("disk usage at 99 percent", ["a"], ev) is True
+    assert graph_mod.quote_found("disk usage at 99 percent", ["b"], ev) is False

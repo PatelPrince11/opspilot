@@ -44,8 +44,10 @@ class Settings(BaseSettings):
     # Ollama's default context is small and it silently truncates longer prompts.
     ollama_num_ctx: int = Field(default=8192, ge=8192)
 
-    # Agent (agent/graph.py). verify_enabled off skips citation checks, for the comparison.
+    # Agent (agent/graph.py). verify_enabled off skips citation checks, for the comparison;
+    # verify_quotes off keeps the id check but skips the quote check.
     verify_enabled: bool = True
+    verify_quotes: bool = True
     agent_max_tool_calls: int = 8
     agent_max_seconds: float = 300.0
     # Password of the read-only role opspilot_ro (migration 0004) that the agent's tools use.

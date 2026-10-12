@@ -13,10 +13,12 @@
   the unsupported claims in the prompt.
 - draft (LLM, JSON): a Diagnosis from trimmed evidence (ids + capped snippets, near-identical log
   lines collapsed), packed to fit the per-call token budget. Invalid JSON gets one retry.
-- verify (no LLM): every claim must cite at least one id, and every cited id must be in the
-  evidence map. On failure it loops back to gather at most MAX_LOOPS times; after that, claims
-  with invalid citations are dropped, confidence goes down one level and the diagnosis is marked
-  unverified. VERIFY_ENABLED=false routes draft straight to finish.
+- verify (no LLM): every claim must cite at least one id, every cited id must be in the
+  evidence map, and (VERIFY_QUOTES, on by default) the claim's quote, normalized, must be a
+  substring of one cited item's text and at least MIN_QUOTE_WORDS long. On failure it loops
+  back to gather at most MAX_LOOPS times; after that, claims with invalid citations or quotes
+  are dropped, confidence goes down one level and the diagnosis is marked unverified.
+  VERIFY_ENABLED=false routes draft straight to finish.
 Events (tool_call, tool_result, sources, diagnosis, error) go to LangGraph's custom stream.
 """
 
@@ -43,6 +45,7 @@ GATHER_MAX_TOKENS = 1000  # reasoning models (gpt-oss) spend part of this thinki
 LATEST_RESULT_TOKENS = 1500
 DRAFT_SNIPPET_CHARS = 300
 INDEX_CHARS = 100  # per line of the compact evidence index gather sees
+MIN_QUOTE_WORDS = 3  # an empty or one-word quote is a substring of almost anything
 LOWER = {"high": "medium", "medium": "low", "low": "low"}
 
 
@@ -59,6 +62,7 @@ class Triage(BaseModel):
 class Claim(BaseModel):
     text: str
     evidence_ids: list[str] = Field(description="Ids of gathered evidence supporting the claim")
+    quote: str = Field(description="At most 20 words copied exactly from one cited item")
 
 
 class Draft(BaseModel):
@@ -92,6 +96,7 @@ class State(TypedDict, total=False):
     llm_calls: Annotated[list, operator.add]
     draft: dict | None
     verify: dict | None
+    verify_log: Annotated[list, operator.add]  # one row per verify pass
     loops: int
     diagnosis: dict
 
@@ -107,6 +112,7 @@ def initial_state(question: str, as_of: str, trace_id: str | None = None) -> Sta
         llm_calls=[],
         draft=None,
         verify=None,
+        verify_log=[],
         loops=0,
     )
 
@@ -131,9 +137,11 @@ GATHER_INSTRUCTIONS = (
 
 DRAFT_INSTRUCTIONS = (
     "Write the diagnosis as JSON with keys summary, likely_cause, confidence (low, medium or "
-    "high), claims (each {text, evidence_ids}) and next_checks. Every claim must cite one or "
-    "more evidence ids exactly as written in square brackets below. Cite only ids listed "
-    "below. Do not claim what the evidence does not show; say what is unknown in next_checks."
+    "high), claims (each {text, evidence_ids, quote}) and next_checks. Every claim must cite one "
+    "or more evidence ids exactly as written in square brackets below. Cite only ids listed "
+    "below. quote is 5 to 20 words copied character for character from the text of one cited "
+    "item, the words that support the claim. Do not claim what the evidence does not show; say "
+    "what is unknown in next_checks."
 )
 
 
@@ -201,6 +209,19 @@ def evidence_lines(evidence: dict, chars: int = DRAFT_SNIPPET_CHARS) -> list[str
     return lines
 
 
+def normalize(text: str) -> str:
+    """Case, whitespace, curly quotes and the quote marks or ellipses around a quote ignored."""
+    text = text.translate(str.maketrans("\u201c\u201d\u2018\u2019", "\"\"''"))
+    return " ".join(text.casefold().split()).strip(" \"'.\u2026")
+
+
+def quote_found(quote: str, ids: list[str], evidence: dict) -> bool:
+    q = normalize(quote)
+    return len(q.split()) >= MIN_QUOTE_WORDS and any(
+        q in normalize(evidence[i]["text"]) for i in ids if i in evidence
+    )
+
+
 def pack(lines: list[str], allowance: int) -> tuple[list[str], int]:
     """Lines in order until the token allowance is spent; returns (kept, dropped count)."""
     kept, used = [], 0
@@ -221,11 +242,13 @@ def build_graph(
     conn,
     *,
     verify_enabled: bool | None = None,
+    verify_quotes: bool | None = None,
     max_tool_calls: int | None = None,
     max_seconds: float | None = None,
 ):
     s = get_settings()
     verify_enabled = s.verify_enabled if verify_enabled is None else verify_enabled
+    verify_quotes = s.verify_quotes if verify_quotes is None else verify_quotes
     max_tool_calls = s.agent_max_tool_calls if max_tool_calls is None else max_tool_calls
     max_seconds = s.agent_max_seconds if max_seconds is None else max_seconds
     tools = tool_schemas()
@@ -349,9 +372,10 @@ def build_graph(
         feedback = ""
         if state["verify"] and not state["verify"]["ok"]:
             feedback = (
-                "\nYour previous draft cited ids that are not in the evidence: "
-                f"{json.dumps(state['verify']['invalid'])}. Cite only listed ids, or "
-                "drop the claim."
+                "\nYour previous draft had claims that failed the check (bad_ids: cited ids "
+                "not in the evidence; quote_found false: the quote is not in a cited item): "
+                f"{json.dumps(state['verify']['invalid'])}. Cite only listed ids, copy quotes "
+                "exactly, or drop the claim."
             )
         head = f"{context(state)}{feedback}\nEvidence:\n"
         base = [
@@ -383,14 +407,25 @@ def build_graph(
         return {"draft": d.model_dump(), "llm_calls": calls}
 
     def verify(state: State) -> dict:
-        invalid = []
-        for i, c in enumerate(state["draft"]["claims"]):
-            bad = [x for x in c["evidence_ids"] if x not in state["evidence"]]
-            if bad or not c["evidence_ids"]:
-                invalid.append({"claim": i, "text": c["text"], "bad_ids": bad or ["(none cited)"]})
+        ev, invalid, bad_id_n, bad_quote_n = state["evidence"], [], 0, 0
+        claims = state["draft"]["claims"]
+        for i, c in enumerate(claims):
+            bad = [x for x in c["evidence_ids"] if x not in ev] or (
+                [] if c["evidence_ids"] else ["(none cited)"]
+            )
+            found = quote_found(c["quote"], c["evidence_ids"], ev) if verify_quotes else True
+            bad_id_n += bool(bad)
+            bad_quote_n += not found
+            if bad or not found:
+                row = {"claim": i, "text": c["text"], "bad_ids": bad}
+                if verify_quotes:
+                    row |= {"quote": c["quote"], "quote_found": found}
+                invalid.append(row)
         retry = bool(invalid) and state["loops"] < MAX_LOOPS and not out_of_time(state)
+        log = {"claims": len(claims), "bad_ids": bad_id_n, "bad_quotes": bad_quote_n}
         return {
             "verify": {"ok": not invalid, "invalid": invalid, "retry": retry},
+            "verify_log": [log],
             "loops": state["loops"] + retry,
         }
 
@@ -410,7 +445,8 @@ def build_graph(
                 d.confidence = LOWER[d.confidence]
                 d.note = (
                     f"{len(bad)} claim(s) dropped after {state['loops']} verify loop(s): "
-                    "they cited evidence that was not gathered. Confidence lowered."
+                    "they cited evidence that was not gathered, or quoted words not in it. "
+                    "Confidence lowered."
                 )
         cited = {x for c in d.claims for x in c.evidence_ids}
         write(

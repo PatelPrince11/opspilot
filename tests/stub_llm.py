@@ -56,7 +56,7 @@ def draft(*claims, confidence="high") -> dict:
             "summary": "s",
             "likely_cause": "c",
             "confidence": confidence,
-            "claims": [{"text": t, "evidence_ids": ids} for t, ids in claims],
+            "claims": [{"text": c[0], "evidence_ids": c[1], "quote": (*c, "")[2]} for c in claims],
             "next_checks": ["check x"],
         }
     )

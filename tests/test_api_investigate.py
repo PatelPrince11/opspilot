@@ -69,7 +69,7 @@ def test_sse_event_order_and_persistence(client, db_url):
             TRIAGE,
             calls(("query_logs", LOGS), ("get_service_status", {})),
             say("done"),
-            draft(("refused", ["log:0"])),
+            draft(("refused", ["log:0"], "ERROR aaz xxxxxxxxxx")),
         ]
     )
     r = client.post("/investigate", json=BODY)
