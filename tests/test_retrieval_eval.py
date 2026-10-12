@@ -2,6 +2,7 @@
 
 import pytest
 
+from eval.ablation import bootstrap
 from eval.retrieval_eval import check_split, dedupe, run, score, store, summarize
 from rag.retrieval import Hit, RetrievalConfig
 from tests.test_retrieval import conn  # noqa: F401  (module fixture: the tiny DB)
@@ -91,3 +92,15 @@ def test_run_and_store_on_the_fixture_db(conn):  # noqa: F811
         assert "@" in models["embed"] and "@" in models["rerank"] and created
         n = conn.execute("SELECT count(*) FROM eval_results WHERE run_id = %s", (run_id,))
         assert n.fetchone()[0] == 2
+
+
+def test_paired_bootstrap_ci():
+    assert bootstrap([1.0] * 50, [1.0] * 50) == (0.0, 0.0, 0.0)
+    assert bootstrap([1.0] * 50, [0.0] * 50) == (1.0, 1.0, 1.0)
+    a = [1.0] * 30 + [0.0] * 70  # A wins 30 questions, B wins 10, 60 ties
+    b = [0.0] * 30 + [1.0] * 10 + [0.0] * 60
+    diff, lo, hi = bootstrap(a, b)
+    assert diff == pytest.approx(0.2) and 0 < lo < 0.2 < hi
+    assert bootstrap(a, b) == (diff, lo, hi)  # seeded
+    diff, lo, hi = bootstrap(a[:20] + [0.0] * 80, [0.0] * 20 + [1.0] * 20 + [0.0] * 60)
+    assert diff == 0.0 and lo < 0 < hi
