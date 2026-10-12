@@ -2429,6 +2429,56 @@ passes, an invented one fails and loops, flag off skips it, normalization cases;
 window; repeated call not run; json_validate_failed retried; Gemini body retry delay; sample is
 stratified and seeded).
 
+## 2026-10-12: Phase 3a.6, OpenRouter provider, read_document, agent and judge config
+
+**Decision (Prince):** agent = `openrouter:openai/gpt-oss-120b`, pinned to Groq; judge =
+`gemini:gemini-3.5-flash-lite` (free); dev = `ollama:qwen2.5:7b` (unchanged).
+- Why not Groq direct: Groq's paid upgrade was unavailable, and its free tier (200K tokens/day,
+  8K TPM; Phase 3a entry) allows about 9 agent runs a day, far short of a 100-question eval.
+- OpenRouter is a router in front of several hosts of the same model. Every request sends
+  `provider: {order: ["groq"], allow_fallbacks: false, require_parameters: true}`
+  (openrouter.ai/docs/features/provider-routing): one upstream host, fail instead of rerouting,
+  and only a host that supports every parameter sent (tools, response_format). Checked live: the
+  reply's `provider` field was `Groq`. Slug `groq` from OpenRouter's endpoints API
+  (`/api/v1/models/openai/gpt-oss-120b/endpoints`).
+- Money: $5 prepaid OpenRouter credit, a hard cap (an empty balance returns 402, which the client
+  does not retry).
+- Agent and judge are different model families (OpenAI gpt-oss vs Google Gemini), so the judge
+  is not grading its own family's output.
+
+**Prices** (checked 2026-10-12)
+- gpt-oss-120b via OpenRouter, Groq provider: $0.15 per 1M input, $0.60 per 1M output, $0.075
+  per 1M cached input (openrouter.ai/openai/gpt-oss-120b and the endpoints API; same as
+  groq.com/pricing). OpenRouter adds no markup on these.
+- Gemini 3.5 Flash-Lite: free tier (500 requests/day, 15 RPM), no cost.
+
+**Cost per call:** OpenRouter returns the charge in `usage.cost` on every response by default
+(openrouter.ai/docs/use-cases/usage-accounting). The client records it as `cost_usd`
+(`cost_source` "reported"); without it, tokens times PRICES_PER_M ("computed"); free providers
+"free". Live check: 77 prompt + 39 completion tokens, reported $0.00003495 = 77 x 0.15/1M + 39 x
+0.60/1M exactly. A cache hit keeps the original cost but is marked cached, so the eval counts it
+as no new spend.
+
+**Per-run estimate (before measuring):** 3a.5 Groq dev means, 15,571 prompt + 4,151
+completion tokens: $0.0023 + $0.0025 = about $0.005 per run, about $0.50 per 100-question dev
+run, about $1.00 for verify on plus off. Ceiling at the largest 3a.5 run (26.7K tokens, all
+priced as output): $0.016 per run, $3.20 for both configs. read_document will add prompt tokens;
+measured in the confirm runs below.
+
+**read_document (fifth tool):** `read_document(doc_id, part=1)` returns a document's chunks in
+order, full text, ids `DOC#index` as search gives them, paged at PAGE_TOKENS 1,400 estimated
+tokens (one page plus header fits gather's 1,500-token latest-result slot). On the corpus: 115 of
+117 incidents are one page, 2 are two; runbooks 16 one, 13 two, 1 three; the largest page is
+1,392. A missing id or part is a failed call (ToolError). Gather's prompt now says: search to
+find documents, then read_document for details. The draft sees read chunks whole (READ_CHARS
+2,000) after status and logs, before the 300-char search snippets; a full read replaces a
+search snippet with the same id in the evidence map, so quotes from the rest of the chunk verify.
+
+**Errors and fixes**
+- An empty `OPENROUTER_API_KEY=` (as in .env.example) is an empty SecretStr, not None, so the
+  client sent `Bearer ` with no key. Root cause: the check was `key is None`. Now an empty value
+  counts as unset, for every provider. Found by a test.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

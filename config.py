@@ -38,11 +38,13 @@ class Settings(BaseSettings):
     api_key: SecretStr | None = None
 
     # LLMs as "provider:model" (llm/client.py). Config only: switching models is an env change.
-    agent_llm: str = "groq:openai/gpt-oss-120b"
+    # Agent: gpt-oss-120b via OpenRouter, pinned to Groq (Groq's paid tier was unavailable).
+    # Judge: Gemini Flash-Lite, free tier, a different model family from the agent.
+    agent_llm: str = "openrouter:openai/gpt-oss-120b"
     judge_llm: str = "gemini:gemini-3.5-flash-lite"
     dev_llm: str = "ollama:qwen2.5:7b"
-    # Per-call cap on estimated prompt + max output tokens. Groq's free tier allows 8K tokens
-    # per minute, so a call near 8K would stall; callers must trim to fit.
+    # Per-call cap on estimated prompt + max output tokens; callers must trim to fit. Set for
+    # Groq's free tier (8K tokens per minute); kept on OpenRouter so runs stay comparable.
     llm_token_budget: int = 6000
     llm_cache_dir: str = ".cache/llm"  # empty string disables the response cache
     # Ollama's default context is small and it silently truncates longer prompts.
