@@ -129,6 +129,20 @@ def test_retry_honours_retry_after_then_succeeds(keys):
     assert r.wait_s == sum(slept) and r.log_row()["wait_s"] == r.wait_s
 
 
+@pytest.mark.parametrize(
+    "body",
+    [
+        '[{"error": {"details": [{"retryDelay": "50s"}]}}]',
+        '[{"error": {"message": "Quota exceeded... Please retry in 50.84s."}}]',
+    ],
+)
+def test_gemini_retry_delay_in_the_body_is_honoured(keys, body):
+    replies = [httpx.Response(429, text=body), httpx.Response(200, json=openai_reply())]
+    slept = []
+    r = client("gemini", lambda req: replies.pop(0), sleep=slept.append).chat(MSGS)
+    assert r.content == "ok" and slept[0] in (50.0, 50.84)
+
+
 def test_long_retry_after_raises_instead_of_sleeping(keys):
     slept = []
     c = client(

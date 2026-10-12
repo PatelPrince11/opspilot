@@ -5,6 +5,7 @@ import pytest
 from agent import graph as graph_mod
 from agent.graph import MAX_LOOPS, build_graph, initial_state
 from agent.tools import Evidence, ToolError, ToolOutput
+from llm.client import LLMError
 from tests.stub_llm import TRIAGE, StubLLM, calls, draft, say
 
 Q = "The payment API is returning connection-refused errors. What happened?"
@@ -152,7 +153,8 @@ def test_gather_loop_sees_each_result_and_stops_on_done(monkeypatch):
 
 def test_gather_loop_stops_at_the_cap(monkeypatch):
     # The model never says done: one call per turn until the cap, then no ninth gather turn.
-    llm = StubLLM([TRIAGE, *[calls(("query_logs", LOGS))] * 8, draft(("x", ["log:0"]))])
+    turns = [calls(("query_logs", LOGS | {"service": f"svc-{i}"})) for i in range(8)]
+    llm = StubLLM([TRIAGE, *turns, draft(("x", ["log:0"]))])
     final, _ = run(llm, monkeypatch, max_tool_calls=8)
     names = [c["name"] for c in final["llm_calls"]]
     assert len(final["tool_calls"]) == 8 and names.count("gather") == 8 and llm.script == []
@@ -188,7 +190,14 @@ def test_failed_tool_is_recorded_not_fatal(monkeypatch):
 
 def test_no_call_exceeds_the_token_budget_on_a_full_gather(monkeypatch):
     # 8 gather turns, each returning 50 long log lines or 5 long snippets: far more than fits.
-    turns = [calls(("query_logs", LOGS)), calls(("search_runbooks", {"query": "q"}))] * 4
+    turns = [
+        c
+        for i in range(4)
+        for c in (
+            calls(("query_logs", LOGS | {"service": f"svc-{i}"})),
+            calls(("search_runbooks", {"query": f"q{i}"})),
+        )
+    ]
     llm = StubLLM([TRIAGE, *turns, draft(("x", ["log:0"]))])
     final, _ = run(llm, monkeypatch, tool=fake_tool(n_logs=50, text_chars=200))
     assert len(llm.checked) == 10 and max(llm.checked) <= 6000
@@ -299,3 +308,41 @@ def test_quote_must_come_from_a_cited_item_not_any_item():
     ev = {"a": {"text": "disk usage at 99 percent on payments-db-01"}, "b": {"text": "all fine"}}
     assert graph_mod.quote_found("disk usage at 99 percent", ["a"], ev) is True
     assert graph_mod.quote_found("disk usage at 99 percent", ["b"], ev) is False
+
+
+def test_a_repeated_call_is_not_run_again(monkeypatch):
+    # Same call in a later turn and twice in one turn: run once, the repeats fail and count.
+    llm = StubLLM(
+        [
+            TRIAGE,
+            calls(("query_logs", LOGS)),
+            calls(("query_logs", LOGS), ("query_logs", LOGS)),
+            DONE,
+            draft(("x", ["log:0"])),
+        ]
+    )
+    seen = []
+    tool = fake_tool()
+    final, _ = run(llm, monkeypatch, tool=lambda n, a, c: seen.append(n) or tool(n, a, c))
+    assert seen == ["query_logs"] and len(final["tool_calls"]) == 3
+    assert [t["success"] for t in final["tool_calls"]] == [True, False, False]
+    assert "duplicate of call 1" in final["tool_calls"][1]["error"]
+    assert "duplicate of call 1" in llm.bodies[3]["messages"][1]["content"]  # the model is told
+
+
+def test_groq_json_validate_failed_is_retried_as_invalid_output(monkeypatch):
+    def rejected(body):
+        raise LLMError('groq 400: {"error": {"code": "json_validate_failed"}}')
+
+    llm = StubLLM([TRIAGE, DONE, rejected, draft()])
+    final, _ = run(llm, monkeypatch)
+    assert final["diagnosis"]["summary"] == "s" and llm.script == []
+    assert "not valid" in llm.bodies[-1]["messages"][-1]["content"]
+
+
+def test_other_llm_errors_still_raise(monkeypatch):
+    def down(body):
+        raise LLMError("groq 503: unavailable")
+
+    with pytest.raises(LLMError, match="503"):
+        run(StubLLM([TRIAGE, DONE, down]), monkeypatch)

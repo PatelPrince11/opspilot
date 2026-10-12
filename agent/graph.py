@@ -36,11 +36,11 @@ from pydantic import BaseModel, Field, ValidationError
 
 from agent.tools import run_tool, tool_schemas
 from config import get_settings
-from llm.client import Client, estimate_tokens
+from llm.client import Client, LLMError, estimate_tokens
 
 MAX_LOOPS = 2
-DRAFT_MAX_TOKENS = 1500
-TRIAGE_MAX_TOKENS = 400
+DRAFT_MAX_TOKENS = 2500  # gpt-oss reasons first: 1,500 cut two of five dev drafts off
+TRIAGE_MAX_TOKENS = 1000  # gpt-oss reasons first: 465 tokens on a dated question
 GATHER_MAX_TOKENS = 1000  # reasoning models (gpt-oss) spend part of this thinking
 LATEST_RESULT_TOKENS = 1500
 DRAFT_SNIPPET_CHARS = 300
@@ -136,7 +136,9 @@ GATHER_INSTRUCTIONS = (
     "apart: when the question names a past date or time, set the window around it (if the "
     "question gives no time of day, find the time in the incident write-ups first); otherwise "
     "use a window ending at as_of. Use exact service names from the known list. Do not repeat "
-    "a call. "
+    "a call. Searches return the best-matching part of each document, one part per document: to "
+    "read another part of a document you found (its cause, fix or timeline), search with words "
+    "that part would contain, not with the document's id. "
     "When the evidence explains the cause, or nothing more can be found, reply with the word "
     "done and no tool call."
 )
@@ -159,23 +161,32 @@ def json_content(text: str) -> str:
 
 
 def structured(llm: Client, messages, model, name, max_tokens, state, calls) -> BaseModel | None:
-    """One call for a JSON object of `model`, one retry with the validation error."""
+    """One call for a JSON object of `model`, one retry with the validation error. Groq rejects
+    output that breaks the schema (often cut off at max_tokens) with a 400 json_validate_failed
+    and no usage counts; that is treated as invalid output, so its tokens go unrecorded."""
     schema = model.model_json_schema()
     for attempt in range(2):
-        r = llm.chat(
-            messages,
-            json_schema=schema,
-            max_tokens=max_tokens,
-            name=name if attempt == 0 else f"{name}_retry",
-            trace_id=state["trace_id"],
-        )
-        calls.append(r.log_row())
         try:
-            return model.model_validate_json(json_content(r.content))
-        except ValidationError as exc:
-            errs = "; ".join(
-                f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors()[:5]
+            r = llm.chat(
+                messages,
+                json_schema=schema,
+                max_tokens=max_tokens,
+                name=name if attempt == 0 else f"{name}_retry",
+                trace_id=state["trace_id"],
             )
+        except LLMError as exc:
+            if "json_validate_failed" not in str(exc):
+                raise
+            r, errs = None, "the provider rejected it as invalid JSON; keep it short"
+        if r is not None:
+            calls.append(r.log_row())
+            try:
+                return model.model_validate_json(json_content(r.content))
+            except ValidationError as exc:
+                errs = "; ".join(
+                    f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors()[:5]
+                )
+        if attempt == 0:
             messages = [
                 *messages,
                 {
@@ -352,6 +363,22 @@ def build_graph(
         write({"event": "tool_result", **row})
         return row, items
 
+    def duplicate(call, first: int, write) -> dict:
+        write({"event": "tool_call", "name": call.name, "arguments": call.arguments})
+        err = f"duplicate of call {first}, not run: its results are already in the evidence"
+        row = {
+            "name": call.name,
+            "arguments": call.arguments,
+            "success": False,
+            "error": err,
+            "ids": [],
+            "note": "",
+            "output_tokens": 0,
+            "latency_ms": 0.0,
+        }
+        write({"event": "tool_result", **row})
+        return row
+
     def gather(state: State) -> dict:
         write = get_stream_writer()
         llm_calls, done, new = [], [], {}
@@ -372,7 +399,16 @@ def build_graph(
                 if len(state["tool_calls"]) + len(done) >= max_tool_calls:
                     write({"event": "error", "message": f"skipped {call.name}: tool-call cap"})
                     continue
-                row, items = run_one(call, write)
+                prior = state["tool_calls"] + done
+                same = [
+                    i
+                    for i, m in enumerate(prior, 1)
+                    if (m["name"], m["arguments"]) == (call.name, call.arguments)
+                ]
+                if same:  # not run again: counted, and the model is told why
+                    row, items = duplicate(call, same[0], write), {}
+                else:
+                    row, items = run_one(call, write)
                 new |= items
                 done.append(row)
                 latest.append(row)
@@ -476,7 +512,7 @@ def build_graph(
             }
         )
         diagnosis = d.model_dump()
-        write({"event": "diagnosis", "diagnosis": diagnosis})
+        write({"event": "diagnosis", "diagnosis": diagnosis, "verify_log": state["verify_log"]})
         return {"diagnosis": diagnosis}
 
     g = StateGraph(State)

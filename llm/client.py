@@ -13,7 +13,8 @@
   one call near that would stall a run. Callers trim; this module never truncates silently.
 - Token counts come from the provider's usage fields. When a provider omits them the estimate
   is used and Response.estimated is True.
-- Retries on 429, 5xx and transport errors: the retry-after header when present, else
+- Retries on 429, 5xx and transport errors: the retry-after header (or Gemini's retryDelay in
+  the body) when present, else
   exponential backoff with jitter, both capped. A retry-after longer than the cap (a daily limit)
   raises at once instead of sleeping for hours.
 - Disk cache keyed by sha256(provider, model, messages, tools, params). Cached responses keep
@@ -27,6 +28,7 @@ import json
 import logging
 import math
 import random
+import re
 import time
 from collections.abc import Iterator
 from dataclasses import asdict, dataclass, field
@@ -92,10 +94,13 @@ def estimate_tokens(*parts) -> int:
     return math.ceil(sum(len(json.dumps(p, default=str)) for p in parts if p) / CHARS_PER_TOKEN)
 
 
-def retry_after_seconds(headers: httpx.Headers) -> float | None:
+def retry_after_seconds(headers: httpx.Headers, body: str = "") -> float | None:
+    """The retry-after header, else Gemini's delay in the body: RetryInfo ("retryDelay": "50s")
+    or the message ("Please retry in 50.8s")."""
     v = headers.get("retry-after")
     if not v:
-        return None
+        m = re.search(r'"retryDelay":\s*"([\d.]+)s"|retry in ([\d.]+)s', body)
+        return float(m.group(1) or m.group(2)) if m else None
     try:
         return max(0.0, float(v))
     except ValueError:
@@ -260,7 +265,7 @@ class Client:
                 self.sleep(wait)
                 continue
             if resp.status_code == 429 or resp.status_code >= 500:
-                wait = retry_after_seconds(resp.headers)
+                wait = retry_after_seconds(resp.headers, resp.text)
                 if last or (wait is not None and wait > MAX_RETRY_AFTER_S):
                     raise LLMError(
                         f"{self.provider} {resp.status_code} (retry-after {wait}):"

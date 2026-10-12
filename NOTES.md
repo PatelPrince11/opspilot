@@ -2297,6 +2297,138 @@ groq.com/pricing page did not render prices to a fetch)
 **Deferred**: generation eval, judge, hand labels (Phase 3b); injection defenses (Phase 4);
 the gather design question above.
 
+## 2026-10-12: Phase 3a.5, an agent that investigates; Groq vs Gemini as the agent
+
+**Built**
+- Iterative gather (Prince's decision, closes 3a's open design question): the plan node is gone;
+  gather is a loop where the model calls a tool, sees the result and picks the next call, until
+  it replies without a tool call (done) or the run reaches 8 tool calls. State keeps every item;
+  each turn's prompt holds the calls so far, a compact index of older evidence (id + 100 chars,
+  near-identical log lines collapsed) and only the latest turn's results in full (capped at
+  1,500 tokens), packed to the 6,000-token budget. Measured: the largest gather prompt
+  estimate in the 10 final dev runs was 2,843 tokens (+ 1,000 max output). The client now records seconds slept on 429/5xx per call
+  (`wait_s`).
+- Quote-grounded verify: each claim carries a quote; verify checks, with no LLM, that the
+  normalized quote (casefold, whitespace collapsed, curly quotes straightened, surrounding quote
+  marks and ellipses stripped) is a substring of one cited item and has at least 3 words. A
+  failed quote counts like a bad id: back to gather (<= 2 loops), then the claim is dropped and
+  confidence goes down. `VERIFY_QUOTES` (default true) next to `VERIFY_ENABLED`. Per-pass counts
+  (claims, bad ids, bad quotes) go out with the diagnosis event as `verify_log`.
+- Historical windows: the system prompt states as_of and says to look at a past date when the
+  question names one; gather and triage ask for an explicit window around a named date (whole
+  day if no time is given). `query_logs` already took any window of <= 24 h; only the prompts
+  pinned it to as_of. Test: a stub that sets a January 2026 window gets exactly INC-9001's logs
+  through the real tool.
+- `make demo ARGS="--qid Qxxx"` runs a dev question (test ids refused) and writes a JSON summary
+  beside the transcript; `--pick N --seed S` is the stratified sample.
+
+**Errors and fixes (root cause first)**
+- Groq runs all failed on triage with 400 `json_validate_failed`, empty `failed_generation`.
+  Root cause: gpt-oss-120b reasons before answering and the reasoning counts against
+  max_tokens; the longer step-3 triage prompt made it think past 400 tokens (probe on Q063: 400
+  fails, 1,000 passes with 465 completion tokens). TRIAGE_MAX_TOKENS 400 -> 1,000.
+- Groq drafts hit max_tokens exactly (1,500 completion tokens) and came back truncated: H007
+  fell back to "no valid diagnosis", and on Q074 Groq raised the truncation as a 400
+  `json_validate_failed`, which crashed the run. DRAFT_MAX_TOKENS 1,500 -> 2,500 (final runs
+  used up to 2,365); a `json_validate_failed` 400 now gets the same one retry as invalid JSON
+  (its tokens are unrecorded: Groq returns no usage with the error). None occurred in the final
+  runs.
+- Gemini runs died on 429 after about 10 s. Root cause: Flash Lite's free tier allows 15
+  requests per minute; Gemini sends no retry-after header but puts the delay in the body
+  ("Please retry in 50.8s", RetryInfo `retryDelay`), so the client fell back to short
+  exponential backoff and gave up after 5 attempts. The client now reads either form from the
+  body.
+- Both models repeated calls (Gemini searched "INC-0109" three times; Groq repeated a runbook
+  search). Root cause, from the dev transcripts: search tools return the best chunk per document,
+  so repeating a query or searching by a document id can never show another part of that
+  document; INC-0109's key facts sit in chunk 1, the queries matched chunk 0. Fixed below.
+
+**Prompt and graph changes from dev questions (never the demo); a and c re-run after them**
+1. GATHER_INSTRUCTIONS: "Searches return the best-matching part of each document, one part per
+   document: to read another part of a document you found (its cause, fix or timeline), search
+   with words that part would contain, not with the document's id." Reason: Q063, Q074, H007,
+   Q053 (both models) re-searched an incident by id to read more of it.
+2. A repeated call (same tool, same arguments) is not run; it counts toward the cap and comes
+   back as a failed call naming the original. Reason: same transcripts; prompt text alone
+   ("Do not repeat a call") was ignored. Tool-call success below counts these as failures.
+3. TRIAGE_MAX_TOKENS and DRAFT_MAX_TOKENS raised (above).
+First-round transcripts (before 1-3) are in scratchpad/phase3/a5/v1/; the table uses the final
+code for every row.
+
+**Smoke runs** (one run per cell, not metrics; seed 0 stratified dev sample: Q063, Q074
+exact-token; H007, Q017 multi-doc; Q053 paraphrase; as_of 2026-10-06T14:52:00Z; transcripts in
+scratchpad/phase3/a5/). Key facts and contradictions judged by Claude, strict: a fact counts
+only if the diagnosis states it (partials in brackets). Dev questions list no forbidden claims,
+so the dev column counts claims that contradict the gold.
+
+| run | model | tool calls ok | key facts | forbidden / contradicting | id fails per pass | quote fails per pass | loops | LLM calls | tokens prompt / completion | max call (actual) | wall s | 429 wait s |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q063 | Groq | 6/8 | 0/3 (1) | 0 | 0 | 0 | 0 | 10 | 13,120 / 2,258 | 2,377 | 36.4 | 17.0 |
+| Q063 | Gemini | 8/8 | 0/3 | 0 | 0 | 0 | 0 | 10 | 17,758 / 600 | 2,342 | 19.4 | 0.0 |
+| Q074 | Groq | 8/8 | 0/2 | 0 | 0,0 | 1,0 | 1 | 11 | 17,120 / 4,406 | 3,708 | 154.3 | 100.0 |
+| Q074 | Gemini | 6/6 | 0/2 | 1 (cache turnover as the cause) | 0 | 0 | 0 | 9 | 16,400 / 657 | 2,683 | 16.0 | 0.0 |
+| H007 | Groq | 7/8 | 0/3 (1) | 1 (pool saturated; pool-size rollback) | 0,0 | 1,0 | 1 | 11 | 16,666 / 5,797 | 4,449 | 134.6 | 107.0 |
+| H007 | Gemini | 8/8 | 0/3 (1) | 0 | 0,0 | 1,0 | 1 | 10 | 21,014 / 964 | 3,179 | 25.6 | 0.0 |
+| Q017 | Groq | 4/4 | 1/2 | 0 | 0 | 0 | 0 | 7 | 9,194 / 3,314 | 2,809 | 53.6 | 38.0 |
+| Q017 | Gemini | 8/8 | 0/2 | 1 (not the same pod) | 0,0 | 1,0 | 1 | 11 | 19,354 / 1,191 | 2,364 | 53.6 | 33.7 |
+| Q053 | Groq | 8/8 | 0/2 (1) | 0 | 0,0 | 1,0 | 1 | 12 | 21,756 / 4,980 | 3,910 | 164.9 | 138.0 |
+| Q053 | Gemini | 4/4 | 2/2 | 0 | 0 | 0 | 0 | 6 | 9,388 / 829 | 2,271 | 16.4 | 0.0 |
+| demo | Groq | 7/8 | 1/9 | 0 | 0,0,0 | 1,1,1 | 2 | 12 | 21,366 / 5,165 | 4,040 | 181.3 | 157.0 |
+| demo | Gemini | 7/7 | 2/9 | 0 | 0 | 0 | 0 | 8 | 13,297 / 1,342 | 2,580 | 18.3 | 0.0 |
+| demo | Ollama qwen2.5:7b | 6/8 | 0/9 | 1 (pool exhaustion, PAYAPI-E1042) | 0,0,0 | 3,1,0 | 2 | 12 | 22,964 / 1,382 | 2,728 | 279.1 | 0.0 |
+
+Totals, 5 dev questions: Groq 1/12 key facts (3 partial), 1 contradiction, 3 loops, 98,611
+tokens (mean 19.7K per run), 51 requests; Gemini 2/12 (1 partial), 2 contradictions, 2 loops,
+88,155 tokens (mean 17.6K), 46 requests. Every call stayed within budget (estimate + max_tokens
+<= 6,000 is enforced before sending); "max call (actual)" is the provider's prompt +
+completion count, reasoning included.
+
+- Gemini found the demo mechanism (pgbouncer rejected pool_mode "transction" and exited) and
+  the refused 10.0.4.21:6432 connects; Groq stopped at "payments-pgbouncer degraded" and listed
+  disk and pool exhaustion as next checks (checks, not claims). qwen claimed pool exhaustion
+  after its own PAYAPI-E1042 log queries returned 0 rows.
+- The quote check flagged first drafts in 7 runs (4 Groq, 2 Gemini, 1 qwen), and missed two ways:
+  (1) qwen's PAYAPI-E1042 claim and the first-round qwen disk-full claim both passed with real
+  quotes from runbooks describing other incidents: a quote proves the words exist, not that they
+  support this claim; that is citation accuracy (b), the judge's job. (2) Groq's demo claim
+  "payments-api: degraded" was dropped: a real 2-word quote under the 3-word floor.
+- Both models score low on dev for the same, model-independent reason: they reach the right
+  incident (the gold incident was in the gathered evidence in 10 of 10 dev runs, every gold doc
+  in 5 of 10) but see only one chunk of it.
+  Open question for Prince: a read-more tool (next chunks of a document) is the likely fix; it
+  would be a fifth tool, so not added.
+- qwen queried `payments-pgbouncer-01` (a host) as a service in the first round and got
+  "0 of 0 rows" with no hint; query_logs could name the known services as get_service_status
+  does. Not changed.
+
+**Capacity and cost** (from the runs above; limits as recorded in Phase 3a)
+- Groq free tier, 200K tokens/day: mean 20.9K tokens per run over all 6 Groq runs (range
+  12.5K to 26.7K): about 9 runs/day (7 to 16). 1K requests/day allows about 95 (10.5 requests
+  per run), so tokens bind. 8K TPM costs 17 to 157 s of 429 waits per run. Recorded Groq use
+  today (3a, first round 54K, triage probe, final round 125K) is about 185K tokens, plus one
+  truncated draft Groq reported no usage for: near the daily cap.
+- Groq paid (console.groq.com/docs/model/openai/gpt-oss-120b, checked 2026-10-12: $0.15 per M
+  input, $0.075 per M cached input, $0.60 per M output): dev means 15,571 prompt + 4,151
+  completion tokens per run -> $0.0048 per run, about $0.48 per 100-question dev run (cache
+  discount ignored; judge excluded). Ceiling at the largest run (26.7K, all priced as output):
+  $1.60.
+- Gemini free tier, 500 requests/day, 15 RPM: 9.2 requests per dev run -> about 920 requests
+  per 100-question run, 1.8 days (2 days); at 15 RPM at least about 61 minutes of runtime.
+  Judge calls not counted (the judge does not exist yet).
+
+**Recommendation** (Prince decides; config unchanged): Gemini Flash Lite's quality is close to
+Groq's on these 6 questions (dev 2/12 vs 1/12 key facts, 2 vs 1 contradictions; demo 2/9 vs
+1/9, both no forbidden claims). One run per cell cannot separate them, so "close" is the
+honest reading. Recommend Gemini Flash Lite as the agent (free); the judge then moves to
+groq / openai/gpt-oss-120b, a different family, and the judge's 200K tokens/day sets the pace
+of a full eval. Gemini was also 1 to 10 times faster per run here, mostly because Groq's 8K
+TPM forced waits.
+
+**Tests**: 545 pass (loop stops on done, at the cap, never exceeds the budget; a real quote
+passes, an invented one fails and loops, flag off skips it, normalization cases; past-incident
+window; repeated call not run; json_validate_failed retried; Gemini body retry delay; sample is
+stratified and seeded).
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
