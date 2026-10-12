@@ -1,5 +1,5 @@
 {
- "commit": "0618241086bf6c53fda0b0aeda19507faaf2566e",
+ "commit": "1735a76588b500aca1af25e07968222e45b55bec",
  "config": {
   "bge_prefix": true,
   "candidates": 30,
@@ -2582,8 +2582,5 @@
   }
  ],
  "split": "dev",
- "uncommitted_changes": [
-  "eval/retrieval_eval.py",
-  "scripts/results.py"
- ]
+ "uncommitted_changes": []
 }
