@@ -70,6 +70,24 @@ def test_twin_needs_its_partner_or_a_distinguishing_detail(corpus):
     assert not [x for x in errs(corpus, question=ok, **base) if "twin" in x]
 
 
+def test_service_named_with_a_space_tells_twins_apart(corpus):
+    base = dict(relevant_doc_ids=["INC-0128", "RB-005"], difficulty="paraphrase")
+    vague = "a pod got killed for memory in February 2026, what was eating the RAM?"
+    assert any("twin of INC-0133" in x for x in errs(corpus, question=vague, **base))
+    named = "the catalog API pod got killed for memory in February 2026, what was eating the RAM?"
+    assert not [x for x in errs(corpus, question=named, **base) if "twin" in x]
+
+
+def test_name_resolution_is_not_a_fix_question(corpus):
+    base = dict(relevant_doc_ids=["INC-0125", "RB-020"], difficulty="paraphrase")
+    q1 = "name resolution from kafka-02 crawled in February 2026, which server went quiet?"
+    assert not [x for x in errs(corpus, question=q1, **base) if "asks for a fix" in x]
+    q3 = "internal-dns-01 in February 2026, how did this resolution failure hit kafka-02?"
+    assert not [x for x in errs(corpus, question=q3, **base) if "asks for a fix" in x]
+    q2 = "what was the resolution for kafka-02 lookups crawling in February 2026?"
+    assert any("asks for a fix" in x for x in errs(corpus, question=q2, **base))
+
+
 def test_retelling_lists_both(corpus):
     e = errs(corpus, relevant_doc_ids=["INC-0185"])
     assert any("retells RB-027" in x for x in e)

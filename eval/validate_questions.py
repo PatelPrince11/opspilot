@@ -120,11 +120,13 @@ NO_FIX = (
     "0159 0165 0166 0169 0179 0182 0184 0187 0196"
 )
 FIX_WORDS = re.compile(
-    r"\b(fix\w*|resolv\w*|resolution|remediat\w*|mitigat\w*|what (?:stopped|ended|cleared)"
-    r"|how (?:did|do) (?:they|we|you) (?:stop|end|clear|get))\b",
+    r"\b(fix\w*|remediat\w*|mitigat\w*"
+    r"|(?<!name )(?<!dns )(?:resolv\w*|resolution)(?! (?:failures?|errors?|issues?|problems?))"
+    r"|what (?:stopped|ended|cleared)|how (?:did|do) (?:they|we|you) (?:stop|end|clear|get))\b",
     re.I,
 )
 
+# "name/DNS resolution" and "resolution failure" are lookups, not fixes.
 # (g): narrative colour. Every row: owners, on-call, follow-ups, reporters. 0025: its page,
 # check and diff times.
 COLOUR = re.compile(
@@ -260,7 +262,8 @@ def check_question(q: dict, c: Corpus) -> list[str]:
     for g in gold:
         for p in sorted(c.partners.get(g, set()) - set(gold)):
             dist = doc_tokens(c.docs[g]) - doc_tokens(c.docs[p])
-            if not any(has(text, t) for t in dist):
+            # "catalog API" names catalog-api as well as the hyphenated token does
+            if not any(has(text, t) or has(text, t.replace("-", " ")) for t in dist):
                 errs.append(f"{g} is a twin of {p}: add both or name a host, date or service")
 
     # One way: the runbook tells the write-up's events, so it answers whatever the write-up
