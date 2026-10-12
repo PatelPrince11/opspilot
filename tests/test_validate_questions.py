@@ -182,14 +182,21 @@ def test_split_is_seeded_even_and_stratified():
     qs = []
     for i in range(200):
         diff = ("exact-token", "paraphrase", "multi-doc")[i % 3]
-        qs.append(q(id=f"Q{i:03}", difficulty=diff, author="claude" if i < 160 else "prince"))
+        gold = ["INC-0001", "RB-001"][: 1 + (i % 7 < 5)]
+        author = "claude" if i < 160 else "prince"
+        qs.append(q(id=f"Q{i:03}", difficulty=diff, author=author, relevant_doc_ids=gold))
     a, b = split(qs), split(copy.deepcopy(qs[::-1]))
     assert a == b
     assert sum(v == "dev" for v in a.values()) == 100
-    for diff in ("exact-token", "paraphrase", "multi-doc"):
-        for author in ("claude", "prince"):
-            group = [a[x["id"]] for x in qs if x["difficulty"] == diff and x["author"] == author]
-            assert abs(group.count("dev") - group.count("test")) <= 1
+    strata = {(x["difficulty"], x["author"], len(x["relevant_doc_ids"]) > 1) for x in qs}
+    assert len(strata) == 12
+    for key in strata:
+        group = [
+            a[x["id"]]
+            for x in qs
+            if (x["difficulty"], x["author"], len(x["relevant_doc_ids"]) > 1) == key
+        ]
+        assert abs(group.count("dev") - group.count("test")) <= 1
 
 
 def test_import_human_appends_40_unlabelled(tmp_path, corpus):

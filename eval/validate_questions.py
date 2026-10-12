@@ -313,11 +313,13 @@ def check_question(q: dict, c: Corpus) -> list[str]:
 
 
 def split(questions: list[dict]) -> dict[str, str]:
-    """100/100 with the fixed seed, stratified by (difficulty, author). One toggle runs across
-    every stratum, so each stratum is within one of even and the totals are exact."""
+    """100/100 with the fixed seed, stratified by (difficulty, author, gold bucket 1 vs 2+).
+    One toggle runs across every stratum, so each stratum is within one of even and the totals
+    are exact."""
     strata: dict[tuple, list[str]] = {}
     for q in sorted(questions, key=lambda q: q["id"]):
-        strata.setdefault((q["difficulty"], q["author"]), []).append(q["id"])
+        key = (q["difficulty"], q["author"], len(q["relevant_doc_ids"]) > 1)
+        strata.setdefault(key, []).append(q["id"])
     rng, out, turn = random.Random(SEED), {}, 0
     for key in sorted(strata):
         ids = strata[key]

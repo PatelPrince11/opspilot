@@ -1588,6 +1588,40 @@ refuses test without an explicit flag.
 
 **Next:** step 5, ingest and embed.
 
+## 2026-10-11: Eval fixes after step 4 (H024 gold, re-split)
+
+**H024 gold.** H024 asks about the "background notification processor". That names notification-worker,
+which INC-0133 has and its twin INC-0128 (catalog-api) lacks, so INC-0128 was removed from the gold
+set. Gold is now INC-0133, RB-005. The question text is unchanged.
+- Root cause: the twin check only knew one loose spelling, a hyphen written as a space ("catalog
+  API"). It didn't know "processor" for "worker", so it treated H024 as naming no service, and the
+  labeller added the twin to satisfy it.
+- Fix: `spellings()` in the validator. Each distinguishing token also matches with spaces for hyphens
+  and with a suffix alias (`worker` → `processor`), so "notification processor",
+  "notification-processor" and "notification worker" all name notification-worker. There's a test.
+
+**Re-split.** The old split was stratified by (difficulty, author) only. That left the gold-count
+buckets uneven (1 gold: dev 22 / test 32). It is now stratified by (difficulty, author, gold bucket 1
+vs 2+), with the same `SEED` and the same single toggle. `--final` passes.
+
+| | dev | test |
+|---|---|---|
+| exact-token | 45 | 45 |
+| multi-doc | 28 | 27 |
+| paraphrase | 27 | 28 |
+| claude | 80 | 80 |
+| gemini | 20 | 20 |
+| 1 gold doc | 27 | 27 |
+| 2+ gold docs | 73 | 73 |
+
+Every (difficulty, author, bucket) stratum is within one of even. false_premise: dev 2, test 12 (all
+14 are Gemini questions). unrecorded: dev 6, test 6.
+
+**Reporting rule (Phase 2 and 5):** every eval result is reported **per author (claude, gemini) as
+well as overall**. The Gemini slice holds all 14 false-premise questions, and 12 of them landed in
+test, so an overall number would mix two different question styles in different proportions on each
+split.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
