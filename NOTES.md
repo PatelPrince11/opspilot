@@ -1884,6 +1884,102 @@ slots, with at most 3 off-gold slots per config. No merge.
   shorter common chunk ranked above it, which is BM25's length normalisation working. The
   test now compares only the equal-length pair.
 
+## 2026-10-11: Phase 2 complete (BM25 rerun, final locked config, done-check)
+
+Supersedes the locked config in "Phase 2, retrieval" above. Dev split only; test is untouched.
+
+**Built since:** BM25 (entry above).
+- Two eval diagnostics in `make eval`:
+  - token-doc Recall@5: exact-token questions; the gold docs containing the question's code or
+    hostname.
+  - agent view: top 5 runbooks plus top 5 incidents, retrieved separately; Recall@10 and
+    all-gold R@10 on the union.
+- The ablation rerun at 256/32. Runs record `keyword_ranker: bm25`, so the report keeps the
+  ts_rank-era runs in their own section.
+- Errors:
+  - The first BM25 report crashed with ZeroDivisionError. Root cause: per-question rows store
+    reciprocal rank as `rr`, and the new MRR comparisons asked for `mrr` (a summary-only key),
+    so no question matched. Fixed. `ci_rows` now raises a clear error when a comparison has no
+    questions.
+  - `latest_runs()` started returning BM25-era runs by default, which would have silently
+    changed `diagnose_ablation`'s original findings. It now asks for the ts_rank-era runs
+    explicitly, and they still reproduce.
+
+**BM25 vs ts_rank_cd (256/32, n = 100), all claimed**
+- Recall@5: +0.186 [+0.126, +0.249]. Exact-token +0.167 [+0.089, +0.256], multi-doc +0.181
+  [+0.071, +0.301], paraphrase +0.222 [+0.093, +0.352].
+- token-doc Recall@5: +0.178 [+0.089, +0.278] (n = 45). MRR: +0.201 [+0.138, +0.265].
+
+**Headline (dev, 256/32)**
+
+| config | R@5 | R@10 | MRR | all-gold R@10 (73) | token-doc R@5 (45) | agent R@10 | agent all-gold | p50 / p95 ms |
+|---|---|---|---|---|---|---|---|---|
+| dense +prefix | 0.804 | 0.910 | 0.746 | 0.753 | 0.833 | 0.928 | 0.836 | 10 / 13 |
+| keyword_tsrank | 0.690 | 0.820 | 0.692 | 0.630 | 0.767 | 0.868 | 0.753 | 5 / 8 |
+| keyword (BM25) | 0.876 | 0.928 | 0.893 | 0.822 | 0.944 | 0.958 | 0.890 | 27 / 60 |
+| hybrid +prefix | 0.853 | 0.932 | 0.868 | 0.808 | 0.922 | 0.960 | 0.890 | 39 / 53 |
+| hybrid_rerank +prefix | 0.851 | 0.915 | 0.884 | 0.767 | 0.900 | 0.959 | 0.877 | 339 / 636 |
+
+**Locked config** (`config.py`): `keyword` (BM25, k1 1.2, b 0.75), chunks 256/32.
+candidates 30 and bge_prefix on apply only to the dense and hybrid modes. Reasons, using
+Prince's rule:
+1. BM25 and hybrid beat dense on Recall@5 (claimed). hybrid_rerank vs dense is not claimed.
+2. BM25, hybrid and hybrid_rerank are tied on Recall@5 and on MRR. No pairwise CI excludes 0.
+   BM25 has the highest MRR point estimate.
+3. Lowest latency: BM25 does a strict subset of hybrid's work (p50 27 vs 39 ms; rerank 339 ms).
+
+Risk (not claimable): BM25 is weakest on paraphrase (R@5 0.815 vs dense 0.852) and on the
+Gemini slice (MRR 0.705 vs hybrid 0.769, n = 20). Phase 3's agent writes its own queries. If
+those paraphrase more than the eval questions do, switch to `hybrid`: it is tied on every
+claimed metric, and the switch is one config value.
+
+`make eval` on the locked config (eval_runs id 27):
+- Overall: R@5 0.876, R@10 0.928, MRR 0.893, all-gold R@10 0.822 (n = 73).
+- Diagnostics: token-doc R@5 0.944 (n = 45), agent R@10 0.958, agent all-gold 0.890.
+- Exact-token: R@5 0.911, MRR 0.956. Paraphrase: R@5 0.815, MRR 0.732.
+- claude: R@5 0.895 (n = 80); gemini: R@5 0.800 (n = 20).
+- p50 26 ms, p95 55 ms.
+
+**Done-check: failed, with cause found.** The check: hybrid_rerank beats dense on exact-token
+Recall@5. Result: +0.067 [+0.000, +0.156] (n = 45); the CI does not exclude 0.
+1. The runbook half of the gold set has no exact tokens. All 12 of hybrid_rerank's exact-token
+   misses include a gold runbook.
+2. The ms-marco cross-encoder undoes part of BM25's token gain. On token-doc Recall@5 it is
+   below BM25 alone on 5 questions and above on 1, and exact-token R@5 falls keyword 0.911 >
+   hybrid 0.889 > hybrid_rerank 0.867.
+3. n = 45 with dense at 0.800 puts a +0.067 gain at the edge.
+
+The guide allows moving on once the cause is found. The check is not redefined. The
+ts_rank-era failure and its cause (no IDF) are in the entry above.
+
+**Claimable for the resume** (CI excludes 0). These are dev numbers now; only test-split numbers
+from Phase 5 go on the resume.
+- Locked BM25 vs dense baseline, Recall@5: 0.804 → 0.876 (+0.072 [+0.015, +0.131]).
+  Exact-token +0.111 [+0.044, +0.200].
+- MRR: 0.746 → 0.893 (+0.147 [+0.081, +0.212]). Exact-token +0.180 [+0.093, +0.269].
+- BM25 vs ts_rank_cd keyword: Recall@5 +0.186, MRR +0.201.
+
+**Not claimable**
+- hybrid_rerank vs dense on Recall@5 (+0.046 overall, +0.067 exact-token).
+- Any difference among BM25, hybrid and hybrid_rerank.
+- Every prefix effect.
+- Agent-view gains over dense.
+- BM25 vs dense all-gold R@10 (+0.068 [-0.014, +0.164]).
+- Slices with small n (gemini 20, false_premise 7) as standalone numbers.
+
+The guide's bullet template ("hybrid RAG ... RRF fusion and cross-encoder reranking, raising
+Recall@5") does not describe the locked system. It must be reworded around BM25 vs dense, or
+dropped.
+
+**Phase 3 note:** `search_runbooks` and `search_incidents` each query with their own
+`doc_type` filter, which is the agent view. Separate searches lift all-gold R@10 for BM25 from
+0.822 to 0.890, because a runbook no longer competes with near-twin incidents for top slots.
+
+**Phase 5 notes**
+- Re-measure latency on the EC2 instance: the locked BM25 query, and the cross-encoder rerank
+  (636 ms p95 on the Mac) in case `hybrid_rerank` is ever switched on.
+- Re-check `ef_search` once the corpus is large enough for the planner to pick HNSW.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -2167,7 +2263,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete except its done-check, which failed on exact-token Recall@5 (cause found, entry above); locked config hybrid_rerank at 256/32 chunks (547). Next: Prince decides on IDF-weighted keyword ranking before Phase 3 (the guide does not allow skipping a done-check).
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `keyword` (BM25) at 256/32 chunks (547); done-check failed, with cause found (entry above). Next is Phase 3.
 - Phase 0 accounts (AWS, Groq, Gemini, Langfuse Cloud, Anthropic credits, GitHub): **not done**. Prince is doing these in parallel. Repo files only until then.
 
 ## Unverified claims (check in Phase 0, record results here)

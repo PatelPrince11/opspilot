@@ -290,6 +290,8 @@ def bm25_section(runs, old, questions) -> list[str]:
         ("keyword", "keyword_tsrank", "token_doc@5", (None,)),
         ("keyword", "keyword_tsrank", "rr", (None,)),
         ("keyword", "dense +prefix", "recall@5", (None, "exact-token")),
+        ("keyword", "dense +prefix", "rr", (None, "exact-token")),
+        ("keyword", "dense +prefix", "all_gold@10", (None,)),
         ("hybrid_rerank +prefix", "dense +prefix", "recall@5", (None, "exact-token")),
         ("hybrid_rerank +prefix", "dense +prefix", "token_doc@5", (None,)),
         ("hybrid_rerank +prefix", "dense +prefix", "rr", (None, "exact-token")),
