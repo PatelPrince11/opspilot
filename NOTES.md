@@ -1754,6 +1754,98 @@ within one. It is seeded and does not depend on file order (tested). `--final` p
 is 3.81 (no `.SHELLFLAGS`). Checked: a dirty tree fails it; a lint error stops it before the validator.
 Every later gate is `make gate`, with its output never piped.
 
+## 2026-10-11: Phase 2, retrieval (ablation on dev, locked config)
+
+**Built**
+- `rag/retrieval.py`: `retrieve(query, config, conn=None)` returns ranked `Hit`s (chunk id,
+  doc id, content, metadata, score). Config: mode (dense | keyword | hybrid | hybrid_rerank),
+  k, candidates, bge_prefix, and filters (service, severity, doc_type, since/until on the
+  doc date). A severity filter keeps incidents only.
+- Migration 0002 adds `opspilot_or_tsquery`. It uses the same punctuation split as
+  `opspilot_tsquery` (unchanged). Lexemes come from the simple parser. English stopwords
+  (`ts_lexize('english_stem')` = `{}`) are dropped from the query only, and the rest are ORed.
+  Postgres's stopword list includes "down", so "redis down" loses "down".
+- `eval/retrieval_eval.py` (`make eval`):
+  - 30 chunks per question, deduped to docs by best rank.
+  - Recall@5, Recall@10, MRR, and all-gold R@10 on 2+ gold questions.
+  - Slices by difficulty, author, gold bucket and false_premise, each with its n.
+  - p50/p95 latency.
+  - Every run is stored in eval_runs/eval_results with commit (with `-dirty` if the tree has
+    tracked changes), config, model revisions, split and timestamp.
+  - Defaults to dev. `--split test` needs `--final-test` and prints the touched-once warning.
+  - Refuses to run if the DB's content hashes don't match the current chunk settings.
+- `eval/ablation.py` (`run` per chunk size, `report` → `eval/results/ablation.md`, paired
+  bootstrap 10,000 resamples, seed `SEED`). `eval/diagnose_ablation.py` reproduces every
+  number in the findings.
+- `make gate` (entry above).
+
+**Decisions**
+- Dense: `hnsw.ef_search` = max(candidates, 40) and `hnsw.iterative_scan = strict_order`,
+  both `SET LOCAL`. Reason: an HNSW scan returns at most ef_search rows, so a LIMIT above it
+  would come back short; iterative scan keeps going when a filter rejects rows.
+  - At 408 or 547 rows the planner picks an exact seq scan.
+  - Forced HNSW gives an identical top 30 on 100/100 dev questions.
+- Reranker: `cross-encoder/ms-marco-MiniLM-L-6-v2` at revision
+  `233902d25c440f23af6f7d6e94d2946bac0bee0a` (head of main, last modified 2026-08-09, read from
+  the HF API on 2026-10-11). Pinned in `config.py`. It gets the raw query, never the bge prefix.
+- Every mode is compared at the same depth: 30 chunks, then the doc dedupe.
+- The claim rule is at the top of ablation.md: a difference is claimed only when its paired
+  95% CI excludes 0.
+
+**Ablation summary (dev, n = 100, Recall@5 / MRR / p95 ms)**
+
+| config | 400/50 | 256/32 |
+|---|---|---|
+| dense +prefix | 0.810 / 0.734 / 12 | 0.804 / 0.746 / 15 |
+| keyword | 0.668 / 0.689 / 6 | 0.690 / 0.692 / 8 |
+| hybrid +prefix | 0.716 / 0.786 / 16 | 0.784 / 0.786 / 17 |
+| hybrid_rerank +prefix | 0.818 / 0.910 / 565 | 0.838 / 0.885 / 639 |
+
+Claimed, with 95% CIs:
+- hybrid < dense: -0.094 [-0.158, -0.032] at 400/50.
+- hybrid_rerank > hybrid: +0.102 at 400/50, +0.054 at 256/32.
+- hybrid at 256/32 > 400/50: +0.068 [+0.032, +0.108].
+- MRR, hybrid_rerank > dense: +0.176 overall at 400/50.
+
+Not claimed: any prefix effect overall, and hybrid_rerank vs dense on Recall@5.
+
+**Done-check: FAILED.** hybrid_rerank vs dense on exact-token Recall@5 is +0.022 [-0.067, +0.122]
+at 400/50 and +0.044 [-0.033, +0.133] at 256/32. Why (details in ablation.md, findings 2-5):
+1. `ts_rank_cd` has no IDF, and the punctuation split makes host suffixes like `01` (245/547
+   chunks) dominate the rank. Keyword alone is weaker than dense even on exact-token
+   questions. Cutting lexemes found in over 20% of chunks lifts keyword exact-token R@5 from
+   0.744 to 0.844 (diagnostic, not adopted).
+2. Dense already finds the token-bearing incident. Its exact-token misses are mostly the
+   runbook half of the gold set (13/14 at 400/50), and runbooks have no hostnames, codes or
+   dates. With dense at 0.800 on n = 45, even the IDF-cut pipeline gives +0.056
+   [-0.022, +0.144].
+3. Rerank's gain is in ordering. Gold at rank 1 on exact-token questions: dense 27-28/45,
+   rerank 38-40/45. MRR CI excludes 0. That is reported as a secondary metric; it does not
+   replace the failed check.
+
+Proposed and not built (it changes the step-3 spec): IDF-weighted keyword ranking (BM25 or
+ts_stat weights).
+
+**Locked config** (`config.py`): hybrid_rerank, bge_prefix on, candidates 30, RRF k 60, chunks
+256/32. Reasons and costs are in ablation.md. Re-ingested at 256/32. `make eval` on dev
+(eval_runs id 16):
+- Recall@5 0.838, Recall@10 0.900, MRR 0.885, all-gold R@10 0.712 (n = 73).
+- Exact-token (n = 45): Recall@5 0.844, MRR 0.941.
+- Gemini (n = 20): Recall@5 0.825, MRR 0.756.
+- p50 420 ms, p95 597 ms.
+- Dense baseline at 256/32: Recall@5 0.804, MRR 0.746, p95 15 ms.
+
+**Sub-50-token chunks:** not false hits. They are 3-4% of chunks but take at most 1.2% of top-5
+slots, with at most 3 off-gold slots per config. No merge.
+
+**Errors and fixes**
+- My split-test rewrite truncated `tests/test_validate_questions.py` (entry above).
+- `diagnose_ablation` first compared 256/32 chunk results against the 400/50 runs. It read
+  the chunk size from settings while the DB held 256/32. Fix: it calls `check_ingested` first,
+  like the eval.
+- Part A: one `pytest | tail` without pipefail. The output was visible, and every later
+  gate-type command was redirected, not piped.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -2037,7 +2129,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete: 147 documents, 408 chunks embedded. Next is Phase 2 (retrieval).
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete except its done-check, which failed on exact-token Recall@5 (cause found, entry above); locked config hybrid_rerank at 256/32 chunks (547). Next: Prince decides on IDF-weighted keyword ranking before Phase 3 (the guide does not allow skipping a done-check).
 - Phase 0 accounts (AWS, Groq, Gemini, Langfuse Cloud, Anthropic credits, GitHub): **not done**. Prince is doing these in parallel. Repo files only until then.
 
 ## Unverified claims (check in Phase 0, record results here)

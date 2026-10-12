@@ -32,9 +32,10 @@ class Settings(BaseSettings):
 
     api_key: SecretStr | None = None
 
-    # Chunking (tokens, counted with the embedding model's own tokenizer).
-    chunk_size: int = 400
-    chunk_overlap: int = 50
+    # Chunking (tokens, counted with the embedding model's own tokenizer). Locked at 256/32 by
+    # the Phase 2 ablation (eval/results/ablation.md); 400/50 was the Phase 1 start.
+    chunk_size: int = 256
+    chunk_overlap: int = 32
     # Local embedder, pinned to a Hugging Face commit so stored vectors stay comparable.
     embed_model: str = "BAAI/bge-small-en-v1.5"
     embed_revision: str = "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a"
@@ -42,7 +43,9 @@ class Settings(BaseSettings):
     rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     rerank_revision: str = "233902d25c440f23af6f7d6e94d2946bac0bee0a"
 
-    # Retrieval defaults (rag/retrieval.py). Locked from the Phase 2 ablation on dev.
+    # Retrieval defaults (rag/retrieval.py), locked by the Phase 2 ablation on dev: hybrid_rerank
+    # beats hybrid on Recall@5 and dense on MRR (CIs exclude 0); the prefix made no claimable
+    # difference and stays on, as the bge model card recommends.
     retrieval_mode: str = "hybrid_rerank"
     retrieval_candidates: int = 30
     bge_prefix: bool = True
