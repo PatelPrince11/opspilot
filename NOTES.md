@@ -2585,7 +2585,7 @@ Before vs after read_document (key facts; before = the 3a.5 table, gpt-oss on Gr
 | citation (b), claims (judge) | 0.974 (270) | 0.964 (333) | +0.011 [-0.012, +0.037], n 98 | no |
 | faithfulness 1-5 (judge) | 4.77 (100) | 4.77 (100) | +0.000 [-0.130, +0.130] | no |
 | completeness, key facts (judge) | 0.732 (254) | 0.783 (254) | -0.051 [-0.106, +0.000] | no |
-| tool-call success, calls | 0.677 (601) | 0.778 (473) | -0.101 [-0.146, -0.061] | yes |
+| tool-call success, calls | 0.677 (601) | 0.778 (473) | -0.101 [-0.146, -0.061] | not a verify effect (see 3b.1) |
 | premise corrected (judge) | 6/7 | 6/7 | | |
 | unrecorded respected (judge) | 2/6 | 2/6 | | |
 | verify-loop rate | 0.46 (100) | 0 | | |
@@ -2629,6 +2629,50 @@ Before vs after read_document (key facts; before = the 3a.5 table, gpt-oss on Gr
   read_document could return a pointer to the earlier result instead of an error, or the gather
   prompt could keep read documents in full. Not changed: it would change the agent after this
   eval.
+
+## 2026-10-12: Phase 3b.1, agent fixes from the dev eval
+
+Each fix is justified by the 3b dev transcripts or by general on-call practice; none by the demo.
+
+1. **Read list.** 3b: 175 of 327 read_document calls (verify on) were repeats of a read already
+   made, despite the part count and a prompt rule. Root cause: the model had no list of what it
+   had read; older results showed only as 100-character index lines. State now keeps `reads`
+   (doc id, part, part count, evidence ids), shown on every gather turn as "Already read, in the
+   evidence in full". A repeat (same document and part, however written: `INC-0109#2`, an
+   explicit `part: 1`) is still refused and counted as a failed call, and the refusal now names
+   the evidence ids to cite. The list survives a verify loop.
+2. **Look before reading.** 3b: query_logs ran 8 times in 100 dev runs; the agent answered from
+   documents alone. General on-call practice is to look at the system first (status, then errors
+   and warnings around the reported time) and read runbooks second. When triage names a service,
+   gather's first pass now runs get_service_status for it and query_logs for it over the triage
+   window at level WARN and above, before the model's own calls; they count toward the 8-call cap
+   and are shown in full on the first turn. Deterministic, so it cannot be skipped. Setting
+   `AGENT_FIRST_LOOK` (default true); unit tests that are not about it turn it off.
+3. **Not recorded.** 3b: unrecorded respected 2/6; the answers filled in what the corpus does not
+   record. Draft prompt: if the question asks for something the evidence does not state (a cause,
+   a time, a number, a name, a reason), the summary says it is not recorded in the evidence;
+   never infer or guess it.
+4. **Reasoning budget.** 3b: 2 of 100 drafts returned no diagnosis (H007 in 3a.6: about 2,200
+   tokens of reasoning, empty content). OpenRouter's `reasoning.effort`
+   (openrouter.ai/docs/use-cases/reasoning-tokens); for gpt-oss the models API lists efforts
+   low, medium, high, default medium, reasoning mandatory, and reasoning counts against
+   max_tokens. The client takes `reasoning_effort` (sent as `reasoning.effort` on OpenRouter,
+   `reasoning_effort` on Groq, ignored elsewhere; in the cache key only when set). Drafts run at
+   low; any structured call with empty content is retried once at low (one level down for
+   triage, which runs at the default; the draft is already at gpt-oss's floor). The 2,500-token
+   draft cap is unchanged so the draft keeps its evidence room. Live check: "Is 17 prime?" took
+   54 completion tokens at the default, 16 at low.
+5. **Verify on/off reading.** Verify off is the same trajectory's first draft: its triage, gather
+   and first-draft prompts equal verify on's (the same cached calls), so the comparison is
+   paired by construction. Verify on then may loop back to gather, which adds tool calls; the
+   tool-call success difference (-0.101) is therefore not a verify effect: verify off replays
+   the first draft and skips later gather rounds. The ledger now flags only citation (a) as
+   claimable; the other comparison rows are context.
+
+Tests: first look runs status then WARN logs before the model's calls, not without a named service,
+not again on a verify loop; repeated read refused with ids (two spellings), list shown and kept
+across a loop; draft at low effort, empty reply retried at low (draft and triage); reasoning
+effort reaches openrouter and groq only, and is in the cache key only when set; ledger flags.
 
 ## Standing rules (write-ups)
 

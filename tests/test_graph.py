@@ -58,6 +58,7 @@ def word(*ns) -> str:
 def run(llm, monkeypatch, tool=None, **kw):
     """The id-check tests run with the quote check off; the quote tests turn it on."""
     kw.setdefault("verify_quotes", False)
+    kw.setdefault("first_look", False)  # tested on its own below
     monkeypatch.setattr(graph_mod, "run_tool", tool or fake_tool())
     g = build_graph(llm, FakeConn(), **kw)
     events, final = [], None
@@ -366,3 +367,79 @@ def test_prose_twice_or_done_first_ends_gather(monkeypatch):
     llm = StubLLM([TRIAGE, say("Done: nothing to look up."), draft()])
     final, _ = run(llm, monkeypatch)
     assert llm.script == [] and final["tool_calls"] == []
+
+
+# ---------------------------------------------------------------------- first look, effort
+
+
+def test_first_look_fetches_status_and_warn_logs_before_the_models_calls(monkeypatch):
+    rb = ("search_runbooks", {"query": "refused"})
+    llm = StubLLM([TRIAGE, calls(rb), DONE, draft(("x", ["log:1_0"]))])
+    final, _ = run(llm, monkeypatch, first_look=True)
+    names = [(t["name"], t["arguments"]) for t in final["tool_calls"]]
+    assert names == [
+        ("get_service_status", {"service": "payments-api"}),
+        (
+            "query_logs",
+            {
+                "service": "payments-api",
+                "start": "2026-10-06T13:52:00Z",
+                "end": "2026-10-06T14:52:00Z",
+                "level": "WARN",
+            },
+        ),
+        rb,
+    ]
+    first_turn = llm.bodies[1]["messages"][1]["content"]
+    assert "Tool calls so far (2 of 8)" in first_turn
+    assert "[log:1_0]" in first_turn.split("Latest result:")[1]  # shown in full first
+
+
+def test_no_first_look_without_a_named_service_or_on_a_verify_loop(monkeypatch):
+    no_svc = say(
+        {
+            "services": [],
+            "symptoms": "s",
+            "window_start": "2026-10-06T13:52:00Z",
+            "window_end": "2026-10-06T14:52:00Z",
+        }
+    )
+    llm = StubLLM([no_svc, DONE, draft()])
+    final, _ = run(llm, monkeypatch, first_look=True)
+    assert final["tool_calls"] == []
+    # A bad citation loops back to gather: the first look does not run again.
+    llm = StubLLM([TRIAGE, DONE, draft(("x", ["nope"])), DONE, draft(("x", ["log:1_0"]))])
+    final, _ = run(llm, monkeypatch, first_look=True)
+    assert [t["name"] for t in final["tool_calls"]] == ["get_service_status", "query_logs"]
+
+
+def test_draft_runs_at_low_effort_and_an_empty_reply_is_retried_at_low(monkeypatch):
+    llm = StubLLM([TRIAGE, DONE, say(""), draft()])
+    final, _ = run(llm, monkeypatch)
+    names = [c["name"] for c in final["llm_calls"]]
+    assert names == ["triage", "gather", "draft", "draft_retry"]
+    efforts = [k.get("reasoning_effort") for k in llm.kwargs]
+    assert (
+        efforts
+        == [None, None, graph_mod.DRAFT_EFFORT, graph_mod.RETRY_EFFORT]
+        == [
+            None,
+            None,
+            "low",
+            "low",
+        ]
+    )
+    assert "empty" in llm.bodies[3]["messages"][-1]["content"]
+    assert final["diagnosis"]["summary"] == "s"
+
+
+def test_empty_triage_reply_is_retried_one_level_lower(monkeypatch):
+    llm = StubLLM([say(""), TRIAGE, DONE, draft()])
+    run(llm, monkeypatch)
+    assert [k.get("reasoning_effort") for k in llm.kwargs][:2] == [None, "low"]
+
+
+def test_draft_prompt_says_unstated_facts_are_not_recorded():
+    assert "not recorded in the evidence; never infer or guess it" in " ".join(
+        graph_mod.DRAFT_INSTRUCTIONS.split()
+    )

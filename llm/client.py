@@ -159,14 +159,24 @@ class Client:
         max_tokens: int = 1024,
         name: str = "chat",
         trace_id: str | None = None,
+        reasoning_effort: str | None = None,
     ) -> Response:
+        """reasoning_effort (low, medium, high) goes to reasoning models on openrouter and groq;
+        other providers ignore it. None leaves the provider's default (gpt-oss: medium)."""
         estimate = self.check_budget(messages, tools, json_schema, max_tokens, name)
         params = {"temperature": temperature, "max_tokens": max_tokens, "json_schema": json_schema}
+        if reasoning_effort:  # only when set, so earlier cache keys stay valid
+            params["reasoning_effort"] = reasoning_effort
         key = self.cache_key(messages, tools, params)
         if (hit := self.cache_get(key)) is not None:
             return Response(**{**hit, "tool_calls": [ToolCall(**t) for t in hit["tool_calls"]]})
         t0 = time.perf_counter()
-        raw = self.post(self.payload(messages, tools, json_schema, temperature, max_tokens, False))
+        body = self.payload(messages, tools, json_schema, temperature, max_tokens, False)
+        if reasoning_effort and self.provider == "openrouter":
+            body["reasoning"] = {"effort": reasoning_effort}
+        elif reasoning_effort and self.provider == "groq":
+            body["reasoning_effort"] = reasoning_effort
+        raw = self.post(body)
         r = self.parse(raw, estimate)
         r.latency_ms = (time.perf_counter() - t0) * 1000
         r.name, r.wait_s = name, self.waited

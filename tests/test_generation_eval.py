@@ -376,6 +376,9 @@ def test_ledger_renders_generation_rows_from_result_files(monkeypatch):
     assert "| citation_a |" in text and "| verify on | 2 | 0.500 (8) |" in text
     assert "| citation_b | difference" not in text  # off has no judge: no b comparison rows
     assert "| citation_a | overall | 2 | +0.000 |" in text
+    assert "| citation_a | overall | 2 | +0.000 | [+0.000, +0.000] | no |" in text
+    assert "| tool_success | overall | 2 | +0.000 | [+0.000, +0.000] | not a verify effect" in text
+    assert "verify off is the same trajectory's first draft" in text
     assert "| difficulty=paraphrase | 1 |" in text
     files["generation_verify_off"]["latency"]["llm_call_ms"] = {"p50": None, "p95": None, "n": 0}
     text = "\n".join(ledger.generation_section(qs))

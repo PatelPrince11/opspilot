@@ -12,6 +12,11 @@ class StubLLM(Client):
         self.script = list(script)
         self.bodies: list[dict] = []
         self.checked: list[int] = []  # estimate + max_tokens of every call
+        self.kwargs: list[dict] = []  # keyword arguments of every chat call
+
+    def chat(self, messages, tools=None, **kw):
+        self.kwargs.append(kw)
+        return super().chat(messages, tools, **kw)
 
     def check_budget(self, messages, tools, json_schema, max_tokens, name):
         estimate = super().check_budget(messages, tools, json_schema, max_tokens, name)

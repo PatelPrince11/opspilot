@@ -34,12 +34,17 @@ from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field, ValidationError
 
-from agent.tools import run_tool, tool_schemas
+from agent.tools import ReadDocumentInput, run_tool, tool_schemas
 from config import get_settings
-from llm.client import Client, LLMError, estimate_tokens
+from llm.client import Client, LLMError, ToolCall, estimate_tokens
 
 MAX_LOOPS = 2
 DRAFT_MAX_TOKENS = 2500  # gpt-oss reasons first: 1,500 cut two of five dev drafts off
+# gpt-oss reasoning effort for the draft (OpenRouter `reasoning.effort`; low is its floor). At the
+# default (medium) 2 of 100 dev drafts reasoned through the whole 2,500 tokens and returned no
+# content. A reply with empty content is retried once at RETRY_EFFORT.
+DRAFT_EFFORT = "low"
+RETRY_EFFORT = "low"
 TRIAGE_MAX_TOKENS = 1000  # gpt-oss reasons first: 465 tokens on a dated question
 GATHER_MAX_TOKENS = 1000  # reasoning models (gpt-oss) spend part of this thinking
 LATEST_RESULT_TOKENS = 1500
@@ -100,6 +105,7 @@ class State(TypedDict, total=False):
     triage: dict
     evidence: Annotated[dict, merge]  # evidence id -> Evidence dict
     tool_calls: Annotated[list, operator.add]
+    reads: Annotated[list, operator.add]  # read_document calls made: doc_id, part, of, ids
     llm_calls: Annotated[list, operator.add]
     draft: dict | None
     verify: dict | None
@@ -116,6 +122,7 @@ def initial_state(question: str, as_of: str, trace_id: str | None = None) -> Sta
         started=time.time(),
         evidence={},
         tool_calls=[],
+        reads=[],
         llm_calls=[],
         draft=None,
         verify=None,
@@ -135,16 +142,19 @@ SYSTEM = (
 
 GATHER_INSTRUCTIONS = (
     "Investigate step by step: each turn, call a tool (or a few independent ones), read the "
-    "result, then choose the next call. Search runbooks and past incidents for the symptoms, "
-    "check service status, and query the logs of the affected service and of the services it "
-    "depends on. Each log query needs an explicit start and end, ISO 8601 UTC, at most 24 hours "
+    "result, then choose the next call. Look before you read: when the question names a service, "
+    "its status and its warnings and errors in the triage window were fetched first (the first "
+    "calls below). Then search runbooks and past incidents for the symptoms, and query the logs "
+    "of the services it depends on, or other windows, if needed. Each log query needs an "
+    "explicit start and end, ISO 8601 UTC, at most 24 hours "
     "apart: when the question names a past date or time, set the window around it (if the "
     "question gives no time of day, find the time in the incident write-ups first); otherwise "
     "use a window ending at as_of. Use exact service names from the known list. Do not repeat "
     "a call. Searches find documents but show only the best-matching part of each: search to "
     "find the relevant runbooks and incidents, then read_document to get their details (cause, "
     "timeline, fix). The evidence index shows older results cut to one short line, but every "
-    "item is kept in full for the diagnosis: do not read a document again. "
+    "item is kept in full for the diagnosis. Documents already read are listed with their "
+    "evidence ids: do not read them again. "
     "When the evidence explains the cause, or nothing more can be found, reply with the word "
     "done and no tool call."
 )
@@ -154,8 +164,10 @@ DRAFT_INSTRUCTIONS = (
     "high), claims (each {text, evidence_ids, quote}) and next_checks. Every claim must cite one "
     "or more evidence ids exactly as written in square brackets below. Cite only ids listed "
     "below. quote is 5 to 20 words copied character for character from the text of one cited "
-    "item, the words that support the claim. Do not claim what the evidence does not show; say "
-    "what is unknown in next_checks."
+    "item, the words that support the claim. Do not claim what the evidence does not show. If the "
+    "question asks for something the evidence does not state (a cause, a time, a number, a "
+    "name, a reason), say in the summary that it is not recorded in the evidence; never infer or "
+    "guess it. Put what to find out in next_checks."
 )
 
 
@@ -166,10 +178,13 @@ def json_content(text: str) -> str:
     return text[start : end + 1] if start != -1 and end > start else text
 
 
-def structured(llm: Client, messages, model, name, max_tokens, state, calls) -> BaseModel | None:
+def structured(
+    llm: Client, messages, model, name, max_tokens, state, calls, effort: str | None = None
+) -> BaseModel | None:
     """One call for a JSON object of `model`, one retry with the validation error. Groq rejects
     output that breaks the schema (often cut off at max_tokens) with a 400 json_validate_failed
-    and no usage counts; that is treated as invalid output, so its tokens go unrecorded."""
+    and no usage counts; that is treated as invalid output, so its tokens go unrecorded. An empty
+    reply (a reasoning model spent max_tokens thinking) is retried at RETRY_EFFORT."""
     schema = model.model_json_schema()
     for attempt in range(2):
         try:
@@ -179,11 +194,15 @@ def structured(llm: Client, messages, model, name, max_tokens, state, calls) -> 
                 max_tokens=max_tokens,
                 name=name if attempt == 0 else f"{name}_retry",
                 trace_id=state["trace_id"],
+                reasoning_effort=effort,
             )
         except LLMError as exc:
             if "json_validate_failed" not in str(exc):
                 raise
             r, errs = None, "the provider rejected it as invalid JSON; keep it short"
+        if r is not None and not r.content.strip():
+            calls.append(r.log_row())
+            r, errs, effort = None, "the reply was empty; keep your reasoning short", RETRY_EFFORT
         if r is not None:
             calls.append(r.log_row())
             try:
@@ -275,8 +294,10 @@ def build_graph(
     verify_quotes: bool | None = None,
     max_tool_calls: int | None = None,
     max_seconds: float | None = None,
+    first_look: bool | None = None,
 ):
     s = get_settings()
+    look_first = s.agent_first_look if first_look is None else first_look
     verify_enabled = s.verify_enabled if verify_enabled is None else verify_enabled
     verify_quotes = s.verify_quotes if verify_quotes is None else verify_quotes
     max_tool_calls = s.agent_max_tool_calls if max_tool_calls is None else max_tool_calls
@@ -314,7 +335,9 @@ def build_graph(
         got += f" ({row['note'][:150]})" if row["success"] and row["note"] else ""
         return f"{i}. {row['name']} {json.dumps(row['arguments'], default=str)} -> {got}"
 
-    def gather_messages(state: State, made: list, evidence: dict, latest: list) -> list[dict]:
+    def gather_messages(
+        state: State, made: list, evidence: dict, latest: list, reads: list
+    ) -> list[dict]:
         """One turn's prompt: calls so far, a compact index of older evidence and the latest
         turn's results in full, both packed to fit the budget (latest first)."""
         feedback = ""
@@ -325,9 +348,17 @@ def build_graph(
                 "exist, then reply done."
             )
         so_far = "\n".join(call_line(i, r) for i, r in enumerate(made, 1)) or "none"
+        read_list = "".join(
+            f"\n- {x['doc_id']} part {x['part']} of {x['of']}: {', '.join(x['ids'])}" for x in reads
+        )
         head = (
             f"{context(state)}\nTriage: {json.dumps(state['triage'])}{feedback}\n"
             f"Tool calls so far ({len(made)} of {max_tool_calls}):\n{so_far}\n"
+            + (
+                f"Already read, in the evidence in full (do not read again):{read_list}\n"
+                if reads
+                else ""
+            )
         )
         msgs = [
             system(state, GATHER_INSTRUCTIONS),
@@ -377,9 +408,9 @@ def build_graph(
         write({"event": "tool_result", **row})
         return row, items
 
-    def duplicate(call, first: int, write) -> dict:
+    def refused(call, err: str, write) -> dict:
+        """A call not run (a repeat): counted as a failed call, and the model is told why."""
         write({"event": "tool_call", "name": call.name, "arguments": call.arguments})
-        err = f"duplicate of call {first}, not run: its results are already in the evidence"
         row = {
             "name": call.name,
             "arguments": call.arguments,
@@ -393,48 +424,103 @@ def build_graph(
         write({"event": "tool_result", **row})
         return row
 
+    def read_key(call) -> tuple[str, int] | None:
+        if call.name != "read_document":
+            return None
+        try:
+            a = ReadDocumentInput.model_validate(call.arguments)
+        except ValidationError:
+            return None
+        return a.doc_id, a.part
+
+    def first_look(state: State) -> list[ToolCall]:
+        """Look before reading: the first named service's status and its warnings and errors in
+        the triage window, before any document search (only on the first gather pass)."""
+        t = state["triage"]
+        if not look_first or state["tool_calls"] or not t or not t.get("services"):
+            return []
+        svc = t["services"][0]
+        logs = {"service": svc, "start": t["window_start"], "end": t["window_end"], "level": "WARN"}
+        return [
+            ToolCall("first_look_status", "get_service_status", {"service": svc}),
+            ToolCall("first_look_logs", "query_logs", logs),
+        ]
+
     def gather(state: State) -> dict:
         write = get_stream_writer()
-        llm_calls, done, new = [], [], {}
+        llm_calls, done, new, reads = [], [], {}, []
         latest: list = []
-        nudged = False
+
+        def execute(call) -> None:
+            if len(state["tool_calls"]) + len(done) >= max_tool_calls:
+                write({"event": "error", "message": f"skipped {call.name}: tool-call cap"})
+                return
+            prior = state["tool_calls"] + done
+            key = read_key(call)
+            seen = next(
+                (x for x in state["reads"] + reads if (x["doc_id"], x["part"]) == key), None
+            )
+            same = [
+                i
+                for i, m in enumerate(prior, 1)
+                if (m["name"], m["arguments"]) == (call.name, call.arguments)
+            ]
+            items = {}
+            if seen:
+                row = refused(
+                    call,
+                    f"already read: {seen['doc_id']} part {seen['part']} of {seen['of']} is in"
+                    f" the evidence as {', '.join(seen['ids'])}; cite those ids, do not read it"
+                    " again",
+                    write,
+                )
+            elif same:
+                row = refused(
+                    call,
+                    f"duplicate of call {same[0]}, not run: its results are already in the"
+                    " evidence",
+                    write,
+                )
+            else:
+                row, items = run_one(call, write)
+                part = re.search(r"part (\d+) of (\d+)", row["note"] or "")
+                if key and row["success"] and part:
+                    reads.append(
+                        {"doc_id": key[0], "part": key[1], "of": int(part[2]), "ids": row["ids"]}
+                    )
+            new.update(items)
+            done.append(row)
+            latest.append(row)
+
+        for call in first_look(state):
+            execute(call)
+        nudged = nudge_now = model_called = False
         while True:
             made = state["tool_calls"] + done
             if len(made) >= max_tool_calls or out_of_time(state):
                 break
-            msgs = gather_messages(state, made, state["evidence"] | new, latest)
-            if nudged and not made:  # only the turn right after the prose reply
+            msgs = gather_messages(
+                state, made, state["evidence"] | new, latest, state["reads"] + reads
+            )
+            if nudge_now:  # only the turn right after the prose reply
                 msgs[1]["content"] += f"\n{NUDGE}"
+                nudge_now = False
             r = llm.chat(
                 msgs, tools, max_tokens=GATHER_MAX_TOKENS, name="gather", trace_id=state["trace_id"]
             )
             llm_calls.append(r.log_row())
             if not r.tool_calls:
-                # Done, unless nothing was called yet and the reply does not say done: gpt-oss
-                # sometimes describes the call in prose instead of making it. One nudge.
-                if made or nudged or "done" in r.content.lower():
+                # Done, unless the model has not called anything itself and the reply does not
+                # say done: gpt-oss sometimes describes the call in prose instead. One nudge.
+                if model_called or state["tool_calls"] or nudged or "done" in r.content.lower():
                     break
-                nudged = True
+                nudged = nudge_now = True
                 continue
+            model_called = True
             latest = []
             for call in r.tool_calls:
-                if len(state["tool_calls"]) + len(done) >= max_tool_calls:
-                    write({"event": "error", "message": f"skipped {call.name}: tool-call cap"})
-                    continue
-                prior = state["tool_calls"] + done
-                same = [
-                    i
-                    for i, m in enumerate(prior, 1)
-                    if (m["name"], m["arguments"]) == (call.name, call.arguments)
-                ]
-                if same:  # not run again: counted, and the model is told why
-                    row, items = duplicate(call, same[0], write), {}
-                else:
-                    row, items = run_one(call, write)
-                new |= items
-                done.append(row)
-                latest.append(row)
-        return {"evidence": new, "tool_calls": done, "llm_calls": llm_calls}
+                execute(call)
+        return {"evidence": new, "tool_calls": done, "llm_calls": llm_calls, "reads": reads}
 
     def draft(state: State) -> dict:
         calls: list = []
@@ -456,7 +542,7 @@ def build_graph(
         allowance = llm.budget - DRAFT_MAX_TOKENS - fixed - 80
         lines, dropped = pack(evidence_lines(state["evidence"], read_chars=READ_CHARS), allowance)
         base[1]["content"] = head + ("\n".join(lines) or "(none gathered)")
-        d = structured(llm, base, Draft, "draft", DRAFT_MAX_TOKENS, state, calls)
+        d = structured(llm, base, Draft, "draft", DRAFT_MAX_TOKENS, state, calls, DRAFT_EFFORT)
         if calls:
             calls[0]["evidence_lines"], calls[0]["evidence_dropped"] = len(lines), dropped
         if d is None:

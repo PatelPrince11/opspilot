@@ -162,7 +162,7 @@ def test_a_past_incident_question_retrieves_that_incidents_logs(ro):
         "end": "2026-01-05T15:00Z",
     }
     llm = StubLLM([TRIAGE, calls(("query_logs", window)), say("done"), draft()])
-    g = build_graph(llm, ro, verify_quotes=False)
+    g = build_graph(llm, ro, verify_quotes=False, first_look=False)
     final = g.invoke(initial_state("What broke payments-api on 5 January 2026?", as_of))
     want = {
         f"log:{i}"
@@ -232,7 +232,9 @@ def test_quote_from_a_read_chunk_verifies_and_an_invented_one_does_not(ro):
             draft(good, bad),
         ]
     )
-    final = build_graph(llm, ro).invoke(initial_state("logs-01 disk full?", "2026-10-06T14:52Z"))
+    final = build_graph(llm, ro, first_look=False).invoke(
+        initial_state("logs-01 disk full?", "2026-10-06T14:52Z")
+    )
     d = final["diagnosis"]
     assert [c["text"] for c in d["claims"]] == ["logrotate was restarted"]
     assert [c["text"] for c in d["dropped_claims"]] == ["the disk was replaced"]
@@ -253,10 +255,62 @@ def test_later_gather_turns_still_show_a_read_documents_part_count(ro):
             draft(),
         ]
     )
-    build_graph(llm, ro, verify_enabled=False).invoke(initial_state("disk?", "2026-10-06T14:52Z"))
+    build_graph(llm, ro, verify_enabled=False, first_look=False).invoke(
+        initial_state("disk?", "2026-10-06T14:52Z")
+    )
     third_turn = llm.bodies[3]["messages"]
     assert (
         '1. read_document {"doc_id": "INC-9002"} -> 2 items (INC-9002 part 1 of 1)'
         in (third_turn[1]["content"])
     )
-    assert "do not read a document again" in third_turn[0]["content"]
+    assert (
+        "Already read, in the evidence in full (do not read again):\n"
+        "- INC-9002 part 1 of 1: INC-9002#0, INC-9002#1"
+    ) in third_turn[1]["content"]
+
+
+def test_a_repeated_read_is_refused_with_the_evidence_ids(ro):
+    """Dev runs: gpt-oss re-read documents it had read. The read list is shown every turn; a
+    repeat (same document and part, however written) is refused, counted failed, and names the
+    ids already in the evidence."""
+    llm = StubLLM(
+        [
+            TRIAGE,
+            calls(("read_document", {"doc_id": "INC-9002"})),
+            calls(("read_document", {"doc_id": "INC-9002#1", "part": 1})),
+            say("done"),
+            draft(),
+        ]
+    )
+    g = build_graph(llm, ro, verify_enabled=False, first_look=False)
+    final = g.invoke(initial_state("disk?", "2026-10-06T14:52Z"))
+    first, again = final["tool_calls"]
+    assert first["success"] and not again["success"]
+    assert again["error"] == (
+        "already read: INC-9002 part 1 of 1 is in the evidence as INC-9002#0, INC-9002#1;"
+        " cite those ids, do not read it again"
+    )
+    assert final["reads"] == [
+        {"doc_id": "INC-9002", "part": 1, "of": 1, "ids": ["INC-9002#0", "INC-9002#1"]}
+    ]
+    assert (
+        "- INC-9002 part 1 of 1: INC-9002#0, INC-9002#1" in llm.bodies[2]["messages"][1]["content"]
+    )
+
+
+def test_the_read_list_survives_a_verify_loop(ro):
+    llm = StubLLM(
+        [
+            TRIAGE,
+            calls(("read_document", {"doc_id": "INC-9002"})),
+            say("done"),
+            draft(("x", ["nope"])),  # bad id: back to gather
+            calls(("read_document", {"doc_id": "INC-9002"})),
+            say("done"),
+            draft(("y", ["INC-9002#1"], "restarted logrotate on logs-01")),
+        ]
+    )
+    final = build_graph(llm, ro, first_look=False).invoke(initial_state("d?", "2026-10-06T14:52Z"))
+    assert [t["success"] for t in final["tool_calls"]] == [True, False]
+    assert final["tool_calls"][1]["error"].startswith("already read: INC-9002 part 1 of 1")
+    assert final["diagnosis"]["citations_verified"] is True

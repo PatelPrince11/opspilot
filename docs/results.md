@@ -96,7 +96,8 @@ token-doc Recall@5 is not independent of Recall@5: on dev, 42 of 45 exact-token 
 Agent `openrouter:openai/gpt-oss-120b`, judge `gemini:gemini-3.5-flash-lite` (prompt judge-v1), as_of 2026-10-06T14:52:00Z, at most 8 tool calls, 6000-token budget per call. One run per question per config. Rates are pooled over claims, key facts or calls; the count beside each value is that denominator, n is questions. Judge metrics are unvalidated until the hand-label agreement below exists.
 
 - Source: eval/results/dev_generation_verify_{on,off}.json, written by `make gen-eval`.
-- Comparisons: verify on minus off, paired by question, percentile bootstrap 95% CI, 10,000 resamples of questions, seed 20261003. Claimable = yes only when the CI excludes 0.
+- Paired design: verify off is the same trajectory's first draft. Its triage, gather and first draft prompts equal verify on's, so they are the same (cached) calls; verify on then checks citations and may loop back to gather and redraft.
+- Comparisons: verify on minus off, paired by question, percentile bootstrap 95% CI, 10,000 resamples of questions, seed 20261003. Only citation (a) is a claim about verify (claimable = yes when its CI excludes 0); the other rows are context.
 
 | metric | definition | config | n | value (denominator) | results file | commit |
 |---|---|---|---|---|---|---|
@@ -129,17 +130,17 @@ Agent `openrouter:openai/gpt-oss-120b`, judge `gemini:gemini-3.5-flash-lite` (pr
 | citation_a | author=gemini | 19 | +0.207 | [+0.115, +0.288] | yes |
 | citation_a | false_premise=False | 91 | +0.218 | [+0.160, +0.278] | yes |
 | citation_a | false_premise=True | 7 | +0.217 | [+0.083, +0.320] | yes |
-| citation_b | overall | 98 | +0.011 | [-0.012, +0.037] | no |
-| citation_b | difficulty=exact-token | 45 | +0.005 | [-0.020, +0.031] | no |
-| citation_b | difficulty=multi-doc | 27 | +0.046 | [-0.002, +0.102] | no |
-| citation_b | difficulty=paraphrase | 26 | -0.022 | [-0.078, +0.023] | no |
-| citation_b | author=claude | 79 | +0.024 | [-0.001, +0.052] | no |
-| citation_b | author=gemini | 19 | -0.053 | [-0.124, +0.000] | no |
-| citation_b | false_premise=False | 91 | +0.016 | [-0.007, +0.042] | no |
-| citation_b | false_premise=True | 7 | -0.056 | [-0.167, +0.000] | no |
-| faithfulness | overall | 100 | +0.000 | [-0.130, +0.130] | no |
-| completeness | overall | 100 | -0.051 | [-0.106, +0.000] | no |
-| tool_success | overall | 100 | -0.101 | [-0.146, -0.061] | yes |
+| citation_b | overall | 98 | +0.011 | [-0.012, +0.037] | - |
+| citation_b | difficulty=exact-token | 45 | +0.005 | [-0.020, +0.031] | - |
+| citation_b | difficulty=multi-doc | 27 | +0.046 | [-0.002, +0.102] | - |
+| citation_b | difficulty=paraphrase | 26 | -0.022 | [-0.078, +0.023] | - |
+| citation_b | author=claude | 79 | +0.024 | [-0.001, +0.052] | - |
+| citation_b | author=gemini | 19 | -0.053 | [-0.124, +0.000] | - |
+| citation_b | false_premise=False | 91 | +0.016 | [-0.007, +0.042] | - |
+| citation_b | false_premise=True | 7 | -0.056 | [-0.167, +0.000] | - |
+| faithfulness | overall | 100 | +0.000 | [-0.130, +0.130] | - |
+| completeness | overall | 100 | -0.051 | [-0.106, +0.000] | - |
+| tool_success | overall | 100 | -0.101 | [-0.146, -0.061] | not a verify effect: verify-off replays the first draft and skips later gather rounds |
 
 Per slice, verify on (value (denominator)):
 

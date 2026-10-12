@@ -14,7 +14,7 @@ from agent import graph as graph_mod
 from api.main import agent_llm, app
 from config import get_settings
 from tests.stub_llm import TRIAGE, StubLLM, calls, draft, say
-from tests.test_graph import LOGS, fake_tool
+from tests.test_graph import fake_tool
 from tests.test_schema import ALEMBIC_INI, with_db
 
 pytestmark = pytest.mark.db
@@ -67,15 +67,18 @@ def test_sse_event_order_and_persistence(client, db_url):
     use(
         [
             TRIAGE,
-            calls(("query_logs", LOGS), ("get_service_status", {})),
+            calls(("search_runbooks", {"query": "connection refused"})),
             say("done"),
-            draft(("refused", ["log:0"], "ERROR aaz xxxxxxxxxx")),
+            # First look ran get_service_status (call 0) then query_logs (call 1: log:1_<i>).
+            draft(("refused", ["log:1_0"], "ERROR baz xxxxxxxxxx")),
         ]
     )
     r = client.post("/investigate", json=BODY)
     assert r.status_code == 200 and r.headers["content-type"].startswith("text/event-stream")
     events = parse_sse(r.text)
     assert [e for e, _ in events] == [
+        "tool_call",
+        "tool_result",
         "tool_call",
         "tool_result",
         "tool_call",
@@ -88,7 +91,11 @@ def test_sse_event_order_and_persistence(client, db_url):
 
     inv = client.get(f"/investigations/{iid}").json()
     assert inv["status"] == "done" and inv["as_of"].startswith("2026-10-06T14:52:00")
-    assert [t["tool"] for t in inv["tool_calls"]] == ["query_logs", "get_service_status"]
+    assert [t["tool"] for t in inv["tool_calls"]] == [
+        "get_service_status",
+        "query_logs",
+        "search_runbooks",
+    ]
     assert all(t["success"] and t["output_tokens"] > 0 for t in inv["tool_calls"])
     assert [c["name"] for c in inv["llm_calls"]] == ["triage", "gather", "gather", "draft"]
     assert inv["prompt_tokens"] == 400 and inv["completion_tokens"] == 80

@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     verify_enabled: bool = True
     verify_quotes: bool = True
     agent_max_tool_calls: int = 8
+    # Look before reading: the first named service's status and WARN+ logs in the triage window
+    # are fetched before the model's own calls (count toward the cap).
+    agent_first_look: bool = True
     agent_max_seconds: float = 300.0
     # Password of the read-only role opspilot_ro (migration 0004) that the agent's tools use.
     readonly_db_password: SecretStr = SecretStr("readonly-change-me")

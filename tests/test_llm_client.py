@@ -376,3 +376,40 @@ def test_openrouter_missing_key_raises(monkeypatch):
     get_settings.cache_clear()
     with pytest.raises(LLMError, match="OPENROUTER_API_KEY"):
         openrouter(lambda req: httpx.Response(200, json=openai_reply())).chat(MSGS)
+
+
+@pytest.mark.parametrize(
+    "provider, field",
+    [
+        ("openrouter", ("reasoning", {"effort": "low"})),
+        ("groq", ("reasoning_effort", "low")),
+        ("gemini", None),
+        ("ollama", None),
+    ],
+)
+def test_reasoning_effort_reaches_reasoning_providers_only(keys, provider, field):
+    sent = []
+
+    def handler(req):
+        sent.append(json.loads(req.content))
+        if provider == "ollama":
+            return httpx.Response(200, json={"message": {"content": "x"}})
+        return httpx.Response(200, json=openai_reply())
+
+    client(provider, handler).chat(MSGS, reasoning_effort="low")
+    body = sent[0]
+    for k in ("reasoning", "reasoning_effort"):
+        assert (k in body) == (field is not None and field[0] == k)
+    if field:
+        assert body[field[0]] == field[1]
+
+
+def test_reasoning_effort_is_part_of_the_cache_key_only_when_set(keys, tmp_path):
+    n = []
+    c = openrouter(
+        lambda r: n.append(1) or httpx.Response(200, json=openai_reply()), cache_dir=tmp_path
+    )
+    c.chat(MSGS)
+    c.chat(MSGS, reasoning_effort=None)  # same key as before: earlier caches stay valid
+    c.chat(MSGS, reasoning_effort="low")
+    assert len(n) == 2

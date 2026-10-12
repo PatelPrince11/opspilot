@@ -293,9 +293,12 @@ def generation_section(questions: list[dict]) -> list[str]:
         " hand-label agreement below exists.",
         "",
         "- Source: eval/results/dev_generation_verify_{on,off}.json, written by `make gen-eval`.",
+        "- Paired design: verify off is the same trajectory's first draft. Its triage, gather"
+        " and first draft prompts equal verify on's, so they are the same (cached) calls; verify"
+        " on then checks citations and may loop back to gather and redraft.",
         "- Comparisons: verify on minus off, paired by question, percentile bootstrap 95% CI,"
-        f" 10,000 resamples of questions, seed {SEED}. Claimable = yes only when the CI excludes"
-        " 0.",
+        f" 10,000 resamples of questions, seed {SEED}. Only citation (a) is a claim about verify"
+        " (claimable = yes when its CI excludes 0); the other rows are context.",
         "",
         "| metric | definition | config | n | value (denominator) | results file | commit |",
         "|---|---|---|---|---|---|---|",
@@ -314,7 +317,14 @@ def generation_section(questions: list[dict]) -> list[str]:
         "|---|---|---|---|---|---|",
     ]
     for c in compare(on, off, questions):
-        claim = "yes" if c["lo"] > 0 or c["hi"] < 0 else "no"
+        claim = "-"
+        if c["metric"] == "citation_a":
+            claim = "yes" if c["lo"] > 0 or c["hi"] < 0 else "no"
+        elif c["metric"] == "tool_success":
+            claim = (
+                "not a verify effect: verify-off replays the first draft and skips later gather"
+                " rounds"
+            )
         out.append(
             f"| {c['metric']} | {c['slice']} | {c['n']} | {c['diff']:+.3f}"
             f" | [{c['lo']:+.3f}, {c['hi']:+.3f}] | {claim} |"
