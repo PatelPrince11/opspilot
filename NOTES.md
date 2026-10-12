@@ -2474,6 +2474,65 @@ find documents, then read_document for details. The draft sees read chunks whole
 2,000) after status and logs, before the 300-char search snippets; a full read replaces a
 search snippet with the same id in the evidence map, so quotes from the rest of the chunk verify.
 
+**Confirm runs (step 4)**: same 5 dev questions (Q063, Q074 exact-token; H007, Q017 multi-doc;
+Q053 paraphrase) plus the demo, as_of 2026-10-06T14:52:00Z, with read_document, on gpt-oss-120b
+(OpenRouter, Groq upstream) and on Gemini Flash-Lite as the agent. One run per cell: smoke, not
+metrics. Key facts judged by Claude by hand, strict, as in 3a.5: a fact counts only if the
+summary, likely_cause or a kept claim states it; partials in brackets; next_checks count only for
+a "what steps" fact. Transcripts in scratchpad/phase3/a6/ (first round in a6/v1/).
+
+Prompt/graph change from the first round (dev transcripts, not the demo): gpt-oss spent 3 to 4 of
+8 calls re-reading documents it had read (duplicates of part 1, or part 2 of a one-part
+document). Root cause: the part count ("INC-0109 part 1 of 1") was visible only on the turn
+after the read; later turns showed "-> 3 items" and a 100-character index line per item, so the
+document looked unread. Now each finished call keeps its note in "calls so far", and the gather
+prompt says the index is cut short but every item is kept in full: do not read a document
+again. Effect: gpt-oss dev tool success 23/40 -> 21/34 (fewer calls, still re-reads); Gemini
+re-reads less. Not fixed further.
+
+| run | model | tool calls ok | key facts | forbidden / contradicting | id fails per pass | quote fails per pass | loops | LLM calls | tokens prompt / completion | max call (actual) | wall s | 429 wait s | cost $ |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Q063 | gpt-oss (OR) | 4/8 | 2/3 (1) | 0 | 0,0 | 2,0 | 1 | 13 | 23,408 / 8,501 | 5,130 | 36.7 | 0.0 | 0.00817 |
+| Q063 | Gemini | 4/6 | 2/3 | 0 | 0,0,0 | 3,3,3 | 2 | 13 | 24,328 / 1,430 | 2,865 | 17.4 | 0.0 | 0 |
+| Q074 | gpt-oss (OR) | 4/8 | 2/2 | 0 | 0,0 | 2,0 | 1 | 12 | 20,397 / 5,149 | 3,740 | 21.1 | 0.0 | 0.00577 |
+| Q074 | Gemini | 2/2 | 2/2 | 0 | 0 | 0 | 0 | 5 | 7,283 / 470 | 2,358 | 72.0 | 62.8 | 0 |
+| H007 | gpt-oss (OR) | 6/8 | 0/3 | 0 | 0,0 | 6,0 | 1 | 13 | 24,747 / 10,959 | 4,993 | 41.4 | 0.0 | 0.00675 |
+| H007 | Gemini | 6/8 | 0/3 (3) | 0 | 0,0,0 | 1,1,1 | 2 | 12 | 24,998 / 1,468 | 3,294 | 16.7 | 0.0 | 0 |
+| Q017 | gpt-oss (OR) | 5/8 | 1/2 | 0 | 0 | 0 | 0 | 10 | 15,253 / 3,451 | 3,174 | 18.7 | 0.0 | 0.00421 |
+| Q017 | Gemini | 6/8 | 1/2 | 0 | 0,0,0 | 2,1,1 | 2 | 12 | 23,066 / 1,311 | 2,761 | 105.6 | 87.4 | 0 |
+| Q053 | gpt-oss (OR) | 2/2 | 1/2 (1) | 1 (ALTER TABLE lock; INC-0091 was no migration) | 0 | 0 | 0 | 5 | 7,053 / 2,792 | 3,499 | 16.4 | 0.0 | 0.00262 |
+| Q053 | Gemini | 2/2 | 1/2 (1) | 0 | 0 | 0 | 0 | 5 | 6,506 / 582 | 1,990 | 11.2 | 0.0 | 0 |
+| demo | gpt-oss (OR) | 7/8 | 0/9 | 0 | 0,0 | 1,0 | 1 | 11 | 22,607 / 4,165 | 3,922 | 23.0 | 0.0 | 0.00566 |
+| demo | Gemini | 7/7 | 0/9 (2) | 0 | 0,0,0 | 1,1,1 | 2 | 11 | 23,789 / 1,589 | 3,074 | 40.9 | 24.1 | 0 |
+
+Before vs after read_document (key facts; before = the 3a.5 table, gpt-oss on Groq direct):
+
+| | gpt-oss dev (12) | Gemini dev (12) | gpt-oss demo (9) | Gemini demo (9) |
+|---|---|---|---|---|
+| 3a.5, no read_document | 1 (3 partial) | 2 (1) | 1 | 2 |
+| 3a.6, read_document | 6 (2) | 6 (4) | 0 | 0 (2) |
+| contradictions (dev), before / after | 1 / 1 | 2 / 0 | | |
+
+- The dev gain is real for both models and comes from reading: Q063's journald cause and fix, and
+  Q074's fix, sit in chunks search never showed.
+- Stop condition (gpt-oss < 5 of 12) not met: 6 of 12. Part B goes ahead.
+- Gemini is not clearly better on key facts (6 vs 6). gpt-oss stays the agent. Notes for Prince:
+  Gemini found the demo mechanism again (pgbouncer rejected pool_mode "transction"; partial, no
+  exit status) while gpt-oss stopped at "payments-pgbouncer degraded" again; gpt-oss produced no
+  valid diagnosis on H007 (first draft cut at 2,500 completion tokens, the post-loop draft and
+  its retry returned empty content after about 2,200 tokens of reasoning); Gemini's three Q063
+  claims all failed the quote check and were dropped (the summary still stated two facts).
+- Q053 (gpt-oss): it read RB-028 and took RB-028's example incident (a migration lock, 14:02) as
+  the 15 October one. The quote check passed, since the words are in RB-028: citation accuracy (b)
+  is the judge's job.
+- Draft evidence: H007 dropped 8 to 13 evidence lines from the draft prompt (both models), the
+  demo on gpt-oss 8 to 10; the other runs dropped none. Read chunks (about 1,000 chars each) use
+  the 6,000-token budget fast.
+- Cost: gpt-oss dev mean 18,172 prompt + 6,170 completion tokens, $0.0055 per run (reported by
+  OpenRouter); about $0.55 per 100-question config, $1.10 for verify on plus off. Spend so far:
+  $0.0618 (OpenRouter account usage, equals the summed reported costs: two rounds of 6 runs plus
+  two one-word checks). Gemini: 47 requests for the 5 dev runs, 91K tokens, free.
+
 **Errors and fixes**
 - An empty `OPENROUTER_API_KEY=` (as in .env.example) is an empty SecretStr, not None, so the
   client sent `Bearer ` with no key. Root cause: the check was `key is None`. Now an empty value

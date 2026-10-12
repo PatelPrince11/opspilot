@@ -139,7 +139,8 @@ GATHER_INSTRUCTIONS = (
     "use a window ending at as_of. Use exact service names from the known list. Do not repeat "
     "a call. Searches find documents but show only the best-matching part of each: search to "
     "find the relevant runbooks and incidents, then read_document to get their details (cause, "
-    "timeline, fix). "
+    "timeline, fix). The evidence index shows older results cut to one short line, but every "
+    "item is kept in full for the diagnosis: do not read a document again. "
     "When the evidence explains the cause, or nothing more can be found, reply with the word "
     "done and no tool call."
 )
@@ -306,6 +307,7 @@ def build_graph(
 
     def call_line(i: int, row: dict) -> str:
         got = f"{len(row['ids'])} items" if row["success"] else f"failed: {row['error'][:150]}"
+        got += f" ({row['note'][:150]})" if row["success"] and row["note"] else ""
         return f"{i}. {row['name']} {json.dumps(row['arguments'], default=str)} -> {got}"
 
     def gather_messages(state: State, made: list, evidence: dict, latest: list) -> list[dict]:

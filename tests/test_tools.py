@@ -240,3 +240,23 @@ def test_quote_from_a_read_chunk_verifies_and_an_invented_one_does_not(ro):
     # The draft saw the read chunk whole.
     draft_prompt = llm.bodies[3]["messages"][1]["content"]
     assert "[INC-9002#1] The team deleted old archives and restarted logrotate" in draft_prompt
+
+
+def test_later_gather_turns_still_show_a_read_documents_part_count(ro):
+    """The part count must outlive the turn that read it, or the model re-reads (dev runs)."""
+    llm = StubLLM(
+        [
+            TRIAGE,
+            calls(("read_document", {"doc_id": "INC-9002"})),
+            calls(("get_service_status", {})),
+            say("done"),
+            draft(),
+        ]
+    )
+    build_graph(llm, ro, verify_enabled=False).invoke(initial_state("disk?", "2026-10-06T14:52Z"))
+    third_turn = llm.bodies[3]["messages"]
+    assert (
+        '1. read_document {"doc_id": "INC-9002"} -> 2 items (INC-9002 part 1 of 1)'
+        in (third_turn[1]["content"])
+    )
+    assert "do not read a document again" in third_turn[0]["content"]

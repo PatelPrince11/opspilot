@@ -88,6 +88,8 @@ def main(argv=None) -> int:
 
     verify_log = by.get("diagnosis", {}).get("verify_log", [])
     waits = sum(c.get("wait_s", 0.0) for c in inv["llm_calls"])
+    cost = sum(c.get("cost_usd", 0.0) for c in inv["llm_calls"])
+    new_cost = sum(c.get("cost_usd", 0.0) for c in inv["llm_calls"] if not c.get("cached"))
     out = [
         f"# Smoke: {args.qid or 'demo'} on {args.llm}",
         "",
@@ -97,6 +99,7 @@ def main(argv=None) -> int:
         f"Investigation: {inv_id} (status {inv['status']})",
         f"Wall time: {wall:.1f} s; verify loops: {inv['loops']}; rate-limit waits: {waits:.1f} s",
         f"Verify passes (claims, bad ids, bad quotes): {verify_log}",
+        f"Cost: ${cost:.5f} (new spend, cache hits excluded: ${new_cost:.5f})",
         "",
         "## Tool calls",
         "",
@@ -180,6 +183,8 @@ def main(argv=None) -> int:
         "max_call_estimate": max((c["prompt_estimate"] for c in calls), default=0),
         "wall_s": round(wall, 1),
         "rate_limit_wait_s": round(waits, 1),
+        "cost_usd": round(cost, 6),
+        "new_spend_usd": round(new_cost, 6),
         "claims": len(d["claims"]) if d else 0,
         "dropped_claims": len(d["dropped_claims"]) if d else 0,
         "confidence": d["confidence"] if d else None,
