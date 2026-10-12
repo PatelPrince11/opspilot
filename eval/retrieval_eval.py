@@ -293,10 +293,14 @@ def named(cfg: RetrievalConfig) -> str | None:
 
 
 def provenance() -> dict:
-    """HEAD plus the tracked files that differed from it: the same for the same tree."""
+    """HEAD plus the tracked files that differed from it: the same for the same tree. Result
+    outputs (eval/results, docs/results.md) are not code, so they never make a run dirty."""
     head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
     changed = subprocess.run(
-        ["git", "diff", "--name-only", "HEAD"], capture_output=True, text=True, check=True
+        ["git", "diff", "--name-only", "HEAD", "--", ".", ":!eval/results", ":!docs/results.md"],
+        capture_output=True,
+        text=True,
+        check=True,
     )
     return {"commit": head.stdout.strip(), "uncommitted_changes": changed.stdout.split()}
 
@@ -330,11 +334,16 @@ def result_content(split, cfg, rows, questions, corpus) -> dict:
 
 def write_named(path: Path, content: dict, extra: dict) -> bool:
     """Write content + extra (provenance, latency) unless the file already holds identical
-    content. Returns whether it wrote."""
+    content. Returns whether it wrote. Identical content from a clean tree replaces a dirty
+    provenance (commit and uncommitted_changes only; latency stays the first run's)."""
     if path.exists():
         old = json.loads(path.read_text())
         if {k: old.get(k) for k in content} == content:
-            return False
+            if not old.get("uncommitted_changes") or extra.get("uncommitted_changes", True):
+                return False
+            extra = {k: extra[k] for k in ("commit", "uncommitted_changes")}
+            path.write_text(json.dumps(old | extra, indent=1, sort_keys=True) + "\n")
+            return True
     path.write_text(json.dumps(content | extra, indent=1, sort_keys=True) + "\n")
     return True
 
