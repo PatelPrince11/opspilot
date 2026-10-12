@@ -39,6 +39,8 @@ def snapshot(conn) -> dict:
         "docs": "SELECT id, content_hash FROM documents ORDER BY id",
         "logs": "SELECT max(id), md5(string_agg(message || coalesce(incident_id, ''), '|'"
         " ORDER BY id)) FROM log_events",
+        "bm25": "SELECT (SELECT md5(string_agg(lexeme || ':' || df, '|' ORDER BY lexeme))"
+        " FROM lexeme_df), n_chunks, avg_len FROM bm25_stats",
     }
     return {k: conn.execute(v).fetchall() for k, v in q.items()}
 
@@ -106,6 +108,27 @@ def test_no_sidecar_eval_or_demo_text_in_documents_or_chunks(db):
     assert "INC-LIVE-001" not in everything
     assert demo["question"] not in everything and demo["likely_cause"] not in everything
     assert not [t[:60] for t in texts if leaks_demo(t)]
+
+
+def test_bm25_stats_match_a_direct_count(db):
+    conn = db["conn"]
+    direct = conn.execute(
+        "SELECT u.lexeme, count(DISTINCT c.id) FROM chunks c, unnest(c.tsv) u GROUP BY 1"
+    ).fetchall()
+    assert dict(direct) == dict(conn.execute("SELECT lexeme, df FROM lexeme_df").fetchall())
+    for word in ("payapi", "503", "01"):
+        n = conn.execute(
+            "SELECT count(*) FROM chunks WHERE tsv @@ to_tsquery('simple', %s)", (word,)
+        ).fetchone()[0]
+        assert (
+            n == conn.execute("SELECT df FROM lexeme_df WHERE lexeme = %s", (word,)).fetchone()[0]
+        )
+    n, avg = conn.execute("SELECT n_chunks, avg_len FROM bm25_stats").fetchone()
+    lens = conn.execute(
+        "SELECT count(*), avg((SELECT sum(cardinality(u.positions)) FROM unnest(tsv) u))"
+        " FROM chunks"
+    ).fetchone()
+    assert n == lens[0] and avg == pytest.approx(float(lens[1]))
 
 
 def test_every_chunk_has_a_384_dim_unit_vector(db):

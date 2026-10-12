@@ -96,6 +96,7 @@ def conn():
     command.upgrade(cfg, "head")
     with psycopg.connect(with_db(base_url, TEST_DB), autocommit=True) as c:
         load_fixture(c)
+        c.execute("SELECT opspilot_bm25_refresh()")
         yield c
 
 
@@ -119,6 +120,41 @@ def test_keyword_is_or_not_and(conn):
     assert hits == sorted(hits, key=lambda h: -h.score)
 
 
+def test_bm25_rare_term_outranks_common_term(conn):
+    """X and Y have the same length and one query term each; X's is rare (df 1), Y's is in 4
+    chunks. BM25 ranks X first; ts_rank_cd, which has no IDF, scores them the same."""
+    texts = {
+        "RB-990": "zebracode filler words here",
+        "RB-991": "commonword filler words here",
+        "RB-992": "commonword other",
+        "RB-993": "commonword other",
+        "RB-994": "commonword other",
+    }
+    with conn.transaction(force_rollback=True):
+        for doc_id, text in texts.items():
+            conn.execute(
+                "INSERT INTO documents (id, doc_type, title, content_hash) VALUES"
+                " (%s, 'runbook', %s, 'x')",
+                (doc_id, doc_id),
+            )
+            conn.execute(
+                "INSERT INTO chunks (document_id, chunk_index, content, token_count, embedding,"
+                " metadata) VALUES (%s, 0, %s, 0, %s::vector, %s)",
+                (doc_id, text, as_pgvector(embed([text])[0]), '{"doc_type": "runbook"}'),
+            )
+        conn.execute("SELECT opspilot_bm25_refresh()")
+        q = "zebracode commonword"
+        bm25 = retrieve(q, RetrievalConfig(mode="keyword", k=10), conn)
+        score = {h.document_id: h.score for h in bm25}
+        assert docs(bm25)[0] == "RB-990"
+        assert score["RB-990"] > score["RB-991"]  # same length: only the IDF differs
+        tsrank = {
+            h.document_id: h.score
+            for h in retrieve(q, RetrievalConfig(mode="keyword_tsrank", k=10), conn)
+        }
+        assert tsrank["RB-990"] == tsrank["RB-991"]
+
+
 def test_dense_finds_a_paraphrase(conn):
     q = "keys being thrown out of the cache because it ran out of memory"
     for prefix in (True, False):
@@ -128,7 +164,7 @@ def test_dense_finds_a_paraphrase(conn):
         assert [h.score for h in hits] == sorted((h.score for h in hits), reverse=True)
 
 
-@pytest.mark.parametrize("mode", ["dense", "keyword", "hybrid", "hybrid_rerank"])
+@pytest.mark.parametrize("mode", ["dense", "keyword", "keyword_tsrank", "hybrid", "hybrid_rerank"])
 @pytest.mark.parametrize(
     ("flt", "want"),
     [

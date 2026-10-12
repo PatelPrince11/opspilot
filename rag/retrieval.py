@@ -4,9 +4,10 @@
 
 - dense: bge-small cosine similarity over the HNSW index. The query gets bge's search prefix
   when bge_prefix is on; passages never do.
-- keyword: Postgres full-text search, ORing the query's non-stopword tokens
-  (opspilot_or_tsquery), ranked by ts_rank_cd.
-- hybrid: reciprocal rank fusion (k=60) of the dense and keyword top `candidates`.
+- keyword: BM25 (k1 1.2, b 0.75) over the chunks matching the query's ORed non-stopword
+  tokens (opspilot_bm25; IDF from lexeme_df, rebuilt by every ingest).
+- keyword_tsrank: the same candidates ranked by ts_rank_cd (no IDF); kept for the ablation.
+- hybrid: reciprocal rank fusion (k=60) of the dense and keyword (BM25) top `candidates`.
 - hybrid_rerank: the top `candidates` fused chunks, re-scored by the cross-encoder.
 
 Filters apply inside each SQL query, before ranking. The date filter uses the document's date
@@ -23,8 +24,8 @@ import psycopg
 from config import get_settings
 from rag import embeddings
 
-Mode = Literal["dense", "keyword", "hybrid", "hybrid_rerank"]
-MODES = ("dense", "keyword", "hybrid", "hybrid_rerank")
+Mode = Literal["dense", "keyword", "keyword_tsrank", "hybrid", "hybrid_rerank"]
+MODES = ("dense", "keyword", "keyword_tsrank", "hybrid", "hybrid_rerank")
 BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 RRF_K = 60
 COLS = "c.id, c.document_id, c.chunk_index, c.content, c.metadata"
@@ -93,6 +94,17 @@ def dense(conn, query: str, cfg: RetrievalConfig, n: int) -> list[Hit]:
 
 
 def keyword(conn, query: str, cfg: RetrievalConfig, n: int) -> list[Hit]:
+    """BM25. The scores use corpus-wide stats, so filters only drop rows, never rescore."""
+    join, where, params = filters(cfg)
+    rows = conn.execute(
+        f"SELECT {COLS}, b.score FROM opspilot_bm25(%s) b JOIN chunks c ON c.id = b.chunk_id"
+        f"{join} WHERE true{where} ORDER BY b.score DESC, c.id LIMIT %s",
+        [query, *params, n],
+    ).fetchall()
+    return [Hit(*r) for r in rows]
+
+
+def keyword_tsrank(conn, query: str, cfg: RetrievalConfig, n: int) -> list[Hit]:
     join, where, params = filters(cfg)
     rows = conn.execute(
         f"SELECT {COLS}, ts_rank_cd(c.tsv, q) AS rank FROM chunks c{join},"
@@ -138,6 +150,8 @@ def retrieve(
                 hits = dense(conn, query, cfg, n)
             elif cfg.mode == "keyword":
                 hits = keyword(conn, query, cfg, n)
+            elif cfg.mode == "keyword_tsrank":
+                hits = keyword_tsrank(conn, query, cfg, n)
             else:
                 hits = rrf(dense(conn, query, cfg, n), keyword(conn, query, cfg, n))[:n]
         if cfg.mode == "hybrid_rerank":

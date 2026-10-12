@@ -1846,6 +1846,44 @@ slots, with at most 3 off-gold slots per config. No merge.
 - Part A: one `pytest | tail` without pipefail. The output was visible, and every later
   gate-type command was redirected, not piped.
 
+## 2026-10-11: Phase 2, BM25 keyword ranker (approved spec change)
+
+- Migration 0003 adds:
+  - `lexeme_df(lexeme, df)` and the one-row `bm25_stats(n_chunks, avg_len)`, rebuilt by
+    `opspilot_bm25_refresh()` at the end of every ingest, in the same transaction.
+  - `opspilot_query_lexemes(query)`: the OR query's split and stopword drop in one place.
+    `opspilot_or_tsquery` is rebuilt from it with the same output. `opspilot_tsquery` is
+    unchanged.
+  - `opspilot_bm25(query)`. Candidates are `tsv @@ opspilot_or_tsquery(query)` (GIN).
+    IDF = ln(1 + (N - df + 0.5) / (df + 0.5)). tf = positions in the chunk's tsvector.
+    Length = total positions. k1 = 1.2, b = 0.75.
+- Modes: `keyword`, `hybrid` and `hybrid_rerank` use BM25. `keyword_tsrank` keeps the old
+  ts_rank_cd ranker for the ablation.
+- **Duplicate lexemes.** `opspilot_tsvector` concatenates the plain and the punctuation-split
+  parse, so an ordinary word gets two positions per occurrence. A hostname part gets one: the
+  plain parse keeps the whole host as one `host` token.
+  - tf and chunk length both count positions in that same tsvector, so length and its corpus
+    average (260 positions vs 208 WordPiece tokens at 256/32) are inflated alike, and b's
+    length ratio stays consistent.
+  - df counts chunks, so IDF is unaffected.
+  - The one asymmetry: a doubled word reaches k1's saturation sooner than a split-only host
+    part. Accepted rather than re-parsing in the ranker.
+- **Why k1 and b are not tuned on dev.** They are the standard defaults from the BM25
+  literature. Dev has 100 questions (45 exact-token), and the ablation compares configs on
+  those same questions. Tuning two free parameters on them would fit dev's noise, bias every
+  dev comparison toward BM25, and make the Phase 5 test number less honest. Fixed defaults
+  keep BM25 vs ts_rank a comparison of one idea, IDF plus saturation, not of a fitted model.
+- First sign it works: Q003's gold chunk (INC-0015) was keyword rank 15 under ts_rank_cd and
+  is rank 1 under BM25.
+- Tests:
+  - rare beats common at equal length; ts_rank_cd ties them.
+  - `lexeme_df` equals a direct `unnest(tsv)` count, and `@@` counts for payapi, 503 and 01.
+  - `bm25_stats` matches a direct count.
+  - the idempotency snapshot now includes the df table and stats.
+- Error: my first rare-vs-common test expected the equal-length common chunk second. A
+  shorter common chunk ranked above it, which is BM25's length normalisation working. The
+  test now compares only the equal-length pair.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

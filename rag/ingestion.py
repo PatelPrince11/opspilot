@@ -208,6 +208,7 @@ def ingest(conn, processed: Path = PROCESSED) -> dict:
     )
     conn.execute("DELETE FROM incidents WHERE NOT id = ANY(%s)", ([r["id"] for r in incidents],))
     conn.execute("DELETE FROM services WHERE NOT name = ANY(%s)", ([s["name"] for s in svc],))
+    conn.execute("SELECT opspilot_bm25_refresh()")  # BM25 df table and corpus stats
     stats["log_lines"] = logs
     return stats
 
