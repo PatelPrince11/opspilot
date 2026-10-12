@@ -32,6 +32,13 @@ class Settings(BaseSettings):
 
     api_key: SecretStr | None = None
 
+    # Chunking (tokens, counted with the embedding model's own tokenizer).
+    chunk_size: int = 400
+    chunk_overlap: int = 50
+    # Local embedder, pinned to a Hugging Face commit so stored vectors stay comparable.
+    embed_model: str = "BAAI/bge-small-en-v1.5"
+    embed_revision: str = "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a"
+
 
 @lru_cache
 def get_settings() -> Settings:

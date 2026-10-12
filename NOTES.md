@@ -1622,6 +1622,110 @@ well as overall**. The Gemini slice holds all 14 false-premise questions, and 12
 test, so an overall number would mix two different question styles in different proportions on each
 split.
 
+## 2026-10-11: Phase 1 step 5, ingest, chunk, embed
+
+**Built:** `rag/ingestion.py` (`make ingest`, host-side with `HOST_DATABASE_URL`), `rag/chunking.py`,
+`rag/embeddings.py`, `tests/test_ingestion.py` (throwaway `opspilot_ingest_test` DB),
+`tests/test_chunking.py`. New dependencies: sentence-transformers 6.1.0 and torch 2.14.1. On Linux,
+torch comes from the PyTorch CPU index (`[tool.uv.sources]`), so the Docker image gets no CUDA
+wheels; the lock has no nvidia packages.
+
+**What is loaded (only `data/processed`).** Nothing from `eval/`, NOTES, `docs/` or the demo spec is
+read.
+- services: 24, from services.json. Hosts, kind, port and tech have no column and are dropped.
+- incidents: 117, the written rows only. Title, format, failure types, hosts, codes and symptom
+  services go in `metadata`.
+- log_events: 9,755. Synthetic 8,439 (with `incident_id`), LogHub 1,170 (`incident_id` NULL), live
+  146 (`incident_id` NULL). If the LogHub file is missing, ingest exits and says to run
+  `make corpus`.
+- documents: 147 (117 incident, 30 runbook), corpus `main`. Stable ids (`INC-NNNN`, `RB-NNN`).
+  Metadata: services, failure_types, hosts, codes, format, date.
+  - Incidents: date is `started_at[:10]`.
+  - Runbooks: date is `last_reviewed`; hosts are the services.json hostnames found in the body;
+    codes come from the catalog `code_finder`.
+- chunks: 408. Each has its heading path, doc type and the doc's metadata in `metadata`.
+
+**Model:** `BAAI/bge-small-en-v1.5` at revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a` (HF commit
+"onnx support (#9)", 2024-02-22, the head of `main` on 2026-10-11). Pinned in `config.py`
+(`embed_revision`). CPU, batch 64, `normalize_embeddings=True`, 384 dims, input limit 512 tokens.
+The tokenizer is uncased WordPiece: `PAYAPI-E1042` is 7 tokens.
+
+**BGE query prefix (for Phase 2 to decide):** `Represent this sentence for searching relevant
+passages: `, added to queries only, never to passages.
+- Source: the model card README at the pinned revision (huggingface.co/BAAI/bge-small-en-v1.5,
+  model table, footnote [1] and FAQ 3).
+- The card says the v1.5 models "enhance its retrieval ability without instruction" and that no
+  instruction gives only "a slight degradation". It recommends picking whichever setting scores
+  better on your own task.
+- Phase 2 runs the retrieval ablation with and without it on dev.
+
+**Chunking (400 / 50 tokens from config, counted with the bge tokenizer)**
+- Units: headings, whole code blocks, table lines, and sentences. A sentence ends after a word, not
+  after a number, so `**3. Look at…` stays one unit.
+- Units are packed greedily up to 400 tokens.
+- Runbooks start a new chunk at each heading; consecutive headings stay together. Incidents pack
+  straight through.
+- Overlap: the next chunk starts with the previous chunk's trailing sentences, up to 50 tokens.
+  It is never a code block or a heading, so some boundaries get less than 50 or none.
+- A heading never ends a chunk.
+- A code block over 400 tokens stays whole up to 510 (bge's limit minus [CLS]/[SEP]). This happens
+  twice: RB-006 (410) and INC-0080 (496).
+
+| doc type | docs | chunks | per doc (min/avg/max) | tokens min / median / mean / max | total tokens |
+|---|---|---|---|---|---|
+| incident | 117 | 239 | 1 / 2.04 / 3 | 51 / 368 / 297 / 496 | 70,935 |
+| runbook | 30 | 169 | 2 / 5.63 / 11 | 18 / 184 / 210 / 410 | 35,457 |
+
+Fourteen runbook chunks are under 50 tokens. They are short reference-card intros and a few section
+tails. Left as is; Phase 2 can test merging them.
+
+**Embed time:** 408 chunks in 8.3 to 13.1 s across five full runs on the Mac's CPU, about 14 to 20 s
+end to end with model load. An unchanged re-run embeds nothing and takes 0.2 s.
+
+**Idempotency.**
+- `documents.content_hash` is sha256 over title, body, metadata, chunk size and overlap, model,
+  revision and the source of `rag/chunking.py`.
+- Unchanged hash: the document is skipped, so its chunk rows and ids stay.
+- Changed hash: the document is deleted (chunks cascade) and rebuilt.
+- services and incidents are upserted. log_events is `TRUNCATE … RESTART IDENTITY` plus COPY in
+  file order, so ids repeat (`ponytail:` comment: scope it to corpus `main` if injection logs ever
+  arrive).
+- Rows that leave the corpus are deleted. Everything runs in one transaction.
+- Tests cover a second ingest leaving every row, id, content md5 and vector md5 the same, and a
+  stale hash rebuilding only that document.
+
+**Errors and fixes**
+- **The third ingest re-embedded 8 runbooks with nothing changed.** Root cause: the runbook `hosts`
+  metadata was sorted by length only. Equal-length hosts kept set order, which varies per process
+  because Python randomises str hashes. The metadata, and so the hash, changed between runs. Fix:
+  sort by name.
+- **A chunker edit didn't re-chunk.** The hash covered only the data. Fix: it includes the
+  chunker's source.
+- **3-token chunks** ("## Investigation" alone). A heading followed directly by a sub-heading made
+  its own section. Fix: consecutive headings stay in one section.
+- **Stray "**3." at the end of a chunk.** The sentence splitter broke after list numbers. Fix:
+  split only after a word character or closing mark.
+- **Heading path `["Title"]` on first runbook chunks.** It was taken from the first unit, the H1.
+  It is now taken from the first non-heading unit (`["Title", "Background"]`). Caught by
+  `test_chunking`.
+
+**Tests (16 new):** 15 in test_ingestion and test_chunking, plus the twin-alias test from the eval
+fixes.
+- Row counts against the corpus files.
+- A second ingest changes nothing.
+- A changed doc is replaced.
+- No `LABEL_RE` word, sidecar label, eval question text, eval field name, `INC-LIVE-001`, demo
+  question or cause, or demo leak combination in any documents or chunks row.
+- Every chunk is a 384-dim unit vector.
+- `opspilot_tsquery` finds PAYAPI-E1042, 503 and LEDGER-W210 (every hit holds the exact token).
+  `payments-db-01` finds `payments-db-01.prod.internal`. ECONNREFUSED is in no chunk.
+- Dense smoke: "ledger service JVM burning CPU because garbage collection keeps running" returns
+  RB-001 first. One query, not a metric.
+
+**Decision:** chunk content is the raw text with no title prefix. A section's later chunks may not
+name their service. Prepending the doc title or heading path before embedding is a Phase 2 ablation,
+not a default.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -1905,7 +2009,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Next is step 5 (ingest and embed).
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete: 147 documents, 408 chunks embedded. Next is Phase 2 (retrieval).
 - Phase 0 accounts (AWS, Groq, Gemini, Langfuse Cloud, Anthropic credits, GitHub): **not done**. Prince is doing these in parallel. Repo files only until then.
 
 ## Unverified claims (check in Phase 0, record results here)

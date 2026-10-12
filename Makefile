@@ -82,8 +82,9 @@ audit-pack:
 import-audit:
 	@uv run python eval/label_audit.py import $(FILE)
 
+# Host-side: loads data/processed into Postgres and embeds on the Mac's CPU.
 ingest:
-	@echo "ingest: not implemented (Phase 1 step 5)"
+	@DATABASE_URL=$(HOST_DATABASE_URL) uv run python -m rag.ingestion
 
 eval:
 	@echo "eval: not implemented (Phase 2)"
