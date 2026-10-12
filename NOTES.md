@@ -1537,7 +1537,55 @@ listed. No question or label changed.
   answer, so it's left for Prince. label_spotcheck.md gold lines refreshed (same 40 questions).
 
 **Phase 2 requirement:** Retrieval eval also reports all-gold Recall@k for questions with 2+ gold
-docs, because at-least-one recall flatters multi-gold questions (126 of 160 after the audit fixes).
+docs, because at-least-one recall flatters multi-gold questions (126 of 160 after the audit fixes;
+146 of the final 200).
+
+## 2026-10-11: Phase 1 step 4 complete (eval set, 200 questions)
+
+**Provenance**
+- **160 Claude-drafted** (Q001-Q160): three Sonnet writers, then an Opus reviewer over every label
+  (34 findings, all fixed; entry above).
+  - Gemini label audit, pasted by hand. Q081-Q160 were audited under strict instructions (doc ids
+    and details cited). Q001-Q080 were audited under loose instructions; they came back all OK and
+    are not relied on.
+  - Prince adjudicated the 2 Gemini flags and 10 seeded OK samples (all AGREE,
+    `eval/label_audit.md`).
+  - A scripted runbook-link scan across all 160, judged by an Opus reviewer: 20 runbooks added, plus
+    the 2 Gemini flags.
+  - Q074 was reworded so it no longer states its fix.
+- **40 Gemini-drafted** (H001-H040), kept verbatim from `eval/human_sheet.md`. Labelled by a Sonnet
+  labeller, then an Opus reviewer (6 findings, all fixed).
+  - 14 are `false_premise`: H002, H003, H012, H018, H020, H022, H023, H024, H025, H026, H032, H033,
+    H038, H040.
+  - 12 have `unrecorded` parts: H004, H009, H012, H017, H018, H019, H022, H023, H026, H027, H033,
+    H037.
+  - H024 names no distinguishing token, so its twin INC-0128 is gold by the twin rule.
+
+**Validator changes in step 4b**
+- Optional `false_premise` (a correcting key fact is required) and `unrecorded` (each item needs
+  "not recorded: <item>"). Rule (d) passes for a no-fix row only when the fix is unrecorded.
+- "name/DNS resolution" and "resolution failure" no longer count as fix wording. They had made the
+  labeller add a bogus "not recorded: the fix" to H019 and H039.
+- In the twin check, a service name may be written with a space ("catalog API").
+
+**Final counts (200)**
+
+| | exact-token | multi-doc | paraphrase | total |
+|---|---|---|---|---|
+| dev | 45 | 28 | 27 | 100 |
+| test | 45 | 27 | 28 | 100 |
+| all | 90 | 55 | 55 | 200 |
+
+- Author: claude 160 (80 dev / 80 test), gemini 40 (20 / 20). Of the 40, 21 are paraphrase.
+- Exact-token: 45% overall.
+- Gold-doc count: 1 doc for 54 questions (dev 22, test 32); 2+ docs for 146 (dev 78, test 68).
+- false_premise: dev 8, test 6. unrecorded: dev 8, test 4.
+- The split is 100/100 with `SEED`, stratified by (difficulty, author). `--final` passes.
+
+**Rule:** the test split is touched once, in Phase 5. In Phase 2 every eval script defaults to dev and
+refuses test without an explicit flag.
+
+**Next:** step 5, ingest and embed.
 
 ## Standing rules (write-ups)
 
@@ -1822,7 +1870,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4a: 160 drafted questions with labels; the 40 hand-written (or Gemini) questions, their labels and the split are next.
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Next is step 5 (ingest and embed).
 - Phase 0 accounts (AWS, Groq, Gemini, Langfuse Cloud, Anthropic credits, GitHub): **not done**. Prince is doing these in parallel. Repo files only until then.
 
 ## Unverified claims (check in Phase 0, record results here)
