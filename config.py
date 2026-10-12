@@ -59,6 +59,9 @@ class Settings(BaseSettings):
     # Password of the read-only role opspilot_ro (migration 0004) that the agent's tools use.
     readonly_db_password: SecretStr = SecretStr("readonly-change-me")
 
+    # Generation eval: agent runs (and judge calls) in flight at once.
+    eval_concurrency: int = Field(default=3, ge=1)
+
     # Chunking (tokens, counted with the embedding model's own tokenizer). Locked at 256/32 by
     # the Phase 2 ablation (eval/results/ablation.md); 400/50 was the Phase 1 start.
     chunk_size: int = 256

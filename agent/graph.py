@@ -46,6 +46,10 @@ LATEST_RESULT_TOKENS = 1500
 DRAFT_SNIPPET_CHARS = 300
 READ_CHARS = 2000  # a chunk from read_document goes to the draft whole (256 tokens is ~1,100 chars)
 INDEX_CHARS = 100  # per line of the compact evidence index gather sees
+NUDGE = (
+    "You replied without a tool call. Make the call now, as a tool call; reply done only when "
+    "finished."
+)
 MIN_QUOTE_WORDS = 3  # an empty or one-word quote is a substring of almost anything
 LOWER = {"high": "medium", "medium": "low", "low": "low"}
 
@@ -393,17 +397,25 @@ def build_graph(
         write = get_stream_writer()
         llm_calls, done, new = [], [], {}
         latest: list = []
+        nudged = False
         while True:
             made = state["tool_calls"] + done
             if len(made) >= max_tool_calls or out_of_time(state):
                 break
             msgs = gather_messages(state, made, state["evidence"] | new, latest)
+            if nudged and not made:  # only the turn right after the prose reply
+                msgs[1]["content"] += f"\n{NUDGE}"
             r = llm.chat(
                 msgs, tools, max_tokens=GATHER_MAX_TOKENS, name="gather", trace_id=state["trace_id"]
             )
             llm_calls.append(r.log_row())
-            if not r.tool_calls:  # the model says done
-                break
+            if not r.tool_calls:
+                # Done, unless nothing was called yet and the reply does not say done: gpt-oss
+                # sometimes describes the call in prose instead of making it. One nudge.
+                if made or nudged or "done" in r.content.lower():
+                    break
+                nudged = True
+                continue
             latest = []
             for call in r.tool_calls:
                 if len(state["tool_calls"]) + len(done) >= max_tool_calls:

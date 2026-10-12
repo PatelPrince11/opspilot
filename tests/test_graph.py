@@ -346,3 +346,23 @@ def test_other_llm_errors_still_raise(monkeypatch):
 
     with pytest.raises(LLMError, match="503"):
         run(StubLLM([TRIAGE, DONE, down]), monkeypatch)
+
+
+def test_a_first_reply_in_prose_gets_one_nudge_then_the_call_runs(monkeypatch):
+    """Q003 on gpt-oss: the first gather turn described the log window in prose, no tool call."""
+    prose = say("The window is 2025-02-20T00:00:00Z to 2025-02-20T23:59:59Z")
+    llm = StubLLM([TRIAGE, prose, calls(("query_logs", LOGS)), DONE, draft(("x", ["log:0"]))])
+    final, _ = run(llm, monkeypatch)
+    assert llm.script == [] and len(final["tool_calls"]) == 1
+    assert graph_mod.NUDGE in llm.bodies[2]["messages"][1]["content"]
+    assert graph_mod.NUDGE not in llm.bodies[3]["messages"][1]["content"]
+
+
+def test_prose_twice_or_done_first_ends_gather(monkeypatch):
+    prose = say("I would look at the logs.")
+    llm = StubLLM([TRIAGE, prose, prose, draft()])
+    final, _ = run(llm, monkeypatch)
+    assert llm.script == [] and final["tool_calls"] == []
+    llm = StubLLM([TRIAGE, say("Done: nothing to look up."), draft()])
+    final, _ = run(llm, monkeypatch)
+    assert llm.script == [] and final["tool_calls"] == []

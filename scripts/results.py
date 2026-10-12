@@ -94,11 +94,11 @@ BULLET_ROWS = {
     " row's CI; [N] documents from section (a); [N] questions = test n.",
     "Developed a LangGraph": "Section (c): citation accuracy (a)/(b) for [X], tool-call success"
     " for [Y] (Phase 3, then test in Phase 5).",
-    "Cut prompt-injection": "Section (c): attack success before/after, held-out half (Phase 4);"
+    "Cut prompt-injection": "Section (d): attack success before/after, held-out half (Phase 4);"
     " [N] = 30 cases (15 tune, 15 held-out, both reported).",
-    "Built an automated eval": "Section (c): judge agreement for [X] (Phase 3); the retrieval"
+    "Built an automated eval": "Section (d): judge agreement for [X] (Phase 3); the retrieval"
     " section shows the retrieval half of the pipeline.",
-    "Deployed FastAPI": "Section (c): p95 end-to-end latency on EC2 (Phase 5).",
+    "Deployed FastAPI": "Section (d): p95 end-to-end latency on EC2 (Phase 5).",
 }
 
 
@@ -249,9 +249,128 @@ def retrieval_section(questions: list[dict]) -> list[str]:
     return out
 
 
-def placeholder_section() -> list[str]:
-    out = ["## (c) Not measured yet", "", "| metric | status |", "|---|---|"]
-    out += [f"| {name} | not measured yet (Phase {p}) |" for name, p in PLACEHOLDERS]
+GEN_DEFS = {
+    "citation_a": "claims whose every cited id was gathered and whose quote is in a cited item"
+    " (deterministic) / claims",
+    "citation_b": "claims the judge marks supported by the evidence they cite / claims",
+    "faithfulness": "judge score 1-5 per answer: the whole diagnosis sticks to its cited"
+    " evidence; mean",
+    "completeness": "expected key facts the judge marks present / key facts",
+    "premise_corrected": "false-premise questions whose answer corrects the premise (judge)",
+    "unrecorded_respected": "questions with an unrecorded part where the answer invents none"
+    " (judge)",
+    "tool_success": "tool calls that ran without error / tool calls (a repeated call counts as"
+    " failed)",
+    "verify_loop": "runs where verify sent the agent back to gather / runs",
+    "no_diagnosis": "runs whose draft failed twice and returned the fallback / runs",
+}
+GEN_MEASURED = {
+    "Citation accuracy (a): cited id was in the retrieved evidence",
+    "Citation accuracy (b): cited evidence supports the claim (judged)",
+    "Faithfulness (judge)",
+    "Completeness (judge, expected key facts)",
+    "Tool-call success rate",
+    "Verify-loop rate (share of investigations that loop back)",
+    "p50 / p95 latency, LLM calls",
+}
+
+
+def generation_section(questions: list[dict]) -> list[str]:
+    on, off = load_named("dev", "generation_verify_on"), load_named("dev", "generation_verify_off")
+    if not on or not off:
+        return []
+    from eval.generation_eval import compare
+
+    agent, judge = on["models"]["agent"], on["models"]["judge"]
+    out = [
+        "## (c) Generation (dev)",
+        "",
+        f"Agent `{agent}`, judge `{judge}` (prompt {on['config']['judge_prompt_version']}),"
+        f" as_of {on['config']['as_of']}, at most {on['config']['agent_max_tool_calls']} tool"
+        f" calls, {on['config']['llm_token_budget']}-token budget per call. One run per question"
+        " per config. Rates are pooled over claims, key facts or calls; the count beside each"
+        " value is that denominator, n is questions. Judge metrics are unvalidated until the"
+        " hand-label agreement below exists.",
+        "",
+        "- Source: eval/results/dev_generation_verify_{on,off}.json, written by `make gen-eval`.",
+        "- Comparisons: verify on minus off, paired by question, percentile bootstrap 95% CI,"
+        f" 10,000 resamples of questions, seed {SEED}. Claimable = yes only when the CI excludes"
+        " 0.",
+        "",
+        "| metric | definition | config | n | value (denominator) | results file | commit |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for name, r in (("verify on", on), ("verify off", off)):
+        m = r["metrics"]["overall"]
+        for k, d in GEN_DEFS.items():
+            v = m[k]
+            out.append(
+                f"| {k} | {d} | {name} | {v['n']} | {fmt(v['value'])} ({v['den']}) |"
+                f" dev_generation_{name.replace(' ', '_')}.json | {provenance(r)} |"
+            )
+    out += [
+        "",
+        "| comparison (on - off) | slice | n | difference | 95% CI | claimable |",
+        "|---|---|---|---|---|---|",
+    ]
+    for c in compare(on, off, questions):
+        claim = "yes" if c["lo"] > 0 or c["hi"] < 0 else "no"
+        out.append(
+            f"| {c['metric']} | {c['slice']} | {c['n']} | {c['diff']:+.3f}"
+            f" | [{c['lo']:+.3f}, {c['hi']:+.3f}] | {claim} |"
+        )
+    cols = ("citation_a", "citation_b", "faithfulness", "completeness", "tool_success")
+    for name, r in (("verify on", on), ("verify off", off)):
+        out += [
+            "",
+            f"Per slice, {name} (value (denominator)):",
+            "",
+            "| slice | n | " + " | ".join(cols) + " | verify_loop | no_diagnosis |",
+            "|---|---|" + "---|" * (len(cols) + 2),
+        ]
+        for sl, m in r["metrics"].items():
+            cells = [f"{fmt(m[c]['value'])} ({m[c]['den']})" for c in cols]
+            out.append(
+                f"| {sl} | {m['per_run']['n']} | {' | '.join(cells)}"
+                f" | {fmt(m['verify_loop']['value'])} | {fmt(m['no_diagnosis']['value'])} |"
+            )
+    out += [
+        "",
+        "| cost and size per run | config | n | prompt tokens | completion tokens | LLM calls"
+        " | tool calls | $ (reported) |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for name, r in (("verify on", on), ("verify off", off)):
+        p = r["metrics"]["overall"]["per_run"]
+        out.append(
+            f"| mean | {name} | {p['n']} | {p['prompt_tokens']:,.0f} |"
+            f" {p['completion_tokens']:,.0f} | {p['llm_calls']:.1f} | {p['tool_calls']:.1f} |"
+            f" {p['cost_usd']:.4f} |"
+        )
+    out += [
+        "",
+        "| latency (first real run; cache hits excluded) | config | n | p50 | p95 |",
+        "|---|---|---|---|---|",
+    ]
+    for name, r in (("verify on", on), ("verify off", off)):
+        lat = r["latency"]
+        for k, unit in (("end_to_end_s", "s"), ("llm_call_ms", "ms"), ("tool_call_ms", "ms")):
+            v = lat[k]
+            out.append(
+                f"| {k} | {name} | {v['n']} | {v['p50']:.1f} {unit} | {v['p95']:.1f} {unit} |"
+            )
+    if on["unjudged"] or off["unjudged"]:
+        out += ["", f"Not judged: verify on {on['unjudged']}, verify off {off['unjudged']}."]
+    return out
+
+
+def placeholder_section(measured: set[str] = frozenset()) -> list[str]:
+    out = ["## (d) Not measured yet", "", "| metric | status |", "|---|---|"]
+    out += [
+        f"| {name} | not measured yet (Phase {p}) |"
+        for name, p in PLACEHOLDERS
+        if name not in measured
+    ]
     return out
 
 
@@ -260,7 +379,7 @@ def bullets_section() -> list[str]:
     block = text[text.index("**Bullet templates**") : text.index("**Skills line:**")]
     templates = [ln[2:].strip() for ln in block.splitlines() if ln.startswith("- ")]
     out = [
-        "## (d) Resume bullet templates (docs/BUILD_GUIDE.md) and the rows that fill them",
+        "## (e) Resume bullet templates (docs/BUILD_GUIDE.md) and the rows that fill them",
         "",
         "Only test-split rows fill the brackets. A bullet whose number comes out weak is dropped.",
         "",
@@ -277,6 +396,7 @@ def render() -> str:
     questions = load(QUESTIONS)
     a = corpus_section(questions)
     b = retrieval_section(questions)
+    c = generation_section(questions)
     out = [
         "# OpsPilot results ledger",
         "",
@@ -288,7 +408,8 @@ def render() -> str:
         "",
         *b,
         "",
-        *placeholder_section(),
+        *([*c, ""] if c else []),
+        *placeholder_section(GEN_MEASURED if c else frozenset()),
         "",
         *bullets_section(),
     ]

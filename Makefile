@@ -1,4 +1,4 @@
-.PHONY: demo up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
+.PHONY: gen-eval judge-sheet judge-agreement demo up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -118,3 +118,17 @@ eval:
 #   make demo ARGS="--llm ollama:qwen2.5:7b --out scratchpad/phase3/demo_ollama.md"
 demo:
 	@DATABASE_URL=$(HOST_DATABASE_URL) OLLAMA_HOST=http://localhost:11434 uv run python -m scripts.demo $(ARGS)
+
+# Generation eval on dev (eval/generation_eval.py): verify on then off, resumable, cached;
+# writes eval/results/dev_generation_verify_{on,off}.json. Extra flags via ARGS, e.g.
+#   make gen-eval ARGS="--config verify_on --concurrency 3 --max-spend 4.5"
+gen-eval:
+	@DATABASE_URL=$(HOST_DATABASE_URL) uv run python -m eval.generation_eval run $(ARGS)
+
+# eval/judge_validation.md: 30 seeded, stratified verify-on answers for Prince to label.
+judge-sheet:
+	@uv run python -m eval.generation_eval sheet
+
+# Percent agreement and Cohen's kappa, Prince's labels vs the judge's.
+judge-agreement:
+	@uv run python -m eval.generation_eval agreement

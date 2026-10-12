@@ -91,7 +91,7 @@ Locked config: `hybrid`, bge prefix on, 30 candidates, chunks 256/32. Baseline: 
 
 token-doc Recall@5 is not independent of Recall@5: on dev, 42 of 45 exact-token questions have every gold doc holding one of their tokens.
 
-## (c) Not measured yet
+## (d) Not measured yet
 
 | metric | status |
 |---|---|
@@ -112,7 +112,7 @@ token-doc Recall@5 is not independent of Recall@5: on dev, 42 of 45 exact-token 
 | Tokens per investigation (input / output) | not measured yet (Phase 4) |
 | Estimated cost per investigation | not measured yet (Phase 4) |
 
-## (d) Resume bullet templates (docs/BUILD_GUIDE.md) and the rows that fill them
+## (e) Resume bullet templates (docs/BUILD_GUIDE.md) and the rows that fill them
 
 Only test-split rows fill the brackets. A bullet whose number comes out weak is dropped.
 
@@ -121,8 +121,8 @@ Only test-split rows fill the brackets. A bullet whose number comes out weak is 
 - Developed a LangGraph incident-investigation agent with 4 read-only tools and a citation-verification loop, reaching \[X\]% citation accuracy and \[Y\]% tool-call success.
   - Filled by: Section (c): citation accuracy (a)/(b) for [X], tool-call success for [Y] (Phase 3, then test in Phase 5).
 - Cut prompt-injection attack success from \[X\]% to \[Y\]% on \[N\] adversarial cases by isolating untrusted log and runbook content and keeping tools read-only.
-  - Filled by: Section (c): attack success before/after, held-out half (Phase 4); [N] = 30 cases (15 tune, 15 held-out, both reported).
+  - Filled by: Section (d): attack success before/after, held-out half (Phase 4); [N] = 30 cases (15 tune, 15 held-out, both reported).
 - Built an automated eval pipeline (retrieval, faithfulness, citation accuracy, latency) with an LLM judge validated at \[X\]% agreement against hand labels.
-  - Filled by: Section (c): judge agreement for [X] (Phase 3); the retrieval section shows the retrieval half of the pipeline.
+  - Filled by: Section (d): judge agreement for [X] (Phase 3); the retrieval section shows the retrieval half of the pipeline.
 - Deployed FastAPI, Postgres and a React/TypeScript dashboard to AWS EC2 via Docker Compose and GitHub Actions, with Langfuse tracing, token/cost tracking and \[X\] ms p95 latency.
-  - Filled by: Section (c): p95 end-to-end latency on EC2 (Phase 5).
+  - Filled by: Section (d): p95 end-to-end latency on EC2 (Phase 5).
