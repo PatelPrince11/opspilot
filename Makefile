@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
+.PHONY: demo up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -113,3 +113,8 @@ results-check:
 #   make eval ARGS="--mode dense --no-bge-prefix". Test needs --split test --final-test (Phase 5).
 eval:
 	@DATABASE_URL=$(HOST_DATABASE_URL) uv run python -m eval.retrieval_eval $(ARGS)
+
+# One demo investigation with a transcript (host-side; Ollama on the Mac is localhost):
+#   make demo ARGS="--llm ollama:qwen2.5:7b --out scratchpad/phase3/demo_ollama.md"
+demo:
+	@DATABASE_URL=$(HOST_DATABASE_URL) OLLAMA_HOST=http://localhost:11434 uv run python -m scripts.demo $(ARGS)
