@@ -100,5 +100,7 @@ import-audit:
 ingest:
 	@DATABASE_URL=$(HOST_DATABASE_URL) uv run python -m rag.ingestion
 
+# Retrieval eval on dev with the locked config; extra flags via ARGS, e.g.
+#   make eval ARGS="--mode dense --no-bge-prefix". Test needs --split test --final-test (Phase 5).
 eval:
-	@echo "eval: not implemented (Phase 2)"
+	@DATABASE_URL=$(HOST_DATABASE_URL) uv run python -m eval.retrieval_eval $(ARGS)
