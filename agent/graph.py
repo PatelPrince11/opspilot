@@ -56,7 +56,9 @@ class Triage(BaseModel):
     services: list[str] = Field(description="Service names involved, from the known list")
     symptoms: str = Field(description="The reported symptoms in a few words")
     window_start: datetime = Field(description="Start of the log window to inspect, ISO 8601 UTC")
-    window_end: datetime = Field(description="End of the log window, ISO 8601 UTC, <= as_of")
+    window_end: datetime = Field(
+        description="End of the log window, ISO 8601 UTC, <= as_of, <= 24 h after the start"
+    )
 
 
 class Claim(BaseModel):
@@ -121,16 +123,20 @@ def initial_state(question: str, as_of: str, trace_id: str | None = None) -> Sta
 
 SYSTEM = (
     "You are OpsPilot, an incident investigator for an on-call engineer. You can only read: "
-    "runbooks, past incident write-ups, service logs and service status. The current time is "
-    "as_of; there are no logs after it."
+    "runbooks, past incident write-ups, service logs and service status. The current time "
+    "(as_of) is {as_of}; there are no logs after it. Questions may ask about a past date: then "
+    "look at that time, not at as_of."
 )
 
 GATHER_INSTRUCTIONS = (
     "Investigate step by step: each turn, call a tool (or a few independent ones), read the "
     "result, then choose the next call. Search runbooks and past incidents for the symptoms, "
     "check service status, and query the logs of the affected service and of the services it "
-    "depends on in the window that ends at as_of (each log query covers at most 24 hours; times "
-    "are ISO 8601 UTC). Use exact service names from the known list. Do not repeat a call. "
+    "depends on. Each log query needs an explicit start and end, ISO 8601 UTC, at most 24 hours "
+    "apart: when the question names a past date or time, set the window around it (if the "
+    "question gives no time of day, find the time in the incident write-ups first); otherwise "
+    "use a window ending at as_of. Use exact service names from the known list. Do not repeat "
+    "a call. "
     "When the evidence explains the cause, or nothing more can be found, reply with the word "
     "done and no tool call."
 )
@@ -259,16 +265,21 @@ def build_graph(
     def context(state) -> str:
         return f"as_of: {state['as_of']}\nQuestion: {state['question']}"
 
+    def system(state, instructions: str = "") -> dict:
+        text = SYSTEM.format(as_of=state["as_of"])
+        return {"role": "system", "content": f"{text} {instructions}".strip()}
+
     def triage(state: State) -> dict:
         known = ", ".join(r[0] for r in conn.execute("SELECT name FROM services ORDER BY name"))
         calls: list = []
         msgs = [
-            {"role": "system", "content": SYSTEM},
+            system(state),
             {
                 "role": "user",
                 "content": f"{context(state)}\nKnown services: {known}\n"
-                "Reply with JSON: services involved, symptoms, and a log window of about one "
-                "hour ending at as_of.",
+                "Reply with JSON: services involved, symptoms, and a log window: about one hour "
+                "around the date and time the question names, or ending at as_of if it names "
+                "none (the whole named day, at most 24 h, if it gives no time of day).",
             },
         ]
         t = structured(llm, msgs, Triage, "triage", TRIAGE_MAX_TOKENS, state, calls)
@@ -294,7 +305,7 @@ def build_graph(
             f"Tool calls so far ({len(made)} of {max_tool_calls}):\n{so_far}\n"
         )
         msgs = [
-            {"role": "system", "content": f"{SYSTEM} {GATHER_INSTRUCTIONS}"},
+            system(state, GATHER_INSTRUCTIONS),
             {"role": "user", "content": head},
         ]
         room = llm.budget - GATHER_MAX_TOKENS - estimate_tokens(msgs, tools) - 60
@@ -379,7 +390,7 @@ def build_graph(
             )
         head = f"{context(state)}{feedback}\nEvidence:\n"
         base = [
-            {"role": "system", "content": f"{SYSTEM} {DRAFT_INSTRUCTIONS}"},
+            system(state, DRAFT_INSTRUCTIONS),
             {"role": "user", "content": head},
         ]
         fixed = estimate_tokens(base, Draft.model_json_schema())

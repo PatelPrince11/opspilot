@@ -6,6 +6,7 @@ from alembic import command
 from alembic.config import Config
 from psycopg import errors
 
+from agent.graph import build_graph, initial_state
 from agent.tools import (
     MAX_LOG_ROWS,
     SNIPPET_CHARS,
@@ -15,6 +16,7 @@ from agent.tools import (
     tool_schemas,
 )
 from config import get_settings
+from tests.stub_llm import TRIAGE, StubLLM, calls, draft, say
 from tests.test_retrieval import load_fixture
 from tests.test_schema import ALEMBIC_INI, with_db
 
@@ -46,6 +48,13 @@ def url():
             " 'payments-api', CASE WHEN g % 10 = 0 THEN 'ERROR' ELSE 'INFO' END,"
             " CASE WHEN g % 10 = 0 THEN 'refused errno=ECONNREFUSED' ELSE 'ok 100%_done' END,"
             " 'synthetic' FROM generate_series(1, 120) g"
+        )
+        # Logs of the past incident INC-9001 (5 January 2026), long before the demo's as_of.
+        c.execute(
+            "INSERT INTO log_events (ts, service, level, message, source, incident_id)"
+            " SELECT '2026-01-05 14:00:00+00'::timestamptz + make_interval(mins => g),"
+            " 'payments-api', 'ERROR', 'PAYAPI-E1042 pool exhausted', 'synthetic', 'INC-9001'"
+            " FROM generate_series(1, 5) g"
         )
     return with_db(base, TEST_DB)
 
@@ -132,3 +141,25 @@ def test_unknown_tool_and_schemas():
     assert names == ["search_runbooks", "search_incidents", "query_logs", "get_service_status"]
     logs = tool_schemas()[2]["function"]["parameters"]
     assert set(logs["required"]) == {"service", "start", "end"}
+
+
+def test_a_past_incident_question_retrieves_that_incidents_logs(ro):
+    """The stub plays a model that follows the prompt: an explicit window around the named date,
+    nine months before as_of. The real tool returns exactly that incident's logs."""
+    as_of = "2026-10-06T14:52:00Z"
+    window = {
+        "service": "payments-api",
+        "start": "2026-01-05T13:30:00Z",
+        "end": "2026-01-05T15:00Z",
+    }
+    llm = StubLLM([TRIAGE, calls(("query_logs", window)), say("done"), draft()])
+    g = build_graph(llm, ro, verify_quotes=False)
+    final = g.invoke(initial_state("What broke payments-api on 5 January 2026?", as_of))
+    want = {
+        f"log:{i}"
+        for (i,) in ro.execute("SELECT id FROM log_events WHERE incident_id = %s", ["INC-9001"])
+    }
+    assert len(want) == 5 and {k for k in final["evidence"] if k.startswith("log:")} == want
+    system = llm.bodies[1]["messages"][0]["content"]  # the first gather turn
+    assert f"(as_of) is {as_of}" in system and "past date" in system
+    assert "set the window around it" in system
