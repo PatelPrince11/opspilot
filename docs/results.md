@@ -91,16 +91,98 @@ Locked config: `hybrid`, bge prefix on, 30 candidates, chunks 256/32. Baseline: 
 
 token-doc Recall@5 is not independent of Recall@5: on dev, 42 of 45 exact-token questions have every gold doc holding one of their tokens.
 
+## (c) Generation (dev)
+
+Agent `openrouter:openai/gpt-oss-120b`, judge `gemini:gemini-3.5-flash-lite` (prompt judge-v1), as_of 2026-10-06T14:52:00Z, at most 8 tool calls, 6000-token budget per call. One run per question per config. Rates are pooled over claims, key facts or calls; the count beside each value is that denominator, n is questions. Judge metrics are unvalidated until the hand-label agreement below exists.
+
+- Source: eval/results/dev_generation_verify_{on,off}.json, written by `make gen-eval`.
+- Comparisons: verify on minus off, paired by question, percentile bootstrap 95% CI, 10,000 resamples of questions, seed 20261003. Claimable = yes only when the CI excludes 0.
+
+| metric | definition | config | n | value (denominator) | results file | commit |
+|---|---|---|---|---|---|---|
+| citation_a | claims whose every cited id was gathered and whose quote is in a cited item (deterministic) / claims | verify on | 98 | 1.000 (270) | dev_generation_verify_on.json | b25000ce44be |
+| citation_b | claims the judge marks supported by the evidence they cite / claims | verify on | 98 | 0.974 (270) | dev_generation_verify_on.json | b25000ce44be |
+| faithfulness | judge score 1-5 per answer: the whole diagnosis sticks to its cited evidence; mean | verify on | 100 | 4.770 (100) | dev_generation_verify_on.json | b25000ce44be |
+| completeness | expected key facts the judge marks present / key facts | verify on | 100 | 0.732 (254) | dev_generation_verify_on.json | b25000ce44be |
+| premise_corrected | false-premise questions whose answer corrects the premise (judge) | verify on | 7 | 0.857 (7) | dev_generation_verify_on.json | b25000ce44be |
+| unrecorded_respected | questions with an unrecorded part where the answer invents none (judge) | verify on | 6 | 0.333 (6) | dev_generation_verify_on.json | b25000ce44be |
+| tool_success | tool calls that ran without error / tool calls (a repeated call counts as failed) | verify on | 100 | 0.677 (601) | dev_generation_verify_on.json | b25000ce44be |
+| verify_loop | runs where verify sent the agent back to gather / runs | verify on | 100 | 0.460 (100) | dev_generation_verify_on.json | b25000ce44be |
+| no_diagnosis | runs whose draft failed twice and returned the fallback / runs | verify on | 100 | 0.020 (100) | dev_generation_verify_on.json | b25000ce44be |
+| citation_a | claims whose every cited id was gathered and whose quote is in a cited item (deterministic) / claims | verify off | 100 | 0.763 (333) | dev_generation_verify_off.json | b25000ce44be |
+| citation_b | claims the judge marks supported by the evidence they cite / claims | verify off | 100 | 0.964 (333) | dev_generation_verify_off.json | b25000ce44be |
+| faithfulness | judge score 1-5 per answer: the whole diagnosis sticks to its cited evidence; mean | verify off | 100 | 4.770 (100) | dev_generation_verify_off.json | b25000ce44be |
+| completeness | expected key facts the judge marks present / key facts | verify off | 100 | 0.783 (254) | dev_generation_verify_off.json | b25000ce44be |
+| premise_corrected | false-premise questions whose answer corrects the premise (judge) | verify off | 7 | 0.857 (7) | dev_generation_verify_off.json | b25000ce44be |
+| unrecorded_respected | questions with an unrecorded part where the answer invents none (judge) | verify off | 6 | 0.333 (6) | dev_generation_verify_off.json | b25000ce44be |
+| tool_success | tool calls that ran without error / tool calls (a repeated call counts as failed) | verify off | 100 | 0.778 (473) | dev_generation_verify_off.json | b25000ce44be |
+| verify_loop | runs where verify sent the agent back to gather / runs | verify off | 100 | 0.000 (100) | dev_generation_verify_off.json | b25000ce44be |
+| no_diagnosis | runs whose draft failed twice and returned the fallback / runs | verify off | 100 | 0.000 (100) | dev_generation_verify_off.json | b25000ce44be |
+
+| comparison (on - off) | slice | n | difference | 95% CI | claimable |
+|---|---|---|---|---|---|
+| citation_a | overall | 98 | +0.218 | [+0.164, +0.279] | yes |
+| citation_a | difficulty=exact-token | 45 | +0.241 | [+0.162, +0.327] | yes |
+| citation_a | difficulty=multi-doc | 27 | +0.204 | [+0.111, +0.302] | yes |
+| citation_a | difficulty=paraphrase | 26 | +0.195 | [+0.093, +0.324] | yes |
+| citation_a | author=claude | 79 | +0.221 | [+0.158, +0.288] | yes |
+| citation_a | author=gemini | 19 | +0.207 | [+0.115, +0.288] | yes |
+| citation_a | false_premise=False | 91 | +0.218 | [+0.160, +0.278] | yes |
+| citation_a | false_premise=True | 7 | +0.217 | [+0.083, +0.320] | yes |
+| citation_b | overall | 98 | +0.011 | [-0.012, +0.037] | no |
+| citation_b | difficulty=exact-token | 45 | +0.005 | [-0.020, +0.031] | no |
+| citation_b | difficulty=multi-doc | 27 | +0.046 | [-0.002, +0.102] | no |
+| citation_b | difficulty=paraphrase | 26 | -0.022 | [-0.078, +0.023] | no |
+| citation_b | author=claude | 79 | +0.024 | [-0.001, +0.052] | no |
+| citation_b | author=gemini | 19 | -0.053 | [-0.124, +0.000] | no |
+| citation_b | false_premise=False | 91 | +0.016 | [-0.007, +0.042] | no |
+| citation_b | false_premise=True | 7 | -0.056 | [-0.167, +0.000] | no |
+| faithfulness | overall | 100 | +0.000 | [-0.130, +0.130] | no |
+| completeness | overall | 100 | -0.051 | [-0.106, +0.000] | no |
+| tool_success | overall | 100 | -0.101 | [-0.146, -0.061] | yes |
+
+Per slice, verify on (value (denominator)):
+
+| slice | n | citation_a | citation_b | faithfulness | completeness | tool_success | verify_loop | no_diagnosis |
+|---|---|---|---|---|---|---|---|---|
+| author=claude | 80 | 1.000 (227) | 0.982 (227) | 4.850 (80) | 0.758 (198) | 0.677 (470) | 0.450 | 0.013 |
+| author=gemini | 20 | 1.000 (43) | 0.930 (43) | 4.450 (20) | 0.643 (56) | 0.679 (131) | 0.500 | 0.050 |
+| difficulty=exact-token | 45 | 1.000 (121) | 0.983 (121) | 4.889 (45) | 0.798 (109) | 0.695 (236) | 0.489 | 0.000 |
+| difficulty=multi-doc | 28 | 1.000 (83) | 0.988 (83) | 4.857 (28) | 0.675 (77) | 0.692 (201) | 0.429 | 0.036 |
+| difficulty=paraphrase | 27 | 1.000 (66) | 0.939 (66) | 4.481 (27) | 0.691 (68) | 0.634 (164) | 0.444 | 0.037 |
+| false_premise=False | 93 | 1.000 (252) | 0.976 (252) | 4.796 (93) | 0.746 (232) | 0.673 (551) | 0.452 | 0.022 |
+| false_premise=True | 7 | 1.000 (18) | 0.944 (18) | 4.429 (7) | 0.591 (22) | 0.720 (50) | 0.571 | 0.000 |
+| overall | 100 | 1.000 (270) | 0.974 (270) | 4.770 (100) | 0.732 (254) | 0.677 (601) | 0.460 | 0.020 |
+
+Per slice, verify off (value (denominator)):
+
+| slice | n | citation_a | citation_b | faithfulness | completeness | tool_success | verify_loop | no_diagnosis |
+|---|---|---|---|---|---|---|---|---|
+| author=claude | 80 | 0.771 (266) | 0.959 (266) | 4.750 (80) | 0.798 (198) | 0.810 (348) | 0.000 | 0.000 |
+| author=gemini | 20 | 0.731 (67) | 0.985 (67) | 4.850 (20) | 0.732 (56) | 0.688 (125) | 0.000 | 0.000 |
+| difficulty=exact-token | 45 | 0.759 (141) | 0.979 (141) | 4.844 (45) | 0.817 (109) | 0.885 (148) | 0.000 | 0.000 |
+| difficulty=multi-doc | 28 | 0.759 (112) | 0.946 (112) | 4.750 (28) | 0.753 (77) | 0.704 (196) | 0.000 | 0.000 |
+| difficulty=paraphrase | 27 | 0.775 (80) | 0.963 (80) | 4.667 (27) | 0.765 (68) | 0.767 (129) | 0.000 | 0.000 |
+| false_premise=False | 93 | 0.761 (310) | 0.961 (310) | 4.774 (93) | 0.802 (232) | 0.785 (423) | 0.000 | 0.000 |
+| false_premise=True | 7 | 0.783 (23) | 1.000 (23) | 4.714 (7) | 0.591 (22) | 0.720 (50) | 0.000 | 0.000 |
+| overall | 100 | 0.763 (333) | 0.964 (333) | 4.770 (100) | 0.783 (254) | 0.778 (473) | 0.000 | 0.000 |
+
+| cost and size per run | config | n | prompt tokens | completion tokens | LLM calls | tool calls | $ (reported) |
+|---|---|---|---|---|---|---|---|
+| mean | verify on | 100 | 15,643 | 4,248 | 9.5 | 6.0 | 0.0044 |
+| mean | verify off | 100 | 11,483 | 2,766 | 7.4 | 4.7 | 0.0030 |
+
+| latency (first real run; cache hits excluded) | config | n | p50 | p95 |
+|---|---|---|---|---|
+| end_to_end_s | verify on | 100 | 12.0 s | 25.9 s |
+| llm_call_ms | verify on | 875 | 853.4 ms | 4450.8 ms |
+| tool_call_ms | verify on | 601 | 3.9 ms | 124.0 ms |
+| all | verify off | - | not measured: every LLM call was a cache hit (verify off replays verify on's first pass) | - |
+
 ## (d) Not measured yet
 
 | metric | status |
 |---|---|
-| Citation accuracy (a): cited id was in the retrieved evidence | not measured yet (Phase 3) |
-| Citation accuracy (b): cited evidence supports the claim (judged) | not measured yet (Phase 3) |
-| Faithfulness (judge) | not measured yet (Phase 3) |
-| Completeness (judge, expected key facts) | not measured yet (Phase 3) |
-| Tool-call success rate | not measured yet (Phase 3) |
-| Verify-loop rate (share of investigations that loop back) | not measured yet (Phase 3) |
 | Attack success before defenses, tune half (15) | not measured yet (Phase 4) |
 | Attack success before defenses, held-out half (15) | not measured yet (Phase 4) |
 | Attack success after defenses, tune half (15) | not measured yet (Phase 4) |
@@ -108,7 +190,6 @@ token-doc Recall@5 is not independent of Recall@5: on dev, 42 of 45 exact-token 
 | Judge agreement with Prince's 30 hand labels | not measured yet (Phase 3) |
 | p50 / p95 latency, end to end per investigation | not measured yet (Phase 4) |
 | p50 / p95 latency, retrieval on EC2 | not measured yet (Phase 5) |
-| p50 / p95 latency, LLM calls | not measured yet (Phase 3) |
 | Tokens per investigation (input / output) | not measured yet (Phase 4) |
 | Estimated cost per investigation | not measured yet (Phase 4) |
 

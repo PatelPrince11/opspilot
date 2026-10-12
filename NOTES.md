@@ -2538,6 +2538,98 @@ Before vs after read_document (key facts; before = the 3a.5 table, gpt-oss on Gr
   client sent `Bearer ` with no key. Root cause: the check was `key is None`. Now an empty value
   counts as unset, for every provider. Found by a test.
 
+## 2026-10-12: Phase 3b, generation eval on dev (verify on vs off), judge, hand-label sheet
+
+**Built**
+- `eval/generation_eval.py`, `make gen-eval`: the graph on all 100 dev questions at as_of
+  2026-10-06T14:52:00Z (after every corpus incident, so any past window is reachable), verify on
+  then off, EVAL_CONCURRENCY 3 (new setting), one Client per run. Three resumable stages with
+  progress files in .cache/gen_eval/: agent, judge, score. New spend (uncached calls' reported
+  cost, both configs) is checked before each run starts against --max-spend (default $4.50).
+  Results: eval/results/dev_generation_verify_{on,off}.json (commit, uncommitted files, config,
+  models, per-question scores and judge labels; unchanged content is not rewritten), an
+  eval_runs row with eval_results per question, and section (c) of docs/results.md.
+- Metrics are (numerator, denominator) per question, pooled per slice, n beside every value.
+  Paired bootstrap: resample questions (10,000, seed 20261003), recompute both configs' pooled
+  ratios on the same resample, CI of the difference.
+- `eval/judge.py`: one call per answer, strict JSON (per-claim supported, per-key-fact present,
+  faithfulness 1-5, premise_corrected, unrecorded_respected), temperature 0, cached by prompt
+  hash, PROMPT_VERSION judge-v1 inside the prompt. It sees the question, key facts, diagnosis and
+  the cited evidence texts only (an ungathered id is shown as not gathered). A verdict missing a
+  claim or fact gets one retry. RateLimiter: 4 s between real requests (15 RPM) and 500 per UTC
+  day counted in a file; cache hits never wait or count.
+- `make judge-sheet` -> eval/judge_validation.md: 30 verify-on answers, seeded, largest-remainder
+  stratified by difficulty x author; question, summary, cause, each claim with its cited evidence
+  text, key facts, blanks for SUPPORTED / PRESENT; the judge's labels are not shown.
+  `make judge-agreement`: percent agreement and Cohen's kappa (claims, key facts, all).
+
+**Errors and fixes (root cause first)**
+- Smoke run, Q003: gpt-oss answered its first gather turn with the log window in prose and no
+  tool call; the loop read any reply without a call as done, so it drafted from no evidence.
+  Now a reply without a call ends gather only if it says done or calls were already made;
+  otherwise one nudge, on the next turn only (a test caught my first version leaving the nudge
+  on every later turn). No run in the full eval needed it.
+- `--limit 3` wrote the named result file (3 of 3 "questions" looked complete). A --limit run
+  now never writes it; the smoke rows were deleted so all 100 ran on one code version.
+- The eval log looked stalled for 6 minutes: Python block-buffers print into a file; the
+  progress file showed 70 runs done. `make gen-eval` now sets PYTHONUNBUFFERED.
+- Verify off made no new LLM calls: its triage, gather and first draft prompts equal verify on's,
+  so all came from the cache. That is the right pairing (off = on's first draft, unlooped), but
+  its latency is replay time, so the ledger reports it as not measured.
+
+**Results (dev, n = 100, one run per question; judge metrics unvalidated until Prince's labels)**
+
+| metric | verify on | verify off | on - off [95% CI] | claimable |
+|---|---|---|---|---|
+| citation (a), claims | 1.000 (270) | 0.763 (333) | +0.218 [+0.164, +0.279], n 98 | yes |
+| citation (b), claims (judge) | 0.974 (270) | 0.964 (333) | +0.011 [-0.012, +0.037], n 98 | no |
+| faithfulness 1-5 (judge) | 4.77 (100) | 4.77 (100) | +0.000 [-0.130, +0.130] | no |
+| completeness, key facts (judge) | 0.732 (254) | 0.783 (254) | -0.051 [-0.106, +0.000] | no |
+| tool-call success, calls | 0.677 (601) | 0.778 (473) | -0.101 [-0.146, -0.061] | yes |
+| premise corrected (judge) | 6/7 | 6/7 | | |
+| unrecorded respected (judge) | 2/6 | 2/6 | | |
+| verify-loop rate | 0.46 (100) | 0 | | |
+| no diagnosis (fallback) | 2/100 | 0/100 | | |
+
+- Citation (a) with verify on is 1.000 by construction: verify drops every claim that fails this
+  check. The measured effect is the off column: 23.7% of first-draft claims cite something not
+  gathered or quote words not in the cited item. CIs exclude 0 in every slice.
+- Citation (b): the judge calls 96% of unverified claims supported, so most quote failures are
+  inexact quotes of real support, not invented support. Verify's gain is exactness, not (per an
+  unvalidated judge) support.
+- Completeness leans down with verify (-0.051, CI touching 0): dropped claims take key facts
+  with them, and 2 looped runs ended with no valid diagnosis. Not claimable.
+- Tool success drops with verify: the extra gather turns mostly re-read documents. In verify on,
+  175 of 327 read_document calls were blocked duplicates (verify off: 92 of 232); query_logs ran
+  8 times in 100 runs (dev questions are about past incidents and the agent reads documents).
+- Unrecorded respected 2/6: answers invent the part the corpus does not record. Premise 6/7.
+- Slices (verify on): completeness exact-token 0.798 (109 facts, n 45), multi-doc 0.675 (77,
+  n 28), paraphrase 0.691 (68, n 27); claude-authored 0.758 (198, n 80), gemini-authored 0.643
+  (56, n 20); false premise 0.591 (22, n 7). Small n: no slice gap here is claimed.
+- Judge vs my strict Part A labels on the 5 confirm questions (same cached answers): 10 of 12
+  key facts agree; both disagreements are facts I scored partial and the judge scored present.
+  A hint the judge is lenient on partials; Prince's 30 labels are the real check.
+
+**Cost, tokens, time**
+- Verify on, per run (mean of 100): 15,643 prompt + 4,248 completion tokens, 9.5 LLM calls,
+  6.0 tool calls, $0.0044 (OpenRouter-reported). Verify off: 11,483 + 2,766, 7.4 calls, 4.7 tool
+  calls, $0.0030 (original cost of its cached calls; no new spend).
+- New spend for the eval: $0.4037. OpenRouter account total after Phases 3a.6 and 3b: $0.4732
+  (Part A $0.0618, three pre-fix smoke runs about $0.008, eval $0.4037), $4.53 left.
+- Latency, verify on (Mac, concurrency 3, no 429 waits): end to end p50 12.0 s, p95 25.9 s
+  (n 100); LLM call p50 853 ms, p95 4,451 ms (n 875); tool call p50 3.9 ms, p95 124 ms (n 601).
+- Wall time: verify-on agent 7.4 min, its judge 6.5 min, verify-off agent 6 s (cache), its
+  judge 3.0 min. Judge: 147 real Gemini requests today (+3 smoke), the rest cache hits (the 54
+  runs that never looped give identical answers in both configs).
+
+**Open, for Prince**
+- Fill eval/judge_validation.md (165 blanks: claims and key facts of 30 answers), then
+  `make judge-agreement`.
+- gpt-oss re-reads documents despite the part count and the prompt rule; a duplicate
+  read_document could return a pointer to the earlier result instead of an error, or the gather
+  prompt could keep read documents in full. Not changed: it would change the agent after this
+  eval.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -2821,7 +2913,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Phase 3a (LLM wrapper, read-only tools, LangGraph graph, SSE API) is complete; demo smoke run on Ollama and Groq (entry above). Next is Phase 3b (generation eval).
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Phase 3a (LLM wrapper, read-only tools, LangGraph graph, SSE API) is complete; Phase 3a.6 (OpenRouter agent, read_document) and Phase 3b (generation eval on dev, verify on vs off) are complete. Next: Prince's 30 hand labels (eval/judge_validation.md), then Phase 4.
 - Phase 0 accounts: Groq, Gemini and Langfuse Cloud keys are in .env and checked by live calls (2026-10-12). AWS, Anthropic credits and GitHub: not checked here.
 
 ## Unverified claims (check in Phase 0, record results here)
