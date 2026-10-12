@@ -264,7 +264,8 @@ The evals are what make OpsPilot stand out; the demo only shows it runs. Tune on
 
 | Layer | Metric | Definition |
 | --- | --- | --- |
-| Retrieval | Recall@5, Recall@10 | Share of questions with at least one relevant doc in the top k (chunks deduped to docs by best-ranked chunk) |
+| Retrieval | Recall@5, Recall@10 | Recall@k (mean fraction of gold docs found): per question, the share of its relevant docs in the top k, averaged over questions (chunks deduped to docs by best-ranked chunk) |
+| Retrieval | Hit@5, Hit@10 | Share of questions with at least one relevant doc in the top k. Flatters multi-gold questions: finding one of two docs counts as a full hit |
 | Retrieval | MRR | Mean of 1 / rank of the first relevant doc |
 | Generation | Citation accuracy (a) | Share of claims whose cited id was in the retrieved evidence (deterministic) |
 | Generation | Citation accuracy (b) | Share of claims whose cited evidence supports the claim (judged) |

@@ -6,7 +6,10 @@
 
 Each question retrieves DEPTH chunks; chunks are deduped to documents keeping each document's
 best rank, and metrics are computed on that document ranking:
-- Recall@k: share of the question's gold documents in the top k.
+- Recall@k (mean fraction of gold docs found): per question |gold ∩ top k| / |gold|, averaged.
+  Not the share of questions with any gold doc in the top k; that is Hit@k.
+- Hit@k (at least one gold doc in top k): 1 if any gold doc is in the top k, else 0, averaged.
+  It flatters multi-gold questions (one of two docs found counts as a full hit).
 - MRR: 1 / rank of the first gold document (0 if none in the ranking).
 - all-gold Recall@10: questions with 2+ gold documents only; 1 if every gold doc is in the top 10.
 Latency is retrieve()'s wall time per question, models loaded beforehand.
@@ -42,6 +45,18 @@ from rag.retrieval import MODES, Hit, RetrievalConfig, retrieve
 from scripts.corpus.common import PROCESSED
 
 DEPTH = 30  # chunks per question, before the doc dedupe
+NAMES = {
+    "recall@5": "Recall@5 (mean fraction of gold docs found)",
+    "recall@10": "Recall@10 (mean fraction of gold docs found)",
+    "hit@5": "Hit@5 (at least one gold doc in top 5)",
+    "hit@10": "Hit@10 (at least one gold doc in top 10)",
+    "rr": "MRR",
+    "mrr": "MRR",
+    "all_gold@10": "all-gold Recall@10 (2+ gold docs, all in top 10)",
+    "token_doc@5": "token-doc Recall@5 (diagnostic)",
+    "agent_recall@10": "agent-view Recall@10 (diagnostic, mean fraction of gold docs found)",
+    "agent_all_gold@10": "agent-view all-gold Recall@10 (diagnostic)",
+}
 SLICES = ("difficulty", "author", "gold bucket", "false_premise")
 TEST_WARNING = (
     "WARNING: running on the TEST split. Test is touched once, in Phase 5, with the locked"
@@ -69,6 +84,8 @@ def score(ranked: list[str], gold: list[str]) -> dict:
     return {
         "recall@5": len(g & set(ranked[:5])) / len(g),
         "recall@10": len(g & set(ranked[:10])) / len(g),
+        "hit@5": float(bool(g & set(ranked[:5]))),
+        "hit@10": float(bool(g & set(ranked[:10]))),
         "rr": 1 / first if first else 0.0,
         "all_gold@10": float(g <= set(ranked[:10])) if len(g) > 1 else None,
     }
@@ -122,6 +139,21 @@ def run(
     return rows
 
 
+def with_hits(rows: list[dict], gold: dict[str, list[str]]) -> list[dict]:
+    """Rows stored before Hit@k existed get it from their stored top-10 docs (exact: `docs`
+    is the deduped ranking's first 10)."""
+    return [
+        r
+        if "hit@5" in r
+        else r
+        | {
+            "hit@5": float(bool(set(gold[r["id"]]) & set(r["docs"][:5]))),
+            "hit@10": float(bool(set(gold[r["id"]]) & set(r["docs"][:10]))),
+        }
+        for r in rows
+    ]
+
+
 def present(rows: list[dict], key: str) -> list[float]:
     return [r[key] for r in rows if r.get(key) is not None]
 
@@ -134,6 +166,8 @@ def metrics(rows: list[dict]) -> dict:
         "n": len(rows),
         "recall@5": mean(r["recall@5"] for r in rows),
         "recall@10": mean(r["recall@10"] for r in rows),
+        "hit@5": mean(r["hit@5"] for r in rows),
+        "hit@10": mean(r["hit@10"] for r in rows),
         "mrr": mean(r["rr"] for r in rows),
         "all_gold@10": mean(multi) if multi else None,
         "n_multi": len(multi),
@@ -166,9 +200,11 @@ def fmt(x: float | None) -> str:
 
 def table(summary: dict) -> str:
     lines = [
-        "| slice | n | Recall@5 | Recall@10 | MRR | all-gold R@10 (n) | token-doc R@5 (n)"
-        " | agent R@10 | agent all-gold R@10 (n) |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| slice | n | "
+        + " | ".join(NAMES[k] for k in ("recall@5", "recall@10", "hit@5"))
+        + f" | {NAMES['hit@10']} | MRR | {NAMES['all_gold@10']} (n) | {NAMES['token_doc@5']} (n)"
+        f" | {NAMES['agent_recall@10']} | {NAMES['agent_all_gold@10']} (n) |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for name, m in summary.items():
         if name == "latency":
@@ -179,7 +215,8 @@ def table(summary: dict) -> str:
         aag = "-" if aag is None else f"{aag:.3f} ({m['n_multi']})"
         lines.append(
             f"| {name} | {m['n']} | {m['recall@5']:.3f} | {m['recall@10']:.3f}"
-            f" | {m['mrr']:.3f} | {ag} | {tok} | {fmt(m['agent_recall@10'])} | {aag} |"
+            f" | {m['hit@5']:.3f} | {m['hit@10']:.3f} | {m['mrr']:.3f} | {ag} | {tok}"
+            f" | {fmt(m['agent_recall@10'])} | {aag} |"
         )
     lat = summary["latency"]
     lines.append(f"\nlatency p50 {lat['p50_ms']:.1f} ms, p95 {lat['p95_ms']:.1f} ms")

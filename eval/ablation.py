@@ -30,6 +30,7 @@ import psycopg
 
 from config import get_settings
 from eval.retrieval_eval import (
+    NAMES,
     check_ingested,
     latency,
     metrics,
@@ -37,6 +38,7 @@ from eval.retrieval_eval import (
     store,
     summarize,
     token_gold,
+    with_hits,
 )
 from eval.validate_questions import QUESTIONS, Corpus, load
 from rag.retrieval import RetrievalConfig
@@ -56,7 +58,7 @@ CONFIGS = [
     ("hybrid_rerank", True),
     ("hybrid_rerank", False),
 ]
-METRICS = (("recall@5", "Recall@5"), ("recall@10", "Recall@10"), ("mrr", "MRR"))
+METRICS = tuple((k, NAMES[k]) for k in ("recall@5", "recall@10", "hit@5", "hit@10", "mrr"))
 
 
 def label(mode: str, prefix: bool | None, chunk: str) -> str:
@@ -95,13 +97,14 @@ def latest_runs(conn, bm25: bool = True) -> dict[str, list[dict]]:
     for run_id, c in runs:
         prefix = None if c["mode"].startswith("keyword") else c["bge_prefix"]
         newest[label(c["mode"], prefix, f"{c['chunk_size']}/{c['chunk_overlap']}")] = run_id
+    gold = {q["id"]: q["relevant_doc_ids"] for q in load(QUESTIONS)}
     out = {}
     for name, run_id in newest.items():
         res = conn.execute(
             "SELECT question_id, metrics FROM eval_results WHERE run_id = %s ORDER BY question_id",
             (run_id,),
         ).fetchall()
-        out[name] = [{"id": qid, **m} for qid, m in res]
+        out[name] = with_hits([{"id": qid, **m} for qid, m in res], gold)
     return out
 
 
@@ -136,7 +139,7 @@ def ci_rows(
         diff, lo, hi = bootstrap([ra[i] for i in ids], [rb[i] for i in ids])
         claim = "yes" if lo > 0 or hi < 0 else "no"
         name = "overall" if sl is None else f"difficulty={sl}"
-        metric = "MRR (rr)" if key == "rr" else key
+        metric = NAMES[key]
         out.append(
             f"| {a} vs {b} | {metric} | {name} | {len(ids)} | {diff:+.3f}"
             f" | [{lo:+.3f}, {hi:+.3f}] | {claim} |"
@@ -203,12 +206,13 @@ def per_tag(names, summaries, chunk: str, keys) -> list[str]:
     return out
 
 
-BASE_KEYS = [(k, t, "n") for k, t in METRICS] + [("all_gold@10", "all-gold Recall@10", "n_multi")]
+BASE_KEYS = [(k, t, "n") for k, t in METRICS] + [("all_gold@10", NAMES["all_gold@10"], "n_multi")]
 DIAG_KEYS = [
-    ("token_doc@5", "token-doc Recall@5 (diagnostic)", "n_token"),
-    ("agent_recall@10", "agent view Recall@10 (diagnostic)", "n"),
-    ("agent_all_gold@10", "agent view all-gold Recall@10 (diagnostic)", "n_multi"),
+    ("token_doc@5", NAMES["token_doc@5"], "n_token"),
+    ("agent_recall@10", NAMES["agent_recall@10"], "n"),
+    ("agent_all_gold@10", NAMES["agent_all_gold@10"], "n_multi"),
 ]
+HEAD = " | ".join(NAMES[k] for k in ("recall@5", "recall@10", "hit@5", "hit@10")) + " | MRR"
 
 
 def original_section(runs, questions) -> list[str]:
@@ -222,13 +226,14 @@ def original_section(runs, questions) -> list[str]:
         "",
         "### Headline (overall, n = 100)",
         "",
-        "| config | Recall@5 | Recall@10 | MRR | all-gold R@10 (n) | p50 ms | p95 ms |",
-        "|---|---|---|---|---|---|---|",
+        f"| config | {HEAD} | {NAMES['all_gold@10']} (n) | p50 ms | p95 ms |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for n in names:
         m, lat = summaries[n]["overall"], summaries[n]["latency"]
         out.append(
-            f"| {n} | {m['recall@5']:.3f} | {m['recall@10']:.3f} | {m['mrr']:.3f}"
+            f"| {n} | {m['recall@5']:.3f} | {m['recall@10']:.3f} | {m['hit@5']:.3f}"
+            f" | {m['hit@10']:.3f} | {m['mrr']:.3f}"
             f" | {m['all_gold@10']:.3f} ({m['n_multi']}) | {lat['p50_ms']:.0f}"
             f" | {lat['p95_ms']:.0f} |"
         )
@@ -258,6 +263,19 @@ def original_section(runs, questions) -> list[str]:
     return out
 
 
+def token_doc_note(questions) -> list[str]:
+    """How often token-doc Recall@5 can differ from exact-token Recall@5 at all."""
+    tg = token_gold(questions, Corpus())
+    ex = [q for q in questions if q["difficulty"] == "exact-token"]
+    same = sum(sorted(tg.get(q["id"], [])) == sorted(q["relevant_doc_ids"]) for q in ex)
+    return [
+        f"Note: for {same} of {len(ex)} exact-token questions every gold doc contains one of"
+        " the question's codes or hostnames, so token-doc Recall@5 equals Recall@5 on those"
+        " questions. It is not independent evidence; where both show the same difference and"
+        " CI, the questions that changed are the same."
+    ]
+
+
 def bm25_section(runs, old, questions) -> list[str]:
     names = sorted(runs)
     summaries = {n: summarize(runs[n], questions) for n in names}
@@ -269,16 +287,19 @@ def bm25_section(runs, old, questions) -> list[str]:
         " `keyword_tsrank` is the old ranker. token-doc Recall@5 and the agent view are"
         " diagnostics (definitions in eval/retrieval_eval.py), not done-checks.",
         "",
+        *token_doc_note(questions),
+        "",
         "### Headline (overall, n = 100)",
         "",
-        "| config | Recall@5 | Recall@10 | MRR | all-gold R@10 (n) | token-doc R@5 (n)"
-        " | agent R@10 | agent all-gold R@10 | p50 ms | p95 ms |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        f"| config | {HEAD} | {NAMES['all_gold@10']} (n) | {NAMES['token_doc@5']} (n)"
+        f" | {NAMES['agent_recall@10']} | {NAMES['agent_all_gold@10']} | p50 ms | p95 ms |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for n in names:
         m, lat = summaries[n]["overall"], summaries[n]["latency"]
         out.append(
-            f"| {n} | {m['recall@5']:.3f} | {m['recall@10']:.3f} | {m['mrr']:.3f}"
+            f"| {n} | {m['recall@5']:.3f} | {m['recall@10']:.3f} | {m['hit@5']:.3f}"
+            f" | {m['hit@10']:.3f} | {m['mrr']:.3f}"
             f" | {m['all_gold@10']:.3f} ({m['n_multi']}) | {m['token_doc@5']:.3f}"
             f" ({m['n_token']}) | {m['agent_recall@10']:.3f} | {m['agent_all_gold@10']:.3f}"
             f" | {lat['p50_ms']:.0f} | {lat['p95_ms']:.0f} |"
@@ -300,6 +321,8 @@ def bm25_section(runs, old, questions) -> list[str]:
         ("hybrid +prefix", "dense +prefix", "recall@5", (None, "exact-token", "paraphrase")),
         ("hybrid +prefix", "dense +prefix", "rr", (None,)),
         ("hybrid +prefix", "dense +prefix", "token_doc@5", (None,)),
+        ("hybrid +prefix", "dense +prefix", "hit@5", (None, "exact-token")),
+        ("hybrid +prefix", "dense +prefix", "hit@10", (None,)),
         ("hybrid_rerank +prefix", "hybrid +prefix", "recall@5", (None,)),
         ("hybrid_rerank +prefix", "hybrid +prefix", "rr", (None,)),
         ("keyword", "hybrid_rerank +prefix", "recall@5", (None, *DIFFICULTIES)),

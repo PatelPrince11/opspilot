@@ -13,6 +13,8 @@ Running log of decisions, errors and fixes. Newest entries at the bottom.
 - **Full-text search uses the `simple` config** so error codes and hostnames are not stemmed or dropped. Tests with `ECONNREFUSED`, `503` and hostnames.
 - **`/investigate` gets API-key auth and rate limiting** in Phase 5 (public endpoint spends free-tier keys and credits).
 - **Recall@k / MRR at doc level:** chunks deduped to docs by each doc's best-ranked chunk.
+  (Definitions corrected in Phase 2: Recall@k is the mean fraction of gold docs found; the
+  at-least-one version is Hit@k. See "Metric definitions, Hit@k".)
 - **Citation accuracy reported as two numbers:** (a) deterministic, cited id was retrieved; (b) judged, evidence supports the claim.
 - **Verify node gets a config flag to disable it,** for the with/without comparison.
 - **Attack success:** canary string or forbidden claim per case, fixed before any run.
@@ -1537,7 +1539,8 @@ listed. No question or label changed.
   answer, so it's left for Prince. label_spotcheck.md gold lines refreshed (same 40 questions).
 
 **Phase 2 requirement:** Retrieval eval also reports all-gold Recall@k for questions with 2+ gold
-docs, because at-least-one recall flatters multi-gold questions (126 of 160 after the audit fixes;
+docs, because at-least-one recall (now named Hit@k; the eval's Recall@k is the mean fraction of
+gold docs found, which already gives partial credit) flatters multi-gold questions (126 of 160 after the audit fixes;
 146 of the final 200).
 
 ## 2026-10-11: Phase 1 step 4 complete (eval set, 200 questions)
@@ -1817,7 +1820,7 @@ at 400/50 and +0.044 [-0.033, +0.133] at 256/32. Why (details in ablation.md, fi
    0.744 to 0.844 (diagnostic, not adopted).
 2. Dense already finds the token-bearing incident. Its exact-token misses are mostly the
    runbook half of the gold set (13/14 at 400/50), and runbooks have no hostnames, codes or
-   dates. With dense at 0.800 on n = 45, even the IDF-cut pipeline gives +0.056
+   dates. [Corrected 2026-10-11: false. 28 of 31 gold runbooks on dev exact-token questions contain one of the question's codes or hostnames. The token is shared with every incident on that host or code, so it does not single the runbook out; see 'Metric definitions, Hit@k'.] With dense at 0.800 on n = 45, even the IDF-cut pipeline gives +0.056
    [-0.022, +0.144].
 3. Rerank's gain is in ordering. Gold at rank 1 on exact-token questions: dense 27-28/45,
    rerank 38-40/45. MRR CI excludes 0. That is reported as a secondary metric; it does not
@@ -1943,7 +1946,7 @@ claimed metric, and the switch is one config value.
 **Done-check: failed, with cause found.** The check: hybrid_rerank beats dense on exact-token
 Recall@5. Result: +0.067 [+0.000, +0.156] (n = 45); the CI does not exclude 0.
 1. The runbook half of the gold set has no exact tokens. All 12 of hybrid_rerank's exact-token
-   misses include a gold runbook.
+   misses include a gold runbook. [Corrected 2026-10-11: false. 28 of 31 gold runbooks on dev exact-token questions contain one of the question's codes or hostnames. The token is shared with every incident on that host or code, so it does not single the runbook out; see 'Metric definitions, Hit@k'.]
 2. The ms-marco cross-encoder undoes part of BM25's token gain. On token-doc Recall@5 it is
    below BM25 alone on 5 questions and above on 1, and exact-token R@5 falls keyword 0.911 >
    hybrid 0.889 > hybrid_rerank 0.867.
@@ -2029,11 +2032,15 @@ dropped.
 **Done-check:** unchanged. It is about hybrid_rerank vs dense on exact-token Recall@5: failed,
 with cause found (entry above), and it is not redefined.
 
+The locked config (hybrid, no rerank) beats dense on exact-token Recall@5: +0.089 [+0.033, +0.156], claimed. The original check (hybrid+rerank) stays recorded as failed with cause.
+
 **Claimable numbers** (these replace the list in the entry above; dev now, test in Phase 5)
 - Locked hybrid vs the dense baseline: Recall@5 0.804 → 0.853 (+0.049 [+0.006, +0.095]).
 - MRR 0.746 → 0.868 (+0.122 [+0.073, +0.170]).
 - Exact-token Recall@5 0.800 → 0.889 (+0.089 [+0.033, +0.156]).
-- Token-doc Recall@5 0.833 → 0.922 (+0.089 [+0.033, +0.156]).
+- Token-doc Recall@5 0.833 → 0.922 (+0.089 [+0.033, +0.156]). Not independent of the line
+  above: on 42 of 45 exact-token questions the token-gold set is the whole gold set, and the
+  same 7 questions changed in both. Count it once.
 - BM25 vs ts_rank_cd keyword (Recall@5 +0.186, MRR +0.201) remains a claimable engineering
   result.
 
@@ -2050,6 +2057,45 @@ system, rerank is not.
 
 **Phase 5 note:** re-measure the locked hybrid's latency on EC2. Re-measure the rerank latency
 only if `hybrid_rerank` is ever switched back on.
+
+## 2026-10-11: Metric definitions, Hit@k, done-check note
+
+**Recall@k definition.** `eval/retrieval_eval.py` computes, per question, |gold ∩ top k| / |gold|,
+averaged over questions. That is the mean fraction of gold docs found. It is not the build
+guide's old "share of questions with at least one gold doc in the top k". The metric is kept and
+named "Recall@k (mean fraction of gold docs found)" everywhere: the eval table, ablation.md and
+BUILD_GUIDE's metrics table.
+- **Hit@5 and Hit@10** (at least one gold doc in the top k) were added. Stored runs get Hit@k
+  from their saved top-10 doc ranking (`with_hits`), which is exact, so no run was redone.
+- Hybrid vs dense on dev, at 256/32 (none claimed; each CI's lower bound is 0):
+  - Hit@5: 0.930 → 0.970, +0.040 [+0.000, +0.090].
+  - Hit@5, exact-token: +0.067 [+0.000, +0.156] (n = 45).
+  - Hit@10: 0.980 → 0.990, +0.010 [+0.000, +0.030].
+- Hit@k is near its ceiling (0.93 to 0.99), which is why the at-least-one version flatters
+  multi-gold questions: finding the incident alone counts as a full hit. Recall@k and all-gold
+  Recall@10 are what separate the configs.
+
+**Exact-token Recall@5 and token-doc Recall@5 give identical differences and CIs.** This is not
+a bug.
+- For 42 of 45 dev exact-token questions, every gold doc contains one of the question's codes
+  or hostnames, so the token-gold set is the whole gold set.
+- On the other 3, neither metric changed between dense and hybrid.
+- The questions that changed are the same in both, with the same values: Q001 0.5→1, Q013
+  0→0.5, Q038 0→0.5, Q044 0.5→1, Q089 0.5→1, Q127 0.5→1, Q140 0→1. Same per-question
+  differences and the same seed give the same bootstrap CI.
+- On this eval set, token-doc Recall@5 is not independent evidence. ablation.md now prints the
+  42/45 count, computed at report time.
+
+**Correction.** Earlier entries said gold runbooks contain no hostnames, codes or dates. That is
+false: 28 of 31 gold runbooks on dev exact-token questions contain one of the question's tokens
+(found while checking the identical CIs). The token is shared with every incident on the same
+host or code, so it doesn't single the runbook out among many matching docs. The agent view's
+gain (runbooks searched separately) fits this. The wrong sentences in NOTES and ablation.md are
+marked "Corrected" where they stand.
+
+**Done-check note** (also under the Phase 2 lock override): the locked config (hybrid, no rerank)
+beats dense on exact-token Recall@5: +0.089 [+0.033, +0.156], claimed. The original check
+(hybrid+rerank) stays recorded as failed with cause.
 
 ## Standing rules (write-ups)
 

@@ -12,6 +12,7 @@ from eval.retrieval_eval import (
     store,
     summarize,
     token_gold,
+    with_hits,
 )
 from eval.validate_questions import QUESTIONS, Corpus, load
 from rag.retrieval import Hit, RetrievalConfig
@@ -28,9 +29,23 @@ def test_dedupe_keeps_each_docs_best_rank():
 
 def test_score():
     s = score(["B", "A", "X", "Y", "Z", "C"], ["A", "C"])
-    assert s == {"recall@5": 0.5, "recall@10": 1.0, "rr": 0.5, "all_gold@10": 1.0}
+    assert s == {
+        "recall@5": 0.5,  # mean fraction: one of two gold docs in the top 5
+        "recall@10": 1.0,
+        "hit@5": 1.0,  # at least one gold doc in the top 5
+        "hit@10": 1.0,
+        "rr": 0.5,
+        "all_gold@10": 1.0,
+    }
     s = score(["X", "Y"], ["A"])
-    assert s == {"recall@5": 0.0, "recall@10": 0.0, "rr": 0.0, "all_gold@10": None}
+    assert s == {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "hit@5": 0.0,
+        "hit@10": 0.0,
+        "rr": 0.0,
+        "all_gold@10": None,
+    }
     assert score(["A"] + ["X"] * 9 + ["C"], ["A", "C"])["all_gold@10"] == 0.0
 
 
@@ -44,6 +59,13 @@ def q(i, difficulty, gold, author="claude", fp=None):
     }
 
 
+def test_with_hits_rebuilds_hit_at_k_from_stored_docs():
+    rows = [{"id": "Q1", "docs": ["X", "Y", "Z", "W", "V", "A"]}, {"id": "Q2", "hit@5": 0.0}]
+    out = with_hits(rows, {"Q1": ["A", "B"], "Q2": ["A"]})
+    assert (out[0]["hit@5"], out[0]["hit@10"]) == (0.0, 1.0)
+    assert out[1] == {"id": "Q2", "hit@5": 0.0}  # already has it: untouched
+
+
 def test_summarize_slices_carry_their_sample_size():
     questions = [
         q(1, "exact-token", ["A"]),
@@ -55,10 +77,13 @@ def test_summarize_slices_carry_their_sample_size():
         {"id": "Q2", "recall@5": 0.5, "recall@10": 1.0, "rr": 0.5, "all_gold@10": 1.0},
         {"id": "Q3", "recall@5": 0.0, "recall@10": 0.5, "rr": 0.0, "all_gold@10": 0.0},
     ]
+    for r, (h5, h10) in zip(rows, [(1.0, 1.0), (1.0, 1.0), (0.0, 1.0)], strict=True):
+        r |= {"hit@5": h5, "hit@10": h10}
     for i, r in enumerate(rows):
         r["latency_ms"] = 10.0 * (i + 1)
     s = summarize(rows, questions)
     assert s["overall"]["n"] == 3 and s["overall"]["recall@5"] == pytest.approx(0.5)
+    assert s["overall"]["hit@5"] == pytest.approx(2 / 3) and s["overall"]["hit@10"] == 1.0
     assert s["overall"]["all_gold@10"] == 0.5 and s["overall"]["n_multi"] == 2
     assert s["difficulty=exact-token"]["n"] == 2
     assert s["difficulty=exact-token"]["mrr"] == pytest.approx(0.75)
