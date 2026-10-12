@@ -2162,6 +2162,141 @@ beats dense on exact-token Recall@5: +0.089 [+0.033, +0.156], claimed. The origi
   The token is in the runbook but shared with every doc on the same host or code; it is not
   missing.
 
+## 2026-10-12: Phase 3a, the agent (BUILD_GUIDE Phase 3 steps 1-4)
+
+**Built**
+- Results provenance: identical scores rerun from a clean tree replace a dirty provenance
+  (commit and uncommitted_changes only; latency stays the first run's). Result outputs
+  (eval/results, docs/results.md) no longer count as uncommitted code. Both dev files now cite
+  1735a76 with no uncommitted files; docs/results.md differs from before only in the commit cells.
+- `llm/client.py`, the one LLM entry point. Plain httpx, no provider SDKs: Groq and Gemini
+  through their OpenAI-compatible chat endpoints, Ollama through native `/api/chat` (only it
+  takes `options.num_ctx`, sent as 8,192 in every request). Temperature 0, tool calling,
+  JSON-schema output, streaming. Retries on 429/5xx/transport errors: retry-after when given,
+  else exponential backoff with jitter, capped at 30 s and 5 attempts; a retry-after over 60 s
+  (a daily limit) raises at once. Disk cache (`.cache/llm`, gitignored) keyed by
+  sha256(provider, model, messages, tools, params). Per-call budget 6,000 tokens (estimated
+  prompt + max output), raised as `BudgetExceeded` before any request. Token counts from usage
+  fields, flagged `estimated` when missing. Langfuse generation per call, trace id =
+  investigation id; the SDK is never constructed unless TRACING_ENABLED and both keys are set.
+  Models are config (`AGENT_LLM`, `JUDGE_LLM`, `DEV_LLM` as provider:model). A test fails if
+  any file outside llm/ imports a provider SDK (or langfuse) or names a provider endpoint.
+- `agent/tools`: search_runbooks / search_incidents (locked hybrid retrieval with a doc_type
+  filter, deduped to docs, top 5, ids `DOC#chunk`, snippets 400 chars), query_logs (one service,
+  window <= 24 h, minimum level, literal text match, <= 50 rows by time, ids `log:<id>`, a note
+  saying "50 of N"), get_service_status (`status:<name>`). Migration 0004 adds role
+  `opspilot_ro`: SELECT only, `default_transaction_read_only = on`. Tests: INSERT, UPDATE and
+  DELETE fail through the tools' connection, and still fail with the read-only transaction
+  switched off (InsufficientPrivilege). The role is cluster-wide, so downgrade revokes grants
+  but does not drop it.
+- `agent/graph.py`: triage (LLM JSON) -> plan (LLM tool calls) -> gather -> draft (LLM JSON,
+  one retry on invalid output) -> verify (deterministic) -> gather (<= 2 loops) | finish.
+  Reducers: tool_calls and llm_calls append, evidence merges by id. The draft sees status, then
+  logs with near-identical lines collapsed (numbers and hex ids masked; the other ids stay
+  citable), then runbook and incident snippets (300 chars), packed until the token allowance is
+  spent. Caps: 8 tool calls, 300 s. After the loop cap: invalid-citation claims dropped,
+  confidence down one level, `citations_verified: false` plus a note. VERIFY_ENABLED=false
+  routes draft to finish (`citations_verified: null`).
+- API: `POST /investigate` streams SSE (tool_call, tool_result, sources, diagnosis, error),
+  id in `X-Investigation-Id`; `GET /investigations/{id}`. Migration 0005: investigations
+  (question, as_of, llm, verify flag, status, diagnosis, llm_calls with per-call tokens,
+  totals) and the tool_calls FK plus `output_tokens` (estimate). Tool calls are written as each
+  one finishes.
+- `make demo ARGS="--llm ... --out ..."` writes a transcript (scripts/demo.py).
+
+**Tests** (stub LLM = the real Client with only the HTTP post replaced, so budget checks and
+token logging run for real): verify loop fires on a bad citation and stops at 2 (3 drafts, 2
+follow-ups, claim dropped, confidence lowered); a redraft with gathered ids passes; uncited
+claims fail verify; the flag disables verify; the tool-call cap holds (12 planned, 8 run, no
+follow-up once capped); no call exceeds 6,000 on an overfull gather and the draft drops
+evidence; invalid JSON gets one retry; SSE order; tool_calls persisted with the FK; a
+tracing-disabled run never constructs Langfuse; num_ctx is sent; retry-after honoured.
+526 tests pass.
+
+**Errors and fixes**
+- Provenance: the dense rerun stayed dirty because the locked rerun had just rewritten
+  dev_locked.json, a tracked file. Root cause: result outputs counted as uncommitted code.
+  Excluded with a git pathspec; test added.
+- `make demo` with `TRACING_ENABLED=false` in the shell failed pydantic's bool parse
+  (`'true         '`). Root cause: `-include .env` makes a make variable from the .env line
+  (inline comment stripped, trailing spaces kept), and make re-exports an environment variable
+  with the makefile's value. Pass overrides as make arguments: `make demo TRACING_ENABLED=false`.
+- `host.docker.internal` does not resolve on the Mac; host-side `make demo` sets
+  `OLLAMA_HOST=http://localhost:11434`.
+- Langfuse: `GET /api/public/traces/{id}` returns `LEGACY_API_UNAVAILABLE_FOR_NEW_ORGANIZATION`
+  for orgs created after 2026-09-16; use `GET /api/public/v2/observations?traceId=...` with
+  `fields=core,basic,usage,model`. The legacy ingestion API is sunset 2026-11-16, so tracing
+  uses the SDK (OpenTelemetry).
+
+**Token estimate vs provider counts.** The estimate (chars / 3 over messages, tools and schema)
+was above the provider count on every real-size prompt (qwen: 525/220, 968/715, 2466/1888;
+Groq: 525/488, 969/631, 1070/902). It is below on tiny prompts because of fixed chat-template
+overhead (Groq counted 78 tokens for a 22-token estimate of "pong").
+
+**Demo smoke** (one run each, not a metric; transcripts in scratchpad/phase3/, judged by
+Claude against eval/corpus/demo_answer.toml)
+
+| | Ollama qwen2.5:7b | Groq gpt-oss-120b |
+|---|---|---|
+| tool calls | 8 (cap) | 1 |
+| key facts hit | 0 of 9 | 0 of 9 |
+| forbidden claims | 1 (payments-db max_connections) | 1 (payments-db disk full) |
+| cited ids gathered (deterministic) | 2 of 2 | 2 of 2 |
+| claims supported by their citation (judged) | 0 of 2 | 0 of 2 |
+| verify loops | 0 | 0 |
+| tokens prompt / completion | 2,823 / 860 | 2,021 / 1,068 |
+| wall time | 107.7 s | 10.6 s |
+
+- qwen planned 8 calls but spent 5 on ERROR logs of payments-db, card-processor-proxy, auth-db
+  and auth-service, never payments-pgbouncer (listed degraded by get_service_status).
+- gpt-oss returned one tool call per turn, as a tool-calling loop expects. The graph gives the
+  model one planning turn, so it saw only 5 runbook snippets and diagnosed from a runbook's
+  description of a disk-full incident, with confidence high.
+- Verify passed both runs: every cited id was gathered. Neither citation supported its claim.
+  That is the deterministic/judged gap that citation accuracy (a) vs (b) measures.
+- **Open design question for Prince:** gather is single-shot. A multi-turn gather (the model
+  sees results and picks the next call until it stops or hits the cap) is the standard fix,
+  and costs more tokens per run on Groq's 8K TPM. Not changed in 3a.
+
+**Provider smoke (2026-10-12)**: .env has Groq, Gemini and Langfuse values (present; values
+never printed).
+- Groq `openai/gpt-oss-120b`: text call OK; tool call OK (`get_service_status`
+  {"service": "payments-api"}). Tool use is listed on Groq's model page. No switch to qwen3.8.
+- Gemini `gemini-3.5-flash-lite` (id from ai.google.dev/gemini-api/docs/models): text call OK
+  through the OpenAI-compatible endpoint.
+- Langfuse: one investigation traced with TRACING_ENABLED=true; `v2/observations` returned its
+  3 generations under trace f2957c85345d4715b49fb21475c7e1e6 with model and token usage equal
+  to the DB rows. Region: US (us.cloud.langfuse.com). Closes Phase 1's Langfuse check.
+
+**Free-tier limits** (observed by Prince in the consoles, 2026-10-12)
+- Groq `openai/gpt-oss-120b` and `qwen/qwen3.8-27b`: 30 RPM, 1K RPD, 8K TPM, 200K TPD.
+  Groq's rate-limits page lists the same row for gpt-oss-120b as the base limits; limits are
+  per organization, 429s carry retry-after (seconds), cached tokens don't count.
+- Gemini Flash models: 5 RPM, 20 RPD. Gemini 3.5 / 3.1 Flash Lite: 15 RPM, 500 RPD, 250K TPM.
+- Groq also offers `llama-prompt-guard-2` (Phase 4 defense candidate).
+- Langfuse Hobby: 50k units per month (a unit is any trace, observation or score), 30 days of
+  data, 2 users (langfuse.com/pricing). One investigation is 1 trace + 3 to 9 generations, so
+  about 4 to 10 units.
+
+**Daily capacity on Groq's free tier (agent only, 200K TPD binds before 1K RPD)**
+- Measured run (3,089 tokens): about 64 per day. That run made 1 tool call, so its draft was
+  small; treat 64 as optimistic.
+- Ceilings from the 6,000-token per-call budget: 3 calls without loops <= 18K tokens, about
+  11 per day; 7 calls with 2 loops <= 42K, about 4 per day.
+- 8K TPM: a run above 8K tokens within a minute waits on 429 retry-after; the client sleeps up
+  to 60 s per retry.
+- A 100-question dev run does not fit one day's free quota unless runs stay near the measured
+  size; plan for the response cache and several days, or the paid tier.
+
+**Cost estimate, 100-question dev run on Groq's paid tier** (gpt-oss-120b $0.15 per M input,
+$0.60 per M output, Groq's model page console.groq.com/docs/model/openai/gpt-oss-120b; the
+groq.com/pricing page did not render prices to a fetch)
+- At the measured run: 100 x (2,021 x 0.15 + 1,068 x 0.60) / 1M = $0.09.
+- Ceiling (42K tokens per run, all priced as output): $2.52. Judge calls (Gemini) excluded.
+
+**Deferred**: generation eval, judge, hand labels (Phase 3b); injection defenses (Phase 4);
+the gather design question above.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -2445,12 +2580,12 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Next is Phase 3.
-- Phase 0 accounts (AWS, Groq, Gemini, Langfuse Cloud, Anthropic credits, GitHub): **not done**. Prince is doing these in parallel. Repo files only until then.
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Phase 3a (LLM wrapper, read-only tools, LangGraph graph, SSE API) is complete; demo smoke run on Ollama and Groq (entry above). Next is Phase 3b (generation eval).
+- Phase 0 accounts: Groq, Gemini and Langfuse Cloud keys are in .env and checked by live calls (2026-10-12). AWS, Anthropic credits and GitHub: not checked here.
 
 ## Unverified claims (check in Phase 0, record results here)
 
 - AWS: Paid plan vs. Free plan behavior (account closing after 6 months), the $200 credits, the credit-unlock activities.
-- Groq: current model list, tool-calling support, free-tier limits.
-- Gemini Flash: free-tier limits.
-- Langfuse Hobby: monthly unit quota.
+- Groq: **checked 2026-10-12.** gpt-oss-120b tool use (model page and a live tool call); limits as recorded in the Phase 3a entry.
+- Gemini Flash: **checked 2026-10-12.** Limits from Prince's console (Phase 3a entry); model id `gemini-3.5-flash-lite` from Google's model docs; live call OK.
+- Langfuse Hobby: **checked 2026-10-12.** 50k units per month (pricing page); a trace arrived (US region).
