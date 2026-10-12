@@ -5,6 +5,7 @@ secrets never enter the image. On the host, the same .env file is read directly.
 """
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -32,6 +33,24 @@ class Settings(BaseSettings):
 
     api_key: SecretStr | None = None
 
+    # LLMs as "provider:model" (llm/client.py). Config only: switching models is an env change.
+    agent_llm: str = "groq:openai/gpt-oss-120b"
+    judge_llm: str = "gemini:gemini-3.5-flash-lite"
+    dev_llm: str = "ollama:qwen2.5:7b"
+    # Per-call cap on estimated prompt + max output tokens. Groq's free tier allows 8K tokens
+    # per minute, so a call near 8K would stall; callers must trim to fit.
+    llm_token_budget: int = 6000
+    llm_cache_dir: str = ".cache/llm"  # empty string disables the response cache
+    # Ollama's default context is small and it silently truncates longer prompts.
+    ollama_num_ctx: int = Field(default=8192, ge=8192)
+
+    # Agent (agent/graph.py). verify_enabled off skips citation checks, for the comparison.
+    verify_enabled: bool = True
+    agent_max_tool_calls: int = 8
+    agent_max_seconds: float = 300.0
+    # Password of the read-only role opspilot_ro (migration 0004) that the agent's tools use.
+    readonly_db_password: SecretStr = SecretStr("readonly-change-me")
+
     # Chunking (tokens, counted with the embedding model's own tokenizer). Locked at 256/32 by
     # the Phase 2 ablation (eval/results/ablation.md); 400/50 was the Phase 1 start.
     chunk_size: int = 256
@@ -50,6 +69,10 @@ class Settings(BaseSettings):
     retrieval_mode: str = "hybrid"
     retrieval_candidates: int = 30
     bge_prefix: bool = True
+
+    @property
+    def llm_cache_path(self) -> Path | None:
+        return Path(self.llm_cache_dir) if self.llm_cache_dir else None
 
 
 @lru_cache
