@@ -1559,7 +1559,8 @@ docs, because at-least-one recall flatters multi-gold questions (126 of 160 afte
     H038, H040.
   - 12 have `unrecorded` parts: H004, H009, H012, H017, H018, H019, H022, H023, H026, H027, H033,
     H037.
-  - H024 names no distinguishing token, so its twin INC-0128 is gold by the twin rule.
+  - H024 names the notification processor (notification-worker), so its twin INC-0128 is not gold
+    (fixed after step 4; entry below).
 
 **Validator changes in step 4b**
 - Optional `false_premise` (a correcting key fact is required) and `unrecorded` (each item needs

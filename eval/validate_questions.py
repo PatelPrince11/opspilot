@@ -187,6 +187,17 @@ def doc_tokens(doc: dict) -> set[str]:
     )
 
 
+# A service may be named loosely: "catalog API" for catalog-api, "notification processor"
+# for notification-worker.
+SUFFIX_ALIASES = {"worker": ("processor",)}
+
+
+def spellings(token: str) -> set[str]:
+    head, _, last = token.rpartition("-")
+    forms = {token} | {f"{head}-{a}" for a in SUFFIX_ALIASES.get(last, ()) if head}
+    return forms | {f.replace("-", " ") for f in forms}
+
+
 def doc_text(doc: dict) -> str:
     fields = ("title", "symptoms", "root_cause", "resolution", "body")
     return "\n".join(doc.get(k) or "" for k in fields)
@@ -262,8 +273,7 @@ def check_question(q: dict, c: Corpus) -> list[str]:
     for g in gold:
         for p in sorted(c.partners.get(g, set()) - set(gold)):
             dist = doc_tokens(c.docs[g]) - doc_tokens(c.docs[p])
-            # "catalog API" names catalog-api as well as the hyphenated token does
-            if not any(has(text, t) or has(text, t.replace("-", " ")) for t in dist):
+            if not any(has(text, f) for t in dist for f in spellings(t)):
                 errs.append(f"{g} is a twin of {p}: add both or name a host, date or service")
 
     # One way: the runbook tells the write-up's events, so it answers whatever the write-up

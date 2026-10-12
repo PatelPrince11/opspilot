@@ -78,6 +78,15 @@ def test_service_named_with_a_space_tells_twins_apart(corpus):
     assert not [x for x in errs(corpus, question=named, **base) if "twin" in x]
 
 
+def test_notification_processor_names_notification_worker(corpus):
+    base = dict(relevant_doc_ids=["INC-0133", "RB-005"], difficulty="paraphrase")
+    vague = "a pod got killed for memory in February 2026, what was eating the RAM?"
+    assert any("twin of INC-0128" in x for x in errs(corpus, question=vague, **base))
+    for name in ("notification processor", "notification-processor", "notification worker"):
+        q = f"the {name} got killed for memory in February 2026, what was eating the RAM?"
+        assert not [x for x in errs(corpus, question=q, **base) if "twin" in x], name
+
+
 def test_name_resolution_is_not_a_fix_question(corpus):
     base = dict(relevant_doc_ids=["INC-0125", "RB-020"], difficulty="paraphrase")
     q1 = "name resolution from kafka-02 crawled in February 2026, which server went quiet?"
