@@ -43,12 +43,11 @@ class Settings(BaseSettings):
     rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     rerank_revision: str = "233902d25c440f23af6f7d6e94d2946bac0bee0a"
 
-    # Retrieval defaults (rag/retrieval.py), locked by the Phase 2 BM25 rerun on dev
-    # (eval/results/ablation.md, B6): BM25 keyword beats dense on Recall@5 (CI excludes 0) and
-    # ties hybrid and hybrid_rerank on Recall@5 and MRR, at the lowest latency. candidates and
-    # bge_prefix apply to the dense and hybrid modes only; the prefix made no claimable
-    # difference and stays on, as the bge model card recommends.
-    retrieval_mode: str = "keyword"
+    # Retrieval defaults (rag/retrieval.py), locked after the Phase 2 BM25 rerun on dev (NOTES,
+    # "Phase 2 lock override"): hybrid = BM25 + dense (bge prefix on), RRF k=60, no rerank.
+    # Hybrid beats dense on Recall@5 (CI excludes 0) and ties BM25 alone on every claimed
+    # metric while being more robust to query wording; rerank gave no claimable gain.
+    retrieval_mode: str = "hybrid"
     retrieval_candidates: int = 30
     bge_prefix: bool = True
 

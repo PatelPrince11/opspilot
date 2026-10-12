@@ -1980,6 +1980,77 @@ dropped.
   (636 ms p95 on the Mac) in case `hybrid_rerank` is ever switched on.
 - Re-check `ef_search` once the corpus is large enough for the planner to pick HNSW.
 
+## 2026-10-11: Phase 2 lock override (hybrid BM25 + dense, rerank dropped)
+
+**Prince's decision; supersedes the `keyword` lock in the entry above.** Locked in `config.py`:
+`hybrid`, which is BM25 + dense (bge prefix on) fused with RRF k = 60, no rerank, chunks 256/32,
+30 candidates per leg. The code paths for the other modes stay, for the ablation.
+
+**Reasons**
+- Hybrid ties BM25 alone on every claimed metric. Recall@5 is BM25 +0.023 [-0.018, +0.064]
+  and MRR +0.025 [-0.026, +0.077], neither claimed. Hybrid also beats dense on Recall@5
+  (claimed, numbers below).
+- Hybrid is more robust to query wording. The dense leg matches meaning when the words differ,
+  and the Phase 3 agent writes its own, often paraphrased, queries. The eval questions are not
+  what the agent will send.
+- Directional evidence, not claimable (no CI excludes 0):
+  - Paraphrase Recall@5: BM25 0.815 vs dense 0.852.
+  - Gemini-slice MRR: BM25 0.705 vs hybrid 0.769 (n = 20).
+- Circularity. The 160 Claude-drafted questions were written from the documents, so they
+  share vocabulary with them and flatter keyword search. The 40 Gemini questions were written
+  without the corpus, so that slice is the circularity check, and BM25 is weakest there.
+- Rerank was built, measured and dropped:
+  - no claimable gain over hybrid (Recall@5 -0.003 [-0.040, +0.035]; MRR +0.016
+    [-0.033, +0.067]);
+  - about 0.6 s p95 on the Mac (636 ms) against 53 ms for hybrid;
+  - it demotes rare-token docs: below BM25 alone on 5 exact-token questions' token-doc Recall@5
+    and above on 1.
+  - The `hybrid_rerank` mode stays in the code.
+
+**Hybrid vs dense (dev, 256/32, paired bootstrap, 10,000 resamples, seed `SEED`)**
+
+| metric | slice | n | hybrid - dense | 95% CI | claim |
+|---|---|---|---|---|---|
+| Recall@5 | overall | 100 | +0.049 | [+0.006, +0.095] | yes |
+| MRR | overall | 100 | +0.122 | [+0.073, +0.170] | yes |
+| Recall@5 | exact-token | 45 | +0.089 | [+0.033, +0.156] | yes |
+| token-doc Recall@5 | exact-token | 45 | +0.089 | [+0.033, +0.156] | yes |
+| Recall@5 | paraphrase | 27 | -0.019 | [-0.111, +0.074] | no |
+
+**`make eval` on the locked config** (eval_runs id 29) reproduces the ablation's
+`hybrid +prefix @256/32` row exactly.
+- Overall: R@5 0.853, R@10 0.932, MRR 0.868, all-gold R@10 0.808 (n = 73).
+- Diagnostics: token-doc R@5 0.922 (n = 45), agent R@10 0.960, agent all-gold 0.890.
+- Exact-token: R@5 0.889, MRR 0.902. Paraphrase: R@5 0.833, MRR 0.783.
+- claude: R@5 0.860 (n = 80); gemini: R@5 0.825, MRR 0.769 (n = 20).
+- Latency: p50 40 ms, p95 86 ms. The ablation run measured 39 / 53 ms; retrieval metrics are
+  deterministic, latency is not.
+
+**Done-check:** unchanged. It is about hybrid_rerank vs dense on exact-token Recall@5: failed,
+with cause found (entry above), and it is not redefined.
+
+**Claimable numbers** (these replace the list in the entry above; dev now, test in Phase 5)
+- Locked hybrid vs the dense baseline: Recall@5 0.804 → 0.853 (+0.049 [+0.006, +0.095]).
+- MRR 0.746 → 0.868 (+0.122 [+0.073, +0.170]).
+- Exact-token Recall@5 0.800 → 0.889 (+0.089 [+0.033, +0.156]).
+- Token-doc Recall@5 0.833 → 0.922 (+0.089 [+0.033, +0.156]).
+- BM25 vs ts_rank_cd keyword (Recall@5 +0.186, MRR +0.201) remains a claimable engineering
+  result.
+
+**Not claimable**
+- Hybrid vs dense on paraphrase, all-gold R@10, or the agent view.
+- Any hybrid vs BM25 or hybrid vs hybrid_rerank difference.
+- Every prefix effect.
+- Small slices as standalone numbers.
+
+**Resume bullet:** "hybrid BM25 + dense vs dense baseline". Its numbers come from the
+test split in Phase 5 only (`make eval ARGS="--split test --final-test"`, once), never from
+these dev numbers. Rerank and RRF wording stays out unless test supports it: RRF is in the
+system, rerank is not.
+
+**Phase 5 note:** re-measure the locked hybrid's latency on EC2. Re-measure the rerank latency
+only if `hybrid_rerank` is ever switched back on.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -2263,7 +2334,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `keyword` (BM25) at 256/32 chunks (547); done-check failed, with cause found (entry above). Next is Phase 3.
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Next is Phase 3.
 - Phase 0 accounts (AWS, Groq, Gemini, Langfuse Cloud, Anthropic credits, GitHub): **not done**. Prince is doing these in parallel. Repo files only until then.
 
 ## Unverified claims (check in Phase 0, record results here)
