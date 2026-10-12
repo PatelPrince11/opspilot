@@ -1726,6 +1726,27 @@ fixes.
 name their service. Prepending the doc title or heading path before embedding is a Phase 2 ablation,
 not a default.
 
+## 2026-10-11: Re-split balanced on false_premise and unrecorded
+
+The step-4 re-split left false_premise at dev 2 / test 12. The split is now stratified by all five
+dimensions together: difficulty, author, gold bucket (1 vs 2+), false_premise, and any `unrecorded`
+part. Each stratum alternates dev/test. An odd stratum's extra question goes to a side drawn from
+`random.Random(SEED)`, redrawn until the totals are 100/100 and every value of every dimension is
+within one. It is seeded and does not depend on file order (tested). `--final` prints the table.
+
+| | dev | test |
+|---|---|---|
+| exact-token / multi-doc / paraphrase | 45 / 28 / 27 | 45 / 27 / 28 |
+| claude / gemini | 80 / 20 | 80 / 20 |
+| 1 gold / 2+ gold | 27 / 73 | 27 / 73 |
+| false_premise | 7 | 7 |
+| any unrecorded | 6 | 6 |
+
+- Error: rewriting the split test, my edit truncated the file after it and deleted
+  `test_import_human_appends_40_unlabelled`; ruff then dropped its now-unused imports. Caught because
+  the suite count fell from 431 to 430. Restored.
+- The per-author reporting rule above still stands; false_premise is now also a reported slice.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

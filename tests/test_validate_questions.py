@@ -6,12 +6,14 @@ import json
 import pytest
 
 from eval.validate_questions import (
+    SPLIT_DIMS,
     Corpus,
     check_all,
     check_question,
     import_human,
     load,
     split,
+    split_counts,
 )
 
 
@@ -184,18 +186,21 @@ def test_split_is_seeded_even_and_stratified():
         diff = ("exact-token", "paraphrase", "multi-doc")[i % 3]
         gold = ["INC-0001", "RB-001"][: 1 + (i % 7 < 5)]
         author = "claude" if i < 160 else "prince"
-        qs.append(q(id=f"Q{i:03}", difficulty=diff, author=author, relevant_doc_ids=gold))
+        extra = {}
+        if i >= 160 and i % 3 == 0:
+            extra["false_premise"] = True
+        if i >= 160 and i % 4 == 1:
+            extra["unrecorded"] = ["not recorded: x"]
+        qs.append(q(id=f"Q{i:03}", difficulty=diff, author=author, relevant_doc_ids=gold, **extra))
     a, b = split(qs), split(copy.deepcopy(qs[::-1]))
     assert a == b
     assert sum(v == "dev" for v in a.values()) == 100
-    strata = {(x["difficulty"], x["author"], len(x["relevant_doc_ids"]) > 1) for x in qs}
-    assert len(strata) == 12
-    for key in strata:
-        group = [
-            a[x["id"]]
-            for x in qs
-            if (x["difficulty"], x["author"], len(x["relevant_doc_ids"]) > 1) == key
-        ]
+    for name, c in split_counts(qs, a).items():
+        for v in {v for v, _ in c}:
+            assert abs(c[(v, "dev")] - c[(v, "test")]) <= 1, (name, v)
+    key = lambda x: tuple(f(x) for f in SPLIT_DIMS.values())  # noqa: E731
+    for k in {key(x) for x in qs}:
+        group = [a[x["id"]] for x in qs if key(x) == k]
         assert abs(group.count("dev") - group.count("test")) <= 1
 
 

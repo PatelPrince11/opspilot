@@ -312,22 +312,48 @@ def check_question(q: dict, c: Corpus) -> list[str]:
     return errs
 
 
+SPLIT_DIMS = {
+    "difficulty": lambda q: q["difficulty"],
+    "author": lambda q: q["author"],
+    "gold bucket": lambda q: "2+" if len(q["relevant_doc_ids"]) > 1 else "1",
+    "false_premise": lambda q: bool(q.get("false_premise")),
+    "unrecorded": lambda q: bool(q.get("unrecorded")),
+}
+
+
+def split_counts(questions: list[dict], out: dict[str, str]) -> dict[str, Counter]:
+    """{dimension: Counter((value, split))} for the five balanced dimensions."""
+    return {
+        name: Counter((f(q), out[q["id"]]) for q in questions) for name, f in SPLIT_DIMS.items()
+    }
+
+
 def split(questions: list[dict]) -> dict[str, str]:
-    """100/100 with the fixed seed, stratified by (difficulty, author, gold bucket 1 vs 2+).
-    One toggle runs across every stratum, so each stratum is within one of even and the totals
-    are exact."""
+    """100/100 with the fixed seed, stratified by all five SPLIT_DIMS together. Each stratum
+    alternates dev/test, so it is within one of even. An odd stratum's extra question goes to
+    a seeded random side, redrawn until the totals are exact and every value of every
+    dimension is within one between dev and test."""
     strata: dict[tuple, list[str]] = {}
     for q in sorted(questions, key=lambda q: q["id"]):
-        key = (q["difficulty"], q["author"], len(q["relevant_doc_ids"]) > 1)
+        key = tuple(str(f(q)) for f in SPLIT_DIMS.values())
         strata.setdefault(key, []).append(q["id"])
-    rng, out, turn = random.Random(SEED), {}, 0
+    rng = random.Random(SEED)
     for key in sorted(strata):
-        ids = strata[key]
-        rng.shuffle(ids)
-        for i in ids:
-            out[i] = ("dev", "test")[turn]
-            turn ^= 1
-    return out
+        rng.shuffle(strata[key])
+    half = len(questions) // 2
+    for _ in range(100_000):
+        out = {}
+        for key in sorted(strata):
+            first = rng.randrange(2)
+            for n, i in enumerate(strata[key]):
+                out[i] = ("dev", "test")[(first + n) % 2]
+        if sum(v == "dev" for v in out.values()) != half:
+            continue
+        counts = split_counts(questions, out)
+        values = {(name, v) for name, c in counts.items() for v, _ in c}
+        if all(abs(counts[n][(v, "dev")] - counts[n][(v, "test")]) <= 1 for n, v in values):
+            return out
+    raise SystemExit("no balanced split found")
 
 
 def check_all(questions: list[dict], c: Corpus, final: bool = False) -> list[str]:
@@ -418,6 +444,12 @@ def main() -> int:
     by = Counter(q["difficulty"] for q in questions if labelled(q))
     blank = sum(not labelled(q) for q in questions)
     print(f"{len(questions)} questions ({blank} unlabelled); {dict(by)}")
+    if (args.final or args.write_split) and not blank:
+        stored = {q["id"]: q["split"] for q in questions}
+        for name, c in split_counts(questions, stored).items():
+            vals = sorted({v for v, _ in c}, key=str)
+            print(f"  {name}: " + ", ".join(f"{v} {c[(v, 'dev')]}/{c[(v, 'test')]}" for v in vals))
+        print("  (dev/test)")
     print("FAIL" if errs else "OK")
     return 1 if errs else 0
 
