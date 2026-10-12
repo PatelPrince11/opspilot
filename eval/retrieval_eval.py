@@ -200,6 +200,7 @@ def run_config(cfg: RetrievalConfig) -> dict:
         "k": DEPTH,
         "chunk_size": s.chunk_size,
         "chunk_overlap": s.chunk_overlap,
+        "keyword_ranker": "bm25",  # runs without it predate BM25 (keyword was ts_rank_cd)
     }
 
 

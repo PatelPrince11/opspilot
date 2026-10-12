@@ -9,6 +9,9 @@ Reads the ablation runs from eval_runs (eval.ablation.latest_runs) and the curre
 3. A keyword leg with lexemes found in over 20% of chunks removed (a crude IDF cut), re-fused
    and re-ranked. Diagnostic only: it confirms the cause and is not a locked config.
 4. Exact scan vs forced HNSW index scan: the same dense top 30 for every dev question?
+Steps 1-3 use the original (ts_rank_cd era) runs. Step 5 uses the BM25 rerun:
+5. Exact-token questions whose token-bearing gold doc is in hybrid's top 5 but not
+   hybrid_rerank's, and the reverse; and the same for keyword vs hybrid_rerank.
 """
 
 from statistics import mean
@@ -132,15 +135,49 @@ def hnsw_check(conn, qs) -> None:
     print(f"\nexact scan vs forced HNSW: identical top 30 for {same} of {len(qs)} dev questions")
 
 
+def displaced(runs, qs) -> None:
+    c = "@256/32"
+    tok = {
+        name: {
+            r["id"]: r["token_doc@5"] for r in runs[f"{name} {c}"] if r["token_doc@5"] is not None
+        }
+        for name in ("keyword", "hybrid +prefix", "hybrid_rerank +prefix", "dense +prefix")
+    }
+    print(f"\n[BM25 rerun, 256/32] token-doc Recall@5 per question (n = {len(tok['keyword'])}):")
+    for a in ("keyword", "hybrid +prefix", "dense +prefix"):
+        b = "hybrid_rerank +prefix"
+        worse = sorted(i for i in tok[b] if tok[b][i] < tok[a][i])
+        better = sorted(i for i in tok[b] if tok[b][i] > tok[a][i])
+        print(f"  rerank lower than {a} on {len(worse)} {worse}; higher on {len(better)} {better}")
+    d = {r["id"]: r for r in runs[f"dense +prefix {c}"]}
+    ex = [i for i, q in qs.items() if q["difficulty"] == "exact-token"]
+    miss = [i for i in ex if d[i]["recall@5"] < 1]
+    rb = sum(
+        any(g.startswith("RB-") for g in set(qs[i]["relevant_doc_ids"]) - set(d[i]["docs"][:5]))
+        for i in miss
+    )
+    print(f"  dense exact-token misses: {len(miss)} of {len(ex)}; a runbook among them: {rb}")
+    r = {x["id"]: x for x in runs[f"hybrid_rerank +prefix {c}"]}
+    miss = [i for i in ex if r[i]["recall@5"] < 1]
+    rb = sum(
+        any(g.startswith("RB-") for g in set(qs[i]["relevant_doc_ids"]) - set(r[i]["docs"][:5]))
+        for i in miss
+    )
+    print(
+        f"  hybrid_rerank exact-token misses: {len(miss)} of {len(ex)}; a runbook among them: {rb}"
+    )
+
+
 def main() -> None:
     qs = {q["id"]: q for q in load(QUESTIONS) if q["split"] == "dev"}
     with psycopg.connect(get_settings().database_url) as conn:
         check_ingested(conn)  # steps 2-4 read the chunks: CHUNK_SIZE/OVERLAP must match them
-        runs = latest_runs(conn)
+        runs = latest_runs(conn, bm25=False)
         misses(runs, qs)
         frequencies(conn, qs)
         idf_cut(conn, qs, runs)
         hnsw_check(conn, qs)
+        displaced(latest_runs(conn, bm25=True), qs)
 
 
 if __name__ == "__main__":
