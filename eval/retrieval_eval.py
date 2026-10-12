@@ -11,6 +11,14 @@ best rank, and metrics are computed on that document ranking:
 - all-gold Recall@10: questions with 2+ gold documents only; 1 if every gold doc is in the top 10.
 Latency is retrieve()'s wall time per question, models loaded beforehand.
 
+Two diagnostics (not done-checks):
+- token-doc Recall@5: exact-token questions only. Of the gold docs that contain one of the
+  question's codes or hostnames (validator's Corpus.exact_tokens, whole-token match), the share
+  in the top 5. Questions with no such gold doc are left out; their count is the n shown.
+- agent view: the top 5 runbooks and the top 5 incidents, retrieved separately (doc_type
+  filter, as Phase 3's search_runbooks and search_incidents will), scored as Recall@10 and
+  all-gold Recall@10 on the union of the two.
+
 Every run goes to eval_runs (commit, config, model revisions, split, timestamp) with one
 eval_results row per question. Refuses to run unless the DB was ingested with the current
 chunk settings, so the stored config describes the chunks that were searched.
@@ -28,7 +36,7 @@ from statistics import mean, median, quantiles
 import psycopg
 
 from config import get_settings
-from eval.validate_questions import QUESTIONS, SPLIT_DIMS, load
+from eval.validate_questions import QUESTIONS, SPLIT_DIMS, Corpus, has, load
 from rag.ingestion import content_hash, documents
 from rag.retrieval import MODES, Hit, RetrievalConfig, retrieve
 from scripts.corpus.common import PROCESSED
@@ -66,9 +74,34 @@ def score(ranked: list[str], gold: list[str]) -> dict:
     }
 
 
-def run(conn, questions: list[dict], cfg: RetrievalConfig) -> list[dict]:
-    """One row per question: metrics, latency and the top 10 chunks (doc, index, tokens)."""
+def token_gold(questions: list[dict], corpus: Corpus) -> dict[str, list[str]]:
+    """Exact-token question id -> its gold docs that contain one of its codes or hostnames."""
+    out = {}
+    for q in questions:
+        if q["difficulty"] != "exact-token":
+            continue
+        toks = corpus.exact_tokens(q["question"])
+        gold = [d for d in q["relevant_doc_ids"] if any(has(corpus.text[d], t) for t in toks)]
+        if gold:
+            out[q["id"]] = gold
+    return out
+
+
+def agent_view(conn, query: str, cfg: RetrievalConfig) -> list[str]:
+    """Top 5 runbooks then top 5 incidents, each from its own filtered retrieval."""
+    docs = []
+    for doc_type in ("runbook", "incident"):
+        docs += dedupe(retrieve(query, replace(cfg, doc_type=doc_type), conn))[:5]
+    return docs
+
+
+def run(
+    conn, questions: list[dict], cfg: RetrievalConfig, tokens_gold: dict | None = None
+) -> list[dict]:
+    """One row per question: metrics, diagnostics, latency and the top 10 chunks (doc, index,
+    tokens)."""
     cfg = replace(cfg, k=DEPTH)
+    tokens_gold = tokens_gold or {}
     tokens = dict(conn.execute("SELECT id, token_count FROM chunks").fetchall())
     retrieve("warm-up query", cfg, conn)  # loads the models outside the timings
     rows = []
@@ -78,15 +111,25 @@ def run(conn, questions: list[dict], cfg: RetrievalConfig) -> list[dict]:
         ms = (time.perf_counter() - t0) * 1000
         top = [[h.document_id, h.chunk_index, tokens[h.chunk_id]] for h in hits[:10]]
         ranked = dedupe(hits)
+        tg = tokens_gold.get(q["id"])
+        agent = score(agent_view(conn, q["question"], cfg), q["relevant_doc_ids"])
         rows.append(
             {"id": q["id"], **score(ranked, q["relevant_doc_ids"]), "latency_ms": ms}
+            | {"token_doc@5": score(ranked, tg)["recall@5"] if tg else None}
+            | {"agent_recall@10": agent["recall@10"], "agent_all_gold@10": agent["all_gold@10"]}
             | {"docs": ranked[:10], "top_chunks": top}
         )
     return rows
 
 
+def present(rows: list[dict], key: str) -> list[float]:
+    return [r[key] for r in rows if r.get(key) is not None]
+
+
 def metrics(rows: list[dict]) -> dict:
-    multi = [r["all_gold@10"] for r in rows if r["all_gold@10"] is not None]
+    multi = present(rows, "all_gold@10")
+    tok = present(rows, "token_doc@5")
+    agent_multi = present(rows, "agent_all_gold@10")
     return {
         "n": len(rows),
         "recall@5": mean(r["recall@5"] for r in rows),
@@ -94,6 +137,10 @@ def metrics(rows: list[dict]) -> dict:
         "mrr": mean(r["rr"] for r in rows),
         "all_gold@10": mean(multi) if multi else None,
         "n_multi": len(multi),
+        "token_doc@5": mean(tok) if tok else None,
+        "n_token": len(tok),
+        "agent_recall@10": mean(agent) if (agent := present(rows, "agent_recall@10")) else None,
+        "agent_all_gold@10": mean(agent_multi) if agent_multi else None,
     }
 
 
@@ -113,18 +160,26 @@ def summarize(rows: list[dict], questions: list[dict]) -> dict:
     return out | {"latency": latency(rows)}
 
 
+def fmt(x: float | None) -> str:
+    return "-" if x is None else f"{x:.3f}"
+
+
 def table(summary: dict) -> str:
     lines = [
-        "| slice | n | Recall@5 | Recall@10 | MRR | all-gold R@10 (n) |",
-        "|---|---|---|---|---|---|",
+        "| slice | n | Recall@5 | Recall@10 | MRR | all-gold R@10 (n) | token-doc R@5 (n)"
+        " | agent R@10 | agent all-gold R@10 (n) |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for name, m in summary.items():
         if name == "latency":
             continue
         ag = "-" if m["all_gold@10"] is None else f"{m['all_gold@10']:.3f} ({m['n_multi']})"
+        tok = "-" if m["token_doc@5"] is None else f"{m['token_doc@5']:.3f} ({m['n_token']})"
+        aag = m["agent_all_gold@10"]
+        aag = "-" if aag is None else f"{aag:.3f} ({m['n_multi']})"
         lines.append(
             f"| {name} | {m['n']} | {m['recall@5']:.3f} | {m['recall@10']:.3f}"
-            f" | {m['mrr']:.3f} | {ag} |"
+            f" | {m['mrr']:.3f} | {ag} | {tok} | {fmt(m['agent_recall@10'])} | {aag} |"
         )
     lat = summary["latency"]
     lines.append(f"\nlatency p50 {lat['p50_ms']:.1f} ms, p95 {lat['p95_ms']:.1f} ms")
@@ -208,7 +263,7 @@ def main(argv: list[str] | None = None) -> int:
     questions = [q for q in load(QUESTIONS) if q["split"] == args.split]
     with psycopg.connect(get_settings().database_url) as conn:
         check_ingested(conn)
-        rows = run(conn, questions, cfg)
+        rows = run(conn, questions, cfg, token_gold(questions, Corpus()))
         run_id = store(conn, args.split, cfg, rows)
         conn.commit()
     s = get_settings()

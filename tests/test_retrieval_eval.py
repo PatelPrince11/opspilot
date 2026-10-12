@@ -3,7 +3,17 @@
 import pytest
 
 from eval.ablation import bootstrap
-from eval.retrieval_eval import check_split, dedupe, run, score, store, summarize
+from eval.retrieval_eval import (
+    agent_view,
+    check_split,
+    dedupe,
+    run,
+    score,
+    store,
+    summarize,
+    token_gold,
+)
+from eval.validate_questions import QUESTIONS, Corpus, load
 from rag.retrieval import Hit, RetrievalConfig
 from tests.test_retrieval import conn  # noqa: F401  (module fixture: the tiny DB)
 
@@ -55,6 +65,12 @@ def test_summarize_slices_carry_their_sample_size():
     assert s["author=gemini"]["n"] == 1 and s["false_premise=True"]["n"] == 1
     assert s["gold bucket=1"]["all_gold@10"] is None
     assert s["latency"]["p50_ms"] == 20.0
+    assert s["overall"]["token_doc@5"] is None and s["overall"]["n_token"] == 0
+    rows[0] |= {"token_doc@5": 1.0, "agent_recall@10": 1.0, "agent_all_gold@10": None}
+    rows[1] |= {"token_doc@5": 0.0, "agent_recall@10": 0.5, "agent_all_gold@10": 0.0}
+    m = summarize(rows, questions)["overall"]
+    assert m["token_doc@5"] == 0.5 and m["n_token"] == 2
+    assert m["agent_recall@10"] == 0.75 and m["agent_all_gold@10"] == 0.0
 
 
 def test_test_split_needs_final_test(capsys):
@@ -76,6 +92,8 @@ def test_run_and_store_on_the_fixture_db(conn):  # noqa: F811
     rows = run(conn, questions, cfg)
     assert rows[0]["rr"] == 1.0 and rows[0]["docs"][0] == "INC-9001"
     assert rows[1]["recall@10"] == 1.0  # the fixture has only 3 docs
+    assert rows[1]["agent_recall@10"] == 1.0 and rows[1]["agent_all_gold@10"] == 1.0
+    assert rows[0]["token_doc@5"] is None  # no token gold passed
     assert all(r["latency_ms"] > 0 and r["top_chunks"] for r in rows)
 
     with conn.transaction():
@@ -104,3 +122,17 @@ def test_paired_bootstrap_ci():
     assert bootstrap(a, b) == (diff, lo, hi)  # seeded
     diff, lo, hi = bootstrap(a[:20] + [0.0] * 80, [0.0] * 20 + [1.0] * 20 + [0.0] * 60)
     assert diff == 0.0 and lo < 0 < hi
+
+
+def test_agent_view_is_runbooks_then_incidents(conn):  # noqa: F811
+    cfg = RetrievalConfig(mode="hybrid", k=30, candidates=30)
+    view = agent_view(conn, "PAYAPI-E1042 redis-01 logs-01", cfg)
+    assert view[0] == "RB-901" and sorted(view[1:]) == ["INC-9001", "INC-9002"]
+
+
+def test_token_gold_keeps_gold_docs_holding_the_questions_token():
+    qs = {q["id"]: q for q in load(QUESTIONS)}
+    tg = token_gold([qs["Q003"], qs["Q027"], qs["H020"]], Corpus())
+    assert tg["Q003"] == ["INC-0015"]  # card-processor-proxy-01 is in the incident
+    assert sorted(tg["Q027"]) == ["INC-0185", "RB-027"]  # RB-027 names kafka-01 too
+    assert "H020" in tg  # orders-db-01
