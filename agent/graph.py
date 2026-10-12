@@ -44,6 +44,7 @@ TRIAGE_MAX_TOKENS = 1000  # gpt-oss reasons first: 465 tokens on a dated questio
 GATHER_MAX_TOKENS = 1000  # reasoning models (gpt-oss) spend part of this thinking
 LATEST_RESULT_TOKENS = 1500
 DRAFT_SNIPPET_CHARS = 300
+READ_CHARS = 2000  # a chunk from read_document goes to the draft whole (256 tokens is ~1,100 chars)
 INDEX_CHARS = 100  # per line of the compact evidence index gather sees
 MIN_QUOTE_WORDS = 3  # an empty or one-word quote is a substring of almost anything
 LOWER = {"high": "medium", "medium": "low", "low": "low"}
@@ -136,9 +137,9 @@ GATHER_INSTRUCTIONS = (
     "apart: when the question names a past date or time, set the window around it (if the "
     "question gives no time of day, find the time in the incident write-ups first); otherwise "
     "use a window ending at as_of. Use exact service names from the known list. Do not repeat "
-    "a call. Searches return the best-matching part of each document, one part per document: to "
-    "read another part of a document you found (its cause, fix or timeline), search with words "
-    "that part would contain, not with the document's id. "
+    "a call. Searches find documents but show only the best-matching part of each: search to "
+    "find the relevant runbooks and incidents, then read_document to get their details (cause, "
+    "timeline, fix). "
     "When the evidence explains the cause, or nothing more can be found, reply with the word "
     "done and no tool call."
 )
@@ -207,10 +208,13 @@ def log_key(e: dict) -> tuple:
     return (e["metadata"].get("service"), re.sub(r"\b[0-9a-f]{8}\b|\d+", "#", msg))
 
 
-def evidence_lines(evidence: dict, chars: int = DRAFT_SNIPPET_CHARS) -> list[str]:
+def evidence_lines(
+    evidence: dict, chars: int = DRAFT_SNIPPET_CHARS, read_chars: int | None = None
+) -> list[str]:
     """One line per item, status then logs (near-duplicates collapsed) then runbooks then
-    incidents, each text cut to `chars`. The collapsed lines' other ids stay valid citations in
-    the evidence map."""
+    incidents, each text cut to `chars`. With read_chars, chunks from read_document come before
+    the search snippets, cut to read_chars instead. The collapsed lines' other ids stay valid
+    citations in the evidence map."""
     by_source = defaultdict(list)
     for e in evidence.values():
         by_source[e["source"]].append(e)
@@ -221,8 +225,12 @@ def evidence_lines(evidence: dict, chars: int = DRAFT_SNIPPET_CHARS) -> list[str
     for g in sorted(groups.values(), key=lambda g: g[0]["text"]):
         more = f" (and {len(g) - 1} similar lines until {g[-1]['text'][:20]})" if len(g) > 1 else ""
         lines.append(f"[{g[0]['id']}] {g[0]['text'][:chars]}{more}")
-    for src in ("runbook", "incident"):
-        lines += [f"[{e['id']}] {' '.join(e['text'].split())[:chars]}" for e in by_source[src]]
+    docs = [e for src in ("runbook", "incident") for e in by_source[src]]
+    if read_chars is not None:
+        read = [e for e in docs if e["metadata"].get("read")]
+        lines += [f"[{e['id']}] {' '.join(e['text'].split())[:read_chars]}" for e in read]
+        docs = [e for e in docs if not e["metadata"].get("read")]
+    lines += [f"[{e['id']}] {' '.join(e['text'].split())[:chars]}" for e in docs]
     return lines
 
 
@@ -432,7 +440,7 @@ def build_graph(
         fixed = estimate_tokens(base, Draft.model_json_schema())
         # Room for one validation retry message (about 80 tokens) is kept free.
         allowance = llm.budget - DRAFT_MAX_TOKENS - fixed - 80
-        lines, dropped = pack(evidence_lines(state["evidence"]), allowance)
+        lines, dropped = pack(evidence_lines(state["evidence"], read_chars=READ_CHARS), allowance)
         base[1]["content"] = head + ("\n".join(lines) or "(none gathered)")
         d = structured(llm, base, Draft, "draft", DRAFT_MAX_TOKENS, state, calls)
         if calls:

@@ -6,9 +6,11 @@ from alembic import command
 from alembic.config import Config
 from psycopg import errors
 
+from agent import tools
 from agent.graph import build_graph, initial_state
 from agent.tools import (
     MAX_LOG_ROWS,
+    PAGE_TOKENS,
     SNIPPET_CHARS,
     ToolError,
     connect,
@@ -16,6 +18,7 @@ from agent.tools import (
     tool_schemas,
 )
 from config import get_settings
+from llm.client import estimate_tokens
 from tests.stub_llm import TRIAGE, StubLLM, calls, draft, say
 from tests.test_retrieval import load_fixture
 from tests.test_schema import ALEMBIC_INI, with_db
@@ -138,7 +141,13 @@ def test_unknown_tool_and_schemas():
     with pytest.raises(ToolError, match="unknown tool"):
         run_tool("drop_tables", {}, None)
     names = [t["function"]["name"] for t in tool_schemas()]
-    assert names == ["search_runbooks", "search_incidents", "query_logs", "get_service_status"]
+    assert names == [
+        "search_runbooks",
+        "search_incidents",
+        "query_logs",
+        "get_service_status",
+        "read_document",
+    ]
     logs = tool_schemas()[2]["function"]["parameters"]
     assert set(logs["required"]) == {"service", "start", "end"}
 
@@ -163,3 +172,71 @@ def test_a_past_incident_question_retrieves_that_incidents_logs(ro):
     system = llm.bodies[1]["messages"][0]["content"]  # the first gather turn
     assert f"(as_of) is {as_of}" in system and "past date" in system
     assert "set the window around it" in system
+
+
+# ---------------------------------------------------------------------- read_document
+
+
+def test_read_document_returns_every_chunk_in_order_with_search_ids(ro):
+    out = run_tool("read_document", {"doc_id": "INC-9002"}, ro)
+    assert [e.id for e in out.items] == ["INC-9002#0", "INC-9002#1"]
+    assert out.items[1].text.startswith("The team deleted old archives")  # full text, not capped
+    assert {e.source for e in out.items} == {"incident"} and out.items[0].metadata["read"]
+    assert out.note == "INC-9002 part 1 of 1"
+    # A search result id names its document.
+    assert run_tool("read_document", {"doc_id": "INC-9002#1"}, ro).items == out.items
+
+
+def test_read_document_pages_hold_the_budget(ro, monkeypatch):
+    monkeypatch.setattr(tools, "PAGE_TOKENS", 10)  # each fixture chunk alone is over 10
+    one = run_tool("read_document", {"doc_id": "INC-9002", "part": 1}, ro)
+    two = run_tool("read_document", {"doc_id": "INC-9002", "part": 2}, ro)
+    assert [e.id for e in one.items] == ["INC-9002#0"] and [e.id for e in two.items] == [
+        "INC-9002#1"
+    ]
+    assert "part 1 of 2; read_document part 2" in one.note and two.note == "INC-9002 part 2 of 2"
+    with pytest.raises(ToolError, match="2 part"):
+        run_tool("read_document", {"doc_id": "INC-9002", "part": 3}, ro)
+
+
+def test_pages_never_exceed_page_tokens_unless_one_chunk_does():
+    rows = [("incident", i, "word " * n, {}) for i, n in enumerate([300, 300, 2000, 3000, 10])]
+    paged = tools.pages(rows)
+    assert [[r[1] for r in p] for p in paged] == [[0, 1], [2], [3], [4]]
+    for p in paged:
+        cost = sum(estimate_tokens(r[2]) for r in p)
+        assert cost <= PAGE_TOKENS or len(p) == 1
+    assert tools.pages([]) == [[]]
+
+
+@pytest.mark.parametrize("doc_id", ["INC-0000", "RB-999"])
+def test_read_document_missing_id_is_a_failed_call(ro, doc_id):
+    with pytest.raises(ToolError, match="no document"):
+        run_tool("read_document", {"doc_id": doc_id}, ro)
+
+
+def test_quote_from_a_read_chunk_verifies_and_an_invented_one_does_not(ro):
+    """search shows INC-9002's best chunk; read_document brings both chunks in full. A quote from
+    the second chunk verifies; an invented quote fails and is dropped after the loops."""
+    good = ("logrotate was restarted", ["INC-9002#1"], "restarted logrotate on logs-01")
+    bad = ("the disk was replaced", ["INC-9002#1"], "the disk on logs-01 was replaced")
+    llm = StubLLM(
+        [
+            TRIAGE,
+            calls(("read_document", {"doc_id": "INC-9002"})),
+            say("done"),
+            draft(good, bad),
+            say("done"),  # loop 1
+            draft(good, bad),
+            say("done"),  # loop 2
+            draft(good, bad),
+        ]
+    )
+    final = build_graph(llm, ro).invoke(initial_state("logs-01 disk full?", "2026-10-06T14:52Z"))
+    d = final["diagnosis"]
+    assert [c["text"] for c in d["claims"]] == ["logrotate was restarted"]
+    assert [c["text"] for c in d["dropped_claims"]] == ["the disk was replaced"]
+    assert max(llm.checked) <= llm.budget
+    # The draft saw the read chunk whole.
+    draft_prompt = llm.bodies[3]["messages"][1]["content"]
+    assert "[INC-9002#1] The team deleted old archives and restarted logrotate" in draft_prompt
