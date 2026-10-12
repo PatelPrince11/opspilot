@@ -38,6 +38,14 @@ class Settings(BaseSettings):
     # Local embedder, pinned to a Hugging Face commit so stored vectors stay comparable.
     embed_model: str = "BAAI/bge-small-en-v1.5"
     embed_revision: str = "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a"
+    # Local cross-encoder reranker, pinned the same way (HF commit, head of main on 2026-10-11).
+    rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    rerank_revision: str = "233902d25c440f23af6f7d6e94d2946bac0bee0a"
+
+    # Retrieval defaults (rag/retrieval.py). Locked from the Phase 2 ablation on dev.
+    retrieval_mode: str = "hybrid_rerank"
+    retrieval_candidates: int = 30
+    bge_prefix: bool = True
 
 
 @lru_cache

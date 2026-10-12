@@ -181,7 +181,7 @@ def load_documents(conn, docs: list[dict]) -> dict:
         )
         for i, p in enumerate(parts):
             meta = {"doc_type": d["doc_type"], "heading_path": p["heading_path"], **d["meta"]}
-            vec = "[" + ",".join(f"{x:.8f}" for x in next(vectors)) + "]"
+            vec = embeddings.as_pgvector(next(vectors))
             conn.execute(
                 "INSERT INTO chunks (document_id, chunk_index, content, token_count, embedding,"
                 " metadata) VALUES (%s, %s, %s, %s, %s::vector, %s)",
