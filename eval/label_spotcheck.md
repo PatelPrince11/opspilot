@@ -162,7 +162,7 @@ Seeded random sample (seed 20261003), stratified by difficulty: exact-token 20, 
 
 **Question:** catalog edge 504 arrived before the pool timeout in the logs on 15 October 2025, why that order?
 
-**Gold:** INC-0091
+**Gold:** INC-0091, RB-028
 
 **Key facts:**
 - the pool waits 30 seconds, longer than the edge's 15-second route timeout
@@ -200,7 +200,7 @@ Seeded random sample (seed 20261003), stratified by difficulty: exact-token 20, 
 
 **Question:** health probe on ledger-db-02 failed creating a scratch file, ENOSPC, 9 Feb 2026. database hasn't grown, so why full?
 
-**Gold:** INC-0127
+**Gold:** INC-0127, RB-008
 
 **Key facts:**
 - /var/log/journal filled the shared root disk
@@ -213,7 +213,7 @@ Seeded random sample (seed 20261003), stratified by difficulty: exact-token 20, 
 
 **Question:** search-cluster-01 got a /var over 90% ticket on 9 August 2026 and the opensearch log folder was fine. what had grown?
 
-**Gold:** INC-0183
+**Gold:** INC-0183, RB-008
 
 **Key facts:**
 - the systemd journal had no size limit
@@ -252,7 +252,7 @@ Seeded random sample (seed 20261003), stratified by difficulty: exact-token 20, 
 
 **Question:** catalog-api-02 intermittently failing to reach its database from 20:25 on 19 September 2025, NXDOMAIN on the db name only. what changed right then?
 
-**Gold:** INC-0081
+**Gold:** INC-0081, RB-020
 
 **Key facts:**
 - a zone-file push left internal-dns-02 serving a file without the catalog database record
@@ -290,7 +290,7 @@ Seeded random sample (seed 20261003), stratified by difficulty: exact-token 20, 
 
 **Question:** edge returning 504 on payment routes from 18:10 on 23 January 2025, payments-api-01 and -02 look CPU throttled. what's the picture?
 
-**Gold:** INC-0008
+**Gold:** INC-0008, RB-002
 
 **Key facts:**
 - CPU throttling held requests past the gateway's 15 second route timeout

@@ -1507,7 +1507,7 @@ lines as H001..H040, with empty labels, difficulty null and split null.
 - Partial mode accepts unlabelled lines; `--final` rejects them.
 - No split yet.
 
-**Counts (160):** exact-token 82, multi-doc 47, paraphrase 31. Questions with 2+ gold docs: 108.
+**Counts (160):** exact-token 82, multi-doc 47, paraphrase 31. Questions with 2+ gold docs: 108 (126 after the audit fixes below).
 - Per cause type (the first failure type of each gold incident; runbook-only questions use the
   runbook's): api_latency 17, bad_deploy 17, conn_pool 18, disk_full 18, dns 17, high_cpu 18,
   memory_leak 14, rate_limiting 14, redis_down 13, tls_expired 14.
@@ -1527,9 +1527,17 @@ listed. No question or label changed.
   not a reason.", and repeat the line format at the end. The importer rejects a reason naming no
   INC-NNNN or RB-NNN id and merges several files (`FILE="a b"`). Batches 05-08 are re-run with this;
   the kept Q001-Q080 lines all cite ids.
+- Audit fixes (2026-10-11): Gemini's two flags were accepted (Q091 +RB-002, Q100 +RB-001). A scan
+  for gold incidents that name or link a runbook missing from the gold set found 93 (question,
+  runbook) pairs. An Opus reviewer judged each against the question as worded: 20 yes (RB-008 x7,
+  RB-020 x5, RB-021 x2, RB-002 x2, RB-010, RB-028, RB-009, RB-023), 73 no (narrow lookups only the
+  incident holds, runbooks the incident rules out, or the wrong runbook). 22 gold additions in all;
+  no question text, fact or tag changed. Q028 needed no rewording (it is about 0194). Q074 asks how
+  0025's record was put back; that's allowed (0025 isn't a (d) row), but the wording half-states the
+  answer, so it's left for Prince. label_spotcheck.md gold lines refreshed (same 40 questions).
 
 **Phase 2 requirement:** Retrieval eval also reports all-gold Recall@k for questions with 2+ gold
-docs, because at-least-one recall flatters multi-gold questions (108 of 160).
+docs, because at-least-one recall flatters multi-gold questions (126 of 160 after the audit fixes).
 
 ## Standing rules (write-ups)
 
