@@ -329,7 +329,7 @@ Fill the brackets only with test-split numbers from `make eval`. Drop any bullet
 
 **Bullet templates** (pick 4)
 
-- Built hybrid RAG over \[N\] incident and runbook documents with PostgreSQL/pgvector, full-text search, RRF fusion and cross-encoder reranking, raising Recall@5 from \[X\]% to \[Y\]% on a \[N\]-question held-out set.
+- Built hybrid BM25 + dense retrieval over \[N\] incident and runbook documents with PostgreSQL/pgvector (BM25 keyword ranking in SQL, RRF fusion), raising Recall@5 (mean fraction of gold docs found) from \[X\]% for a dense baseline to \[Y\]% on a \[N\]-question held-out set.
 - Developed a LangGraph incident-investigation agent with 4 read-only tools and a citation-verification loop, reaching \[X\]% citation accuracy and \[Y\]% tool-call success.
 - Cut prompt-injection attack success from \[X\]% to \[Y\]% on \[N\] adversarial cases by isolating untrusted log and runbook content and keeping tools read-only.
 - Built an automated eval pipeline (retrieval, faithfulness, citation accuracy, latency) with an LLM judge validated at \[X\]% agreement against hand labels.

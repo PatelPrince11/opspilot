@@ -2097,6 +2097,31 @@ marked "Corrected" where they stand.
 beats dense on exact-token Recall@5: +0.089 [+0.033, +0.156], claimed. The original check
 (hybrid+rerank) stays recorded as failed with cause.
 
+## 2026-10-11: Results ledger (docs/results.md)
+
+- `make results` runs `scripts/results.py`, which writes `docs/results.md` from eval_runs, the
+  ingested DB and repo files. No number in it is typed by hand. Sections:
+  - (a) corpus and eval-set facts, with label-audit counts parsed from `eval/label_audit.md`;
+  - (b) retrieval levels and locked-vs-dense comparisons, each with definition, split, n,
+    value, CI, claimable, eval_run id and commit;
+  - (c) "not measured yet (Phase N)" placeholders;
+  - (d) BUILD_GUIDE's bullet templates, each mapped to the rows that fill it.
+- `make results-check` is in `make gate`. It regenerates the ledger in memory and fails when the
+  committed file differs, e.g. after any new `make eval` run, since the ledger cites the newest
+  run. The output is deterministic: no wall-clock time, and the bootstrap uses seed `SEED`.
+- Rows use the newest locked-config run and the newest dense-baseline run per split. Both
+  current dev runs (32, 33) were made from a clean tree at 38c2539, so their commits carry no
+  `-dirty`.
+- Claimable: "n/a" for levels; for comparisons, yes only when the CI excludes 0. Resume
+  numbers come from test rows only. Those rows appear after the Phase 5 run and say "not
+  measured yet (Phase 5)" until then.
+- BUILD_GUIDE's first bullet template now reads "hybrid BM25 + dense ... from [X]% for a dense
+  baseline to [Y]%". Rerank is no longer in it.
+- The agent-view R@10 comparison for locked hybrid vs dense is +0.032 [+0.002, +0.069]. The
+  CI excludes 0, but it is a diagnostic, not a resume metric.
+- Error: the first render put raw `|` characters (from |gold ∩ top k|) inside table cells, which
+  breaks markdown tables. The definitions are reworded without pipes.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

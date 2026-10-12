@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint fmt gate migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
+.PHONY: up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -48,6 +48,7 @@ gate:
 		$(MAKE) -s test; \
 		$(MAKE) -s lint; \
 		uv run python eval/validate_questions.py --final; \
+		$(MAKE) -s results-check; \
 		if [ -n "$$(git status --porcelain)" ]; then \
 			echo "gate: working tree not clean:"; git status --short; exit 1; fi; \
 		echo "gate: OK"'
@@ -99,6 +100,14 @@ import-audit:
 # Host-side: loads data/processed into Postgres and embeds on the Mac's CPU.
 ingest:
 	@DATABASE_URL=$(HOST_DATABASE_URL) uv run python -m rag.ingestion
+
+# docs/results.md, generated from eval_runs, the DB and repo files (never edited by hand).
+# results-check (in the gate) fails when it is stale, e.g. after a new eval run.
+results:
+	@DATABASE_URL=$(HOST_DATABASE_URL) uv run python -m scripts.results
+
+results-check:
+	@DATABASE_URL=$(HOST_DATABASE_URL) uv run python -m scripts.results --check
 
 # Retrieval eval on dev with the locked config; extra flags via ARGS, e.g.
 #   make eval ARGS="--mode dense --no-bge-prefix". Test needs --split test --final-test (Phase 5).
