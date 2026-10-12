@@ -1747,6 +1747,13 @@ within one. It is seeded and does not depend on file order (tested). `--final` p
   the suite count fell from 431 to 430. Restored.
 - The per-author reporting rule above still stands; false_premise is now also a reported slice.
 
+## 2026-10-11: make gate
+
+`make gate` runs corpus-check, test, lint, `validate_questions.py --final`, then fails if
+`git status --porcelain` is non-empty. It is one `bash -euo pipefail -c` script because macOS make
+is 3.81 (no `.SHELLFLAGS`). Checked: a dirty tree fails it; a lint error stops it before the validator.
+Every later gate is `make gate`, with its output never piped.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

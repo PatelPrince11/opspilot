@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint fmt migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
+.PHONY: up down logs test lint fmt gate migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -37,6 +37,20 @@ test:
 lint:
 	uv run ruff check .
 	uv run ruff format --check .
+
+# Everything a commit must pass, as one bash script with -e and pipefail: the first failing step
+# stops the gate, and a failure inside a pipe is not hidden by the command after it. (macOS
+# make 3.81 has no .SHELLFLAGS, hence bash -c.) Ends by requiring a clean tree, so a corpus
+# rebuild that changed a tracked file fails here. Never pipe this target's output.
+gate:
+	@bash -euo pipefail -c '\
+		$(MAKE) -s corpus-check; \
+		$(MAKE) -s test; \
+		$(MAKE) -s lint; \
+		uv run python eval/validate_questions.py --final; \
+		if [ -n "$$(git status --porcelain)" ]; then \
+			echo "gate: working tree not clean:"; git status --short; exit 1; fi; \
+		echo "gate: OK"'
 
 fmt:
 	uv run ruff format .
