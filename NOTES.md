@@ -1818,10 +1818,14 @@ at 400/50 and +0.044 [-0.033, +0.133] at 256/32. Why (details in ablation.md, fi
    chunks) dominate the rank. Keyword alone is weaker than dense even on exact-token
    questions. Cutting lexemes found in over 20% of chunks lifts keyword exact-token R@5 from
    0.744 to 0.844 (diagnostic, not adopted).
-2. Dense already finds the token-bearing incident. Its exact-token misses are mostly the
-   runbook half of the gold set (13/14 at 400/50), and runbooks have no hostnames, codes or
-   dates. [Corrected 2026-10-11: false. 28 of 31 gold runbooks on dev exact-token questions contain one of the question's codes or hostnames. The token is shared with every incident on that host or code, so it does not single the runbook out; see 'Metric definitions, Hit@k'.] With dense at 0.800 on n = 45, even the IDF-cut pipeline gives +0.056
-   [-0.022, +0.144].
+2. Dense already finds the incident, and the question's token doesn't single out the
+   runbook. Dense's exact-token misses are mostly the runbook half of the gold set (13/14 at
+   400/50). The runbook does contain the token: 28 of 31 gold runbooks on dev exact-token
+   questions hold one of the question's codes or hostnames. But the same token is in every
+   incident on that host or code, so matching it ranks the runbook among many docs that share
+   it. With dense at 0.800 on n = 45, even the IDF-cut pipeline gives +0.056 [-0.022, +0.144].
+   (Corrected 2026-10-11: this entry first said runbooks contain no hostnames, codes or dates.
+   That was false; see "Metric definitions, Hit@k".)
 3. Rerank's gain is in ordering. Gold at rank 1 on exact-token questions: dense 27-28/45,
    rerank 38-40/45. MRR CI excludes 0. That is reported as a secondary metric; it does not
    replace the failed check.
@@ -1945,8 +1949,13 @@ claimed metric, and the switch is one config value.
 
 **Done-check: failed, with cause found.** The check: hybrid_rerank beats dense on exact-token
 Recall@5. Result: +0.067 [+0.000, +0.156] (n = 45); the CI does not exclude 0.
-1. The runbook half of the gold set has no exact tokens. All 12 of hybrid_rerank's exact-token
-   misses include a gold runbook. [Corrected 2026-10-11: false. 28 of 31 gold runbooks on dev exact-token questions contain one of the question's codes or hostnames. The token is shared with every incident on that host or code, so it does not single the runbook out; see 'Metric definitions, Hit@k'.]
+1. The runbook half of the gold set. All 12 of hybrid_rerank's exact-token misses include a
+   gold runbook. The runbook usually holds the question's code or hostname (28 of 31 gold
+   runbooks on dev exact-token questions), but so does every incident on that host or code.
+   The shared token doesn't single the runbook out, and incidents that also match the date and
+   symptoms take the top slots. The agent view, which searches runbooks separately, finds every
+   gold doc for 11 of these 12 questions (BM25-rerun hybrid_rerank, eval_runs 25). (Corrected 2026-10-11: first written as "runbooks have no exact tokens", which
+   was false.)
 2. The ms-marco cross-encoder undoes part of BM25's token gain. On token-doc Recall@5 it is
    below BM25 alone on 5 questions and above on 1, and exact-token R@5 falls keyword 0.911 >
    hybrid 0.889 > hybrid_rerank 0.867.
@@ -2121,6 +2130,37 @@ beats dense on exact-token Recall@5: +0.089 [+0.033, +0.156], claimed. The origi
   CI excludes 0, but it is a diagnostic, not a resume metric.
 - Error: the first render put raw `|` characters (from |gold ∩ top k|) inside table cells, which
   breaks markdown tables. The definitions are reworded without pipes.
+
+## 2026-10-12: Results ledger reads committed files
+
+- `make eval` writes `eval/results/<split>_locked.json` and `<split>_dense_baseline.json` for
+  the two named configs (`named()`). Each holds per-question scores (Recall@k, Hit@k, rr,
+  all-gold, token-doc, agent view, top-10 docs), metrics by slice, config, model revisions, a
+  corpus snapshot (documents, chunks and log lines as ingested), the commit, the tracked files
+  that differed from it, and p50/p95 latency. There are no timestamps or run ids.
+- If a run's deterministic part (scores, metrics, config, models, corpus) matches the file,
+  the file is not rewritten. Its commit and latency stay those of the run that first produced
+  the numbers. Latency varies run to run, so it is reported "from the run that produced these
+  scores".
+- `scripts/results.py` reads only eval/results/*.json, eval/questions.jsonl, data/processed and
+  eval/label_audit.md. It never imports or opens the database. The chunk and log counts come
+  from the result file's snapshot, because a clean clone has neither a DB nor the LogHub
+  download.
+- `make results-check` (in `make gate`) fails only when the regenerated ledger differs. That
+  now happens only when a metric, count or definition changes.
+- Checks:
+  - `make eval` (locked, twice) and `make eval ARGS="--mode dense"`: files "unchanged" and
+    byte-identical while latency moved (p95 100 then 104 ms); `results-check` passes.
+  - Tests: an identical rewrite is skipped and a changed score is written; the ledger renders
+    with `psycopg.connect` patched to fail; the result files hold no run ids or timestamps.
+  - A fresh clone with no reachable database rebuilds docs/results.md byte for byte (run after
+    this commit, below).
+- The current files cite commit 0618241 plus 2 uncommitted files (eval/retrieval_eval.py,
+  scripts/results.py). Those are the result-writing code. The retrieval code and config are
+  unchanged since 0618241, and the numbers equal eval_runs 32/33 made from a clean tree.
+- The Phase 2 done-check cause text now reads coherently after the runbook-token correction.
+  The token is in the runbook but shared with every doc on the same host or code; it is not
+  missing.
 
 ## Standing rules (write-ups)
 

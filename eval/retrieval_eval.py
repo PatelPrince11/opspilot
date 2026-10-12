@@ -23,7 +23,14 @@ Two diagnostics (not done-checks):
   all-gold Recall@10 on the union of the two.
 
 Every run goes to eval_runs (commit, config, model revisions, split, timestamp) with one
-eval_results row per question. Refuses to run unless the DB was ingested with the current
+eval_results row per question. A run of a named config (the locked one, or the dense baseline)
+also writes eval/results/<split>_<name>.json: per-question scores, metrics, config, models,
+a corpus snapshot and provenance, with no timestamps or run ids. scripts/results.py builds
+docs/results.md from these committed files only. When the scores, metrics, config, models and
+corpus are identical to the file's, the file is left untouched (its commit and latency stay
+those of the run that first produced the numbers), so re-running changes nothing.
+
+Refuses to run unless the DB was ingested with the current
 chunk settings, so the stored config describes the chunks that were searched.
 """
 
@@ -45,6 +52,19 @@ from rag.retrieval import MODES, Hit, RetrievalConfig, retrieve
 from scripts.corpus.common import PROCESSED
 
 DEPTH = 30  # chunks per question, before the doc dedupe
+RESULTS = Path(__file__).parent / "results"
+SCORE_KEYS = (
+    "recall@5",
+    "recall@10",
+    "hit@5",
+    "hit@10",
+    "rr",
+    "all_gold@10",
+    "token_doc@5",
+    "agent_recall@10",
+    "agent_all_gold@10",
+    "docs",
+)
 NAMES = {
     "recall@5": "Recall@5 (mean fraction of gold docs found)",
     "recall@10": "Recall@10 (mean fraction of gold docs found)",
@@ -263,6 +283,62 @@ def store(conn, split: str, cfg: RetrievalConfig, rows: list[dict]) -> int:
     return run_id
 
 
+def named(cfg: RetrievalConfig) -> str | None:
+    """The committed-results name of a config, or None for ablation-only configs."""
+    if cfg == RetrievalConfig():
+        return "locked"
+    if cfg == RetrievalConfig(mode="dense"):
+        return "dense_baseline"
+    return None
+
+
+def provenance() -> dict:
+    """HEAD plus the tracked files that differed from it: the same for the same tree."""
+    head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+    changed = subprocess.run(
+        ["git", "diff", "--name-only", "HEAD"], capture_output=True, text=True, check=True
+    )
+    return {"commit": head.stdout.strip(), "uncommitted_changes": changed.stdout.split()}
+
+
+def corpus_snapshot(conn) -> dict:
+    """What was searched, for a clean clone that has no DB (and no LogHub file)."""
+    q = {
+        "documents": "SELECT doc_type, count(*) FROM documents GROUP BY 1",
+        "chunks": "SELECT metadata->>'doc_type', count(*) FROM chunks GROUP BY 1",
+        "log_lines": "SELECT CASE WHEN source LIKE 'loghub%%' THEN 'LogHub background'"
+        " WHEN incident_id IS NOT NULL THEN 'synthetic, per incident'"
+        " ELSE 'synthetic, demo (live)' END, count(*) FROM log_events GROUP BY 1",
+    }
+    return {k: dict(sorted(conn.execute(v).fetchall())) for k, v in q.items()}
+
+
+def result_content(split, cfg, rows, questions, corpus) -> dict:
+    """The deterministic part of a named result file."""
+    summary = summarize(rows, questions)
+    summary.pop("latency")
+    content = {
+        "split": split,
+        "config": run_config(cfg),
+        "models": models(),
+        "corpus": corpus,
+        "metrics": summary,
+        "questions": [{"id": r["id"], **{k: r[k] for k in SCORE_KEYS}} for r in rows],
+    }
+    return json.loads(json.dumps(content, default=str))  # as it will read back
+
+
+def write_named(path: Path, content: dict, extra: dict) -> bool:
+    """Write content + extra (provenance, latency) unless the file already holds identical
+    content. Returns whether it wrote."""
+    if path.exists():
+        old = json.loads(path.read_text())
+        if {k: old.get(k) for k in content} == content:
+            return False
+    path.write_text(json.dumps(content | extra, indent=1, sort_keys=True) + "\n")
+    return True
+
+
 def check_ingested(conn, processed: Path = PROCESSED) -> None:
     s = get_settings()
     want = {
@@ -304,6 +380,13 @@ def main(argv: list[str] | None = None) -> int:
         rows = run(conn, questions, cfg, token_gold(questions, Corpus()))
         run_id = store(conn, args.split, cfg, rows)
         conn.commit()
+        corpus = corpus_snapshot(conn)
+    name = named(cfg)
+    if name:
+        path = RESULTS / f"{args.split}_{name}.json"
+        content = result_content(args.split, cfg, rows, questions, corpus)
+        wrote = write_named(path, content, provenance() | {"latency": latency(rows)})
+        print(f"{path.relative_to(RESULTS.parent.parent)}: {'written' if wrote else 'unchanged'}")
     s = get_settings()
     print(
         f"split {args.split}, {len(rows)} questions; mode {cfg.mode},"

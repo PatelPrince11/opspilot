@@ -1,24 +1,25 @@
 """Generate docs/results.md, the results ledger (`make results`; `make results-check` in the gate).
 
-Every number comes from eval_runs/eval_results, the ingested DB, or repo files; nothing is typed
-by hand. The output is deterministic (no wall-clock time; seeded bootstrap), so `--check`
-regenerates it in memory and fails when the committed file differs, e.g. after a new eval run.
+Reads committed files only, never the database, so a clean clone rebuilds it byte for byte:
+eval/results/<split>_{locked,dense_baseline}.json (written by `make eval`), eval/questions.jsonl,
+data/processed (corpus outputs) and eval/label_audit.md. Nothing is typed by hand. The output is
+deterministic (seeded bootstrap, no clock), so `--check` regenerates it in memory and fails only
+when a metric, count or definition changed. A repeat eval run with identical numbers leaves the
+result files, and so this ledger, unchanged.
 
-Retrieval rows use the newest run of the locked config (config.py) and of the dense baseline
-(dense, bge prefix on, same chunks and candidates) per split. Test rows appear only once a test
-run exists (Phase 5, `make eval ARGS="--split test --final-test"`).
+Test rows appear once eval/results/test_*.json exist (Phase 5,
+`make eval ARGS="--split test --final-test"`, plus the dense baseline with `--mode dense`).
 """
 
 import argparse
+import json
 import re
 import sys
 from collections import Counter
 
-import psycopg
-
 from config import get_settings
 from eval.ablation import bootstrap
-from eval.retrieval_eval import NAMES, latency, metrics, token_gold, with_hits
+from eval.retrieval_eval import NAMES, RESULTS, token_gold
 from eval.validate_questions import QUESTIONS, SPLIT_DIMS, Corpus, load
 from scripts.corpus.common import PROCESSED, ROOT, SEED
 
@@ -39,8 +40,10 @@ DEFINITIONS = {
     " gold docs found in the union (diagnostic)",
     "agent_all_gold@10": "same union; questions with 2+ gold docs, share with every gold doc"
     " (diagnostic)",
-    "p50_ms": "median retrieve() wall time per question, models warm, Mac CPU",
-    "p95_ms": "95th percentile retrieve() wall time per question, models warm, Mac CPU",
+    "p50_ms": "median retrieve() wall time per question, models warm, Mac CPU, from the run"
+    " that produced these scores",
+    "p95_ms": "95th percentile retrieve() wall time per question, models warm, Mac CPU, from the"
+    " run that produced these scores",
 }
 LEVEL_KEYS = [
     "recall@5",
@@ -86,7 +89,7 @@ PLACEHOLDERS = [
 ]
 # Bullet template (by its opening words) -> the ledger rows that fill it.
 BULLET_ROWS = {
-    "Built hybrid": "Retrieval, test split: hybrid BM25 + dense vs dense, Recall@5 (mean fraction"
+    "Built hybrid": "Section (b), test split: hybrid BM25 + dense vs dense, Recall@5 (mean fraction"
     " of gold docs found) levels for [X] (dense) and [Y] (locked hybrid), with the comparison"
     " row's CI; [N] documents from section (a); [N] questions = test n.",
     "Developed a LangGraph": "Section (c): citation accuracy (a)/(b) for [X], tool-call success"
@@ -99,39 +102,24 @@ BULLET_ROWS = {
 }
 
 
-def latest_run(conn, split: str, mode: str) -> tuple[int, str, list[dict]] | None:
-    s = get_settings()
-    row = conn.execute(
-        "SELECT id, git_commit FROM eval_runs WHERE eval_type = 'retrieval' AND split = %s"
-        " AND config->>'mode' = %s AND (config->>'bge_prefix')::boolean = %s"
-        " AND (config->>'candidates')::int = %s AND (config->>'chunk_size')::int = %s"
-        " AND (config->>'chunk_overlap')::int = %s AND config ? 'keyword_ranker'"
-        " AND config->>'doc_type' IS NULL ORDER BY id DESC LIMIT 1",
-        (split, mode, s.bge_prefix, s.retrieval_candidates, s.chunk_size, s.chunk_overlap),
-    ).fetchone()
-    if not row:
-        return None
-    res = conn.execute(
-        "SELECT question_id, metrics FROM eval_results WHERE run_id = %s ORDER BY question_id",
-        (row[0],),
-    ).fetchall()
-    gold = {q["id"]: q["relevant_doc_ids"] for q in load(QUESTIONS)}
-    return row[0], row[1], with_hits([{"id": qid, **m} for qid, m in res], gold)
+def load_named(split: str, name: str) -> dict | None:
+    path = RESULTS / f"{split}_{name}.json"
+    return json.loads(path.read_text()) if path.exists() else None
 
 
-def corpus_section(conn, questions: list[dict]) -> list[str]:
+def provenance(r: dict) -> str:
+    n = len(r["uncommitted_changes"])
+    return r["commit"][:12] + (f" + {n} uncommitted file(s)" if n else "")
+
+
+def corpus_section(questions: list[dict]) -> list[str]:
     def lines(name: str) -> int:
         return len((PROCESSED / name).read_text().splitlines())
 
-    s = get_settings()
-    chunks = dict(
-        conn.execute("SELECT metadata->>'doc_type', count(*) FROM chunks GROUP BY 1").fetchall()
-    )
-    logs = conn.execute(
-        "SELECT CASE WHEN source LIKE 'loghub%%' THEN 'LogHub background'"
-        " WHEN incident_id IS NOT NULL THEN 'synthetic, per incident'"
-        " ELSE 'synthetic, demo (live)' END, count(*) FROM log_events GROUP BY 1 ORDER BY 1"
-    ).fetchall()
+    locked = load_named("dev", "locked")
+    snap = locked["corpus"] if locked else {"chunks": {}, "log_lines": {}}
+    cfg = locked["config"] if locked else {"chunk_size": "?", "chunk_overlap": "?"}
+    src = "eval/results/dev_locked.json, corpus as ingested for that run"
     out = [
         "## (a) Corpus and eval set",
         "",
@@ -141,11 +129,11 @@ def corpus_section(conn, questions: list[dict]) -> list[str]:
         "|---|---|---|",
         f"| runbooks | {lines('runbooks.jsonl')} | data/processed/runbooks.jsonl |",
         f"| incident write-ups | {lines('incidents.jsonl')} | data/processed/incidents.jsonl |",
-        f"| chunks, runbook | {chunks.get('runbook', 0)} | DB, chunks {s.chunk_size}/"
-        f"{s.chunk_overlap} tokens |",
-        f"| chunks, incident | {chunks.get('incident', 0)} | DB |",
+        f"| chunks, runbook | {snap['chunks'].get('runbook', '-')} | {src}"
+        f" ({cfg['chunk_size']}/{cfg['chunk_overlap']} tokens) |",
+        f"| chunks, incident | {snap['chunks'].get('incident', '-')} | {src} |",
     ]
-    out += [f"| log lines, {k} | {n} | DB, log_events |" for k, n in logs]
+    out += [f"| log lines, {k} | {n} | {src} |" for k, n in snap["log_lines"].items()]
     out += ["", f"Questions: {len(questions)} (eval/questions.jsonl).", ""]
     out += ["| dimension | value | dev | test | all |", "|---|---|---|---|---|"]
     for dim, f in SPLIT_DIMS.items():
@@ -181,7 +169,7 @@ def fmt(x) -> str:
     return "-" if x is None else f"{x:.3f}"
 
 
-def retrieval_section(conn, questions: list[dict]) -> list[str]:
+def retrieval_section(questions: list[dict]) -> list[str]:
     s = get_settings()
     locked = f"{s.retrieval_mode} (bge prefix {'on' if s.bge_prefix else 'off'})"
     out = [
@@ -196,38 +184,43 @@ def retrieval_section(conn, questions: list[dict]) -> list[str]:
         "- **Comparisons** are locked minus baseline, paired by question, percentile bootstrap"
         f" 95% CI, 10,000 resamples, seed {SEED}. Claimable = yes only when the CI excludes 0.",
         "- Resume numbers come from **test** rows only (Phase 5). Dev rows are for development.",
+        "- Source: eval/results/<split>_locked.json and <split>_dense_baseline.json, written by"
+        " `make eval`; commit = the code that produced the scores.",
         "",
         "| metric | definition | split | config | n | value | 95% CI | claimable"
-        " | eval_run | commit |",
+        " | results file | commit |",
         "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for split in ("dev", "test"):
-        qs = [q for q in questions if q["split"] == split]
-        a = latest_run(conn, split, s.retrieval_mode)
-        b = latest_run(conn, split, "dense")
+        a, b = load_named(split, "locked"), load_named(split, "dense_baseline")
         if not a or not b:
             out.append(
                 f"| all | - | {split} | - | - | not measured yet"
                 f" ({'Phase 5' if split == 'test' else 'run make eval'}) | - | - | - | - |"
             )
             continue
-        for (run_id, commit, rows), name in ((a, locked), (b, "dense (bge prefix on)")):
-            m, lat = metrics(rows), latency(rows)
+        for r, name, fname in (
+            (a, locked, f"{split}_locked.json"),
+            (b, "dense (bge prefix on)", f"{split}_dense_baseline.json"),
+        ):
+            m = r["metrics"]["overall"]
             for k in LEVEL_KEYS:
                 n = {"all_gold@10": m["n_multi"], "agent_all_gold@10": m["n_multi"]}.get(
                     k, m["n_token"] if k == "token_doc@5" else m["n"]
                 )
                 out.append(
                     f"| {NAMES[k]} | {DEFINITIONS[k]} | {split} | {name} | {n} | {fmt(m[k])}"
-                    f" | - | n/a | {run_id} | {commit[:12]} |"
+                    f" | - | n/a | {fname} | {provenance(r)} |"
                 )
             for k in ("p50_ms", "p95_ms"):
                 out.append(
                     f"| retrieval latency {k[:3]} | {DEFINITIONS[k]} | {split} | {name}"
-                    f" | {m['n']} | {lat[k]:.1f} ms | - | n/a | {run_id} | {commit[:12]} |"
+                    f" | {m['n']} | {r['latency'][k]:.1f} ms | - | n/a | {fname}"
+                    f" | {provenance(r)} |"
                 )
-        by_id = {q["id"]: q for q in qs}
-        ra, rb = {r["id"]: r for r in a[2]}, {r["id"]: r for r in b[2]}
+        by_id = {q["id"]: q for q in questions}
+        ra = {x["id"]: x for x in a["questions"]}
+        rb = {x["id"]: x for x in b["questions"]}
         for metric, key, sl in COMPARISONS:
             ids = sorted(
                 i
@@ -242,8 +235,8 @@ def retrieval_section(conn, questions: list[dict]) -> list[str]:
             out.append(
                 f"| {NAMES[metric]}: locked - dense{where} | difference of the levels above"
                 f" | {split} | {locked} vs dense | {len(ids)} | {diff:+.3f}"
-                f" | [{lo:+.3f}, {hi:+.3f}] | {claim} | {a[0]} vs {b[0]}"
-                f" | {a[1][:12]} / {b[1][:12]} |"
+                f" | [{lo:+.3f}, {hi:+.3f}] | {claim} | both files above"
+                f" | {provenance(a)} / {provenance(b)} |"
             )
     tg = token_gold([q for q in questions if q["split"] == "dev"], Corpus())
     ex = [q for q in questions if q["split"] == "dev" and q["difficulty"] == "exact-token"]
@@ -282,14 +275,14 @@ def bullets_section() -> list[str]:
 
 def render() -> str:
     questions = load(QUESTIONS)
-    with psycopg.connect(get_settings().database_url) as conn:
-        a = corpus_section(conn, questions)
-        b = retrieval_section(conn, questions)
+    a = corpus_section(questions)
+    b = retrieval_section(questions)
     out = [
         "# OpsPilot results ledger",
         "",
-        "Generated by `make results` (scripts/results.py) from eval_runs, the ingested DB and repo"
-        " files. Do not edit by hand: `make gate` fails when this file is stale.",
+        "Generated by `make results` (scripts/results.py) from committed files only:"
+        " eval/results/*.json, eval/questions.jsonl, data/processed and eval/label_audit.md."
+        " Do not edit by hand: `make gate` fails when this file is stale.",
         "",
         *a,
         "",

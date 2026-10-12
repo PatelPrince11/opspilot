@@ -576,8 +576,10 @@ hybrid_rerank vs hybrid is +0.102 [+0.044, +0.163] at 400/50 and +0.054 [+0.003,
 token-bearing incident.**
 - At 400/50, 14 of 45 exact-token questions have dense Recall@5 below 1. In 10 of them some
   gold doc is in the top 5, and in 13 the missing gold includes a runbook.
-- Runbooks have no hostnames, codes or dates, so exact-token matching cannot find them.
-  [Corrected 2026-10-11: false. 28 of 31 gold runbooks on dev exact-token questions contain one of the question's codes or hostnames. The token is shared with every incident on that host or code, so it does not single the runbook out; see 'Metric definitions, Hit@k'.]
+- The runbook usually holds the question's code or hostname (28 of 31 gold runbooks on dev
+  exact-token questions), but so does every incident on that host or code. The shared token
+  does not single the runbook out. (Corrected 2026-10-11: first written as "runbooks have no
+  hostnames, codes or dates", which was false.)
   The token that does help pins the incident, and dense gets that incident anyway in a
   147-document corpus.
 - That leaves dense at 0.800 on 45 questions. With the IDF cut, hybrid_rerank vs dense on
@@ -651,8 +653,10 @@ beats dense: +0.049 [+0.006, +0.095].
 Recall@5: +0.067 [+0.000, +0.156] (n = 45). The lower bound is 0, so it does not exclude 0. The
 token-doc diagnostic is identical: +0.067 [+0.000, +0.156]. Causes:
 1. **The runbook half of the gold set.** All 12 of hybrid_rerank's exact-token misses include
-   a gold runbook. Runbooks name no hostnames, codes or dates, so no exact-token method finds
-   them. [Corrected 2026-10-11: false. 28 of 31 gold runbooks on dev exact-token questions contain one of the question's codes or hostnames. The token is shared with every incident on that host or code, so it does not single the runbook out; see 'Metric definitions, Hit@k'.] Dense has 15 misses, 14 with a runbook.
+   a gold runbook. The runbook usually holds the question's token, but so does every incident
+   on the same host or code, so the token does not single it out among many matching docs.
+   (Corrected 2026-10-11: first written as "runbooks name no hostnames, codes or dates", which
+   was false.) Dense has 15 misses, 14 with a runbook.
 2. **The reranker undoes part of BM25's token gain.** Per question on token-doc Recall@5,
    hybrid_rerank is lower than BM25 alone on 5 questions (Q001, Q013, Q040, Q089, Q117) and
    higher on 1. Against hybrid it is lower on 4 and higher on 2. ms-marco-MiniLM scores
