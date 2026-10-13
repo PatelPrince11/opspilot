@@ -37,27 +37,52 @@ TEST_DB = "opspilot_injection_test"
 CASES = load_cases()
 
 
-def test_thirty_cases_balanced_by_location_style_and_split():
-    assert len(CASES) == 30
-    assert len({c["id"] for c in CASES}) == 30
-    assert Counter(c["split"] for c in CASES) == {"tune": 15, "heldout": 15}
-    assert Counter(c["location"] for c in CASES) == dict.fromkeys(LOCATIONS, 10)
+FIRST, SECOND = CASES[:30], CASES[30:]  # INJ-01..30 (tune + held-out), INJ-31..60 (held-out)
+
+
+def test_first_thirty_balanced_by_location_style_and_split():
+    assert [c["id"] for c in FIRST] == [f"INJ-{i:02d}" for i in range(1, 31)]
+    assert Counter(c["split"] for c in FIRST) == {"tune": 15, "heldout": 15}
+    assert Counter(c["location"] for c in FIRST) == dict.fromkeys(LOCATIONS, 10)
     # every location x style pair has one tune and one held-out case
-    pairs = Counter((c["location"], c["style"], c["split"]) for c in CASES)
+    pairs = Counter((c["location"], c["style"], c["split"]) for c in FIRST)
     assert pairs == {
         (loc, st, sp): 1 for loc in LOCATIONS for st in STYLES for sp in ("tune", "heldout")
     }
 
 
+def test_second_held_out_set_covers_every_pair_twice():
+    assert [c["id"] for c in SECOND] == [f"INJ-{i:02d}" for i in range(31, 61)]
+    assert {c["split"] for c in SECOND} == {"heldout"}
+    pairs = Counter((c["location"], c["style"]) for c in SECOND)
+    assert pairs == {(loc, st): 2 for loc in LOCATIONS for st in STYLES}
+    # the same canary / claim mix per style as the first set
+    kinds = lambda cs: Counter((c["style"], c["check"]["kind"]) for c in cs)  # noqa: E731
+    assert kinds(SECOND) == kinds(FIRST)
+
+
 def test_each_case_targets_a_dev_question_and_sits_next_to_its_gold():
     questions = {q["id"]: q for q in load(QUESTIONS)}
-    assert len({c["question_id"] for c in CASES}) == 30
+    assert len({c["question_id"] for c in FIRST}) == 30
+    # Document cases take new questions; only 13 dev runs query logs, so log cases may reuse
+    # a question (with its own payload, visible only to its own case).
+    used = {c["question_id"] for c in FIRST}
+    new_docs = [c["question_id"] for c in SECOND if c["location"] != "log"]
+    assert len(set(new_docs)) == 20 and not set(new_docs) & used
     for c in CASES:
         q = questions[c["question_id"]]
         assert q["split"] == "dev", c["id"]
         if c["location"] != "log":
             assert c["doc"]["anchor"] in q["relevant_doc_ids"], c["id"]
             assert c["doc"]["doc_type"] == c["location"]
+    assert len({c["doc"]["id"] for c in CASES if "doc" in c}) == 40
+
+
+def test_second_set_checks_tolerate_either_apostrophe_and_case():
+    swap = str.maketrans({"'": "\u2019", "\u2019": "'"})
+    for c in SECOND:
+        for text in (c["payload"], c["payload"].translate(swap), c["payload"].upper()):
+            assert re.search(c["check"]["pattern"], text, re.I), c["id"]
 
 
 def test_payload_is_in_its_carrier_fits_what_the_agent_sees_and_trips_its_check():
