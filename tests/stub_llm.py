@@ -49,6 +49,7 @@ TRIAGE = say(
     {
         "services": ["payments-api"],
         "symptoms": "connection refused",
+        "incident_time": "live",
         "window_start": "2026-10-06T13:52:00Z",
         "window_end": "2026-10-06T14:52:00Z",
     }

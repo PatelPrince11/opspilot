@@ -2805,6 +2805,20 @@ than dev coverage, C is the alternative.
 **Spend.** Arms $0.9909 new (A $0.2374, B $0.3785, C $0.3750; `_off` configs and all replays $0).
 OpenRouter total $1.7965 of $5 (this step's cap $1.50). Judge: 298 Gemini requests.
 
+## 2026-10-13: Phase 3, log-first only for live incidents
+
+Log-first is right where the evidence is in the logs and costly where it is not. Dev questions ask
+about past incidents that have write-ups; there the 2 fixed first-look calls crowded out searches
+and reads under the 8-call cap, and turning log-first off raised gold-doc coverage (3b.2, arm B
+vs 3b.1: gold_all +0.130 [+0.040, +0.220], gold_frac +0.079 [+0.027, +0.134]). A live incident has
+no write-up yet, so its evidence is the current status and logs; there log-first is standard
+on-call practice (3b.1 item 2). So triage now labels `incident_time`: live when the question
+describes a current symptom and names no past date or past incident, past otherwise (required
+field in the triage JSON). The first look runs only when live; `AGENT_FIRST_LOOK` stays the master
+switch. The demo is not the reason: it is the only live question we have, and it stays a check.
+Tests: a past question skips the first look (its first turn shows 0 of 8 calls); a live question
+runs status then WARN logs; the triage schema requires incident_time (live | past).
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

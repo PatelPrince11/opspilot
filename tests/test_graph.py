@@ -400,6 +400,7 @@ def test_no_first_look_without_a_named_service_or_on_a_verify_loop(monkeypatch):
         {
             "services": [],
             "symptoms": "s",
+            "incident_time": "live",
             "window_start": "2026-10-06T13:52:00Z",
             "window_end": "2026-10-06T14:52:00Z",
         }
@@ -449,3 +450,36 @@ def test_draft_effort_none_leaves_the_provider_default(monkeypatch):
     llm = StubLLM([TRIAGE, DONE, draft()])
     run(llm, monkeypatch, draft_effort=None)
     assert [k.get("reasoning_effort") for k in llm.kwargs] == [None, None, None]
+
+
+PAST_TRIAGE = say(
+    {
+        "services": ["payments-api"],
+        "symptoms": "pool exhausted",
+        "incident_time": "past",
+        "window_start": "2026-01-05T13:30:00Z",
+        "window_end": "2026-01-05T15:00:00Z",
+    }
+)
+
+
+def test_a_past_incident_skips_the_first_look(monkeypatch):
+    """3b.2: on past incidents (write-ups exist) log-first cost gold-doc coverage."""
+    rb = ("search_incidents", {"query": "pool exhausted January 2026"})
+    llm = StubLLM([PAST_TRIAGE, calls(rb), DONE, draft()])
+    final, _ = run(llm, monkeypatch, first_look=True)
+    assert [(t["name"], t["arguments"]) for t in final["tool_calls"]] == [rb]
+    assert "Tool calls so far (0 of 8)" in llm.bodies[1]["messages"][1]["content"]
+
+
+def test_a_live_incident_runs_the_first_look(monkeypatch):
+    llm = StubLLM([TRIAGE, DONE, draft()])
+    final, _ = run(llm, monkeypatch, first_look=True)
+    assert final["triage"]["incident_time"] == "live"
+    assert [t["name"] for t in final["tool_calls"]] == ["get_service_status", "query_logs"]
+
+
+def test_triage_asks_for_incident_time():
+    schema = graph_mod.Triage.model_json_schema()
+    assert "incident_time" in schema["required"]
+    assert schema["properties"]["incident_time"]["enum"] == ["live", "past"]

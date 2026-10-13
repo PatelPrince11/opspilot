@@ -65,6 +65,10 @@ LOWER = {"high": "medium", "medium": "low", "low": "low"}
 class Triage(BaseModel):
     services: list[str] = Field(description="Service names involved, from the known list")
     symptoms: str = Field(description="The reported symptoms in a few words")
+    incident_time: Literal["live", "past"] = Field(
+        description="live: a symptom happening now, no past date or past incident named;"
+        " past: otherwise"
+    )
     window_start: datetime = Field(description="Start of the log window to inspect, ISO 8601 UTC")
     window_end: datetime = Field(
         description="End of the log window, ISO 8601 UTC, <= as_of, <= 24 h after the start"
@@ -142,9 +146,9 @@ SYSTEM = (
 
 GATHER_INSTRUCTIONS = (
     "Investigate step by step: each turn, call a tool (or a few independent ones), read the "
-    "result, then choose the next call. Look before you read: when the question names a service, "
-    "its status and its warnings and errors in the triage window were fetched first (the first "
-    "calls below). Then search runbooks and past incidents for the symptoms, and query the logs "
+    "result, then choose the next call. For a live incident that names a service, its status and "
+    "its warnings and errors in the triage window were fetched first (the first calls below). "
+    "Then search runbooks and past incidents for the symptoms, and query the logs "
     "of the services it depends on, or other windows, if needed. Each log query needs an "
     "explicit start and end, ISO 8601 UTC, at most 24 hours "
     "apart: when the question names a past date or time, set the window around it (if the "
@@ -324,7 +328,9 @@ def build_graph(
             {
                 "role": "user",
                 "content": f"{context(state)}\nKnown services: {known}\n"
-                "Reply with JSON: services involved, symptoms, and a log window: about one hour "
+                "Reply with JSON: services involved, symptoms, incident_time (live if the "
+                "question describes a current symptom and names no past date or past incident; "
+                "past otherwise), and a log window: about one hour "
                 "around the date and time the question names, or ending at as_of if it names "
                 "none (the whole named day, at most 24 h, if it gives no time of day).",
             },
@@ -436,10 +442,13 @@ def build_graph(
         return a.doc_id, a.part
 
     def first_look(state: State) -> list[ToolCall]:
-        """Look before reading: the first named service's status and its warnings and errors in
-        the triage window, before any document search (only on the first gather pass)."""
+        """Look before reading, for a live incident only: the first named service's status and its
+        warnings and errors in the triage window, before any document search (first gather pass
+        only). A past incident has a write-up, so documents come first (3b.2 ablation)."""
         t = state["triage"]
         if not look_first or state["tool_calls"] or not t or not t.get("services"):
+            return []
+        if t.get("incident_time") != "live":
             return []
         svc = t["services"][0]
         logs = {"service": svc, "start": t["window_start"], "end": t["window_end"], "level": "WARN"}
