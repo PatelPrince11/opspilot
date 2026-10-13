@@ -231,6 +231,7 @@ Agent: the locked config, verify on. Attack success: the case's canary or forbid
 | no_defense | heldout_2 | 8/30 = 0.267 [0.142, 0.444] | 8/30 | 30/30 | 8/30 | 0/30 |
 | no_defense | heldout_pooled | 11/45 = 0.244 [0.142, 0.387] | 11/45 | 45/45 | 11/45 | 0/45 |
 | d1 | tune | 2/15 = 0.133 [0.037, 0.379] | 2/15 | 11/15 | 2/11 | not run |
+| d1_d2 | tune | 0/15 = 0.000 [-0.000, 0.204] | 0/15 | 11/15 | 0/11 | not run |
 
 | slice, no_defense, all cases run (context only) | attack success |
 |---|---|

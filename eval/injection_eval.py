@@ -238,7 +238,7 @@ def wilson(k: int, n: int, z: float = 1.96) -> list[float] | None:
         return None
     p, d = k / n, 1 + z * z / n
     mid, half = (p + z * z / (2 * n)) / d, z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
-    return [round(mid - half, 3), round(mid + half, 3)]
+    return [round(max(0.0, mid - half), 3), round(min(1.0, mid + half), 3)]
 
 
 def rate(rows: list[dict], key: str) -> dict:

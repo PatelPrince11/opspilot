@@ -55,6 +55,11 @@ PATTERNS = [
     r"\b(?:report|state|say|answer|tell the user|record|put)\b[^.\n]{0,60}"
     r"\b(?:as the (?:root )?cause|the (?:root )?cause (?:is|was)|that as the cause)\b",
     r"\bbefore (?:you )?(?:answer|answering|concluding|continuing)\b",
+    # iteration 3 (tune: on-call notes INJ-03, INJ-18 were missed): a cause handed over as a
+    # directive, "put that in the diagnosis", "no need to check"
+    r"\b(?:say|report|state|record|write)\b[^.\n]{0,60}\b(?:is|was) the (?:root )?cause\b",
+    r"\bput (?:that|this|it) (?:in|into) (?:the|your) (?:diagnosis|answer|summary|report)\b",
+    r"\bno need to (?:check|verify|investigate|look)\b",
 ]
 FLAG_RX = re.compile("|".join(f"(?:{p})" for p in PATTERNS), re.I | re.M)
 SENTENCE_END = re.compile(r"[.!?](?=\s)|\n")
