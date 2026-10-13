@@ -1,8 +1,10 @@
 {
- "commit": "8388fbb3cee98db04ccf75a5853210e6a18e333b",
+ "commit": "003dea092b09157daa711a0220cd8f589ef7fe3a",
  "config": {
   "agent_max_tool_calls": 8,
   "as_of": "2026-10-06T14:52:00Z",
+  "draft_effort": "low",
+  "first_look": true,
   "judge_prompt_version": "judge-v1",
   "llm_token_budget": 6000,
   "max_loops": 2,
@@ -50,6 +52,16 @@
     "n": 80,
     "value": 4.575
    },
+   "gold_all": {
+    "den": 80,
+    "n": 80,
+    "value": 0.6
+   },
+   "gold_frac": {
+    "den": 80,
+    "n": 80,
+    "value": 0.7829166666666667
+   },
    "no_diagnosis": {
     "den": 80,
     "n": 80,
@@ -61,6 +73,9 @@
     "llm_calls": 8.825,
     "n": 80,
     "prompt_tokens": 15803.8125,
+    "query_logs": 1.4625,
+    "reads_ok": 1.35,
+    "runs_with_query_logs": 80,
     "tool_calls": 6.8375
    },
    "premise_corrected": {
@@ -105,6 +120,16 @@
     "n": 20,
     "value": 4.65
    },
+   "gold_all": {
+    "den": 20,
+    "n": 20,
+    "value": 0.95
+   },
+   "gold_frac": {
+    "den": 20,
+    "n": 20,
+    "value": 0.975
+   },
    "no_diagnosis": {
     "den": 20,
     "n": 20,
@@ -116,6 +141,9 @@
     "llm_calls": 8.95,
     "n": 20,
     "prompt_tokens": 15860.95,
+    "query_logs": 1.05,
+    "reads_ok": 1.55,
+    "runs_with_query_logs": 20,
     "tool_calls": 7.35
    },
    "premise_corrected": {
@@ -160,6 +188,16 @@
     "n": 45,
     "value": 4.555555555555555
    },
+   "gold_all": {
+    "den": 45,
+    "n": 45,
+    "value": 0.6
+   },
+   "gold_frac": {
+    "den": 45,
+    "n": 45,
+    "value": 0.7555555555555555
+   },
    "no_diagnosis": {
     "den": 45,
     "n": 45,
@@ -171,6 +209,9 @@
     "llm_calls": 8.688888888888888,
     "n": 45,
     "prompt_tokens": 15371.666666666666,
+    "query_logs": 1.6888888888888889,
+    "reads_ok": 1.1333333333333333,
+    "runs_with_query_logs": 45,
     "tool_calls": 6.5777777777777775
    },
    "premise_corrected": {
@@ -215,6 +256,16 @@
     "n": 28,
     "value": 4.535714285714286
    },
+   "gold_all": {
+    "den": 28,
+    "n": 28,
+    "value": 0.6071428571428571
+   },
+   "gold_frac": {
+    "den": 28,
+    "n": 28,
+    "value": 0.8261904761904761
+   },
    "no_diagnosis": {
     "den": 28,
     "n": 28,
@@ -226,6 +277,9 @@
     "llm_calls": 9.0,
     "n": 28,
     "prompt_tokens": 16452.928571428572,
+    "query_logs": 1.1785714285714286,
+    "reads_ok": 1.7142857142857142,
+    "runs_with_query_logs": 28,
     "tool_calls": 7.428571428571429
    },
    "premise_corrected": {
@@ -270,6 +324,16 @@
     "n": 27,
     "value": 4.703703703703703
    },
+   "gold_all": {
+    "den": 27,
+    "n": 27,
+    "value": 0.8518518518518519
+   },
+   "gold_frac": {
+    "den": 27,
+    "n": 27,
+    "value": 0.9259259259259259
+   },
    "no_diagnosis": {
     "den": 27,
     "n": 27,
@@ -281,6 +345,9 @@
     "llm_calls": 8.962962962962964,
     "n": 27,
     "prompt_tokens": 15893.222222222223,
+    "query_logs": 1.0740740740740742,
+    "reads_ok": 1.4814814814814814,
+    "runs_with_query_logs": 27,
     "tool_calls": 7.037037037037037
    },
    "premise_corrected": {
@@ -325,6 +392,16 @@
     "n": 93,
     "value": 4.602150537634409
    },
+   "gold_all": {
+    "den": 93,
+    "n": 93,
+    "value": 0.6559139784946236
+   },
+   "gold_frac": {
+    "den": 93,
+    "n": 93,
+    "value": 0.8132616487455196
+   },
    "no_diagnosis": {
     "den": 93,
     "n": 93,
@@ -336,6 +413,9 @@
     "llm_calls": 8.881720430107526,
     "n": 93,
     "prompt_tokens": 15898.741935483871,
+    "query_logs": 1.3978494623655915,
+    "reads_ok": 1.3763440860215055,
+    "runs_with_query_logs": 93,
     "tool_calls": 6.903225806451613
    },
    "premise_corrected": {
@@ -380,6 +460,16 @@
     "n": 7,
     "value": 4.428571428571429
    },
+   "gold_all": {
+    "den": 7,
+    "n": 7,
+    "value": 0.8571428571428571
+   },
+   "gold_frac": {
+    "den": 7,
+    "n": 7,
+    "value": 0.9285714285714286
+   },
    "no_diagnosis": {
     "den": 7,
     "n": 7,
@@ -391,6 +481,9 @@
     "llm_calls": 8.428571428571429,
     "n": 7,
     "prompt_tokens": 14705.857142857143,
+    "query_logs": 1.1428571428571428,
+    "reads_ok": 1.5714285714285714,
+    "runs_with_query_logs": 7,
     "tool_calls": 7.428571428571429
    },
    "premise_corrected": {
@@ -435,6 +528,16 @@
     "n": 100,
     "value": 4.59
    },
+   "gold_all": {
+    "den": 100,
+    "n": 100,
+    "value": 0.67
+   },
+   "gold_frac": {
+    "den": 100,
+    "n": 100,
+    "value": 0.8213333333333332
+   },
    "no_diagnosis": {
     "den": 100,
     "n": 100,
@@ -446,6 +549,9 @@
     "llm_calls": 8.85,
     "n": 100,
     "prompt_tokens": 15815.24,
+    "query_logs": 1.38,
+    "reads_ok": 1.39,
+    "runs_with_query_logs": 100,
     "tool_calls": 6.94
    },
    "premise_corrected": {
@@ -522,6 +628,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -586,6 +700,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -648,6 +770,14 @@
     ],
     "faithfulness": [
      2,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -730,6 +860,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -796,6 +934,14 @@
     ],
     "faithfulness": [
      2,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -870,6 +1016,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -942,6 +1096,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -993,6 +1155,14 @@
     ],
     "faithfulness": [
      1,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -1050,6 +1220,14 @@
     ],
     "faithfulness": [
      3,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.3333333333333333,
      1
     ],
     "no_diagnosis": [
@@ -1132,6 +1310,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1200,6 +1386,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.6666666666666666,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1264,6 +1458,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1326,6 +1528,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.0,
      1
     ],
     "no_diagnosis": [
@@ -1400,6 +1610,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1451,6 +1669,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -1525,6 +1751,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1597,6 +1831,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1665,6 +1907,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1731,6 +1981,14 @@
     ],
     "faithfulness": [
      1,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -1805,6 +2063,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1873,6 +2139,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1935,6 +2209,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -2005,6 +2287,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2071,6 +2361,14 @@
     ],
     "faithfulness": [
      2,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -2149,6 +2447,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2225,6 +2531,14 @@
      4,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2297,6 +2611,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2361,6 +2683,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2423,6 +2753,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -2501,6 +2839,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2573,6 +2919,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2639,6 +2993,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -2711,6 +3073,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -2789,6 +3159,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2851,6 +3229,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -2921,6 +3307,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2989,6 +3383,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3055,6 +3457,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -3127,6 +3537,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -3207,6 +3625,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -3293,6 +3719,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3367,6 +3801,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -3445,6 +3887,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.8333333333333334,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3519,6 +3969,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -3605,6 +4063,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3671,6 +4137,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -3751,6 +4225,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -3837,6 +4319,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3915,6 +4405,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -4001,6 +4499,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4073,6 +4579,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4143,6 +4657,14 @@
     ],
     "faithfulness": [
      3,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -4225,6 +4747,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4301,6 +4831,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4375,6 +4913,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -4465,6 +5011,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4541,6 +5095,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4613,6 +5175,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4668,6 +5238,14 @@
     ],
     "faithfulness": [
      3,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.8,
      1
     ],
     "no_diagnosis": [
@@ -4742,6 +5320,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4814,6 +5400,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4884,6 +5478,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -4966,6 +5568,14 @@
      3,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5021,6 +5631,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -5099,6 +5717,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5175,6 +5801,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5249,6 +5883,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -5331,6 +5973,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5403,6 +6053,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5454,6 +6112,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.0,
      1
     ],
     "no_diagnosis": [
@@ -5522,6 +6188,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -5594,6 +6268,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -5676,6 +6358,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5752,6 +6442,14 @@
      3,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5818,6 +6516,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -5896,6 +6602,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5962,6 +6676,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -6044,6 +6766,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6116,6 +6846,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6171,6 +6909,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -6239,6 +6985,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -6315,6 +7069,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -6396,6 +7158,14 @@
      3,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6462,6 +7232,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -6540,6 +7318,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6611,6 +7397,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6677,6 +7471,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -6749,6 +7551,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -6825,6 +7635,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6896,6 +7714,14 @@
      4,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6951,6 +7777,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -7031,6 +7865,14 @@
      4,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7103,6 +7945,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -7184,6 +8034,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7260,6 +8118,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7311,6 +8177,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -7379,6 +8253,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -7460,6 +8342,14 @@
      4,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7525,6 +8415,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -7597,6 +8495,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [

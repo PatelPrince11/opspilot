@@ -443,3 +443,9 @@ def test_draft_prompt_says_unstated_facts_are_not_recorded():
     assert "not recorded in the evidence; never infer or guess it" in " ".join(
         graph_mod.DRAFT_INSTRUCTIONS.split()
     )
+
+
+def test_draft_effort_none_leaves_the_provider_default(monkeypatch):
+    llm = StubLLM([TRIAGE, DONE, draft()])
+    run(llm, monkeypatch, draft_effort=None)
+    assert [k.get("reasoning_effort") for k in llm.kwargs] == [None, None, None]

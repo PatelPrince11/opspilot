@@ -2730,6 +2730,81 @@ Verify on vs off (new): citation (a) +0.298 [+0.242, +0.359], n 91, claimable; c
   phase, $5 credit). Time: verify-on agent 4.6 min, judge 6.6 min; verify-off agent 4 s (cache),
   judge 4.1 min until the quota stopped it.
 
+## 2026-10-13: Phase 3b.2, ablation of the 3b.1 changes
+
+**Why.** 3b.1 bundled four fixes (read list, first look, not-recorded rule, low draft effort) into
+one change and compared it with 3b as a whole, so its before/after differences could not be
+attributed to any one fix: the comparison was confounded. This step changes one thing at a time.
+
+**Design.** Three arms, verify on, all 100 dev questions, each one change from 3b.1:
+A draft reasoning effort back to the provider default (medium); B first look off; C first look
+on with a tool-call cap of 10 (was 8). Each arm's `_off` config replays its own first draft
+from the cache (free), giving first-draft citation (a). New deterministic metric, no judge:
+gold-doc coverage, `gold_all` (share of runs that gathered or read every gold doc) and `gold_frac`
+(mean fraction of gold docs gathered per run), from the documents in the run's evidence map.
+- Runs before 3b.2 did not record gathered documents, so 3b.1 was replayed with the current code
+  and the old 3b run with its own code (b25000c, in a git worktree), both from the response
+  cache with the OpenRouter key blanked (a miss would fail, not spend): 400 runs, every call
+  cached, every diagnosis identical to the original. Their result files now carry gold coverage;
+  a pure replay keeps the measured run's latency and spend (fix 003dea0, tested).
+- Judge: the 300 arm answers and the 10 verify-off answers 3b.1 left unjudged, after Gemini's
+  quota reset at midnight Pacific: 298 real requests. The limiter's counter file was reset first:
+  its entries had been keyed by UTC day before f7cb0b3 and would have counted 165 requests
+  against the new Pacific day.
+- Report: eval/results/dev_generation_ablation.md (`uv run python -m eval.generation_eval
+  ablation`), result files dev_generation_arm_{a,b,c}_{on,off}.json.
+
+**Results** (verify on; value with denominator; differences paired over questions, 95% CI;
+* = CI excludes 0)
+
+| metric | old 3b | 3b.1 | A effort default | B no first look | C cap 10 |
+|---|---|---|---|---|---|
+| completeness (254 facts) | 0.732 | 0.657 | 0.665 | 0.693 | 0.630 |
+| gold_all (100 runs) | 0.710 | 0.670 | 0.660 | 0.800 | 0.760 |
+| gold_frac | 0.861 | 0.821 | 0.815 | 0.900 | 0.883 |
+| first-draft citation (a) failure | 0.237 (333) | 0.328 (341) | 0.222 (338) | 0.367 (327) | 0.323 (334) |
+| citation (b) | 0.974 (270) | 0.954 (238) | 0.973 (296) | 0.972 (250) | 0.962 (238) |
+| tool-call success | 0.677 (601) | 0.899 (694) | 0.914 (659) | 0.854 (643) | 0.851 (824) |
+| reads per run (ok) | 1.52 | 1.39 | 1.30 | 1.61 | 1.54 |
+| query_logs per run (runs using) | 0.08 (6) | 1.38 (100) | 1.39 (100) | 0.22 (12) | 1.41 (100) |
+| cost per run | $0.0044 | $0.0037 | $0.0043 | $0.0042 | $0.0043 |
+| end-to-end p95 | 25.9 s | 13.4 s | 17.5 s | 17.7 s | 16.3 s |
+
+Versus 3b.1: A first-draft failure -0.107 [-0.179, -0.039]*; B gold_all +0.130 [+0.040, +0.220]*,
+gold_frac +0.079 [+0.027, +0.134]*, tool success -0.045 [-0.074, -0.017]*; C gold_all +0.090
+[+0.010, +0.180]*, gold_frac +0.062 [+0.017, +0.115]*, tool success -0.048 [-0.074, -0.023]*. No
+arm's completeness differs from 3b.1 (A +0.008, B +0.035, C -0.028, all CIs span 0).
+Versus old: every arm keeps a tool-success gain (A +0.236*, B +0.177*, C +0.174*); A's first-draft
+failure is back at old's level (-0.015, CI spans 0); C's completeness is lower (-0.102 [-0.187,
+-0.020]*); B's gold_all is higher (+0.090 [+0.010, +0.170]*).
+
+**Findings**
+- The low draft effort caused the first-draft quote regression: undoing it alone (A) removes it
+  (claimable). It did not change completeness or coverage.
+- First look costs gold-doc coverage under the 8-call cap: its 2 calls crowd out searches and
+  reads. Removing it (B) or giving it 2 more calls (C) raises coverage (both claimable).
+- The completeness drop that started this step does not hold up. With the 10 missing verify-off
+  answers now judged, 3b.1 minus old is -0.071 [-0.145, 0.000] for verify off (n 100; it was
+  -0.084 [-0.162, -0.004] on n 90) and -0.075 [-0.154, +0.004] for verify on: neither CI
+  excludes 0, and no single change moves completeness detectably at n 100.
+- Coverage does not translate into judged completeness here (C has the second-best coverage and
+  the lowest completeness); the judge is still unvalidated (Prince's 30 labels pending).
+- Dev questions are about past, documented incidents; logs rarely carry their key facts, so dev
+  cannot show the value of looking at logs first. That is a limit of the dev set, not evidence
+  against first look on live incidents.
+
+**Recommendation (Prince decides; nothing locked, hand-label sheet not regenerated).** Arm B:
+first look off, everything else as 3b.1. It has the best coverage (gold_all 0.800 vs 0.670,
+claimable) and the highest completeness of the new configs (not claimable), keeps most of the
+tool-success gain over old (+0.177, claimable), and is cheaper than C. Costs: tool success -0.045
+vs 3b.1 (claimable) and first-draft quote failures 0.367 (above old, claimable) from the low draft
+effort that A shows is the cause. Untested and not claimed: B with A's default draft effort is
+the likely better combination (about $0.40 to test). If live-incident log checks matter more
+than dev coverage, C is the alternative.
+
+**Spend.** Arms $0.9909 new (A $0.2374, B $0.3785, C $0.3750; `_off` configs and all replays $0).
+OpenRouter total $1.7965 of $5 (this step's cap $1.50). Judge: 298 Gemini requests.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

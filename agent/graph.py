@@ -295,7 +295,9 @@ def build_graph(
     max_tool_calls: int | None = None,
     max_seconds: float | None = None,
     first_look: bool | None = None,
+    draft_effort: str | None = DRAFT_EFFORT,
 ):
+    """draft_effort None leaves the provider's default reasoning effort for the draft."""
     s = get_settings()
     look_first = s.agent_first_look if first_look is None else first_look
     verify_enabled = s.verify_enabled if verify_enabled is None else verify_enabled
@@ -542,7 +544,7 @@ def build_graph(
         allowance = llm.budget - DRAFT_MAX_TOKENS - fixed - 80
         lines, dropped = pack(evidence_lines(state["evidence"], read_chars=READ_CHARS), allowance)
         base[1]["content"] = head + ("\n".join(lines) or "(none gathered)")
-        d = structured(llm, base, Draft, "draft", DRAFT_MAX_TOKENS, state, calls, DRAFT_EFFORT)
+        d = structured(llm, base, Draft, "draft", DRAFT_MAX_TOKENS, state, calls, draft_effort)
         if calls:
             calls[0]["evidence_lines"], calls[0]["evidence_dropped"] = len(lines), dropped
         if d is None:
