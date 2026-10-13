@@ -51,7 +51,11 @@ OPENAI_COMPAT = {
 PROVIDERS = (*OPENAI_COMPAT, "openrouter", "ollama")
 # USD per 1M (input, output) tokens, for calls whose provider reports no cost. gpt-oss-120b via
 # OpenRouter on Groq: openrouter.ai/openai/gpt-oss-120b and groq.com/pricing, checked 2026-10-12.
-PRICES_PER_M = {("openrouter", "openai/gpt-oss-120b"): (0.15, 0.60)}
+PRICES_PER_M = {
+    ("openrouter", "openai/gpt-oss-120b"): (0.15, 0.60),
+    # console.groq.com/docs/model/meta-llama/llama-prompt-guard-2-86m, checked 2026-10-13
+    ("groq", "meta-llama/llama-prompt-guard-2-86m"): (0.04, 0.04),
+}
 CHARS_PER_TOKEN = 3  # conservative: English and JSON run nearer 4, so this over-estimates
 MAX_ATTEMPTS = 5
 BACKOFF_BASE_S = 1.0

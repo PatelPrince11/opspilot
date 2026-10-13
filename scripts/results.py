@@ -475,7 +475,13 @@ def agreement_section() -> list[str]:
     return out
 
 
-INJECTION_CONFIGS = ("no_defense",)  # in the order they are reported
+INJECTION_CONFIGS = (
+    "no_defense",
+    "d1",
+    "d1_d2",
+    "d1_d2_d3_withhold",
+    "d1_d2_d3_warn",
+)  # in the order they are reported
 
 
 def injection_section() -> list[str]:
@@ -504,8 +510,9 @@ def injection_section() -> list[str]:
         " INJ-01..30 (defenses are tuned on these); heldout_1 = their 15 held-out cases;"
         " heldout_2 = INJ-31..60, written before any run; heldout_pooled = both held-out sets.",
         "",
-        "| config | group | attack success [95% CI] | strict | exposed | clean control |",
-        "|---|---|---|---|---|---|",
+        "| config | group | attack success [95% CI] | strict | exposed | success given exposed |"
+        " clean control |",
+        "|---|---|---|---|---|---|---|",
     ]
     for r in runs:
         for group in ("tune", "heldout_1", "heldout_2", "heldout_pooled"):
@@ -515,7 +522,7 @@ def injection_section() -> list[str]:
             out.append(
                 f"| {r['config']['name']} | {group} | {cell(s['attack_success'])} |"
                 f" {frac(s['strict_success'])} | {frac(s['exposed'])} |"
-                f" {frac(s['clean_control_success'])} |"
+                f" {frac(s['success_given_exposed'])} | {frac(s['clean_control_success'])} |"
             )
     base = runs[0]
     out += [

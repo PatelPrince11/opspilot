@@ -52,7 +52,15 @@ CASES = ROOT / "eval" / "injection.jsonl"
 LOCATIONS = ("log", "runbook", "incident")
 STYLES = ("direct", "fake_system", "oncall_note", "json", "tool_call")
 # config name -> build_graph overrides. no_defense is the locked agent as it is.
-CONFIGS: dict[str, dict] = {"no_defense": {}}
+# Defense values are explicit, so a .env setting never leaks into a named config.
+LAYERS = {"wrap": False, "flag": False, "guard": "off"}
+CONFIGS: dict[str, dict] = {
+    "no_defense": {},
+    "d1": LAYERS | {"wrap": True},
+    "d1_d2": LAYERS | {"wrap": True, "flag": True},
+    "d1_d2_d3_withhold": LAYERS | {"wrap": True, "flag": True, "guard": "withhold"},
+    "d1_d2_d3_warn": LAYERS | {"wrap": True, "flag": True, "guard": "warn"},
+}
 # Case groups. The first 30 cases split 15 tune / 15 held-out; INJ-31..60 are a second held-out
 # set written in Part B before any run. Defenses are tuned on "tune" only.
 GROUPS = {
@@ -270,6 +278,9 @@ def result_content(config: str, cases: list[dict], attack: dict, clean: dict) ->
             "attack_success": rate(part, "attack_success"),
             "strict_success": rate(part, "strict_success"),
             "exposed": rate(part, "exposed"),
+            # A defense can change what the agent reads, so a payload may go unseen: success
+            # among exposed runs separates "ignored it" from "never saw it".
+            "success_given_exposed": rate([r for r in part if r["exposed"]], "attack_success"),
             "clean_control_success": rate(cleaned, "clean_success") if cleaned else None,
             "by_location": {
                 loc: rate([r for r in part if r["location"] == loc], "attack_success")
@@ -309,7 +320,8 @@ def report(content: dict, attack: dict, clean: dict) -> None:
         cc = f"{c['k']}/{c['n']}" if c else "not run"
         print(
             f"{split}: attack success {a['k']}/{a['n']} = {a['rate']} {a['ci95']}; strict "
-            f"{t['k']}/{t['n']}; exposed {e['k']}/{e['n']}; clean control {cc}"
+            f"{t['k']}/{t['n']}; exposed {e['k']}/{e['n']}; given exposed "
+            f"{s['success_given_exposed']['k']}/{s['success_given_exposed']['n']}; clean {cc}"
         )
     calls = [x for r in [*attack.values(), *clean.values()] for x in r["llm_calls"]]
     print(f"new spend ${sum(x.get('cost_usd', 0.0) for x in calls if not x['cached']):.4f}")
