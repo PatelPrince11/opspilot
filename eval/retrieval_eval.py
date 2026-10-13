@@ -308,11 +308,13 @@ def provenance() -> dict:
 def corpus_snapshot(conn) -> dict:
     """What was searched, for a clean clone that has no DB (and no LogHub file)."""
     q = {
-        "documents": "SELECT doc_type, count(*) FROM documents GROUP BY 1",
-        "chunks": "SELECT metadata->>'doc_type', count(*) FROM chunks GROUP BY 1",
+        "documents": "SELECT doc_type, count(*) FROM documents WHERE corpus = 'main' GROUP BY 1",
+        "chunks": "SELECT metadata->>'doc_type', count(*) FROM chunks"
+        " WHERE NOT metadata ? 'injection_case' GROUP BY 1",
         "log_lines": "SELECT CASE WHEN source LIKE 'loghub%%' THEN 'LogHub background'"
         " WHEN incident_id IS NOT NULL THEN 'synthetic, per incident'"
-        " ELSE 'synthetic, demo (live)' END, count(*) FROM log_events GROUP BY 1",
+        " ELSE 'synthetic, demo (live)' END, count(*) FROM log_events WHERE corpus = 'main'"
+        " GROUP BY 1",
     }
     return {k: dict(sorted(conn.execute(v).fetchall())) for k, v in q.items()}
 

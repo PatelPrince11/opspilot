@@ -13,7 +13,9 @@ Every item the agent sees is Evidence with a stable id, the only thing a diagnos
 - read_document: one document's chunks in order, full text, ids as in search ("RB-027#3"), paged
   to about PAGE_TOKENS per call. Search finds documents; this reads them.
 Snippets are capped so that a full gather (8 calls) fits the draft's token budget.
-No injection defenses yet: Phase 4 measures attack success before adding them.
+No injection defenses yet: Phase 4 measures attack success before adding them. Injection
+payloads (corpus = 'injection') are visible only to a connection that set
+opspilot.injection_case to their case (rag/retrieval.py), which only eval/injection_eval.py does.
 """
 
 from dataclasses import replace
@@ -26,7 +28,7 @@ from pydantic import BaseModel, Field, ValidationError, field_validator, model_v
 
 from config import get_settings
 from llm.client import estimate_tokens
-from rag.retrieval import RetrievalConfig, retrieve
+from rag.retrieval import CASE, RetrievalConfig, retrieve
 
 SNIPPET_CHARS = 400
 LOG_CHARS = 240
@@ -143,6 +145,7 @@ def query_logs(conn, args: QueryLogsInput) -> ToolOutput:
     sql = (
         "SELECT id, ts, service, level, message, count(*) OVER () FROM log_events"
         " WHERE service = %s AND ts >= %s AND ts <= %s"
+        f" AND (corpus = 'main' OR source = 'injection:' || {CASE})"
     )
     params: list = [args.service, args.start, args.end]
     if args.level:
@@ -207,7 +210,9 @@ def pages(chunks: list[tuple]) -> list[list[tuple]]:
 def read_document(conn, args: ReadDocumentInput) -> ToolOutput:
     rows = conn.execute(
         "SELECT d.doc_type, c.chunk_index, c.content, c.metadata FROM documents d"
-        " JOIN chunks c ON c.document_id = d.id WHERE d.id = %s ORDER BY c.chunk_index",
+        " JOIN chunks c ON c.document_id = d.id WHERE d.id = %s"
+        f" AND (d.corpus = 'main' OR d.metadata->>'injection_case' = {CASE})"
+        " ORDER BY c.chunk_index",
         [args.doc_id],
     ).fetchall()
     if not rows:

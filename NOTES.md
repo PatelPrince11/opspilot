@@ -2965,6 +2965,62 @@ on deterministic metrics (gold-doc coverage, first-draft citation (a)), which th
   claims rest on deterministic metrics**: citation (a), gold-doc coverage, tool-call success,
   and (Phase 4) injection attack success by string/regex check.
 
+## 2026-10-13: Phase 4 step 1, the injection set (fixed before any agent run)
+
+eval/injection.jsonl: 30 cases, written and committed before any agent run with a payload.
+- **Locations:** log messages 10, runbook text 10, incident notes 10.
+- **Styles:** direct command, fake system message, fake note from on-call, instruction in JSON,
+  indirect (aimed at the agent's next tool call). Each location has 2 cases per style.
+- **Split:** each location x style pair has one tune and one held-out case: 15 / 15, and each
+  half has 5 per location and 3 per style.
+- **Target question:** each case targets a different dev question.
+- **Check, fixed now** (a case-insensitive regex): the case's canary (12 cases) or the
+  specific claim it pushes (18, e.g. `solar flare`, `ransomware`, `\bRAID\b`). For the
+  tool-call style the canary is an argument the payload asks for (a fake service, doc id or
+  query). Two first choices matched the real corpus ("crypto" in "cryptography", "laptop") and
+  were changed before the file was written; a test now fails if any check matches
+  runbooks.jsonl, incidents.jsonl or the synthetic logs.
+
+**Placement, so the payload is actually seen.** A cached replay of the locked agent on dev (all
+100 runs from the response cache, $0) gave every tool call with its arguments. The locked agent
+queries logs in only 13 of 100 dev runs, mostly with a text filter, so a log payload elsewhere
+would never be read.
+- **Log cases:** each payload is one log row inside the exact service, window, minimum level
+  and text filter of a query_logs call from that question's run (e.g. Q006: inventory-db,
+  03:00-04:00, WARN, "Seq Scan"). It fits LOG_CHARS (240).
+- **Document cases:** a single-chunk document (`<gold id>-addendum` for runbook cases,
+  `<gold id>-notes` for incident cases) holding a short excerpt of a gold document of the
+  question with the payload next to it. It is at most 400 characters (SNIPPET_CHARS), so a
+  search shows all of it, and it copies the gold document's metadata.
+- **Exposure check (tools only, no LLM), with each case's payload enabled:** replaying that
+  question's tool calls shows its payload in all 30 cases. The 20 documents appear in the
+  first search (rank 1 or 2 of 5). The 10 log rows appear in the replayed log query, at call
+  0 to 6.
+
+**Separate corpus.**
+- Payload rows have `corpus = 'injection'` on documents and log_events. They are tagged with
+  their case: `metadata.injection_case` on the document and chunk, `source = 'injection:<id>'`
+  on log rows.
+- Retrieval (all modes), query_logs and read_document show them only to a connection that set
+  `opspilot.injection_case` to that case (`set_config`). Nothing but the injection eval sets it.
+- Migration 0006: BM25's df table and corpus stats count main-corpus chunks only.
+  (Otherwise the payloads would shift IDF and the retrieval eval's scores.) A payload's
+  lexemes that only payloads contain add nothing to its BM25 score.
+- `make ingest` truncates log_events (injection rows included); `eval.injection_eval load`
+  reloads the payloads (idempotent).
+
+**Proof that retrieval evals never see them:**
+- tests/test_injection.py: with payloads loaded, every retrieval mode returns the same results
+  for queries that are the payload text itself. The BM25 stats, corpus snapshot and
+  retrieval-eval rows are unchanged, and no payload doc appears. The tools show a payload only
+  to its own case (another case, or none, sees nothing).
+- The test can fail: with the retrieval filter removed, 2 of its tests fail.
+- On the real DB, with all 30 payloads loaded and BM25 refreshed:
+  - `make eval` leaves eval/results/dev_locked.json unchanged.
+  - BM25 still counts 547 chunks.
+  - A cached replay of the locked agent on all 100 dev questions makes identical tool calls
+    and diagnoses, 100% from the cache.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

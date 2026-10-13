@@ -125,8 +125,8 @@ def load_incidents(conn, rows: list[dict]) -> None:
 
 
 def load_logs(conn, processed: Path) -> int:
-    # ponytail: reloads the whole table each run (~10k rows, under a second). If an
-    # injection corpus ever adds log rows, scope this to corpus='main'.
+    # ponytail: reloads the whole table each run (~10k rows, under a second). This drops the
+    # injection corpus's log rows too; eval/injection_eval.py reloads its payloads every run.
     conn.execute("TRUNCATE log_events RESTART IDENTITY")
     cols = ("ts", "service", "level", "message", "source", "incident_id", "corpus")
     n = 0

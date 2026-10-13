@@ -10,7 +10,10 @@
 - hybrid: reciprocal rank fusion (k=60) of the dense and keyword (BM25) top `candidates`.
 - hybrid_rerank: the top `candidates` fused chunks, re-scored by the cross-encoder.
 
-Filters apply inside each SQL query, before ranking. The date filter uses the document's date
+Filters apply inside each SQL query, before ranking. Injection payloads (Phase 4) are chunks
+tagged with their case id in metadata (corpus = 'injection' on their document): a connection
+sees one case's payloads only after set_config('opspilot.injection_case', <case id>), so every
+retrieval eval and every normal run sees none. The date filter uses the document's date
 (an incident's start day, a runbook's last_reviewed). A severity filter keeps incidents only,
 because runbooks have no severity.
 """
@@ -29,6 +32,7 @@ MODES = ("dense", "keyword", "keyword_tsrank", "hybrid", "hybrid_rerank")
 BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 RRF_K = 60
 COLS = "c.id, c.document_id, c.chunk_index, c.content, c.metadata"
+CASE = "current_setting('opspilot.injection_case', true)"  # NULL when never set
 
 
 @dataclass(frozen=True)
@@ -56,7 +60,8 @@ class Hit:
 
 def filters(cfg: RetrievalConfig) -> tuple[str, str, list]:
     """(extra joins, extra AND conditions, their params)."""
-    join, conds, params = "", [], []
+    join, params = "", []
+    conds = [f"(NOT c.metadata ? 'injection_case' OR c.metadata->>'injection_case' = {CASE})"]
     if cfg.service:
         conds.append("c.metadata->'services' ? %s")
         params.append(cfg.service)
