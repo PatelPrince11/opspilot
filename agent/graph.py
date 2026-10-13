@@ -40,10 +40,10 @@ from llm.client import Client, LLMError, ToolCall, estimate_tokens
 
 MAX_LOOPS = 2
 DRAFT_MAX_TOKENS = 2500  # gpt-oss reasons first: 1,500 cut two of five dev drafts off
-# gpt-oss reasoning effort for the draft (OpenRouter `reasoning.effort`; low is its floor). At the
-# default (medium) 2 of 100 dev drafts reasoned through the whole 2,500 tokens and returned no
-# content. A reply with empty content is retried once at RETRY_EFFORT.
-DRAFT_EFFORT = "low"
+# gpt-oss reasoning effort for the draft (OpenRouter `reasoning.effort`; low is its floor). LOCKED
+# None = the provider default (medium), Phase 3b.3: low made first drafts quote less exactly (3b.2
+# arm A). The empty-content risk at the default is covered by the retry at RETRY_EFFORT.
+DRAFT_EFFORT = None
 RETRY_EFFORT = "low"
 TRIAGE_MAX_TOKENS = 1000  # gpt-oss reasons first: 465 tokens on a dated question
 GATHER_MAX_TOKENS = 1000  # reasoning models (gpt-oss) spend part of this thinking

@@ -414,7 +414,7 @@ def test_no_first_look_without_a_named_service_or_on_a_verify_loop(monkeypatch):
     assert [t["name"] for t in final["tool_calls"]] == ["get_service_status", "query_logs"]
 
 
-def test_draft_runs_at_low_effort_and_an_empty_reply_is_retried_at_low(monkeypatch):
+def test_draft_runs_at_the_default_effort_and_an_empty_reply_is_retried_at_low(monkeypatch):
     llm = StubLLM([TRIAGE, DONE, say(""), draft()])
     final, _ = run(llm, monkeypatch)
     names = [c["name"] for c in final["llm_calls"]]
@@ -423,12 +423,7 @@ def test_draft_runs_at_low_effort_and_an_empty_reply_is_retried_at_low(monkeypat
     assert (
         efforts
         == [None, None, graph_mod.DRAFT_EFFORT, graph_mod.RETRY_EFFORT]
-        == [
-            None,
-            None,
-            "low",
-            "low",
-        ]
+        == [None, None, None, "low"]  # locked: the draft runs at the provider default
     )
     assert "empty" in llm.bodies[3]["messages"][-1]["content"]
     assert final["diagnosis"]["summary"] == "s"

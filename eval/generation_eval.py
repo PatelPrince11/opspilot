@@ -53,12 +53,12 @@ from scripts.corpus.common import ROOT, SEED
 AS_OF = "2026-10-06T14:52:00Z"  # the demo's as_of; every corpus incident is before it
 # name -> (verify_enabled, build_graph overrides). The arms of the 3b.2 ablation each change one
 # thing from the 3b.1 config; an arm's _off config is its _on config's first draft (cached).
-ARMS = {
-    "arm_a": {"draft_effort": None},  # draft reasoning effort back to the provider default
-    "arm_b": {"first_look": False},  # no first look
-    "arm_c": {"max_tool_calls": 10},  # first look on, tool-call cap 10
+ARMS = {  # every setting explicit: the defaults changed when the config was locked (3b.3)
+    "arm_a": {"draft_effort": None, "first_look": True},  # draft effort back to default
+    "arm_b": {"draft_effort": "low", "first_look": False},  # no first look
+    "arm_c": {"draft_effort": "low", "first_look": True, "max_tool_calls": 10},  # cap 10
     # 3b.3: default draft effort, first look only for live incidents (in the graph), cap 8
-    "arm_d": {"draft_effort": None},
+    "arm_d": {"draft_effort": None, "first_look": True},
 }
 CONFIGS = {"verify_on": (True, {}), "verify_off": (False, {})} | {
     f"{arm}_{v}": (v == "on", over) for arm, over in ARMS.items() for v in ("on", "off")
@@ -636,7 +636,10 @@ ABLATION_ROWS = [  # (metric, config, sign): sign -1 = first-draft failure = 1 -
 
 
 # Measured results of runs that 3b.2 replays from the cache (the old 3b run's file, archived).
-MEASURED = {"old_on": PROGRESS / "v1" / "dev_generation_verify_on.json"}
+MEASURED = {
+    "old_on": PROGRESS / "v1" / "dev_generation_verify_on.json",
+    "3b1_on": PROGRESS / "v2" / "dev_generation_verify_on.json",
+}
 
 
 def ablation_report(questions: list[dict], split: str = "dev") -> str:
@@ -645,8 +648,9 @@ def ablation_report(questions: list[dict], split: str = "dev") -> str:
     cache to record gathered_docs). Paired bootstrap over questions scored in both."""
     variants = {
         "old (3b)": ("old_on", "old_off"),
-        "3b.1": ("verify_on", "verify_off"),
+        "3b.1": ("3b1_on", "3b1_off"),
         **{a.replace("_", " ").upper(): (f"{a}_on", f"{a}_off") for a in ARMS},
+        "locked": ("verify_on", "verify_off"),
     }
     data = {}
     for name, (on, off) in variants.items():
@@ -719,7 +723,7 @@ def ablation_report(questions: list[dict], split: str = "dev") -> str:
         out.append(f"| {k} per run |" + " | ".join(cells) + " |")
     p95 = [data[v]["lat"]["end_to_end_s"]["p95"] for v in names]
     out.append("| end-to-end p95 s | " + " | ".join(f"{x:.1f}" if x else "-" for x in p95) + " |")
-    for ref in ("3b.1", "old (3b)", "ARM A", "ARM B"):
+    for ref in ("3b.1", "old (3b)", "ARM A", "ARM B", "locked"):
         others = [v for v in names if v != ref]
         out += [
             "",

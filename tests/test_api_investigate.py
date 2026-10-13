@@ -43,6 +43,7 @@ def db_url():
 @pytest.fixture
 def client(db_url, monkeypatch):
     monkeypatch.setenv("DATABASE_URL", db_url)
+    monkeypatch.setenv("AGENT_FIRST_LOOK", "true")  # off in the locked config; tested end to end
     get_settings.cache_clear()
     monkeypatch.setattr(graph_mod, "run_tool", fake_tool())
     yield TestClient(app)
