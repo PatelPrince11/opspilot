@@ -1,4 +1,4 @@
-.PHONY: gen-eval judge-sheet judge-agreement demo up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
+.PHONY: injection-eval gen-eval judge-sheet judge-agreement demo up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -124,6 +124,11 @@ demo:
 #   make gen-eval ARGS="--config verify_on --concurrency 3 --max-spend 4.5"
 gen-eval:
 	@DATABASE_URL=$(HOST_DATABASE_URL) PYTHONUNBUFFERED=1 uv run python -m eval.generation_eval run $(ARGS)
+
+# Injection eval (eval/injection_eval.py): loads the 30 payloads, runs the locked agent per case
+# with its payload, then the clean control; writes eval/results/injection_no_defense.json.
+injection-eval:
+	@DATABASE_URL=$(HOST_DATABASE_URL) PYTHONUNBUFFERED=1 uv run python -m eval.injection_eval run $(ARGS)
 
 # eval/judge_validation.md: 30 seeded, stratified verify-on answers for Prince to label.
 judge-sheet:
