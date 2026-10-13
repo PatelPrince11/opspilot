@@ -315,7 +315,10 @@ def latency(runs: list[dict]) -> dict:
     """From real calls only: a cache hit has no latency."""
     llm = [c["latency_ms"] for r in runs for c in r["llm_calls"] if not c["cached"]]
     tool = [t["latency_ms"] for r in runs for t in r["tool_calls"]]
-    wall = [r["wall_s"] for r in runs]
+    # End to end only from runs made live: a run with any cache hit skipped part of its work.
+    wall = [
+        r["wall_s"] for r in runs if r["llm_calls"] and not any(c["cached"] for c in r["llm_calls"])
+    ]
     return {
         "end_to_end_s": {"p50": pct(wall, 50), "p95": pct(wall, 95), "n": len(wall)},
         "llm_call_ms": {"p50": pct(llm, 50), "p95": pct(llm, 95), "n": len(llm)},

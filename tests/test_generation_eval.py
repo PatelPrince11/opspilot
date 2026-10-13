@@ -259,8 +259,9 @@ def test_paired_bootstrap_is_seeded_and_zero_for_identical_configs():
 def test_latency_ignores_cache_hits():
     r = run_row()
     r["llm_calls"].append(r["llm_calls"][0] | {"cached": True, "latency_ms": 0.0})
-    lat = ge.latency([r])
-    assert lat["llm_call_ms"] == {"p50": 50.0, "p95": 50.0, "n": 1}
+    lat = ge.latency([r, run_row()])
+    assert lat["llm_call_ms"] == {"p50": 50.0, "p95": 50.0, "n": 2}
+    assert lat["end_to_end_s"]["n"] == 1  # the run with a cache hit is not timed
 
 
 # ---------------------------------------------------------------------- resumable agent stage
