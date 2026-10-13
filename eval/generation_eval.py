@@ -41,7 +41,7 @@ from statistics import quantiles
 import psycopg
 
 from agent import tools
-from agent.graph import MAX_LOOPS, build_graph, initial_state, quote_found
+from agent.graph import DRAFT_EFFORT, MAX_LOOPS, build_graph, initial_state, quote_found
 from config import get_settings
 from eval.ablation import RESAMPLES
 from eval.judge import JUDGE_RPD, JUDGE_RPM, PROMPT_VERSION, JudgeClient, RateLimiter, judge
@@ -51,10 +51,20 @@ from llm.client import Client, LLMError
 from scripts.corpus.common import ROOT, SEED
 
 AS_OF = "2026-10-06T14:52:00Z"  # the demo's as_of; every corpus incident is before it
-CONFIGS = {"verify_on": True, "verify_off": False}
+# name -> (verify_enabled, build_graph overrides). The arms of the 3b.2 ablation each change one
+# thing from the 3b.1 config; an arm's _off config is its _on config's first draft (cached).
+ARMS = {
+    "arm_a": {"draft_effort": None},  # draft reasoning effort back to the provider default
+    "arm_b": {"first_look": False},  # no first look
+    "arm_c": {"max_tool_calls": 10},  # first look on, tool-call cap 10
+}
+CONFIGS = {"verify_on": (True, {}), "verify_off": (False, {})} | {
+    f"{arm}_{v}": (v == "on", over) for arm, over in ARMS.items() for v in ("on", "off")
+}
 PROGRESS = ROOT / ".cache" / "gen_eval"
 SHEET = ROOT / "eval" / "judge_validation.md"
 SHEET_N = 30
+ABLATION = ROOT / "eval" / "results" / "dev_generation_ablation.md"
 NO_DIAGNOSIS = "No valid diagnosis was produced."
 METRICS = (
     "citation_a",
@@ -66,6 +76,8 @@ METRICS = (
     "tool_success",
     "verify_loop",
     "no_diagnosis",
+    "gold_all",
+    "gold_frac",
 )
 SLICES = {
     "difficulty": lambda q: q["difficulty"],
@@ -105,11 +117,12 @@ def new_spend(rows) -> float:
 # ---------------------------------------------------------------------- stage 1: agent
 
 
-def run_one(q: dict, verify: bool, spec: str) -> dict:
+def run_one(q: dict, config: str, spec: str) -> dict:
+    verify, over = CONFIGS[config]
     llm = Client.from_spec(spec)
     t0 = time.perf_counter()
     with tools.connect() as ro:
-        final = build_graph(llm, ro, verify_enabled=verify).invoke(
+        final = build_graph(llm, ro, verify_enabled=verify, **over).invoke(
             initial_state(q["question"], AS_OF)
         )
     wall = time.perf_counter() - t0
@@ -121,6 +134,8 @@ def run_one(q: dict, verify: bool, spec: str) -> dict:
         "diagnosis": d,
         "cited_evidence": {x: ev[x] for x in sorted(cited) if x in ev},
         "evidence_count": len(ev),
+        # Documents gathered (any search hit or read chunk), for gold-doc coverage.
+        "gathered_docs": sorted({k.split("#")[0] for k in ev if "#" in k}),
         "tool_calls": [
             {k: t[k] for k in ("name", "success", "error", "latency_ms")}
             for t in final["tool_calls"]
@@ -132,11 +147,12 @@ def run_one(q: dict, verify: bool, spec: str) -> dict:
     }
 
 
-def agent_stage(questions, config, split, spec, workers, max_spend) -> None:
+def agent_stage(questions, config, split, spec, workers, max_spend, scope=None) -> None:
+    """scope: the configs whose new spend counts toward max_spend (default: this one)."""
     path = runs_path(split, config)
     done = read_jsonl(path)
     todo = [q for q in questions if q["id"] not in done]
-    spent = sum(new_spend(read_jsonl(runs_path(split, c)).values()) for c in CONFIGS)
+    spent = sum(new_spend(read_jsonl(runs_path(split, c)).values()) for c in scope or [config])
     print(f"{config}: {len(done)} done, {len(todo)} to run; new spend so far ${spent:.4f}")
     errors = []
     with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -145,7 +161,7 @@ def agent_stage(questions, config, split, spec, workers, max_spend) -> None:
         while queue or pending:
             while queue and len(pending) < workers and spent < max_spend:
                 q = queue.pop(0)
-                pending[pool.submit(run_one, q, CONFIGS[config], spec)] = q
+                pending[pool.submit(run_one, q, config, spec)] = q
             if not pending:
                 break
             fut = next(as_completed(pending))
@@ -220,12 +236,18 @@ def score(q: dict, run: dict, verdict: dict | None) -> dict:
         "tool_success": [sum(t["success"] for t in calls), len(calls)] if calls else None,
         "verify_loop": [int(run["loops"] > 0), 1],
         "no_diagnosis": [int(d["summary"] == NO_DIAGNOSIS), 1],
+        "gold_all": None,
+        "gold_frac": None,
         "citation_b": None,
         "faithfulness": None,
         "completeness": None,
         "premise_corrected": None,
         "unrecorded_respected": None,
     }
+    if "gathered_docs" in run:  # runs before 3b.2 did not record it
+        gold, got = set(q["relevant_doc_ids"]), set(run["gathered_docs"])
+        s["gold_all"] = [int(gold <= got), 1]
+        s["gold_frac"] = [len(gold & got) / len(gold), 1]
     if verdict:
         if claims:
             s["citation_b"] = [sum(c["supported"] for c in verdict["claims"]), len(claims)]
@@ -257,6 +279,14 @@ def aggregate(rows: list[dict]) -> dict:
         "completion_tokens": sum(c["completion_tokens"] for c in calls) / n,
         "llm_calls": len(calls) / n,
         "tool_calls": sum(len(r["tool_calls"]) for r in rows) / n,
+        "reads_ok": sum(
+            t["success"] for r in rows for t in r["tool_calls"] if t.get("name") == "read_document"
+        )
+        / n,
+        "query_logs": sum(t.get("name") == "query_logs" for r in rows for t in r["tool_calls"]) / n,
+        "runs_with_query_logs": sum(
+            any(t.get("name") == "query_logs" for t in r["tool_calls"]) for r in rows
+        ),
         "cost_usd": sum(c.get("cost_usd", 0.0) for c in calls) / n,
     }
     return out
@@ -317,7 +347,7 @@ def build_rows(questions, config, split) -> tuple[list[dict], list[dict], list[s
                     }
                     for c in r["llm_calls"]
                 ],
-                "tool_calls": [{"success": t["success"]} for t in r["tool_calls"]],
+                "tool_calls": [{k: t[k] for k in ("name", "success")} for t in r["tool_calls"]],
             }
         )
     return rows, raw, unjudged
@@ -330,11 +360,15 @@ def result_content(split, config, rows, questions, unjudged) -> dict:
     content = {
         "split": split,
         "config": {
-            "verify_enabled": CONFIGS[config],
+            "verify_enabled": CONFIGS[config][0],
+            "first_look": CONFIGS[config][1].get("first_look", s.agent_first_look),
+            "draft_effort": CONFIGS[config][1].get("draft_effort", DRAFT_EFFORT),
             "verify_quotes": s.verify_quotes,
             "max_loops": MAX_LOOPS,
             "as_of": AS_OF,
-            "agent_max_tool_calls": s.agent_max_tool_calls,
+            "agent_max_tool_calls": CONFIGS[config][1].get(
+                "max_tool_calls", s.agent_max_tool_calls
+            ),
             "llm_token_budget": s.llm_token_budget,
             "retrieval_mode": s.retrieval_mode,
             "judge_prompt_version": PROMPT_VERSION,
@@ -582,16 +616,124 @@ def agreement(text: str, results: dict) -> dict:
     return out
 
 
+# ---------------------------------------------------------------------- 3b.2 ablation report
+
+ABLATION_ROWS = [  # (metric, config, sign): sign -1 = first-draft failure = 1 - citation (a)
+    ("completeness", "on", 1),
+    ("gold_all", "on", 1),
+    ("gold_frac", "on", 1),
+    ("first-draft citation (a) failure", "off", -1),
+    ("citation_b", "on", 1),
+    ("tool_success", "on", 1),
+]
+
+
+def ablation_report(questions: list[dict], split: str = "dev") -> str:
+    """Each arm (verify on; its _off config gives the first draft) against 3b.1 (verify_on /
+    verify_off) and the old 3b run (old_on / old_off: code b25000c, replayed from the response
+    cache to record gathered_docs). Paired bootstrap over questions scored in both."""
+    variants = {
+        "old (3b)": ("old_on", "old_off"),
+        "3b.1": ("verify_on", "verify_off"),
+        **{a.replace("_", " ").upper(): (f"{a}_on", f"{a}_off") for a in ARMS},
+    }
+    data = {}
+    for name, (on, off) in variants.items():
+        r_on, raw_on, _ = build_rows(questions, on, split)
+        r_off, _, _ = build_rows(questions, off, split)
+        data[name] = {
+            "on": {r["id"]: r for r in r_on},
+            "off": {r["id"]: r for r in r_off},
+            "agg": aggregate(r_on),
+            "lat": latency(raw_on),
+            "spend": new_spend(raw_on),
+        }
+
+    def key(metric, sign):
+        return "citation_a" if sign < 0 else metric
+
+    def level(name, metric, cfg, sign):
+        vals = [r["scores"][key(metric, sign)] for r in data[name][cfg].values()]
+        vals = [x for x in vals if x is not None]
+        v = ratio(vals)
+        if v is None:
+            return "-"
+        return f"{1 - v if sign < 0 else v:.3f} ({sum(x[1] for x in vals):g}, n {len(vals)})"
+
+    def diff(a, b, metric, cfg, sign):
+        k = key(metric, sign)
+        ra, rb = data[a][cfg], data[b][cfg]
+        ids = sorted(
+            i for i in ra if i in rb and ra[i]["scores"][k] is not None and rb[i]["scores"][k]
+        )
+        if not ids:
+            return "-"
+        d, lo, hi = paired_bootstrap(
+            {i: ra[i]["scores"][k] for i in ids}, {i: rb[i]["scores"][k] for i in ids}, ids
+        )
+        if sign < 0:
+            d, lo, hi = -d, -hi, -lo
+        star = " *" if lo > 0 or hi < 0 else ""
+        return f"{d:+.3f} [{lo:+.3f}, {hi:+.3f}] n {len(ids)}{star}"
+
+    names = list(variants)
+    out = [
+        "# Phase 3b.2 ablation (dev; generated by `make gen-eval ARGS=ablation`)",
+        "",
+        "Each arm changes one thing from 3b.1: A draft reasoning effort back to the provider"
+        " default; B no first look; C first look with a tool-call cap of 10. Verify on. Levels:"
+        " value (denominator, n questions). Differences: row minus reference, paired bootstrap"
+        f" 95% CI over questions scored in both (10,000 resamples, seed {SEED}); * = the CI"
+        " excludes 0. First-draft citation (a) failure is from the _off config (the same"
+        " trajectory's first draft); lower is better. gold_all: share of runs that gathered or"
+        " read every gold doc; gold_frac: mean fraction of gold docs gathered per run.",
+        "",
+        "| metric | " + " | ".join(names) + " |",
+        "|---|" + "---|" * len(names),
+    ]
+    for metric, cfg, sign in ABLATION_ROWS:
+        cells = [level(v, metric, cfg, sign) for v in names]
+        out.append(f"| {metric} | " + " | ".join(cells) + " |")
+    for k, f in (
+        ("reads_ok", "{:.2f}"),
+        ("query_logs", "{:.2f}"),
+        ("runs_with_query_logs", "{:d}"),
+        ("tool_calls", "{:.2f}"),
+        ("cost_usd", "${:.4f}"),
+    ):
+        cells = [f.format(data[v]["agg"]["per_run"][k]) for v in names]
+        out.append(f"| {k} per run |" + " | ".join(cells) + " |")
+    p95 = [data[v]["lat"]["end_to_end_s"]["p95"] for v in names]
+    out.append("| end-to-end p95 s | " + " | ".join(f"{x:.1f}" if x else "-" for x in p95) + " |")
+    for ref in ("3b.1", "old (3b)"):
+        others = [v for v in names if v != ref]
+        out += [
+            "",
+            f"Differences vs {ref}:",
+            "",
+            "| metric | " + " | ".join(others) + " |",
+            "|---|" + "---|" * len(others),
+        ]
+        for metric, cfg, sign in ABLATION_ROWS:
+            cells = [diff(v, ref, metric, cfg, sign) for v in others]
+            out.append(f"| {metric} | " + " | ".join(cells) + " |")
+    unjudged = [f"{v} {sum(r['judge'] is None for r in data[v]['on'].values())}" for v in names]
+    out += ["", "Unjudged answers (verify on): " + ", ".join(unjudged) + "."]
+    return "\n".join(out) + "\n"
+
+
 # ---------------------------------------------------------------------- main
 
 
 def main(argv=None) -> int:
     s = get_settings()
     ap = argparse.ArgumentParser()
-    ap.add_argument("action", nargs="?", default="run", choices=("run", "sheet", "agreement"))
+    ap.add_argument(
+        "action", nargs="?", default="run", choices=("run", "sheet", "agreement", "ablation")
+    )
     ap.add_argument("--split", choices=("dev", "test"), default="dev")
     ap.add_argument("--final-test", action="store_true")
-    ap.add_argument("--config", choices=(*CONFIGS, "both"), default="both")
+    ap.add_argument("--config", choices=(*CONFIGS, "both", "arms"), default="both")
     ap.add_argument("--concurrency", type=int, default=s.eval_concurrency)
     ap.add_argument("--max-spend", type=float, default=4.5, help="USD of new spend, all configs")
     ap.add_argument("--limit", type=int, help="first N questions only (smoke)")
@@ -604,6 +746,11 @@ def main(argv=None) -> int:
         SHEET.write_text(sheet(questions, args.split))
         print(f"wrote {SHEET.relative_to(ROOT)}")
         return 0
+    if args.action == "ablation":
+        text = ablation_report(questions, args.split)
+        ABLATION.write_text(text)
+        print(text)
+        return 0
     if args.action == "agreement":
         path = RESULTS / f"{args.split}_generation_verify_on.json"
         a = agreement(SHEET.read_text(), json.loads(path.read_text()))
@@ -615,11 +762,15 @@ def main(argv=None) -> int:
 
     if args.limit:
         questions = questions[: args.limit]
-    configs = list(CONFIGS) if args.config == "both" else [args.config]
+    groups = {"both": ["verify_on", "verify_off"], "arms": [c for c in CONFIGS if c[:4] == "arm_"]}
+    configs = groups.get(args.config, [args.config])
     results = {}
     for config in configs:
-        agent_stage(questions, config, args.split, s.agent_llm, args.concurrency, args.max_spend)
-        if not args.skip_judge:
+        agent_stage(
+            questions, config, args.split, s.agent_llm, args.concurrency, args.max_spend, configs
+        )
+        # an arm's _off config only gives first-draft citation (a): never judged
+        if not args.skip_judge and not (config.startswith("arm_") and config.endswith("_off")):
             judge_stage(questions, config, args.split, args.concurrency)
         if args.limit:  # a smoke run never writes the named result file
             print(f"--limit {args.limit}: smoke run, no result file")
