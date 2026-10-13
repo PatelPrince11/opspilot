@@ -1,5 +1,7 @@
 # OpsPilot
 
+[![CI](https://github.com/PatelPrince11/opspilot/actions/workflows/ci.yml/badge.svg)](https://github.com/PatelPrince11/opspilot/actions/workflows/ci.yml)
+
 An incident-investigation agent: an on-call engineer describes a problem, and the agent searches runbooks, past incidents and logs, then returns a diagnosis where every claim cites its evidence.
 
 **All runbooks, incidents, services and incident logs in this repo are synthetic: they describe a fictional company, not any real organisation or system.** Public LogHub data is used only as background noise.

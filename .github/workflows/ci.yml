@@ -1,0 +1,61 @@
+# Lint, tests against Postgres + pgvector, and the results-ledger check. No API keys: LLM tests
+# use stubs and mocked HTTP; tests that need local-only data (LogHub lines) skip with a reason
+# (shown by -rs). REQUIRE_DB=1 makes an unreachable Postgres fail the run instead of skipping.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: opspilot
+          POSTGRES_PASSWORD: change-me
+          POSTGRES_DB: opspilot
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U opspilot"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      # The Makefile builds DATABASE_URL from these for host-side targets.
+      DB_HOST_PORT: "5432"
+      DATABASE_URL: postgresql://opspilot:change-me@localhost:5432/opspilot
+      REQUIRE_DB: "1"
+      HF_HOME: ${{ github.workspace }}/.hf-cache
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      # The embedder and reranker are pinned to Hugging Face commits in config.py.
+      - name: Cache Hugging Face models
+        uses: actions/cache@v4
+        with:
+          path: .hf-cache
+          key: hf-${{ hashFiles('config.py') }}
+
+      - name: Lint
+        run: make lint
+
+      - name: Migrations
+        run: uv run alembic upgrade head
+
+      - name: Tests
+        run: uv run pytest -rs
+
+      - name: Results ledger is current
+        run: make results-check

@@ -47,6 +47,11 @@ def snapshot(conn) -> dict:
 
 @pytest.fixture(scope="module")
 def db():
+    if not (PROCESSED / "log_events.loghub.jsonl").exists():
+        pytest.skip(
+            "LogHub background lines are downloaded at build time, not committed: run"
+            " `make corpus` (local-only data)"
+        )
     base_url = get_settings().database_url
     try:
         admin = psycopg.connect(with_db(base_url, "postgres"), autocommit=True, connect_timeout=3)
