@@ -387,3 +387,24 @@ def test_ledger_renders_generation_rows_from_result_files(monkeypatch):
     assert "| all | verify off | - | not measured: every LLM call was a cache hit" in text
     monkeypatch.setattr(ledger, "load_named", lambda split, name: None)
     assert ledger.generation_section(qs) == []
+
+
+def test_a_cache_replay_keeps_the_measured_latency_and_spend(tmp_path, monkeypatch):
+    monkeypatch.setattr(ge, "PROGRESS", tmp_path)
+    monkeypatch.setattr(ge, "RESULTS", tmp_path)
+    monkeypatch.setattr(ge, "store", lambda *a: None)
+    measured = run_row()
+    ge.append_jsonl(ge.runs_path("dev", "verify_on"), measured)
+    ge.write_results([Q], "verify_on", "dev")
+    path = tmp_path / "dev_generation_verify_on.json"
+    first = json.loads(path.read_text())
+    assert first["latency"]["llm_call_ms"]["n"] == 1 and first["spend_usd"] == 0.001
+    # The same run replayed from the cache, now with a new metric field: content changes.
+    replay = run_row()
+    replay["llm_calls"] = [c | {"cached": True, "latency_ms": 0.0} for c in replay["llm_calls"]]
+    replay["gathered_docs"] = ["INC-9002"]
+    ge.runs_path("dev", "verify_on").write_text(json.dumps(replay) + "\n")
+    ge.write_results([Q | {"relevant_doc_ids": ["INC-9002"]}], "verify_on", "dev")
+    second = json.loads(path.read_text())
+    assert second["metrics"]["overall"]["gold_all"]["value"] == 1.0
+    assert second["latency"] == first["latency"] and second["spend_usd"] == 0.001

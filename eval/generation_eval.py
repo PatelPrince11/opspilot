@@ -426,10 +426,14 @@ def write_results(questions, config, split) -> dict | None:
         "wall_s_total": round(sum(r["wall_s"] for r in raw), 1),
     }
     path = RESULTS / f"{split}_generation_{config}.json"
+    if path.exists() and all(c["cached"] for r in raw for c in r["llm_calls"]):
+        # A pure cache replay measures nothing: keep the measured run's latency and spend.
+        old = json.loads(path.read_text())
+        extra |= {k: old[k] for k in ("latency", "spend_usd", "wall_s_total") if k in old}
     wrote = write_named(path, content, extra)
     if wrote:
         store(split, config, content)
-    print(f"{path.relative_to(ROOT)}: {'written' if wrote else 'unchanged'}")
+    print(f"eval/results/{path.name}: {'written' if wrote else 'unchanged'}")
     return content
 
 
@@ -628,6 +632,10 @@ ABLATION_ROWS = [  # (metric, config, sign): sign -1 = first-draft failure = 1 -
 ]
 
 
+# Measured results of runs that 3b.2 replays from the cache (the old 3b run's file, archived).
+MEASURED = {"old_on": PROGRESS / "v1" / "dev_generation_verify_on.json"}
+
+
 def ablation_report(questions: list[dict], split: str = "dev") -> str:
     """Each arm (verify on; its _off config gives the first draft) against 3b.1 (verify_on /
     verify_off) and the old 3b run (old_on / old_off: code b25000c, replayed from the response
@@ -641,12 +649,15 @@ def ablation_report(questions: list[dict], split: str = "dev") -> str:
     for name, (on, off) in variants.items():
         r_on, raw_on, _ = build_rows(questions, on, split)
         r_off, _, _ = build_rows(questions, off, split)
+        lat = latency(raw_on)
+        if not lat["llm_call_ms"]["n"]:  # a cache replay: the measured run's file has it
+            measured = MEASURED.get(on, RESULTS / f"{split}_generation_{on}.json")
+            lat = json.loads(measured.read_text())["latency"] if measured.exists() else lat
         data[name] = {
             "on": {r["id"]: r for r in r_on},
             "off": {r["id"]: r for r in r_off},
             "agg": aggregate(r_on),
-            "lat": latency(raw_on),
-            "spend": new_spend(raw_on),
+            "lat": lat,
         }
 
     def key(metric, sign):
