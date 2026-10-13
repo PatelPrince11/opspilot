@@ -379,6 +379,97 @@ def generation_section(questions: list[dict]) -> list[str]:
     return out
 
 
+def kappa_rule(k: float | None) -> str:
+    """Phase 3 rule (NOTES): per metric, by Cohen's kappa against Prince's labels."""
+    if k is None:
+        return "not validated"
+    if k < 0.4:
+        return "unreliable: lean on deterministic metrics"
+    if k <= 0.6:
+        return "moderate: report with the agreement beside it"
+    return "report normally, with the agreement beside it"
+
+
+def agreement_section() -> list[str]:
+    path = ROOT / "eval" / "results" / "judge_agreement.json"
+    if not path.exists():
+        return []
+    a = json.loads(path.read_text())
+    o = a["overall"]
+
+    def ci(s):
+        c = s.get("kappa_ci95")
+        return f"[{c[0]:+.3f}, {c[1]:+.3f}]" if c else "-"
+
+    out = [
+        "## (c2) Judge validation (Prince's 30 hand labels)",
+        "",
+        f"Prince's labels (`{a['labels_file']}`) against the judge's verdicts on the same 30"
+        f" verify-on dev answers (`{a['results_file']}`, commit {a['results_commit'][:12]})."
+        " Kappa CI: 95% percentile bootstrap resampling questions, 10,000 resamples, seed"
+        f" {SEED}. Prince marked 'no' when unsure, so key-fact presence is a strict standard; the"
+        " disagreement pattern is reported, not corrected.",
+        "",
+        "| items | n items (questions) | agreement | Cohen's kappa [95% CI] | Prince yes rate |"
+        " judge yes rate |",
+        "|---|---|---|---|---|---|",
+    ]
+    for k, name in (
+        ("claims", "claim support"),
+        ("key_facts", "key-fact presence"),
+        ("all", "both"),
+    ):
+        s = o[k]
+        out.append(
+            f"| {name} | {s['n']} ({s['questions']}) | {fmt(s['agreement'])} |"
+            f" {s['kappa']:+.3f} {ci(s)} | {fmt(s['prince_yes_rate'])} |"
+            f" {fmt(s['judge_yes_rate'])} |"
+        )
+    out += ["", "| 2x2, Prince x judge | judge yes | judge no |", "|---|---|---|"]
+    for k, name in (("claims", "claim support"), ("key_facts", "key-fact presence")):
+        t = o[k]["table"]
+        out.append(
+            f"| {name}: Prince yes | {t['prince_yes_judge_yes']} | {t['prince_yes_judge_no']} |"
+        )
+        out.append(
+            f"| {name}: Prince no | {t['prince_no_judge_yes']} | {t['prince_no_judge_no']} |"
+        )
+    out += [
+        "",
+        "| slice | items | n items (questions) | agreement | kappa |",
+        "|---|---|---|---|---|",
+    ]
+    for sl, b in a["by"].items():
+        for k in ("claims", "key_facts"):
+            s = b[k]
+            kk = "-" if s["kappa"] is None else f"{s['kappa']:+.3f}"
+            out.append(
+                f"| {sl} | {k} | {s['n']} ({s['questions']}) | {fmt(s['agreement'])} | {kk} |"
+            )
+    sens = a["sensitivity"]
+    out += [
+        "",
+        "| judged metric on these 30 answers | from the judge | from Prince's labels | n items"
+        " (questions) | rule (by kappa) |",
+        "|---|---|---|---|---|",
+        f"| citation (b) | {fmt(sens['citation_b']['judge'])} | {fmt(sens['citation_b']['prince'])}"
+        f" | {sens['citation_b']['n_items']} ({sens['citation_b']['n_questions']}) |"
+        f" {kappa_rule(o['claims']['kappa'])} |",
+        f"| completeness | {fmt(sens['completeness']['judge'])} |"
+        f" {fmt(sens['completeness']['prince'])} | {sens['completeness']['n_items']}"
+        f" ({sens['completeness']['n_questions']}) | {kappa_rule(o['key_facts']['kappa'])} |",
+        "| faithfulness, premise corrected, unrecorded respected | - | - | 0 |"
+        f" {kappa_rule(None)}: no hand labels |",
+        "",
+        f"Disagreements: {len(a['disagreements'])} of {o['all']['n']} items. Claims: Prince no /"
+        f" judge yes {o['claims']['prince_no_judge_yes']}, Prince yes / judge no"
+        f" {o['claims']['prince_yes_judge_no']}. Key facts: Prince no / judge yes"
+        f" {o['key_facts']['prince_no_judge_yes']}, Prince yes / judge no"
+        f" {o['key_facts']['prince_yes_judge_no']}. Full list: eval/results/judge_agreement.json.",
+    ]
+    return out
+
+
 def placeholder_section(measured: set[str] = frozenset()) -> list[str]:
     out = ["## (d) Not measured yet", "", "| metric | status |", "|---|---|"]
     out += [
@@ -412,6 +503,7 @@ def render() -> str:
     a = corpus_section(questions)
     b = retrieval_section(questions)
     c = generation_section(questions)
+    c2 = agreement_section()
     out = [
         "# OpsPilot results ledger",
         "",
@@ -424,7 +516,11 @@ def render() -> str:
         *b,
         "",
         *([*c, ""] if c else []),
-        *placeholder_section(GEN_MEASURED if c else frozenset()),
+        *([*c2, ""] if c2 else []),
+        *placeholder_section(
+            (GEN_MEASURED if c else frozenset())
+            | ({"Judge agreement with Prince's 30 hand labels"} if c2 else frozenset())
+        ),
         "",
         *bullets_section(),
     ]

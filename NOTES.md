@@ -2899,6 +2899,57 @@ model); 7/8 calls ok (one repeated search refused); 0 loops; $0.0040.
 $0.0040 from recorded calls; $0.0048 unattributed, possibly provider-rejected outputs, which
 return no usage). OpenRouter total $2.2751 of $5.
 
+## 2026-10-13: Phase 3, judge validation (Prince's 30 hand labels)
+
+Prince labelled the 30 seeded, stratified verify-on answers of the locked config
+(eval/judge_validation.md, commit e69bfe8 answers): 164 items, every blank marked (108 yes, 56 no),
+no unknown ids, no duplicates. Saved exactly as given in eval/prince_labels.txt; the labels are
+never changed. `make judge-agreement` compares them with the judge's verdicts on the same answers
+and writes eval/results/judge_agreement.json; docs/results.md section (c2). Kappa CIs: percentile
+bootstrap resampling questions (items of one answer stay together), 10,000 resamples, seed
+20261003.
+
+| items | n items (questions) | agreement | Cohen's kappa [95% CI] | Prince yes | judge yes |
+|---|---|---|---|---|---|
+| claim support | 87 (29) | 0.874 | -0.053 [-0.103, +0.000] | 0.908 | 0.966 |
+| key-fact presence | 77 (30) | 0.714 | +0.471 [+0.283, +0.667] | 0.377 | 0.662 |
+| both | 164 (30) | 0.799 | +0.494 [+0.327, +0.646] | 0.659 | 0.823 |
+
+2x2 (Prince x judge): claims yes/yes 76, yes/no 3, no/yes 8, no/no 0; key facts yes/yes 29,
+yes/no 0, no/yes 22, no/no 26.
+
+- Claims: 87% agreement but kappa about 0. The judge marked 84 of 87 claims supported and never
+  agreed with any of Prince's 11 "no"s (no/no = 0), so its agreement is what saying yes to nearly
+  everything gets by chance. The judge cannot detect unsupported claims here.
+- Key facts: moderate. Every disagreement is Prince no / judge yes (22, reverse 0): the judge is
+  lenient on partial or vaguer statements, as the 3a.6 spot check (10 of 12) suggested.
+- "Both" (0.494) is higher than either part: pooling two item types with different yes rates
+  inflates kappa; the per-metric numbers are the ones to use.
+- Splits (n small, no slice claims): claims kappa about 0 in every slice; key facts by author
+  claude 0.541 (59 items, 24 q) vs gemini 0.182 (18, 6); by difficulty exact-token 0.429 (32, 13),
+  multi-doc 0.476 (22, 8), paraphrase 0.504 (23, 9).
+- Disagreements: 33 of 164; Prince no / judge yes 30 (claims 8, key facts 22), Prince yes / judge
+  no 3 (claims Q138 C3, Q043 C2, Q043 C3). Full list in the JSON.
+- Sensitivity, on these 30 answers: citation (b) 0.966 by the judge vs 0.908 by Prince (87
+  claims, 29 q); completeness 0.662 by the judge vs 0.377 by Prince (77 facts, 30 q). The judge's
+  completeness is far more generous than Prince's standard.
+
+Prince marked 'no' when unsure, so key-fact presence is a strict standard; the disagreement
+pattern is reported, not corrected.
+
+**Rule for using the judged metrics** (per metric, by kappa against Prince's labels):
+- kappa below about 0.4: report that judged metric as unreliable and lean on deterministic
+  metrics;
+- 0.4 to 0.6: moderate; report it with the agreement number beside it;
+- above 0.6: report it normally, with the agreement number beside it.
+
+Applied: **citation (b)** (claim support, kappa -0.05): unreliable; citation (a) (deterministic)
+and gold-doc coverage carry the citation story. **Completeness** (key-fact presence, kappa 0.47):
+moderate; report it with "71% agreement, kappa 0.47 against a stricter human (judge 0.66 vs human
+0.38 on 30 answers)" beside it. **Faithfulness, premise corrected, unrecorded respected**: no hand
+labels, so not validated; report them as unvalidated. The 3b.2 and 3b.3 decisions already rested
+on deterministic metrics (gold-doc coverage, first-draft citation (a)), which this supports.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

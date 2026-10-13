@@ -1,0 +1,503 @@
+{
+ "blank": 0,
+ "by": {
+  "author=claude": {
+   "all": {
+    "agreement": 0.8208955223880597,
+    "judge_yes_rate": 0.8432835820895522,
+    "kappa": 0.49765698219306476,
+    "n": 134,
+    "prince_yes_rate": 0.7089552238805971,
+    "questions": 24,
+    "table": {
+     "prince_no_judge_no": 18,
+     "prince_no_judge_yes": 21,
+     "prince_yes_judge_no": 3,
+     "prince_yes_judge_yes": 92
+    }
+   },
+   "claims": {
+    "agreement": 0.8666666666666667,
+    "judge_yes_rate": 0.96,
+    "kappa": -0.05932203389830472,
+    "n": 75,
+    "prince_yes_rate": 0.9066666666666666,
+    "questions": 23,
+    "table": {
+     "prince_no_judge_no": 0,
+     "prince_no_judge_yes": 7,
+     "prince_yes_judge_no": 3,
+     "prince_yes_judge_yes": 65
+    }
+   },
+   "key_facts": {
+    "agreement": 0.7627118644067796,
+    "judge_yes_rate": 0.6949152542372882,
+    "kappa": 0.5406006674082312,
+    "n": 59,
+    "prince_yes_rate": 0.4576271186440678,
+    "questions": 24,
+    "table": {
+     "prince_no_judge_no": 18,
+     "prince_no_judge_yes": 14,
+     "prince_yes_judge_no": 0,
+     "prince_yes_judge_yes": 27
+    }
+   }
+  },
+  "author=gemini": {
+   "all": {
+    "agreement": 0.7,
+    "judge_yes_rate": 0.7333333333333333,
+    "kappa": 0.43514644351464427,
+    "n": 30,
+    "prince_yes_rate": 0.43333333333333335,
+    "questions": 6,
+    "table": {
+     "prince_no_judge_no": 8,
+     "prince_no_judge_yes": 9,
+     "prince_yes_judge_no": 0,
+     "prince_yes_judge_yes": 13
+    }
+   },
+   "claims": {
+    "agreement": 0.9166666666666666,
+    "judge_yes_rate": 1.0,
+    "kappa": 0.0,
+    "n": 12,
+    "prince_yes_rate": 0.9166666666666666,
+    "questions": 6,
+    "table": {
+     "prince_no_judge_no": 0,
+     "prince_no_judge_yes": 1,
+     "prince_yes_judge_no": 0,
+     "prince_yes_judge_yes": 11
+    }
+   },
+   "key_facts": {
+    "agreement": 0.5555555555555556,
+    "judge_yes_rate": 0.5555555555555556,
+    "kappa": 0.18181818181818193,
+    "n": 18,
+    "prince_yes_rate": 0.1111111111111111,
+    "questions": 6,
+    "table": {
+     "prince_no_judge_no": 8,
+     "prince_no_judge_yes": 8,
+     "prince_yes_judge_no": 0,
+     "prince_yes_judge_yes": 2
+    }
+   }
+  },
+  "difficulty=exact-token": {
+   "all": {
+    "agreement": 0.7538461538461538,
+    "judge_yes_rate": 0.8307692307692308,
+    "kappa": 0.41899441340782106,
+    "n": 65,
+    "prince_yes_rate": 0.6153846153846154,
+    "questions": 13,
+    "table": {
+     "prince_no_judge_no": 10,
+     "prince_no_judge_yes": 15,
+     "prince_yes_judge_no": 1,
+     "prince_yes_judge_yes": 39
+    }
+   },
+   "claims": {
+    "agreement": 0.8181818181818182,
+    "judge_yes_rate": 0.9696969696969697,
+    "kappa": -0.05319148936170226,
+    "n": 33,
+    "prince_yes_rate": 0.8484848484848485,
+    "questions": 12,
+    "table": {
+     "prince_no_judge_no": 0,
+     "prince_no_judge_yes": 5,
+     "prince_yes_judge_no": 1,
+     "prince_yes_judge_yes": 27
+    }
+   },
+   "key_facts": {
+    "agreement": 0.6875,
+    "judge_yes_rate": 0.6875,
+    "kappa": 0.42857142857142855,
+    "n": 32,
+    "prince_yes_rate": 0.375,
+    "questions": 13,
+    "table": {
+     "prince_no_judge_no": 10,
+     "prince_no_judge_yes": 10,
+     "prince_yes_judge_no": 0,
+     "prince_yes_judge_yes": 12
+    }
+   }
+  },
+  "difficulty=multi-doc": {
+   "all": {
+    "agreement": 0.851063829787234,
+    "judge_yes_rate": 0.8723404255319149,
+    "kappa": 0.55359565807327,
+    "n": 47,
+    "prince_yes_rate": 0.723404255319149,
+    "questions": 8,
+    "table": {
+     "prince_no_judge_no": 6,
+     "prince_no_judge_yes": 7,
+     "prince_yes_judge_no": 0,
+     "prince_yes_judge_yes": 34
+    }
+   },
+   "claims": {
+    "agreement": 0.96,
+    "judge_yes_rate": 1.0,
+    "kappa": 0.0,
+    "n": 25,
+    "prince_yes_rate": 0.96,
+    "questions": 8,
+    "table": {
+     "prince_no_judge_no": 0,
+     "prince_no_judge_yes": 1,
+     "prince_yes_judge_no": 0,
+     "prince_yes_judge_yes": 24
+    }
+   },
+   "key_facts": {
+    "agreement": 0.7272727272727273,
+    "judge_yes_rate": 0.7272727272727273,
+    "kappa": 0.4761904761904763,
+    "n": 22,
+    "prince_yes_rate": 0.45454545454545453,
+    "questions": 8,
+    "table": {
+     "prince_no_judge_no": 6,
+     "prince_no_judge_yes": 6,
+     "prince_yes_judge_no": 0,
+     "prince_yes_judge_yes": 10
+    }
+   }
+  },
+  "difficulty=paraphrase": {
+   "all": {
+    "agreement": 0.8076923076923077,
+    "judge_yes_rate": 0.7692307692307693,
+    "kappa": 0.5390070921985817,
+    "n": 52,
+    "prince_yes_rate": 0.6538461538461539,
+    "questions": 9,
+    "table": {
+     "prince_no_judge_no": 10,
+     "prince_no_judge_yes": 8,
+     "prince_yes_judge_no": 2,
+     "prince_yes_judge_yes": 32
+    }
+   },
+   "claims": {
+    "agreement": 0.8620689655172413,
+    "judge_yes_rate": 0.9310344827586207,
+    "kappa": -0.0740740740740749,
+    "n": 29,
+    "prince_yes_rate": 0.9310344827586207,
+    "questions": 9,
+    "table": {
+     "prince_no_judge_no": 0,
+     "prince_no_judge_yes": 2,
+     "prince_yes_judge_no": 2,
+     "prince_yes_judge_yes": 25
+    }
+   },
+   "key_facts": {
+    "agreement": 0.7391304347826086,
+    "judge_yes_rate": 0.5652173913043478,
+    "kappa": 0.5035971223021583,
+    "n": 23,
+    "prince_yes_rate": 0.30434782608695654,
+    "questions": 9,
+    "table": {
+     "prince_no_judge_no": 10,
+     "prince_no_judge_yes": 6,
+     "prince_yes_judge_no": 0,
+     "prince_yes_judge_yes": 7
+    }
+   }
+  }
+ },
+ "disagreements": [
+  {
+   "id": "Q001",
+   "item": "K2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q003",
+   "item": "C1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q027",
+   "item": "C1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q056",
+   "item": "K3",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q089",
+   "item": "C1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q089",
+   "item": "C2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q089",
+   "item": "C4",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q089",
+   "item": "K3",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q126",
+   "item": "K2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q129",
+   "item": "K2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q129",
+   "item": "K3",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q138",
+   "item": "C3",
+   "judge": false,
+   "prince": true
+  },
+  {
+   "id": "Q156",
+   "item": "K1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q156",
+   "item": "K2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "H001",
+   "item": "K1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "H001",
+   "item": "K2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q017",
+   "item": "K1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q120",
+   "item": "C2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q146",
+   "item": "K1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "H002",
+   "item": "K1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "H002",
+   "item": "K2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "H002",
+   "item": "K3",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "H002",
+   "item": "K4",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q043",
+   "item": "C2",
+   "judge": false,
+   "prince": true
+  },
+  {
+   "id": "Q043",
+   "item": "C3",
+   "judge": false,
+   "prince": true
+  },
+  {
+   "id": "Q083",
+   "item": "K2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q087",
+   "item": "C1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q087",
+   "item": "K1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q104",
+   "item": "K1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "Q104",
+   "item": "K2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "H027",
+   "item": "K1",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "H029",
+   "item": "K2",
+   "judge": true,
+   "prince": false
+  },
+  {
+   "id": "H038",
+   "item": "C1",
+   "judge": true,
+   "prince": false
+  }
+ ],
+ "labels_file": "eval/prince_labels.txt",
+ "not_judged": [],
+ "overall": {
+  "all": {
+   "agreement": 0.7987804878048781,
+   "judge_yes_rate": 0.823170731707317,
+   "kappa": 0.4938271604938273,
+   "kappa_ci95": [
+    0.32710809281267683,
+    0.6455516687151367
+   ],
+   "n": 164,
+   "prince_yes_rate": 0.6585365853658537,
+   "questions": 30,
+   "table": {
+    "prince_no_judge_no": 26,
+    "prince_no_judge_yes": 30,
+    "prince_yes_judge_no": 3,
+    "prince_yes_judge_yes": 105
+   }
+  },
+  "claims": {
+   "agreement": 0.8735632183908046,
+   "judge_yes_rate": 0.9655172413793104,
+   "kappa": -0.05280528052805343,
+   "kappa_ci95": [
+    -0.10344827586206856,
+    0.0
+   ],
+   "n": 87,
+   "prince_no_judge_yes": 8,
+   "prince_yes_judge_no": 3,
+   "prince_yes_rate": 0.9080459770114943,
+   "questions": 29,
+   "table": {
+    "prince_no_judge_no": 0,
+    "prince_no_judge_yes": 8,
+    "prince_yes_judge_no": 3,
+    "prince_yes_judge_yes": 76
+   }
+  },
+  "key_facts": {
+   "agreement": 0.7142857142857143,
+   "judge_yes_rate": 0.6623376623376623,
+   "kappa": 0.47095565271705186,
+   "kappa_ci95": [
+    0.28307123034227566,
+    0.6666666666666667
+   ],
+   "n": 77,
+   "prince_no_judge_yes": 22,
+   "prince_yes_judge_no": 0,
+   "prince_yes_rate": 0.37662337662337664,
+   "questions": 30,
+   "table": {
+    "prince_no_judge_no": 26,
+    "prince_no_judge_yes": 22,
+    "prince_yes_judge_no": 0,
+    "prince_yes_judge_yes": 29
+   }
+  }
+ },
+ "results_commit": "e69bfe87e35472674d9758c5cca492df973ed160",
+ "results_file": "eval/results/dev_generation_verify_on.json",
+ "sensitivity": {
+  "citation_b": {
+   "judge": 0.9655172413793104,
+   "n_items": 87,
+   "n_questions": 29,
+   "prince": 0.9080459770114943
+  },
+  "completeness": {
+   "judge": 0.6623376623376623,
+   "n_items": 77,
+   "n_questions": 30,
+   "prince": 0.37662337662337664
+  }
+ }
+}
