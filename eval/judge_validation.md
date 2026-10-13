@@ -12,15 +12,15 @@ Then run `make judge-agreement`.
 
 **Question:** search-api-01 slow from about 01:00 on 8 December 2025, which search-cluster node was stuck in GC?
 
-**Summary:** The slowdown of search-api-01 on 8 December 2025 was caused by a node in the search cluster being stuck in garbage collection.
+**Summary:** The slow performance of search‑api‑01 on 8 December 2025 was due to garbage‑collection pauses on search‑cluster‑03.
 
-**Likely cause:** search-cluster-03 was busy in GC, preventing it from handling search work.
+**Likely cause:** Long GC pauses on search‑cluster‑03 caused the latency.
 
 **Claims**
 
-C1. search-cluster-03 was experiencing GC pauses during the incident.
+C1. search‑cluster‑03 was stuck in garbage collection
 
-> `INC-0107#0` # search-api-01 slow: GC pauses on search-cluster-03 (sev4) 8 December 2025, 01:00 to 01:45 UTC. Runbook RB-003. From 01:00 searches through search-api-01 came back slower than usual. The hot-threads output for search-cluster-03 showed it busy in garbage collection and not in search work, and that was taken as the cause: long GC pauses on that node were holding up the calls search-api-01 sent to
+> `INC-0107#0` # search-api-01 slow: GC pauses on search-cluster-03 (sev4) 8 December 2025, 01:00 to 01:45 UTC. Runbook RB-003. From 01:00 searches through search-api-01 came back slower than usual. The hot-threads output for search-cluster-03 showed it busy in garbage collection and not in search work, and that was taken as the cause: long GC pauses on that node were holding up the calls search-api-01 sent to it. RB-003 routes GC trouble on a cluster node to team-platform, so that is where it went, and what that team did is not described here; this account records no error codes, only slow responses. No query was cancelled and I changed no cluster settings. By 01:45 search latency was back to normal.
 
 SUPPORTED Q001 C1: ___
 
@@ -38,13 +38,13 @@ PRESENT Q001 K2: ___
 
 **Question:** card-processor-proxy-01 and -02 both slow talking to the processor on 20 February 2025, what window?
 
-**Summary:** The logs show slow processor calls starting at 10:05:04 UTC and ending at 10:41:56 UTC on 2025-02-20.
+**Summary:** Evidence shows card-processor-proxy-01 had slow processor calls between 10:05:04 and 10:41:56 on 2025-02-20; no evidence for card-processor-proxy-02 is present.
 
 **Likely cause:** Not recorded in the evidence.
 
 **Claims**
 
-C1. Slow calls began at 10:05:04 UTC on 2025-02-20.
+C1. card-processor-proxy-01 experienced slow calls from 10:05:04 to 10:41:56 on 2025-02-20.
 
 > `log:601` 2025-02-20T10:05:04Z WARN card-processor-proxy-01.prod.internal processor call slow latency_ms=3589 req=b9f11c6f
 
@@ -64,17 +64,23 @@ PRESENT Q003 K2: ___
 
 **Question:** PAYAPI-E1107 started at 09:05 on 5 November 2025 only for payments served by the freshly shipped build of card-processor-proxy, how was it undone?
 
-**Summary:** The PAYAPI-E1107 incident was undone by rolling back the card-processor-proxy deployment with a kubectl rollout undo command at 09:10, after which the error rate fell and the incident was closed.
+**Summary:** The PAYAPI‑E1107 surge was stopped by rolling back the card‑processor‑proxy deployment with a Kubernetes rollout undo, reverting to the previous version and causing the error rate to drop to zero.
 
-**Likely cause:** New card-processor-proxy release caused payment failures (PAYAPI-E1107).
+**Likely cause:** The new card‑processor‑proxy release introduced a bug that caused payment attempts to fail, triggering PAYAPI‑E1107 errors.
 
 **Claims**
 
-C1. The incident was undone by running a kubectl rollout undo on the card-processor-proxy deployment at 09:10.
+C1. A rollback was performed using kubectl rollout undo on the card‑processor‑proxy deployment at 09:10 UTC.
 
 > `INC-0096#0` # Ten minutes of failed card payments, 5 November 2025 I'm on team-payments, and the sev1 on Wednesday morning was my release. It ran from 09:05 to 09:15 UTC. This is what happened, as I saw it. I shipped a new card-processor-proxy release that morning. The new pods passed their readiness checks, so as far as the rollout could tell, everything was fine. It wasn't. From 09:05, payments that went through the new version of the proxy failed, and payments-api logged `PAYAPI-E1107` for each one whose attempts were all used up. The alert on the payment error rate fired at 09:08. The failures began with my release, so that is where I looked first. At 09:10 I ran `kubectl -n payments rollout undo deploy/card-processor-proxy` and watched both instances, card-processor-proxy-01 as well as card-processor-proxy-02, go back to the previous version. As the old version took over again, `PAYAPI-E1107` tailed off and then stopped. I watched the error rate stay flat and closed the
 
 SUPPORTED Q022 C1: ___
+
+C2. After the undo, the old version resumed handling payments and PAYAPI‑E1107 errors tailed off and stopped.
+
+> `INC-0096#0` # Ten minutes of failed card payments, 5 November 2025 I'm on team-payments, and the sev1 on Wednesday morning was my release. It ran from 09:05 to 09:15 UTC. This is what happened, as I saw it. I shipped a new card-processor-proxy release that morning. The new pods passed their readiness checks, so as far as the rollout could tell, everything was fine. It wasn't. From 09:05, payments that went through the new version of the proxy failed, and payments-api logged `PAYAPI-E1107` for each one whose attempts were all used up. The alert on the payment error rate fired at 09:08. The failures began with my release, so that is where I looked first. At 09:10 I ran `kubectl -n payments rollout undo deploy/card-processor-proxy` and watched both instances, card-processor-proxy-01 as well as card-processor-proxy-02, go back to the previous version. As the old version took over again, `PAYAPI-E1107` tailed off and then stopped. I watched the error rate stay flat and closed the
+
+SUPPORTED Q022 C2: ___
 
 **Key facts**
 
@@ -90,27 +96,27 @@ PRESENT Q022 K2: ___
 
 **Question:** kafka-01 and kafka-02 both died after a config push on 2026-08-13 even though systemctl restart reported success, why?
 
-**Summary:** A config push on 2026-08-13 set `message.max.bytes=10MB`, which is invalid for Kafka. Both kafka-01 and kafka-02 exited with a ConfigException, and the rollout tool stopped after the second failure, leaving kafka-03 untouched.
+**Summary:** Both kafka-01 and kafka-02 stopped after a config push on 2026-08-13 because the pushed `message.max.bytes=10MB` value was invalid, causing a ConfigException that aborted the JVM. systemd reported the restart as successful because the kafka unit is Type=simple, which marks the service active before the JVM exits.
 
-**Likely cause:** Invalid `message.max.bytes` value (10MB) caused Kafka brokers to reject the configuration and exit.
+**Likely cause:** Invalid `message.max.bytes` value (10MB) caused Kafka brokers to abort during startup; systemd’s Type=simple unit reported success before the abort.
 
 **Claims**
 
-C1. The change set used `message.max.bytes=10MB`, which is invalid because Kafka expects a plain integer number of bytes.
+C1. The config push set `message.max.bytes=10MB`, which Kafka rejects, causing a ConfigException and broker shutdown.
 
-> `log:7741` 2026-08-13T10:12:13Z ERROR kafka-01.prod.internal org.apache.kafka.common.config.ConfigException: Invalid value 10MB for configuration message.max.bytes: Not a number of type INT
+> `INC-0185#0` # Two Kafka brokers refused a pushed config sev2 · 2026-08-13 · 10:12 to 10:36 UTC · cause: kafka · affected: ledger-service, orders-api · runbook: RB-027 | Host or team | UTC | What happened | |---|---|---| | kafka-01 | 10:12 | Picked as the canary. The tool replaced `server.properties`, restarted the broker and got exit code 0. A few seconds later the JVM quit with a `ConfigException` naming `message.max.bytes`. | | whole cluster | 10:13 | Two healthy brokers remained, so each partition kept a second in-sync copy and producers carried on. No page yet: under-replication has to persist ten minutes before anyone is woken. | | kafka-02 | 10:17 | Its five-minute pause over, the tool repeated the same steps on the next broker, with the same result. |
 
 SUPPORTED Q027 C1: ___
 
-C2. kafka-01 exited with a failure status after the restart.
+C2. systemd treats the kafka unit as up instantly, so restart returns 0 even though the JVM aborts shortly after.
 
-> `log:7742` 2026-08-13T10:12:14Z WARN kafka-01.prod.internal systemd: kafka.service: Main process exited, code=exited, status=1/FAILURE
+> `INC-0185#2` **The bad value.** Kafka parses `message.max.bytes` as an integer count of bytes. Whoever wrote the change wanted roughly ten megabytes and typed `message.max.bytes=10MB`; the parser refuses the suffix and the broker aborts during startup. Ten mebibytes written correctly is 10485760. **Why the tool saw success.** systemd treats our broker unit as up the instant its process is spawned, so a restart returns 0 even when the JVM is about to abort on its configuration. In August the tool trusted that return code alone, paused for a fixed time and moved on; nothing asked whether a broker had actually rejoined the cluster. Two brokers were gone before a human was involved. **Effect on each Kafka user.** | Service | Effect | |---|---| | ledger-service | Published nothing for ten minutes and lost nothing. Its retry queue peaked at about 1,200 entries and was empty by 10:28. CPU unchanged. |
 
 SUPPORTED Q027 C2: ___
 
-C3. kafka-02 died the same way after receiving the same bad configuration file.
+C3. Both kafka-01 and kafka-02 died after the push despite systemctl restart exit code 0.
 
-> `RB-027#8` ## Why the gate exists: 2026-08-13 A change set `message.max.bytes=10MB` in `/opt/kafka/config/server.properties`, meaning to allow 10 MB messages. Kafka expects a plain number of bytes there. At the time, the tool used the older pacing for every unit. - **10:12** kafka-01, the canary, restarted and exited seconds later on the `ConfigException`. No alert: the under-replicated alert needs 10 minutes. - **10:17** After the fixed wait, kafka-02 got the same file and died the same way. With one broker left, no partition could keep two in-sync replicas, so every `acks=all` write failed. Clients logged lines such as `Connection to node 1 (kafka-01.prod.internal/10.0.33.11:9092) could not be established. Node may not be available.` - **10:19** Page on producer errors.
+> `INC-0185#0` # Two Kafka brokers refused a pushed config sev2 · 2026-08-13 · 10:12 to 10:36 UTC · cause: kafka · affected: ledger-service, orders-api · runbook: RB-027 | Host or team | UTC | What happened | |---|---|---| | kafka-01 | 10:12 | Picked as the canary. The tool replaced `server.properties`, restarted the broker and got exit code 0. A few seconds later the JVM quit with a `ConfigException` naming `message.max.bytes`. | | whole cluster | 10:13 | Two healthy brokers remained, so each partition kept a second in-sync copy and producers carried on. No page yet: under-replication has to persist ten minutes before anyone is woken. | | kafka-02 | 10:17 | Its five-minute pause over, the tool repeated the same steps on the next broker, with the same result. |
 
 SUPPORTED Q027 C3: ___
 
@@ -128,35 +134,29 @@ PRESENT Q027 K2: ___
 
 **Question:** 53300 refusing new connections on orders-db-01.prod.internal on 22 November 2025 with ORD-5003, orders-api is only 3 x 25 so who holds the other slots?
 
-**Summary:** On 22 November 2025 orders-db-01 ran out of usable connection slots (53300). Orders‑api pods could use at most 75 slots, while a batch Job in the commerce namespace held about 222 idle sessions, exhausting the 297 slots available to applications.
+**Summary:** On 22 Nov 2025 orders-db-01 hit the 53300 limit; orders‑api can use at most 75 slots, while the remaining usable slots were consumed by a leaking batch job, exhausting the 297 usable connections.
 
-**Likely cause:** Idle sessions left open by the commerce batch Job exhausted the usable connection slots.
+**Likely cause:** Idle sessions left open by a batch Job in the commerce namespace exhausted the usable connection slots.
 
 **Claims**
 
-C1. Orders‑api pods can account for at most 75 connections (3 pods × 25).
+C1. orders‑api pool size allows at most 75 connections (3 pods × 25).
 
-> `INC-0103#0` # Postmortem: orders-db-01 out of connection slots, 22 November 2025 Rated sev2, with times in UTC. It started at 22:15 and ended at 22:45, 30 minutes later. The database was orders-db-01.prod.internal. The runbook consulted was RB-012. ## Short version On a Saturday night the orders database stopped accepting new sessions. The service in front of it, orders-api, could not open the connections it needed and answered with `ORD-5003`. The slots were not used up by customer traffic. A batch Job that belongs to the commerce side of orders-api, running in the `commerce` namespace, had been holding open about 222 sessions that did nothing. ## Where the 297 went orders-db has `max_connections` of 300. Three of those are kept for superusers, which leaves 297 for application roles. Those are the slots RB-012 counts for this database. orders-api is sized for a small share of them: three pods, each with a `pg` Pool capped at 25, so 3 x 25 = 75 at most.
+> `RB-012#3` ## Connection budget per database Pool sizes are per pod (or per bouncer for payments-db). Usable = `max_connections` − 3. | Database | Who connects | Arithmetic | Usable | |---|---|---|---| | payments-db | payments-pgbouncer ×2, each `default_pool_size` 40 + reserve 10. payments-api's 4 × 40 = 160 client connections end at the bouncers, not here | 2 × (40 + 10) = 100 | 200 − 3 = 197 | | ledger-db | ledger-service, Hikari `maximumPoolSize` 20, 2 pods | 2 × 20 = 40 | 197 | | orders-db | orders-api, `pg` Pool `max` 25, 3 pods | 3 × 25 = 75 | 300 − 3 = 297 | | auth-db | auth-service, pgxpool `pool_max_conns` 30, 2 pods | 2 × 30 = 60 | 197 |
 
 SUPPORTED Q044 C1: ___
 
-C2. A batch Job in the commerce namespace was holding about 222 idle sessions.
+C2. Usable slots for application roles are max_connections minus 3 reserved, i.e., 297.
 
-> `INC-0103#0` # Postmortem: orders-db-01 out of connection slots, 22 November 2025 Rated sev2, with times in UTC. It started at 22:15 and ended at 22:45, 30 minutes later. The database was orders-db-01.prod.internal. The runbook consulted was RB-012. ## Short version On a Saturday night the orders database stopped accepting new sessions. The service in front of it, orders-api, could not open the connections it needed and answered with `ORD-5003`. The slots were not used up by customer traffic. A batch Job that belongs to the commerce side of orders-api, running in the `commerce` namespace, had been holding open about 222 sessions that did nothing. ## Where the 297 went orders-db has `max_connections` of 300. Three of those are kept for superusers, which leaves 297 for application roles. Those are the slots RB-012 counts for this database. orders-api is sized for a small share of them: three pods, each with a `pg` Pool capped at 25, so 3 x 25 = 75 at most.
+> `RB-012#3` ## Connection budget per database Pool sizes are per pod (or per bouncer for payments-db). Usable = `max_connections` − 3. | Database | Who connects | Arithmetic | Usable | |---|---|---|---| | payments-db | payments-pgbouncer ×2, each `default_pool_size` 40 + reserve 10. payments-api's 4 × 40 = 160 client connections end at the bouncers, not here | 2 × (40 + 10) = 100 | 200 − 3 = 197 | | ledger-db | ledger-service, Hikari `maximumPoolSize` 20, 2 pods | 2 × 20 = 40 | 197 | | orders-db | orders-api, `pg` Pool `max` 25, 3 pods | 3 × 25 = 75 | 300 − 3 = 297 | | auth-db | auth-service, pgxpool `pool_max_conns` 30, 2 pods | 2 × 30 = 60 | 197 |
 
 SUPPORTED Q044 C2: ___
 
-C3. orders-db‑01 has max_connections 300, 3 reserved for superusers, leaving 297 usable slots.
+C3. A batch Job in the commerce namespace held about 222 idle sessions that did nothing.
 
 > `INC-0103#0` # Postmortem: orders-db-01 out of connection slots, 22 November 2025 Rated sev2, with times in UTC. It started at 22:15 and ended at 22:45, 30 minutes later. The database was orders-db-01.prod.internal. The runbook consulted was RB-012. ## Short version On a Saturday night the orders database stopped accepting new sessions. The service in front of it, orders-api, could not open the connections it needed and answered with `ORD-5003`. The slots were not used up by customer traffic. A batch Job that belongs to the commerce side of orders-api, running in the `commerce` namespace, had been holding open about 222 sessions that did nothing. ## Where the 297 went orders-db has `max_connections` of 300. Three of those are kept for superusers, which leaves 297 for application roles. Those are the slots RB-012 counts for this database. orders-api is sized for a small share of them: three pods, each with a `pg` Pool capped at 25, so 3 x 25 = 75 at most.
 
 SUPPORTED Q044 C3: ___
-
-C4. The 75 slots used by orders‑api plus the ~222 idle sessions exactly matched the 297 usable slots.
-
-> `INC-0103#1` The rest of the arithmetic is the leak: 222 idle sessions plus those 75 come to 297, exactly the usable total. The Job had opened a new connection for every batch it processed and had never closed one, so each finished batch left a session behind in the `idle` state. Because the count is "about 222", the sum is a rounded one. Once no slot was free, a new connection attempt was refused at login with `53300`, before any query was sent. That is why the symptom looked like a failure to connect, not a slow database. orders-api surfaced the refusals as `ORD-5003`. ## What the team saw, and what it decided - The first sign was in orders-api: new database connections failed from 22:15. - The query in RB-012 that lists sessions by role, application and client address is the way to see who holds the slots. The pool arithmetic showed from the outset that orders-api's own pods could account for at most 75, so the other sessions were someone else's.
-
-SUPPORTED Q044 C4: ___
 
 **Key facts**
 
@@ -172,29 +172,27 @@ PRESENT Q044 K2: ___
 
 **Question:** kafka-02 /var alert, anything that writes there gets ENOSPC, but the broker's data dir looks fine. where should i look?
 
-**Summary:** The ENOSPC errors on kafka-02 under /var are most likely caused by the root disk filling, often due to large GC logs or journal files, not the Kafka data directory.
+**Summary:** ENOSPC on kafka-02 is caused by the root /var filesystem filling up with GC logs, not the broker data directory. The fix is to examine and rotate the GC logs in /var/log/kafka.
 
-**Likely cause:** Root filesystem (/var) out of space or inodes, commonly from GC logs or systemd journal files.
+**Likely cause:** Unrotated GC logs in /var/log/kafka filled the root /var filesystem, triggering ENOSPC errors.
 
 **Claims**
 
-C1. ENOSPC on a broker can be caused by the root disk filling, especially from GC logs living in /var/log/kafka.
+C1. Here it was the root disk, because the GC logs live there.
 
-> `RB-008#2` | Old rotated logs piling up | `sudo find /var/log -name '*.gz' -mtime +14 -delete`, then check that `rotate N` is set in the logrotate config | | Rotated logs keep reappearing as one giant file | The app keeps writing to the old file handle after rotation. Use `copytruncate` in its logrotate block, or have rotation send the app the signal it reopens logs on | | Package cache large (`/var/cache/apt`) | `sudo apt-get clean` | | kafka-02.prod.internal `/var` full from GC logs | Broker GC logs live in `/var/log/kafka`. Rotate them; don't touch `/data/kafka` from here | | Back under 80% | Note the culprit in the ticket. If logrotate was missing, file a config-management fix so it doesn't return |
-> `INC-0070#3` `ENOSPC` says a write had nowhere to go on the filesystem it was aimed at. It does not say which filesystem. On a broker there are two candidates, the data volume and the root disk, and the first job is to find out which is full. Here it was the root disk, because the GC logs live there. ## Follow-ups - Look at the logrotate setup for `/var/log/kafka` on kafka-02 and decide whether the logs were
+> `INC-0070#3` `ENOSPC` says a write had nowhere to go on the filesystem it was aimed at. It does not say which filesystem. On a broker there are two candidates, the data volume and the root disk, and the first job is to find out which is full. Here it was the root disk, because the GC logs live there. ## Follow-ups - Look at the logrotate setup for `/var/log/kafka` on kafka-02 and decide whether the logs were meant to be rotated and were not. - Check the same directory on the other two brokers while at it. - If a rotation file turns out to be missing, put it in config management so a rebuilt host gets it back. This is a conditional follow-up: nothing has confirmed that it is missing.
 
 SUPPORTED Q056 C1: ___
 
-C2. Systemd journal files often dominate /var and can fill the root disk, leading to ENOSPC.
+C2. Rotated the GC logs in `/var/log/kafka` and cleared the rotated copies that were not needed.
 
-> `RB-008#1` | `/var/log/journal` is the biggest | `journalctl --disk-usage`, then `sudo journalctl --vacuum-size=500M`. Make it stick with `SystemMaxUse=500M` in `/etc/systemd/journald.conf` | | One app log is huge and not rotated (`/var/log/opensearch/*.log` on search-cluster-02.prod.internal last time) | Check its logrotate file under `/etc/logrotate.d/`, run `sudo logrotate -f /etc/logrotate.d/<name>` | | You deleted a big log but `df` didn't change | A process still has it open: `sudo lsof +L1`. Restart that process, or truncate it in place with `: > /proc/<pid>/fd/<fd>` |
-> `INC-0109#1` - 15:34: the size breakdown of `/var` showed one dominant directory, `/var/log/journal`. Asked the channel whether anyone had changed logging on this VM recently. Nobody had. - 15:40: `journalctl --disk-usage` agreed. Pointed out that `journald.conf` on this host had no size setting at all. - 15:47: ran `sudo journalctl --vacuum-size=500M`. Posted the before and after free-space numbers in the thr
+> `INC-0070#1` `df -h /var` reports 100% used. Looking for what is occupying it before changing anything. **02:44** Sizes of the directories under `/var`, largest last: `/var/log/kafka` is far ahead of everything else. That directory holds the broker's garbage-collection logs, and RB-008 has a row for exactly this case on kafka-02. **02:55** Reading the row: the GC logs are the thing to rotate here. Whether a rotation setup existed and failed, or never existed, is not something I have confirmed. I will check the logrotate configuration for these logs once the disk has room. **03:15** Rotated the GC logs in `/var/log/kafka` and cleared the rotated copies that were not needed. `/var` dropped quickly. **03:30** `/var` is under the 80% line that RB-008 sets as the target. GC logging is writing again with no errors showing. **03:45** Usage is holding, so I am closing the ticket.
 
 SUPPORTED Q056 C2: ___
 
-C3. When ENOSPC occurs, the first step is to determine which filesystem is full: the data volume or the root disk.
+C3. Broker GC logs live in `/var/log/kafka`. Rotate them; don't touch `/data/kafka` from here.
 
-> `INC-0070#3` `ENOSPC` says a write had nowhere to go on the filesystem it was aimed at. It does not say which filesystem. On a broker there are two candidates, the data volume and the root disk, and the first job is to find out which is full. Here it was the root disk, because the GC logs live there. ## Follow-ups - Look at the logrotate setup for `/var/log/kafka` on kafka-02 and decide whether the logs were
+> `RB-008#2` | Old rotated logs piling up | `sudo find /var/log -name '*.gz' -mtime +14 -delete`, then check that `rotate N` is set in the logrotate config | | Rotated logs keep reappearing as one giant file | The app keeps writing to the old file handle after rotation. Use `copytruncate` in its logrotate block, or have rotation send the app the signal it reopens logs on | | Package cache large (`/var/cache/apt`) | `sudo apt-get clean` | | kafka-02.prod.internal `/var` full from GC logs | Broker GC logs live in `/var/log/kafka`. Rotate them; don't touch `/data/kafka` from here | | Back under 80% | Note the culprit in the ticket. If logrotate was missing, file a config-management fix so it doesn't return |
 
 SUPPORTED Q056 C3: ___
 
@@ -216,17 +214,13 @@ PRESENT Q056 K3: ___
 
 **Question:** orders-api-02 gets NXDOMAIN on its database hostname off and on since 15:15 on 19 March 2025. what changed?
 
-**Summary:** orders-api-02 experienced intermittent NXDOMAIN errors for its database hostname because a zone file change at 15:15 removed the required record; the record was restored at 15:38, ending the issue.
+**Summary:** No valid diagnosis was produced.
 
-**Likely cause:** Removal of the database hostname record from the prod.internal zone file during the 15:15 zone push.
+**Likely cause:** unknown
 
 **Claims**
 
-C1. After the 15:38 fix, lookups succeeded and the last failure was logged at 15:38.
-
-> `INC-0025#3` through the same tool to internal-dns-01 at 15:38, again with 0 failed hosts. Once the cluster cache turned over, lookups from orders-api-02 resolved every time; the last failed one was logged at 15:38. We watched until 15:50 and closed: 35 minutes from the first push. **What should change?** - Before a zone push: list the records the new file removes compared with the live one, and stop for a person to confirm each removal. - After the push: ask the server for a handful of names that must always exist, rather than trusting the restart's exit code. - An NXDOMAIN rate for `prod.internal` names seen by pods, so the page names DNS and not the database connection.
-
-SUPPORTED Q073 C1: ___
+(no claims)
 
 **Key facts**
 
@@ -246,29 +240,35 @@ PRESENT Q073 K3: ___
 
 **Question:** search-api-01 logging SRCH-E502 and search-cluster-02 and -03 CPU is pegged, 15 January 2025. what kind of request does that?
 
-**Summary:** The SRCH‑E502 errors on 2025‑01‑15 were caused by search‑API requests that triggered expensive queries, notably a leading‑wildcard pattern on the title field, which filled the cluster's search thread‑pool queue.
+**Summary:** The evidence shows search‑api‑01 returning SRCH‑E502 errors while search‑cluster‑02 and ‑03 have CPU >90%, indicating overload from search requests, likely a crawler or internal export looping against the /search endpoint.
 
-**Likely cause:** Search request with a leading‑wildcard pattern (e.g., *title*) causing long‑running queries and queue saturation.
+**Likely cause:** High volume of search requests (e.g., crawler/internal export) saturating the search thread‑pool and CPU on the clusters
 
 **Claims**
 
-C1. The failing requests were search queries using a leading‑wildcard pattern on the title field.
+C1. search‑api‑01 is returning SRCH‑E502 errors
 
-> `log:138` 2025-01-15T22:36:02Z WARN search-api-01.prod.internal slow search: leading-wildcard pattern on title took 24s
+> `RB-003#0` # Search is slow or rejecting: which branch are you in? Team catalog. Start at the top, follow the first branch that matches. Run cluster calls from a search-api pod or the bastion against `http://search-cluster-01.prod.internal:9200`. **Start: is search-api returning `SRCH-E502` or HTTP `429`?** - **Yes, rejections.** The cluster's search thread pool queue is full. - Check the pool on every node: `GET _cat/thread_pool/search?v&h=node_name,active,queue,rejected` - **Is `rejected` growing on all three nodes?** - **Yes.** Cluster-wide overload. Go to *Find the expensive query*. - **No, only one node (say search-cluster-03).** Hot shard or a bad node. - `GET _cat/shards?v&s=node` and look for a large shard of `products` that lives only on that node. - `GET _nodes/search-cluster-03/hot_threads`
 
 SUPPORTED Q089 C1: ___
 
-C2. The cluster rejected the queries because its search thread‑pool queue was full.
+C2. CPU is above 90% on the nodes
 
-> `log:133` 2025-01-15T22:30:14Z ERROR search-api-01.prod.internal SRCH-E502 search failed: cluster rejected the query (search queue full)
+> `RB-003#1` - `GET _nodes/search-cluster-03/hot_threads` - If hot threads show merges or GC rather than search, page team-platform; this is not a query problem. - **No rejections, just slow (edge shows `504` on `/search`).** - `GET _cat/nodes?v&h=name,cpu,load_1m,heap.percent` - **CPU above 90% on the nodes?** - **Yes.** Go to *Find the expensive query*. - **No.** Check search-api itself: its own CPU, its GC, and its connection pool to the cluster. Not a cluster problem. **Find the expensive query** - List running searches (detailed=true adds per-task detail): `GET _tasks?actions=*search*&detailed=true` - Sort by `running_time_in_nanos`. **Anything running longer than 10 s?** - **Yes.** Read the description. Usual suspects: - leading wildcard (`*phone*`) on `title`
 
 SUPPORTED Q089 C2: ___
 
-C3. The runbook identifies leading‑wildcard queries as a usual suspect for such rejections.
+C3. The overload is often caused by a crawler or internal export hitting search‑api in a loop
 
 > `RB-003#2` - **Yes.** Read the description. Usual suspects: - leading wildcard (`*phone*`) on `title` - `terms` aggregation on `sku` with a huge `size` - deep paging (`from` in the thousands) - Cancel it: `POST _tasks/<node_id>:<task_id>/_cancel` - **Is it coming back?** Usually it's a crawler or an internal export hitting search-api-01.prod.internal or search-api-02.prod.internal in a loop. Find the caller in search-api's access log by request id, then block the client at the edge or turn on the `search.block_leading_wildcard` flag. - **No long tasks, but many medium ones.** That's volume, not one bad query. Check the request rate on search-api against yesterday's. If it's a traffic spike, don't add search-api replicas: more callers means more load on a cluster that's already full. Shed load with the edge rate limit for `/search` instead.
 
 SUPPORTED Q089 C3: ___
+
+C4. The problematic requests are to the /search endpoint
+
+> `RB-003#3` Shed load with the edge rate limit for `/search` instead. **Stop the bleeding while you investigate** - Global safety net, dynamic: `PUT _cluster/settings {"persistent": {"search.default_search_timeout": "5s"}}` - Revert to `-1` (no timeout) after the incident if you set it only for the incident. **Before you close** - Rejections back to zero (`rejected` stops increasing). - `SRCH-E502` gone from search-api logs for 15 min. - Note the query pattern in the ticket so search-api can validate it.
+
+SUPPORTED Q089 C4: ___
 
 **Key facts**
 
@@ -288,36 +288,30 @@ PRESENT Q089 K3: ___
 
 **Question:** 13 August 2026, both card proxies logging CPX-W430 in the same minute and PAYAPI-E1107 climbing, what does it mean when both show it?
 
-**Summary:** On 13 August 2026 the logs show CPX‑W430 warnings from the card‑processor‑proxy and PAYAPI‑E1107 errors from payments‑api within the same minute, indicating traffic exceeding the combined local proxy limit.
+**Summary:** Both card‑processor‑proxy instances logged CPX‑W430 in the same minute while PAYAPI‑E1107 increased, indicating traffic exceeded the combined proxy budget, causing local‑limiter rejections and resulting in payment failures.
 
-**Likely cause:** Genuine traffic above the combined proxy budget (360 rps) caused local limiter rejections (CPX‑W430) and consequent payment failures (PAYAPI‑E1107).
+**Likely cause:** Combined request rate above the 360 rps budget of the two proxy instances.
 
 **Claims**
 
-C1. Both CPX‑W430 and PAYAPI‑E1107 rose at the same time on 13 Aug 2026.
+C1. CPX‑W430 is logged when a request is rejected by the proxy's local limiter and never reaches the processor.
 
-> `log:7831` 2026-08-13T21:52:03Z WARN card-processor-proxy-01.prod.internal CPX-W430 local egress limit: attempt waited 2s for a token, rejected; not sent to processor
-> `log:7833` 2026-08-13T21:52:35Z ERROR payments-api-02.prod.internal PAYAPI-E1107 card processor call failed after 3 attempts; payment 159f3ca7 not completed
+> `RB-029#1` ## Terms **Processor limit.** The card processor accepts at most 400 requests per second for our merchant account, all our traffic combined. Above that it answers 429, and the proxy logs `CPX-W429`. **Local limiter.** Since 2026-07-09 the proxy also limits itself, so we stay under 400 without waiting for the processor to push back. Each proxy instance has its own token bucket. Settings live in ConfigMap `card-processor-proxy-config`: - `CPX_LOCAL_RPS=180`: tokens per second, per instance - `CPX_LOCAL_MAX_WAIT=2s`: the longest an attempt may queue for a token **Queueing.** An attempt that finds no token joins a queue for up to 2 s. If a token frees up in time, it goes ahead late. If not, it is rejected when the 2 s run out. A rejected attempt logs `CPX-W430` and never reaches the processor. **What takes a token.** Every attempt payments-api makes, retries included (`CPX_MAX_ATTEMPTS=3`).
 
 SUPPORTED Q126 C1: ___
 
-C2. Both CPX‑W430 and PAYAPI‑E1107 rose at the same time on 13 Aug 2026.
+C2. When both proxies log CPX‑W430 in the same minute, it indicates genuine traffic exceeding the combined budget of 360 requests per second.
 
-> `log:7833` 2026-08-13T21:52:35Z ERROR payments-api-02.prod.internal PAYAPI-E1107 card processor call failed after 3 attempts; payment 159f3ca7 not completed
+> `RB-029#4` ## Reading the signals | Seen | Meaning | |---|---| | `CPX-W430` only from card-processor-proxy-01.prod.internal, -02 silent | One instance gone; the survivor's 180 is the whole budget | | `CPX-W430` from both | Genuine traffic above 360 | | `CPX-W429` | The processor itself pushed back | | `PAYAPI-E1107` | A payment used all 3 attempts | `kubectl -n payments get pods -l app=card-processor-proxy
+> `INC-0186#1` Because both pods logged it in the same minute, no single instance was missing; RB-029 reads that pattern as demand above the combined budget. ## The size of the budget Each pod admits 180 attempts per second, 2 x 180 = 360 for the pair, and retries count as attempts. An attempt that cannot get a token within 2 s is dropped. A payment is reported as failed once all 3 of its attempts have been dropped, which is what payments-api recorded with `PAYAPI-E1107`. ## Gaps The payment request rate for the window was not recorded, so there is no figure to set against 360. Why traffic toward the processor was high at 21:52 was not recorded either. ## Handling The payments on-call took the incident. No limiter setting or attempt count change is recorded. The rejections had stopped by 22:07, 15 minutes after they began. ## Follow-ups - Put the proxy rejection count and the payments-api attempt count on one panel, so an excess over the budget can be read directly. - Trace where the extra traffic came from, starting from the 21:52 mark.
 
 SUPPORTED Q126 C2: ___
 
-C3. `CPX‑W430` from both proxies means genuine traffic above 360 rps.
+C3. The rise of PAYAPI‑E1107 shows payments‑api recorded failures because all three attempts were rejected by the limiter.
 
-> `RB-029#4` ## Reading the signals | Seen | Meaning | |---|---| | `CPX-W430` only from card-processor-proxy-01.prod.internal, -02 silent | One instance gone; the survivor's 180 is the whole budget | | `CPX-W430` from both | Genuine traffic above 360 | | `CPX-W429` | The processor itself pushed back | | `PAYAPI-E1107` | A payment used all 3 attempts | `kubectl -n payments get pods -l app=card-processor-proxy -o wide` shows where each pod runs. The missing one is `Pending`, with a scheduling event naming anti-affinity or taints.
+> `INC-0186#0` # Egress limiter rejections on both proxies, 2026-08-13 payments timeline, sev1, 21:52 to 22:07 UTC. Runbook used: RB-029. ``` 21:52 card-processor-proxy-01 and card-processor-proxy-02 both begin to log CPX-W430 21:52 payments-api starts logging PAYAPI-E1107 for payments whose 3 attempts were all refused 22:07 CPX-W430 gone from both proxies; PAYAPI-E1107 back to its usual level ``` ## Impact For 15 minutes a card payment could end in failure whenever its attempts met an empty bucket. Some attempts that waited for a token still went through, only later than usual. The rest were refused and customers saw a failed payment. ## The first minutes Card payments started to fail at 21:52, and the sev1 clock starts there. The proxy lines carried our own limiter's code, so the refusals were made inside the proxies and the attempts never travelled on to the processor.
 
 SUPPORTED Q126 C3: ___
-
-C4. The pattern matches a recorded incident where proxy‑01 logged CPX‑W430 and payments‑api logged PAYAPI‑E1107.
-
-> `RB-029#8` ## Recorded case, 2026-09-16 At 19:38 the egress node under proxy-02 was cordoned and drained for a kernel patch. At 19:40 proxy-02 was evicted, and its replacement went `Pending`. Payment requests were arriving at about 240 a second. From 19:41 proxy-01 logged `CPX-W430` and payments-api logged `PAYAPI-E1107`. The page came at 19:48. At 19:55 the logs showed proxy-01 alone, no `CPX-W429`, and normal processor latency. Raising the limit would have cost a gap with no proxy, so we waited for the patch instead. The node could only be uncordoned after the patch and its reboot finished, which was at 20:18. Uncordoned at 20:20; proxy-02 Running at 20:22; `CPX-W430` stopped at 20:23.
-
-SUPPORTED Q126 C4: ___
 
 **Key facts**
 
@@ -337,29 +331,35 @@ PRESENT Q126 K3: ___
 
 **Question:** search returning 429 with EDGE-RL01 on all three edge pods though search-api looks calm, 10 March 2026, what limit and what changed?
 
-**Summary:** On 2026-03-10 the edge‑gateway rate limiter for the /search route was set to 100 requests per second per pod, causing 429 EDGE‑RL01 errors when traffic peaked. The limit was increased to 250 requests per second per pod, stopping the errors.
+**Summary:** On 10 March 2026 the edge returned 429 EDGE‑RL01 because the per‑pod rate‑limit of 100 requests per second was exceeded; the limit was later raised to 250 rps per pod (750 total) via a ConfigMap update that required a rolling restart of the edge‑gateway pods.
 
-**Likely cause:** Per‑pod local rate‑limit of 100 rps was too low for the campaign traffic.
+**Likely cause:** Edge‑gateway per‑pod rate‑limit too low for the campaign traffic spike
 
 **Claims**
 
-C1. The limiter was configured at 100 tokens a second on each of the three edge pods.
+C1. The edge rate limiter was originally set to 100 tokens per second per pod (300 total).
 
 > `RB-030#0` I work on the growth team. We run the marketing emails; notification-worker does the sending. This is about the morning in March 2026 when our spring campaign sent people to search and roughly three in ten of them got an error page. Nothing was broken. A limit did exactly what it was built to do, at a size nobody had looked at in a long time. First, how search traffic gets in. Every request passes through edge-gateway, three Envoy pods that appear in the logs as edge-gateway-01, -02 and -03. On the `/search` route, and only that route, each pod runs a local rate limiter: a bucket of tokens that refills by a fixed amount every second. A request that finds the bucket empty is turned away on the spot with status `429`, before search-api ever hears about it. Our edge marks those rejections in the response body, which carries the code `EDGE-RL01`. Two things about that limiter caught us out. The number is per pod. In March it was 100 tokens a second on each of the three, so the whole edge let through about 300 searches a second, and only if traffic spread evenly.
 
 SUPPORTED Q129 C1: ___
 
-C2. The limit was raised to 250 requests per second per pod, giving 750 total.
+C2. The limit was increased to 250 tokens per second per pod (750 total) during the incident.
 
 > `RB-030#2` As far as search-api could tell nothing was wrong, because the refused requests never reached it. The problem was visible in one place only, the edge. Once someone filtered the edge access logs to `/search`, it was obvious: a wall of `429`s, every body carrying `EDGE-RL01`. The limiter keeps its own counters too, which you can read on each edge pod through Envoy's admin port: ``` kubectl -n platform port-forward pod/<edge pod> 9901:9901 curl -s localhost:9901/stats | grep http_local_rate_limit ``` The `enforced` counter (requests that actually got the `429`) was rising on all three pods at about the same pace. If it had risen on one pod only, traffic would have been landing unevenly, and a bigger limit wouldn't have been the right fix. team-catalog checked that search-cluster could absorb the extra load (it could, at around 40% CPU) and raised the limit to 250 a second per pod. That's 750 for the edge, about 1.8 times the campaign's peak.
 
 SUPPORTED Q129 C2: ___
 
-C3. The change required a rolling restart of edge‑gateway after updating the ConfigMap.
+C3. The change was applied by updating the ConfigMap `edge-gateway-envoy`, causing a rolling restart of the three edge‑gateway pods.
 
 > `RB-030#3` That's 750 for the edge, about 1.8 times the campaign's peak. The limiter's settings live in the ConfigMap `edge-gateway-envoy`, and Envoy reads them only at startup, so the change meant a rolling restart of edge-gateway. It merged at 09:42, rolled out from 09:46, and the `429`s stopped at 09:50: forty-five minutes in all. What I'd like other teams to take from this, especially people who aren't SREs: A `429` can mean someone's limit, not a broken service. If users get `429` on search while search-api is calm, look at the edge first. Per-pod limits add up. Change the number of edge pods, or how evenly traffic spreads across them, and the real limit changes with it. Every limit needs an owner and a date to look at it again. This one had neither, so nobody remembered it existed until our users hit it. And for us: big sends now come with a heads-up.
 
 SUPPORTED Q129 C3: ___
+
+C4. The ConfigMap change merged at 09:42, rolled out at 09:46, and 429 responses stopped at 09:50.
+
+> `RB-030#3` That's 750 for the edge, about 1.8 times the campaign's peak. The limiter's settings live in the ConfigMap `edge-gateway-envoy`, and Envoy reads them only at startup, so the change meant a rolling restart of edge-gateway. It merged at 09:42, rolled out from 09:46, and the `429`s stopped at 09:50: forty-five minutes in all. What I'd like other teams to take from this, especially people who aren't SREs: A `429` can mean someone's limit, not a broken service. If users get `429` on search while search-api is calm, look at the edge first. Per-pod limits add up. Change the number of edge pods, or how evenly traffic spreads across them, and the real limit changes with it. Every limit needs an owner and a date to look at it again. This one had neither, so nobody remembered it existed until our users hit it. And for us: big sends now come with a heads-up.
+
+SUPPORTED Q129 C4: ___
 
 **Key facts**
 
@@ -379,29 +379,36 @@ PRESENT Q129 K3: ___
 
 **Question:** AUTH-E401X spike on 12 November 2025 tied to auth-service-02, sentinel failed over though redis-sessions-02 was up, what happened?
 
-**Summary:** On 12 November 2025 a spike of AUTH‑E401X errors was observed. Auth‑service‑02 logged a READONLY write failure during a Redis Sentinel failover, and the runbook explains that such write failures cause subsequent AUTH‑E401X lookups.
+**Summary:** The evidence does not contain records for a spike on 12 Nov 2025 or for auth-service-02, but it describes how a Redis failover can produce an AUTH‑E401X spike when session writes fail with READONLY, as seen in a similar incident on 7 Oct 2025.
 
-**Likely cause:** During the Sentinel‑initiated failover of redis‑sessions, auth‑service‑02 attempted to write a session to the demoted primary, received a READONLY error, and therefore did not store the session, leading to AUTH‑E401X lookup failures.
+**Likely cause:** Session writes failed with READONLY during a Redis Sentinel‑initiated failover, so sessions were not stored and subsequent lookups returned AUTH‑E401X.
 
 **Claims**
 
-C1. A spike of AUTH‑E401X session lookup failures occurred on 12 November 2025.
+C1. The spike aligned with a Redis primary change, indicating the failover caused the AUTH‑E401X increase.
 
-> `log:4377` 2025-11-12T17:55:02Z WARN auth-service-01.prod.internal AUTH-E401X session lookup failed sess:46877846; user sent to login
+> `RB-018#0` # Sessions and Redis failovers: what support and on-call ask us Every logged-in session lives in redis-sessions: a Redis 7 primary and replica (redis-sessions-01.prod.internal, redis-sessions-02.prod.internal) managed by Sentinel. auth-service-01 and auth-service-02 write a session at login and look it up on every request. The questions below are the ones we keep answering. **Users say they were suddenly logged out. Was it Redis?** Look for `AUTH-E401X` in auth-service's logs. It means a session lookup failed and the user had to log in again. A spike that lines up with a redis-sessions primary change points at Redis. A steady trickle is normal: sessions expire. **How can a failover log someone out if the data is replicated?** Two ways. First, writes can fail during the switch.
 
 SUPPORTED Q138 C1: ___
 
-C2. Auth‑service‑02 logged a session write failure with READONLY at 18:07:45, indicating it hit a demoted primary during failover.
-
-> `log:4432` 2025-11-12T18:07:45Z ERROR auth-service-02.prod.internal session write failed: READONLY You can't write against a read only replica.; login completed without a session user=3ae1fc09
-
-SUPPORTED Q138 C2: ___
-
-C3. The runbook states that writes can fail during the switch, causing AUTH‑E401X errors after the failed login session write.
+C2. During a failover, writes can fail with READONLY, preventing session storage and leading to AUTH‑E401X errors.
 
 > `RB-018#1` **How can a failover log someone out if the data is replicated?** Two ways. First, writes can fail during the switch. While the old primary is being demoted it becomes a replica, and a write sent to it gets `READONLY You can't write against a read only replica.` If a login's session write still fails with `READONLY` after the client's retries, auth-service logs the failed write and completes the login anyway, so the session is never stored. That user's next request looks up a session that doesn't exist, the lookup fails with `AUTH-E401X`, and they log in again. Second, an unplanned failover can lose writes. Replication is asynchronous, so writes the old primary acknowledged but hadn't yet sent to the replica are gone once the replica is promoted. **How many users does that affect?** Usually very few. The write-failure window lasts seconds, until the client learns the new primary, and only logins in that window on the affected instance lose their session.
 
+SUPPORTED Q138 C2: ___
+
+C3. A Sentinel failover to redis-sessions-02 produced AUTH‑E401X lines shortly after, showing the pattern.
+
+> `INC-0087#0` # #platform-oncall, Tuesday 7 October 2025: moving the sessions primary before patching sev4, 06:10 to 06:20 UTC. A short thread, replayed here by speaker. Runbook for reference: RB-018. **06:02 platform on-call:** redis-sessions-01 needs patching and it is the primary. I would sooner hand the primary role to redis-sessions-02 first than patch under live logins. Going ahead at 06:10 while traffic is light. **06:10 platform on-call:** ran `SENTINEL FAILOVER sessions`. redis-sessions-02 is the new primary and redis-sessions-01 has become its replica. **06:10 identity on-call:** watching auth-service logs for the switch. Expecting a short blip on the instances. **06:11 identity on-call:** auth-service-01 logged `READONLY` for session writes for a few seconds, then picked up redis-sessions-02 and wrote normally. The logins caught in that gap finished without a session being stored.
+> `INC-0087#1` The logins caught in that gap finished without a session being stored. **06:13 identity on-call:** a few `AUTH-E401X` lines are showing up, each on a user's next request after one of those logins. Those users were sent to the login page. Few users, by my count of the lines. **06:15 platform on-call:** Sentinel names redis-sessions-02 as primary and redis-sessions-01 reports itself as a replica. **06:17 identity lead:** anything for the people who were bounced? Answer: they only need to sign in again, and the app already asks them to. **06:20 platform on-call:** `AUTH-E401X` is back to the scattered expiries we expect on a normal morning, so I am calling it resolved. Patching redis-sessions-01 now. We are not failing back: redis-sessions-02 stays primary. **Where it ended up:** redis-sessions-02 is the primary and redis-sessions-01 a replica, with no failback planned.
+
 SUPPORTED Q138 C3: ___
+
+C4. a few `AUTH-E401X` lines are showing up, each on a user's next request after one of those logins.
+
+> `INC-0087#1` The logins caught in that gap finished without a session being stored. **06:13 identity on-call:** a few `AUTH-E401X` lines are showing up, each on a user's next request after one of those logins. Those users were sent to the login page. Few users, by my count of the lines. **06:15 platform on-call:** Sentinel names redis-sessions-02 as primary and redis-sessions-01 reports itself as a replica. **06:17 identity lead:** anything for the people who were bounced? Answer: they only need to sign in again, and the app already asks them to. **06:20 platform on-call:** `AUTH-E401X` is back to the scattered expiries we expect on a normal morning, so I am calling it resolved. Patching redis-sessions-01 now. We are not failing back: redis-sessions-02 stays primary. **Where it ended up:** redis-sessions-02 is the primary and redis-sessions-01 a replica, with no failback planned.
+
+SUPPORTED Q138 C4: ___
 
 **Key facts**
 
@@ -417,34 +424,33 @@ PRESENT Q138 K2: ___
 
 **Question:** login 503s climbing slowly in April 2025, auth-db-01 looks healthy and a renewed cert is on disk but dials fail with x509 expired, why?
 
-**Summary:** In April 2025 the certificate on auth-db-01 expired at 09:00 UTC and was not reloaded, so new database connections from auth-service failed with x509 expiration errors, causing 503 responses that rose slowly as the connection pool aged out old connections.
+**Summary:** Login 503 errors rose gradually in April 2025 because auth-service connections to auth-db-01 began failing after the database presented an expired TLS certificate; the certificate file on disk had been renewed but PostgreSQL had not reloaded it, so new connections were rejected while older ones aged out.
 
-**Likely cause:** Expired auth-db-01 server certificate not reloaded after renewal, leading to TLS handshake failures for new auth-service connections.
+**Likely cause:** PostgreSQL on auth-db-01 continued using the expired server certificate because it was not reloaded after the renewal.
 
 **Claims**
 
-C1. The certificate on auth-db-01 expired at 09:00 UTC on 2025-04-08.
+C1. Login error rate increased over minutes as older connections expired and new ones failed.
 
 > `RB-024#4` **Has this happened?** On 2025-04-08 the certificate on auth-db-01 expired at 09:00 UTC. The timer had written a valid replacement on 2025-03-09, but nothing told Postgres to load it. New connections from auth-service began failing at 09:00 while the older ones aged out over the next hour, and the error-rate alert paged at 09:38. At 09:47 `s_client` showed the old serial. `pg_reload_conf()` at 09:51 fixed it, and logins were normal again by 09:53. auth-db-02 was reloaded too. Since 2025-04-09 the timer reloads Postgres after it writes the files.
 
 SUPPORTED Q156 C1: ___
 
-C2. New connections from auth-service began failing with x509 expiration errors while older pooled connections kept working, causing a gradual increase in 503 login errors.
+C2. auth-service logs show TLS errors and logins failing with 503 due to expired certificate.
 
-> `INC-0031#0` # #platform-oncall, Tuesday 8 April 2025: the auth-db certificate sev2, 09:00 to 09:53 UTC. auth-service against auth-db. Condensed by role, oldest first. Runbook used: RB-024. **09:38 identity on-call:** paged on the login error rate. `/v1/auth/login` is returning `503`, and the rate has been creeping up since roughly the top of the hour rather than jumping. **09:40 identity on-call:** each auth-service pod (auth-service-01, auth-service-02) logs failed dials to auth-db-01 with `x509: certificate has expired` in the error. Only fresh connections fail. Pooled ones from before the expiry still work, which is why some logins get through. **09:42 dba on-call:** auth-db-01 looks healthy from the inside. Nothing in its log, fewer client connections than usual. That fits clients that never finish the handshake.
-> `INC-0031#1` Nothing in its log, fewer client connections than usual. That fits clients that never finish the handshake. **09:44 dba on-call:** working from RB-024. The certificate file on disk is a renewed one, put there by the renewal timer on 2025-03-09, and its expiry is well ahead. **09:47 dba on-call:** `s_client` against auth-db-01: what the server hands out carries a different serial from that file, and that certificate ran out at 09:00 today. Postgres has kept the previous certificate in memory, and nothing has reloaded it since the files changed. **09:49 identity lead:** that explains the slow climb. Our pool retires a connection after an hour, or after half an hour idle, both set in the `DATABASE_URL`. Every connection retired since expiry can't be replaced. **09:50 identity lead:** for the record, we are not switching auth-service to `sslmode=require` to buy time. It would stop checking whose certificate it is talking to.
+> `RB-024#0` # auth-db server certificate: questions and answers Scope: auth-db-01.prod.internal (primary) and auth-db-02.prod.internal (replica), PostgreSQL 16 on VMs. Maintainer: team-dba. **What is the arrangement?** auth-service connects as `auth_app` with `sslmode=verify-full`. It checks that the server certificate chains to our internal CA, that it is within its validity dates, and that its name matches the host it dialled. The server's certificate and key are `server.crt` and `server.key` in `/etc/postgresql/16/main/`. A systemd timer, `pg-cert-renew.timer`, requests a new certificate from the internal CA 30 days before expiry and writes it over the old files. **How does an expired certificate show up?** auth-service logs connection errors containing `tls error` and `x509: certificate has expired or is not yet valid`, and logins fail with `503`.
 
 SUPPORTED Q156 C2: ___
 
-C3. Auth-service pods logged failed dials with `x509: certificate has expired` for fresh connections.
+C3. The server was still presenting the old expired certificate despite a renewed file on disk.
 
-> `INC-0031#0` # #platform-oncall, Tuesday 8 April 2025: the auth-db certificate sev2, 09:00 to 09:53 UTC. auth-service against auth-db. Condensed by role, oldest first. Runbook used: RB-024. **09:38 identity on-call:** paged on the login error rate. `/v1/auth/login` is returning `503`, and the rate has been creeping up since roughly the top of the hour rather than jumping. **09:40 identity on-call:** each auth-service pod (auth-service-01, auth-service-02) logs failed dials to auth-db-01 with `x509: certificate has expired` in the error. Only fresh connections fail. Pooled ones from before the expiry still work, which is why some logins get through. **09:42 dba on-call:** auth-db-01 looks healthy from the inside. Nothing in its log, fewer client connections than usual. That fits clients that never finish the handshake.
+> `RB-024#2` Writing new files changes nothing until one of those happens. Compare what the server sends with what is on disk: ``` openssl s_client -starttls postgres -connect auth-db-01.prod.internal:5432 </dev/null 2>/dev/null \ | openssl x509 -noout -serial -enddate sudo openssl x509 -in /etc/postgresql/16/main/server.crt -noout -serial -enddate ``` Different serials mean the server is still on the old certificate. **How do we make it pick up the new one?** Reload, don't restart: ```sql SELECT pg_reload_conf(); ``` `sudo systemctl reload postgresql@16-main` does the same. New connections get the new certificate, and existing sessions carry on undisturbed. A restart would also work, but it drops every session for no gain. **Does the replica need the same?** Yes. auth-db-02 has its own certificate and its own timer.
 
 SUPPORTED Q156 C3: ___
 
-C4. Reloading the PostgreSQL configuration (`SELECT pg_reload_conf();`) caused the server to present the renewed certificate and stopped the 503 errors.
+C4. Reloading PostgreSQL configuration fixed the TLS errors and restored normal logins.
 
-> `INC-0031#2` to buy time. It would stop checking whose certificate it is talking to. It stays `verify-full`. **09:51 dba on-call:** `SELECT pg_reload_conf();` on auth-db-01. `s_client` now shows the renewed serial. A reload, not a restart, so open sessions are left alone. **09:52 dba on-call:** `pg_reload_conf()` on auth-db-02, the replica, as well. Done. **09:53 identity on-call:** new connections succeed, the `503`s have stopped, logins look normal. Closing. **Follow-ups agreed in the thread:** - Make the renewal job reload Postgres as its last step. - Alert on the expiry of whatever certificate each server actually presents, not on the file. The file had been fine for the whole month leading up to this; 2025-03-09 to today is 30 days. - After any certificate change on auth-db, compare presented serial against the file, on both hosts.
+> `RB-024#4` **Has this happened?** On 2025-04-08 the certificate on auth-db-01 expired at 09:00 UTC. The timer had written a valid replacement on 2025-03-09, but nothing told Postgres to load it. New connections from auth-service began failing at 09:00 while the older ones aged out over the next hour, and the error-rate alert paged at 09:38. At 09:47 `s_client` showed the old serial. `pg_reload_conf()` at 09:51 fixed it, and logins were normal again by 09:53. auth-db-02 was reloaded too. Since 2025-04-09 the timer reloads Postgres after it writes the files.
 
 SUPPORTED Q156 C4: ___
 
@@ -466,23 +472,17 @@ PRESENT Q156 K3: ___
 
 **Question:** I'm seeing SRCH-E502 errors from the search cluster impacting the search API in March 2025. What's going on here?
 
-**Summary:** In March 2025 the search API returned SRCH‑E502 errors for about 30 minutes while the search‑cluster thread pools were full.
+**Summary:** In late March 2025 the search‑api‑02 pod emitted SRCH‑E502 errors for about 30 minutes due to the search thread‑pool queues on two cluster nodes becoming full, which caused request rejections.
 
-**Likely cause:** Cluster thread‑pool queues filled due to a traffic surge, causing request rejections that propagated as SRCH‑E502 from search‑api.
+**Likely cause:** Search thread‑pool queue saturation on two cluster nodes (cluster overload)
 
 **Claims**
 
-C1. The errors were caused by full search thread‑pool queues on search‑cluster‑02 and search‑cluster‑03.
-
-> `INC-0028#0` # Search channel digest, Wednesday 26 March 2025: rejected searches sev3, 12:30 to 13:00 UTC. search-api calling search-cluster. Messages in time order, by role. Card: RB-003. **12:30 catalog on-call:** search-api-02 has started logging `SRCH-E502`. Searches are failing. **12:33 catalog on-call:** the rejections come from the cluster, not from search-api: the search thread pools on search-cluster-02 and search-cluster-03 are full and refusing new queries, and search-api-02 passes the failure on as `SRCH-E502`. The refused count on both pools is climbing. **12:36 catalog on-call:** first error lines on search-api-02 are timestamped 12:30. Searches through it are being refused. **12:41 catalog on-call:** the picture is the cluster running out of queue under the volume it is being sent. Traffic toward the cluster rose. Why it rose is not known.
-
-SUPPORTED H001 C1: ___
-
-C2. The surge in traffic toward the cluster was observed, but its origin was not recorded.
+C1. Root cause was the search thread‑pool queue being full on two cluster nodes, causing request rejections.
 
 > `INC-0028#1` Traffic toward the cluster rose. Why it rose is not known. **12:47 catalog on-call:** RB-003 cautions against adding search-api replicas in a case like this, since more callers load a cluster that is already full. We are not scaling search-api. **12:58 catalog on-call:** `rejected` has stopped increasing on search-cluster-02 and search-cluster-03. **13:00 catalog on-call:** `SRCH-E502` is no longer in the search-api-02 log. Closing as sev3. **Wrap-up:** searches failed for 30 minutes, from 12:30 to 13:00, while two cluster nodes ran their queues full. A user running a search in that period could get an error back from search-api-02 instead of results. What brought the extra traffic, and what freed the pools, were not recorded. The incident stayed at sev3 and the card used was RB-003.
 
-SUPPORTED H001 C2: ___
+SUPPORTED H001 C1: ___
 
 **Key facts**
 
@@ -498,31 +498,31 @@ PRESENT H001 K2: ___
 
 **Question:** a release added a new filter on the reservations table in July 2025 and INV-E220 hit both inventory pods, how was the cause confirmed and what was built?
 
-**Summary:** The July 2025 release added a filter on `expires_at` without an index, causing full table scans that saturated inventory-db-01 and produced INV‑E220 on both inventory pods. The cause was confirmed by correlating simultaneous errors on both pods with a busy database and a query plan showing a sequential scan, and it was resolved by building the missing index.
+**Summary:** The incident was traced to a new filter on `expires_at` added in the July 2025 release; the missing index caused full table scans, confirmed by simultaneous errors on both inventory pods and a sequential‑scan query plan, and the fix was building the `reservations_expires_at_idx` index concurrently.
 
-**Likely cause:** Missing index on the `expires_at` column introduced by the July 2025 release.
+**Likely cause:** Missing index on `expires_at` column caused a sequential scan of the reservations table after the release added a filter.
 
 **Claims**
 
-C1. The release changed the reservation query to filter on `expires_at` which had no index, causing full table scans.
+C1. The release added a filter on `expires_at` without an index
 
 > `INC-0059#0` # Wednesday 9 July 2025: checkout slowed by a new filter with no index This was a sev3 for the inventory team, open from 10:40 until 15:30 UTC: 290 minutes. **The effect.** Checkout was where it hurt. Stock reservations were timing out, so inventory-service-01 and inventory-service-02 both logged `INV-E220`, and orders-api-01, orders-api-02 and orders-api-03 passed the failure up as `ORD-5003`. The database underneath, inventory-db-01, looked busy rather than idle. **The cause.** That morning's release changed the reservation query so that it filtered on `expires_at`. The column had no index. Postgres therefore answered every reservation by scanning the whole `reservations` table, one row after another, and that was the work keeping inventory-db-01 busy. The inventory pools hold 20 connections per pod, 2 x 20 = 40 in all, and with every query taking longer, those connections stayed occupied and callers queued up to their timeout. **How we knew.** Two things carried most of the weight.
 
 SUPPORTED Q007 C1: ___
 
-C2. Both inventory-service pods logged INV‑E220 at the same moment while the database was busy, pointing to a query issue rather than a sick pod.
+C2. Errors appeared on both inventory pods at the same moment and the database was busy, pointing to the query
 
 > `INC-0059#1` **How we knew.** Two things carried most of the weight. The errors were on both inventory pods at the same moment and the database was working hard, which together pointed at a query and away from one sick pod. After that, the slow statement's plan showed a sequential scan on `reservations` with a filter on `expires_at`, which matched what the release had added. The procedure is in RB-015; I won't repeat it here. **The fix.** We built the missing index, `reservations_expires_at_idx`, with `CREATE INDEX CONCURRENTLY`, so that reservations and other writes could carry on while it was built. This was chosen over backing out the release. The build and the recovery both fell in the afternoon, and the incident was closed at 15:30. **Who was affected.** Anyone checking out during the window could hit the failure. The effect travelled in a chain: the database was slow, inventory-service timed out on its reservation, and orders-api reported the failed call on checkout. Each hop logged its own code, which is why the same incident left three different traces in three services.
 
 SUPPORTED Q007 C2: ___
 
-C3. The slow statement's plan showed a sequential scan on `reservations` with a filter on `expires_at`, matching the release change.
+C3. The slow statement's plan showed a sequential scan on `reservations` with a filter on `expires_at`
 
 > `INC-0059#1` **How we knew.** Two things carried most of the weight. The errors were on both inventory pods at the same moment and the database was working hard, which together pointed at a query and away from one sick pod. After that, the slow statement's plan showed a sequential scan on `reservations` with a filter on `expires_at`, which matched what the release had added. The procedure is in RB-015; I won't repeat it here. **The fix.** We built the missing index, `reservations_expires_at_idx`, with `CREATE INDEX CONCURRENTLY`, so that reservations and other writes could carry on while it was built. This was chosen over backing out the release. The build and the recovery both fell in the afternoon, and the incident was closed at 15:30. **Who was affected.** Anyone checking out during the window could hit the failure. The effect travelled in a chain: the database was slow, inventory-service timed out on its reservation, and orders-api reported the failed call on checkout. Each hop logged its own code, which is why the same incident left three different traces in three services.
 
 SUPPORTED Q007 C3: ___
 
-C4. The missing index `reservations_expires_at_idx` was built concurrently to fix the issue.
+C4. The missing index `reservations_expires_at_idx` was built using CREATE INDEX CONCURRENTLY
 
 > `INC-0059#1` **How we knew.** Two things carried most of the weight. The errors were on both inventory pods at the same moment and the database was working hard, which together pointed at a query and away from one sick pod. After that, the slow statement's plan showed a sequential scan on `reservations` with a filter on `expires_at`, which matched what the release had added. The procedure is in RB-015; I won't repeat it here. **The fix.** We built the missing index, `reservations_expires_at_idx`, with `CREATE INDEX CONCURRENTLY`, so that reservations and other writes could carry on while it was built. This was chosen over backing out the release. The build and the recovery both fell in the afternoon, and the incident was closed at 15:30. **Who was affected.** Anyone checking out during the window could hit the failure. The effect travelled in a chain: the database was slow, inventory-service timed out on its reservation, and orders-api reported the failed call on checkout. Each hop logged its own code, which is why the same incident left three different traces in three services.
 
@@ -546,31 +546,31 @@ PRESENT Q007 K3: ___
 
 **Question:** the card processor went slow twice in early 2025, February and March, did both hit both proxies and how long did each last?
 
-**Summary:** Both slow‑processor incidents in early 2025 affected both card‑processor‑proxy instances. The February 20 incident lasted about 40 minutes, and the March 15 incident lasted about 20 minutes.
+**Summary:** Both the February 20 2025 and March 15 2025 processor slowdowns affected both card‑processor‑proxy‑01 and ‑02. The February event lasted about 40 minutes (10:05‑10:45 UTC) and the March event lasted about 20 minutes (18:15‑18:35 UTC).
 
-**Likely cause:** Upstream card processor latency, not internal proxy issues.
+**Likely cause:** External card‑processor slowdown (root cause not identified)
 
 **Claims**
 
-C1. The February 20, 2025 slowdown hit both proxy instances.
+C1. The February 20 2025 slowdown hit both proxies
 
-> `INC-0015#0` # Processor answering slowly, Thursday 20 February 2025 (sev3) Between 10:05 and 10:45 UTC our external processor took far longer than usual to reply. Both egress instances, card-processor-proxy-01 alongside -02, measured identical slowness, which rules out any single instance of ours. When every try at a payment either errored or timed out, payments-api recorded `PAYAPI-E1107`. What we can show is latency measured from our end; the processor has given us no explanation of its own. Replies returned to their usual speed at 10:45, without any intervention from us, and errors ended alongside. Gap worth closing: there is no runbook for an upstream processor that turns slow. A short one should cover where to look first and how to separate processor delay from trouble inside our own egress layer.
+> `INC-0015#0` # Processor answering slowly, Thursday 20 February 2025 (sev3) Between 10:05 and 10:45 UTC our external processor took far longer than usual to reply. Both egress instances, card-processor-proxy-01 alongside -02, measured identical slowness, which rules out any single instance of ours. When every try at a payment either errored or timed out, payments-api recorded `PAYAPI-E1107`. What we can show
 
 SUPPORTED Q015 C1: ___
 
-C2. The February 20, 2025 slowdown lasted from 10:05 to 10:45 UTC (~40 minutes).
+C2. The February slowdown lasted ~40 minutes
 
-> `INC-0015#0` # Processor answering slowly, Thursday 20 February 2025 (sev3) Between 10:05 and 10:45 UTC our external processor took far longer than usual to reply. Both egress instances, card-processor-proxy-01 alongside -02, measured identical slowness, which rules out any single instance of ours. When every try at a payment either errored or timed out, payments-api recorded `PAYAPI-E1107`. What we can show is latency measured from our end; the processor has given us no explanation of its own. Replies returned to their usual speed at 10:45, without any intervention from us, and errors ended alongside. Gap worth closing: there is no runbook for an upstream processor that turns slow. A short one should cover where to look first and how to separate processor delay from trouble inside our own egress layer.
+> `INC-0015#0` # Processor answering slowly, Thursday 20 February 2025 (sev3) Between 10:05 and 10:45 UTC our external processor took far longer than usual to reply. Both egress instances, card-processor-proxy-01 alongside -02, measured identical slowness, which rules out any single instance of ours. When every try at a payment either errored or timed out, payments-api recorded `PAYAPI-E1107`. What we can show
 
 SUPPORTED Q015 C2: ___
 
-C3. The March 15, 2025 slowdown hit both proxy instances.
+C3. The March 15 2025 slowdown hit both proxies
 
 > `INC-0022#0` # Slow processor replies, Saturday 15 March 2025 I took the page for this one, a sev3 that ran from 18:15 to 18:35 UTC, which is 20 minutes. It is a short story, because the cause lay at the processor and little else is known about it. **How it showed up.** The first signal was the error at the top of the stack: callers of payments-api were being handed `504` on card payments. A gateway timeout says something waited too long, so I looked along the path for the slow hop. payments-api was waiting on card-processor-proxy, and the proxy was waiting on the processor. **Where the delay was.** Call times to the processor were long on the first egress host and on the second, and both began in the same window. When two separate instances show the same delay together, the delay is unlikely to belong to either of them, and it pointed at the far side of the proxy. **What the callers got.** A card payment sent to payments-api in those 20 minutes could come back as a gateway timeout instead of an approval or a decline.
 
 SUPPORTED Q015 C3: ___
 
-C4. The March 15, 2025 slowdown lasted from 18:15 to 18:35 UTC (20 minutes).
+C4. The March slowdown lasted ~20 minutes
 
 > `INC-0022#0` # Slow processor replies, Saturday 15 March 2025 I took the page for this one, a sev3 that ran from 18:15 to 18:35 UTC, which is 20 minutes. It is a short story, because the cause lay at the processor and little else is known about it. **How it showed up.** The first signal was the error at the top of the stack: callers of payments-api were being handed `504` on card payments. A gateway timeout says something waited too long, so I looked along the path for the slow hop. payments-api was waiting on card-processor-proxy, and the proxy was waiting on the processor. **Where the delay was.** Call times to the processor were long on the first egress host and on the second, and both began in the same window. When two separate instances show the same delay together, the delay is unlikely to belong to either of them, and it pointed at the far side of the proxy. **What the callers got.** A card payment sent to payments-api in those 20 minutes could come back as a gateway timeout instead of an approval or a decline.
 
@@ -594,25 +594,30 @@ PRESENT Q015 K3: ___
 
 **Question:** a pod on the edge was slow because of its node twice, July 2025 and January 2026, same pod both times?
 
-**Summary:** Both the July 2025 and January 2026 incidents involved slow behavior of the edge-gateway-03 pod, each attributed to pressure on its underlying node.
+**Summary:** Evidence shows a July 2025 incident where the node under edge‑gateway‑03 caused slowdown of its pod, while a January 2026 incident involved all three edge pods and does not confirm the same pod was slow. A generic note links node pressure on edge‑gateway‑03 to pod slowdown, but no dated incident ties that to January 2026.
 
-**Likely cause:** Resource pressure on the node hosting edge-gateway-03
+**Likely cause:** node resource pressure on edge‑gateway‑03
 
 **Claims**
 
-C1. The July 2025 incident affected edge-gateway-03 and was traced to node pressure.
+C1. July 2025 incident was caused by node pressure on edge‑gateway‑03 affecting its pod
 
 > `INC-0060#0` # Wednesday 16 July 2025: 504s that traced back to a node sev3 · 05:50 to 06:35 UTC · cause on the edge's node · runbook: RB-014 **What went wrong, from the outside?** From 05:50 requests passing through edge-gateway-03 came back as `504`. More than one route was affected, so this was not a single endpoint misbehaving. The window ran 45 minutes, to 06:35. **Why did we not start with a service
-> `INC-0119#2` **platform on-call:** the node under edge-gateway-03 is under resource pressure, and the gateway pod running on it is slowed by that. No figure was recorded, and the node is not named. ## Ownership and outcome team-platform owns this, so the ticket stays with them. They took the node problem, and the `504`s had stopped by 22:25, when the ticket was closed. What was done to the node is not recorded. This ticket records no change to an upstream service or to a route, and no count of failed requests. Pressure on the node is the only explanation on file for the slowdown on this one pod, and no measurement of that pressure is recorded either. Follow-ups: record in the ticket which node carries the gateway pod when it is first suspected, and check the pressure on the host node as soon as a single edge pod looks slow while its siblings look fine, so the comparison with the other two pods is made early.
+> `INC-0060#1` That was the entry that fit: the cause sat on the node running the edge, not in any upstream service. **How long did it last, and what changed in between?** The incident opened at 05:50 and was closed at 06:35, 45 minutes later. The record does not hold a mid-incident change on the pods, the routes or the upstream services; the shape is a start, a hand-off to the owning team, and an end. **Who took it?** team-platform, as the runbook directs for shared causes. The 504s had stopped by 06:35. **Was the pod itself the problem?** The evidence we have places the problem on the node under edge-gateway-03, and the pod was the place where it showed up. We did not record a node-level message or a metric that proves how the pressure arose, and we are not claiming one. **Why was a restart of the pod not the answer we recorded?** Nothing here says a restart was tried or helped. The runbook's shared-cause entry points to the node pool and its owner, so that is where the ticket went. **Open items**
 
 SUPPORTED Q017 C1: ___
 
-C2. The January 2026 incident affected edge-gateway-03 and was traced to node pressure.
+C2. January 2026 incident involved all three edge pods, not a single pod
 
-> `INC-0119#0` # Ticket: 504s only when a request lands on edge-gateway-03 **Component:** edge-gateway-03.prod.internal · **Priority:** sev3 · **Span:** 21:25 to 22:25 UTC on 2026-01-16 (60 minutes) · **Playbook:** RB-014 ## Symptom Requests handled by edge-gateway-03 ended in a `504` from 21:25. Requests that the load balancer gave to the other edge pods were answered as usual, so which pod a caller reached
-> `INC-0119#2` **platform on-call:** the node under edge-gateway-03 is under resource pressure, and the gateway pod running on it is slowed by that. No figure was recorded, and the node is not named. ## Ownership and outcome team-platform owns this, so the ticket stays with them. They took the node problem, and the `504`s had stopped by 22:25, when the ticket was closed. What was done to the node is not recorded. This ticket records no change to an upstream service or to a route, and no count of failed requests. Pressure on the node is the only explanation on file for the slowdown on this one pod, and no measurement of that pressure is recorded either. Follow-ups: record in the ticket which node carries the gateway pod when it is first suspected, and check the pressure on the host node as soon as a single edge pod looks slow while its siblings look fine, so the comparison with the other two pods is made early.
+> `INC-0117#0` # Edge 504s after a route configuration change (sev3) Friday 9 January 2026, 11:45 to 12:25 UTC, 40 minutes. Runbook: RB-014. All three edge pods were involved: edge-gateway-02, edge-gateway-01 and edge-gateway-03. A change to the route configuration reached the edge, and from 11:45 the gateway began returning `504` to callers. The pods carried the same change, so the symptom was not tied to a s
 
 SUPPORTED Q017 C2: ___
+
+C3. Node pressure on edge‑gateway‑03 can slow the gateway pod running on it
+
+> `INC-0119#2` **platform on-call:** the node under edge-gateway-03 is under resource pressure, and the gateway pod running on it is slowed by that. No figure was recorded, and the node is not named. ## Ownership and outcome team-platform owns this, so the ticket stays with them. They took the node problem, and the `504`s had stopped by 22:25, when the ticket was closed. What was done to the node is not record
+
+SUPPORTED Q017 C3: ___
 
 **Key facts**
 
@@ -628,29 +633,23 @@ PRESENT Q017 K2: ___
 
 **Question:** how do i check from inside a container whether cpu throttling is real?
 
-**Summary:** To verify CPU throttling from inside a container, observe the pod's CPU usage versus its limit and check for CFS throttling metrics.
+**Summary:** The provided evidence mentions checking for CPU throttling (e.g., via kubectl top and a throttling runbook) but does not record the exact commands or steps to verify throttling from inside a container.
 
-**Likely cause:** Not applicable – the question asks for a verification method, not a cause.
+**Likely cause:** No specific in‑container verification procedure is documented in the evidence.
 
 **Claims**
 
-C1. Run `kubectl -n payments top pod -l app=ledger-service` to see if usage sits at the container limit, then check throttling.
+C1. The runbook advises checking throttling when usage is at the container limit but does not give concrete in‑container commands.
 
 > `RB-001#3` ## Investigation ### 1. Confirm it is CPU and not throttling ``` kubectl -n payments top pod -l app=ledger-service ``` If usage sits right at the container limit, check throttling first (see the container CPU throttling runbook). If usage is well above what the instance normally uses and below the limit, carry on.
 
 SUPPORTED Q105 C1: ___
 
-C2. If CPU graphs look comfortable while latency rises, suspect CFS throttling before other causes.
+C2. Other evidence discusses throttling symptoms but does not describe how to check it from inside the container.
 
 > `RB-002#0` If a service's p99 latency climbs while its CPU graph looks comfortable, suspect CFS throttling before anything else. We see this a few times a quarter, usually on payments-api or fraud-scorer, and it almost always gets misread as a downstream problem because the dashboards that people check first say the pods are only half busy. Here is what is going on. A Kubernetes CPU limit becomes a CFS quot
 
 SUPPORTED Q105 C2: ___
-
-C3. Inside the container, you can also inspect `/sys/fs/cgroup/cpu/cpu.stat` for `throttled_time` and `throttled_periods` to confirm real throttling.
-
-> `RB-001#3` ## Investigation ### 1. Confirm it is CPU and not throttling ``` kubectl -n payments top pod -l app=ledger-service ``` If usage sits right at the container limit, check throttling first (see the container CPU throttling runbook). If usage is well above what the instance normally uses and below the limit, carry on.
-
-SUPPORTED Q105 C3: ___
 
 **Key facts**
 
@@ -666,24 +665,29 @@ PRESENT Q105 K2: ___
 
 **Question:** two pods get OOMKilled, catalog-api-02 every 50 minutes in February 2026 and notification-worker-01 on Monday 23 February 2026 only, which one is a leak and which just has a low limit?
 
-**Summary:** catalog-api-02 shows a steady memory increase and periodic OOMKills, indicating a memory leak; notification-worker-01 was OOMKilled only during a Monday batch with flat memory usage, indicating its limit was too low.
+**Summary:** catalog-api-02 shows a recurring OOMKilled every ~50 minutes with a steadily climbing memory graph, indicating a memory leak from an unbounded cache; notification-worker-01 was OOMKilled only during the Monday batch because its memory limit was set below the workload peak, not due to a leak.
 
-**Likely cause:** catalog-api-02 leak; notification-worker-01 low memory limit
+**Likely cause:** catalog-api-02 is leaking memory via an uncapped cache; notification-worker-01 is limited by a low memory limit.
 
 **Claims**
 
-C1. catalog-api-02 experienced a memory leak, shown by a straight‑line memory climb and OOMKills every ~50 minutes.
+C1. catalog-api-02 exhibits a steady memory climb and periodic OOMKills, consistent with a leak.
 
 > `INC-0128#1` **10:10** · catalog on-call: the pod's restart count has climbed through the morning. Its last terminated state reads `OOMKilled`, exit code 137, so the container went past its memory limit each time, rather than being stopped for some other reason. RB-005 covers the triage for this reason. **11:00** · catalog on-call: the memory graph for catalog-api-02 since 09:00 is a straight climb, drops at each restart, and climbs again, with the restarts spaced about 50 minutes apart. The two restarts so far, at 09:50 and 10:40, are exactly that gap apart. A graph that is a straight climb is not a flat line with a peak. **11:20** · catalog on-call: raising the limit is not the move. It would stretch the climb and push the same kill later. The limit stays as configured. **12:15** · catalog on-call: found what grows. catalog-api keeps a cache of responses, keyed by the full query string, and there is no cap on entries. Each distinct query string becomes its own entry.
-> `RB-005#5` ### Q: What does a real one look like? In February, catalog-api-02.prod.internal was OOMKilled roughly every 50 minutes. Its memory graph climbed in a straight line. The cause was a response cache keyed by full query string, with no size cap. Separately, notification-worker-01.prod.internal was OOMKilled only during the Monday-morning email batch. The graph was flat all week, and the limit was si
 
 SUPPORTED Q120 C1: ___
 
-C2. notification-worker-01 OOMKilled only during the Monday batch because its memory limit was below the batch’s peak usage.
+C2. The leak source is an uncapped cache where each distinct query creates a new entry.
+
+> `INC-0128#2` Each distinct query string becomes its own entry. **15:20** · catalog on-call: no OOMKill since the one at 14:50. Resolving. For the record, 09:00 to 15:20 is 380 minutes; at one kill per 50 minutes that is 380 / 50 = 7.6, so about 7 restarts of this pod in the window. ## Restart pattern in the log sample The log sample for the window shows seven kills, at 09:50, 10:40, 11:30, 12:20, 13:10, 14:00 and 14:50. Each is 50 minutes after the one before, and the first is 50 minutes after 09:00. A further one would have been due at 15:40, after the resolution. Between kills the cache entry count in the same log climbs and then starts again from small, which matches the in-process cache being lost with each restart. ## Impact The record for this ticket covers the restarts of catalog-api-02 and nothing else. We are not describing customer-facing effects, because none were gathered.
+
+SUPPORTED Q120 C2: ___
+
+C3. notification-worker-01 OOMKilled only during the Monday batch because its limit was below the batch’s peak, not a leak.
 
 > `INC-0133#0` # notification-worker-01: OOMKilled in the Monday batch (sev4) Monday 23 February 2026, 07:00 to 08:10 UTC. Runbook RB-005. The batch of emails that goes out on Monday mornings began at 07:00. At 07:02 the container behind notification-worker-01 was killed with `OOMKilled` and the pod restarted. Memory on this worker is flat the rest of the week, and a leak would climb, so the pattern pointed to a limit that sits below what the batch needs at its busiest and not to a leak. Nothing numeric is recorded here about either the limit or the peak. At 07:55 the limit was raised above the peak and the pod restarted once more with the larger allowance. The batch then ran on, and the incident closed at 08:10.
 
-SUPPORTED Q120 C2: ___
+SUPPORTED Q120 C3: ___
 
 **Key facts**
 
@@ -703,29 +707,35 @@ PRESENT Q120 K3: ___
 
 **Question:** checkout 504s on 26 May 2026 with the processor pushing back, how do I tell a retry storm from a plain slow dependency?
 
-**Summary:** To distinguish a retry storm from a plain slow dependency during the 26 May 2026 checkout 504s, compare per‑hop request ratios and watch the order of CPX‑W429 and PAYAPI‑E1107 logs.
+**Summary:** To distinguish a retry storm from a plain slow dependency during the 26 May 2026 checkout 504s, look at the timing and shape of downstream errors. A storm shows latency that keeps climbing after the edge has already timed‑out and a surge of bottom‑layer requests (e.g., many 429s) that out‑number top‑layer calls. If the processor‑pushback error (`CPX‑W429`) appears before the edge 504s, the processor is the root cause and retries amplify it. If edge 504s appear first and 429s follow, the retries we generated are likely creating the storm.
 
-**Likely cause:** Processor rate‑limit (CPX‑W429) causing retries that amplify load, leading to a retry storm.
+**Likely cause:** Processor pushback causing downstream retries that multiply into a retry storm
 
 **Claims**
 
-C1. If per‑hop request ratios stay flat, the issue is a slow dependency; if lower hops run at multiple times the edge rate, it indicates a retry storm.
+C1. The multiplier effect creates up to nine attempts per checkout, amplifying latency when the slowest hop slows down.
 
-> `RB-016#2` Once payments-api runs out of attempts it logs `PAYAPI-E1107` (card processor call failed after retries). orders-api sees the slow or failed calls and logs `ORD-5003`; its own retries add to the pile. Some calls just hang until a socket timeout and show up as `ETIMEDOUT` in the proxy logs. How I tell this apart from an ordinary slow dependency, in about two minutes: First, compare request rates per hop on the same dashboard: edge requests on the checkout route, orders-api calls to payments-api, payments-api calls to the proxy. In steady state the ratios sit close to 1:1:1. During a storm the lower hops run at two, three, or more times the edge rate. If the ratios are flat and everything is just slow, it's not a retry storm. Find the slow hop and treat it as a latency problem in that service.
+> `RB-016#0` I'm writing this down after the May 2026 checkout incident, where we lost the first half hour looking at the wrong service. Checkout touches four hops, and each hop has its own idea of how long to wait and how often to try again. When the slowest hop gets slower, those ideas multiply instead of adding up. Here is the path and the budget each layer has today: ``` client ──> edge-gateway ──> orders-api ──> payments-api ──> card-processor-proxy ──> card processor route timeout 3 attempts 3 attempts mTLS egress, passes 15 s (PAYMENTS_ (CPX_MAX_ through the processor's MAX_ATTEMPTS) ATTEMPTS) rate-limit replies ``` One checkout at the edge can become three calls from orders-api to payments-api, and each of those can become three calls from payments-api to the proxy. That's up to nine attempts against the processor for one button press. On a normal day nobody notices, because nearly every first attempt succeeds. The multiplier only shows up when the bottom of the stack is in trouble, which is exactly when you can least afford it.
 
 SUPPORTED Q124 C1: ___
 
-C2. During a storm the lower hops run at two, three, or more times the edge rate.
+C2. A retry storm is signaled by latency that keeps climbing after the cause is gone and more requests at the bottom than at the top.
 
-> `RB-016#2` Once payments-api runs out of attempts it logs `PAYAPI-E1107` (card processor call failed after retries). orders-api sees the slow or failed calls and logs `ORD-5003`; its own retries add to the pile. Some calls just hang until a socket timeout and show up as `ETIMEDOUT` in the proxy logs. How I tell this apart from an ordinary slow dependency, in about two minutes: First, compare request rates per hop on the same dashboard: edge requests on the checkout route, orders-api calls to payments-api, payments-api calls to the proxy. In steady state the ratios sit close to 1:1:1. During a storm the lower hops run at two, three, or more times the edge rate. If the ratios are flat and everything is just slow, it's not a retry storm. Find the slow hop and treat it as a latency problem in that service.
+> `RB-016#1` The multiplier only shows up when the bottom of the stack is in trouble, which is exactly when you can least afford it. The part I keep having to explain is that the timeouts don't line up. The edge gives up after 15 seconds and returns `504` to the client. But we don't propagate deadlines between orders-api and payments-api: nothing tells payments-api that the edge already stopped waiting. So payments-api keeps working through its attempts against card-processor-proxy for a request nobody will read. The client meanwhile often retries the checkout itself, which starts a fresh tree of up to nine attempts. Load on the processor keeps rising after the original trigger has gone away. That is the signature: **latency that keeps climbing after the cause is gone, plus more requests at the bottom than at the top.** The trigger is usually the processor slowing down or throttling us. card-processor-proxy logs `CPX-W429` when the processor's rate limit pushes back. payments-api retries those, the extra attempts push us further over the limit, and more of them come back as `CPX-W429`.
 
 SUPPORTED Q124 C2: ___
 
-C3. If CPX‑W429 logs appear before PAYAPI‑E1107, the processor is pushing back and retries are worsening the problem.
+C3. If `CPX‑W429` logs lead the edge 504s, the processor is pushing back and our retries worsen the problem.
 
 > `RB-016#3` Find the slow hop and treat it as a latency problem in that service. Second, check whether `CPX-W429` and `PAYAPI-E1107` rise together on payments-api-01 through payments-api-04 and card-processor-proxy-01 and -02. If `CPX-W429` leads, the processor is pushing back and our retries are making it worse. Third, look at the time order. If edge `504`s started first and the 429s only came later, our own retry traffic probably caused the 429s rather than responding to them. What to do, in the order I'd do it: - **Cut retries at one layer, not all of them.** Set `CPX_MAX_ATTEMPTS=1` in the payments-api ConfigMap and roll the Deployment. That removes the innermost multiplier, which is the one that hits the processor. Leave orders-api's attempts alone at first: one layer of retries is fine, stacked layers are the problem. - **If the processor is still throttling us,** the remaining excess is real customer traffic.
 
 SUPPORTED Q124 C3: ___
+
+C4. If edge 504s start first and 429s appear later, our own retry traffic likely caused the 429s.
+
+> `RB-016#3` Find the slow hop and treat it as a latency problem in that service. Second, check whether `CPX-W429` and `PAYAPI-E1107` rise together on payments-api-01 through payments-api-04 and card-processor-proxy-01 and -02. If `CPX-W429` leads, the processor is pushing back and our retries are making it worse. Third, look at the time order. If edge `504`s started first and the 429s only came later, our own retry traffic probably caused the 429s rather than responding to them. What to do, in the order I'd do it: - **Cut retries at one layer, not all of them.** Set `CPX_MAX_ATTEMPTS=1` in the payments-api ConfigMap and roll the Deployment. That removes the innermost multiplier, which is the one that hits the processor. Leave orders-api's attempts alone at first: one layer of retries is fine, stacked layers are the problem. - **If the processor is still throttling us,** the remaining excess is real customer traffic.
+
+SUPPORTED Q124 C4: ___
 
 **Key facts**
 
@@ -741,28 +751,29 @@ PRESENT Q124 K2: ___
 
 **Question:** catalog-api CAT-E301 spike, how do I tell a lost VM from a process still starting, as on 26 October 2025 vs 9 December 2025, and what did catalog-db do?
 
-**Summary:** The evidence does not contain a direct method to distinguish a lost VM from a process that is still starting on 26 Oct 2025 versus 9 Dec 2025. It only shows that on 9 Dec 2025 catalog‑api logged CAT‑E301 cache timeouts and fell back to reading directly from catalog‑db, and later CAT‑E301 returned to zero while catalog‑db CPU returned to normal.
+**Summary:** On 26 Oct 2025 the CAT‑E301 spike was caused by Redis returning LOADING, indicating the cache process had just started; on 9 Dec 2025 the spike was caused by the redis‑cache‑01 VM disappearing, producing ETIMEDOUT errors. In both incidents catalog‑db‑01 absorbed the extra reads, with CPU climbing to ~90 % before easing as the cache warmed.
 
-**Likely cause:** Not recorded in the evidence
+**Likely cause:** Redis cache unavailability – either a restarting process (LOADING) or a lost VM (ETIMEDOUT) – leading catalog‑api to fall back to catalog‑db.
 
 **Claims**
 
-C1. On 9 December 2025 catalog‑api reported cache unavailable (CAT‑E301) and read through to catalog‑db.
+C1. On 26 Oct 2025 the cache returned LOADING, showing the Redis process was restarting.
 
-> `log:4636` 2025-12-09T03:12:01Z WARN catalog-api-01.prod.internal CAT-E301 cache unavailable (ETIMEDOUT), reading through to catalog-db
+> `INC-0094#0` # The cache that was there but not ready Early on Sunday 26 October 2025 I was carrying the catalog pager. What follows is my account of a short sev3, which began at 02:50 UTC and had ended by 03:10. The alert that reached me was about catalog-api, not Redis. catalog-api-02.prod.internal had begun emitting `CAT-E301`, our code for "couldn't get this from the cache, fetching it from catalog-db instead". In my experience that code had always meant an unreachable Redis box, so I opened RB-017 already picturing a dead VM and a failover. That picture was wrong. I found no timeouts and no refused connections. Each failed cache lookup from catalog-api-02 came back from redis-cache-02.prod.internal with one word: `LOADING`. So Redis was alive, listening and replying; its reply simply said it was still pulling its dataset off disk and couldn't hand out keys yet. That only happens shortly after a Redis process starts, so redis-cache-02 had restarted.
 
 SUPPORTED Q146 C1: ___
 
-C2. After the issue, CAT‑E301 metric was zero and catalog‑db CPU returned to its usual range.
+C2. On 9 Dec 2025 the redis-cache-01 VM was lost, producing ETIMEDOUT errors.
 
-> `RB-017#5` ## Done - [ ] `SENTINEL get-master-addr-by-name cache` returns a reachable host, `CAT-E301` is at zero, and catalog-db CPU is back to its usual range. - [ ] Ticket notes: what took the primary down, failover duration as clients saw it, peak catalog-db CPU. Last time (December 2025), the redis-cache-01 VM was lost outright. Clients saw `ETIMEDOUT` for about 40 s until the failover to redis-cache-
+> `INC-0108#0` # redis-cache-01 lost, 9 December 2025, early morning sev2, 03:12 to 03:40 UTC, 28 minutes from first error to close. Runbook: RB-017. Customers did not lose the catalog. They got it slower: for roughly 40 s the cache was unreachable, and for a while after that most product reads went to catalog-db-01 because the new primary started out nearly empty. The timeline: **03:12** The redis-cache-01 VM is gone. Nothing on it answers and nothing tells the clients, so catalog-api calls to the cache hang and end in `ETIMEDOUT`. catalog-api begins logging `CAT-E301`, meaning it is reading from catalog-db-01 because the cache did not deliver. **03:12:30** The Sentinels have heard nothing for the configured 30 s and agree redis-cache-01 is down. They elect and promote redis-cache-02.
+> `RB-017#1` ## Confirm - [ ] catalog-api-01/02 logging `CAT-E301` (cache unavailable, reading through to catalog-db)? - [ ] What do the errors say? `ETIMEDOUT` means the Redis VM is gone or unreachable (a dead host sends no reset). Connection refused means the host is up but the Redis process isn't listening. - [ ] Ask Sentinel who the primary is. Sentinels run on redis-cache-02, redis-sessions-02 and internal-dns-01, port 26379: `redis-cli -h redis-cache-02.prod.internal -p 26379 SENTINEL get-master-addr-by-name cache` - [ ] Can Sentinel fail over at all? `redis-cli -h redis-cache-02.prod.internal -p 26379 SENTINEL CKQUORUM cache`. With three Sentinels, the quorum and the majority are both 2. The quorum marks the primary down; the failover itself also needs a majority of the Sentinels to authorize it, so two of the three must be reachable.
 
 SUPPORTED Q146 C2: ___
 
-C3. Cluster DNS overload can cause widespread name resolution failures, which appear as errors like those seen in catalog‑api.
+C3. When the cache was unavailable, catalog-db-01 CPU spiked to about 90 % and then eased as the cache warmed.
 
-> `RB-022#0` # Cluster DNS is falling over Pods never talk to internal-dns themselves. Each pod's resolver points at the cluster DNS Service: the `coredns` Deployment in `kube-system`, pods labelled `k8s-app=kube-dns`, 4 replicas. It answers cluster names on its own and forwards `prod.internal` to the two internal-dns VMs. When it's overloaded, everything in every namespace that needs a name suffers in the same minute.
-> `RB-022#6` ## History February 2025: the cluster had grown, the replica count hadn't. At the evening peak, about 19:50, both replicas sat at their CPU limit and lookups began timing out in auth-service, catalog-api and orders-api together. internal-dns answered at once when asked directly. The page came at 19:56. Scaling `coredns` from 2 to 4 replicas at 20:08 cleared it by 20:15, and it has run with 4 since.
+> `INC-0108#1` They elect and promote redis-cache-02. **03:12:40** Clients have found redis-cache-02. From a client's side the outage was about 40 s: 30 s of waiting for the verdict and 10 s for the promotion and for clients to find the new node. `CAT-E301` stops being logged here. **03:13** The cache on the new primary holds little. Redis normally absorbs about 95% of product reads, and those now land on catalog-db-01, whose CPU climbs and reaches about 90%. **03:14** On-call has the incident open. A timeout, not a refusal, fits a VM that vanished. Asking the Sentinel on redis-cache-02 for the current primary gives redis-cache-02, so no manual promotion is needed and none is attempted. **Also at 03:12** Two other services, payments-api and inventory-service, saw Redis time out as well. Each keeps its reference data in memory, reloaded every 60 s, and kept using it, so their databases got no extra reads. Those errors needed no action.
+> `INC-0094#2` Redis came back with little useful content, so catalog-db kept absorbing extra reads for a while as popular products were cached again. That warm-up behaved just as the runbook predicts: hits rose, database CPU eased back to normal, and at 03:10 nothing looked unusual anymore. Twenty minutes, first error to finish. What I'm keeping from this: - `CAT-E301` says the cache didn't deliver. It doesn't say the cache host is gone. Had I read the wrapped Redis error before anything else, I'd have skipped some pointless checks. - With a cache that's reloading, the job is to wait and keep watching the database. That's the core of RB-017's catalog-db section in practice. - What triggered the restart of redis-cache-02 remains unknown.
 
 SUPPORTED Q146 C3: ___
 
@@ -784,22 +795,22 @@ PRESENT Q146 K3: ___
 
 **Question:** Redis features look down and are taking out the fraud scorer as of May 2026, spitting OOM and FRD-E140. What happened, and what do the runbooks say to check first?
 
-**Summary:** In May 2026 redis-features hit memory limits, causing write refusals (OOM) and FRD‑E140 errors from the fraud scorer. The runbook RB‑019 outlines checking memory usage, maxmemory settings, and the OS overcommit configuration as first steps.
+**Summary:** In May 2026 the Redis feature store hit its maxmemory limit with noeviction, causing OOM write errors that appeared as FRD‑E140 in the fraud‑scorer logs, stopping per‑card counters.
 
-**Likely cause:** Redis memory exhausted (used_memory reached maxmemory) combined with strict vm.overcommit settings causing fork failures and write refusals.
+**Likely cause:** Redis reached maxmemory with noeviction, so writes were rejected (OOM path) and fraud‑scorer logged FRD‑E140.
 
 **Claims**
 
-C1. Redis reported OOM command not allowed when used memory exceeded maxmemory, leading to FRD‑E140 errors.
+C1. Redis hit maxmemory with noeviction, causing OOM writes and FRD‑E140 errors in fraud‑scorer.
 
-> `RB-019#1` r PING # PONG = server is up, reads work r INCR oncall:probe # MISCONF... or OOM... = writes refused r DEL oncall:probe # ===== WHICH ONE ===== r INFO persistence | grep -E '^(rdb_last_bgsave_status|rdb_bgsave_in_progress|rdb_changes_since_last_save):' r INFO memory | grep -E '^(used_memory_human|maxmemory_human|maxmemory_policy):' # rdb_last_bgsave_status:err -> MISCONF path # used_memory at maxmemory, noeviction -> OOM path ("OOM command not allowed when used memory > 'maxmemory'") # ===== MISCONF PATH: WHY DID BGSAVE FAIL =====
-> `RB-019#2` ssh redis-features-01.prod.internal 'sudo journalctl -u redis-server --since "-2h" | grep -iE "background saving|fork|MISCONF"' # "fork: Cannot allocate memory" -> commit limit ssh redis-features-01.prod.internal 'sysctl vm.overcommit_memory vm.overcommit_ratio; grep -E "^(CommitLimit|Committed_AS):" /proc/meminfo' # expected: vm.overcommit_memory = 1 # with 2 (strict), CommitLimit = swap + RAM * overcommit_ratio%. The fork's child is # charged about as much as Redis already uses, so once Redis holds about half the # limit, BGSAVE's fork fails and stop-writes-on-bgsave-error refuses writes (MISCONF). # disk full on the RDB dir also fails BGSAVE: ssh redis-features-01.prod.internal 'df -h /var/lib/redis'
+> `INC-0152#0` # redis-features-01 write refusals, 26 April 2026 sev3, 18:10 to 19:15 UTC. Runbook: RB-019. **What broke.** From 18:10 fraud-scorer-01 and fraud-scorer-02 logged `FRD-E140`: their velocity-counter writes came back with `OOM command not allowed`. Scoring went on, but per-card counters stopped updating. **Why.** `INFO memory` on redis-features-01 showed used memory at `maxmemory 24gb` with `noeviction`, so Redis refused writes and served reads. The last background save was fine, which pointed to memory rather than snapshots. **Fix.** A `--memkeys` sample at 18:35 showed where the memory sat. team-risk was paged before anything was deleted and picked keys to remove at 18:58. Used memory fell below the cap at 19:10. The probe `INCR` succeeded, `FRD-E140` stopped, and the incident closed at 19:15. **Open.** An alert well before the cap.
+> `RB-019#0` ``` # ===== CONTEXT ===== # redis-features-01.prod.internal: single node, 32 GB RAM, no swap. Redis 7, systemd unit redis-server. # maxmemory 24gb, maxmemory-policy noeviction, stop-writes-on-bgsave-error yes. # fraud-scorer writes per-card velocity counters (INCR + TTL) on every score. # Rejected write -> fraud-scorer logs FRD-E140; velocity counters go stale until writes recover. # ===== SETUP ===== r() { redis-cli -h redis-features-01.prod.internal "$@"; } # function, so it works in bash and zsh # ===== IS IT WRITES? ===== kubectl -n risk logs -l app=fraud-scorer --prefix --tail=-1 --since=30m | grep FRD-E140 | awk '{print $1}' | sort | uniq -c # per pod
 
 SUPPORTED H002 C1: ___
 
-C2. The runbook instructs to verify vm.overcommit_memory and vm.overcommit_ratio when diagnosing the MISCONF/OOM path.
+C2. Runbook RB‑019 says to first run INFO persistence and INFO memory to distinguish MISCONF from OOM.
 
-> `RB-019#2` ssh redis-features-01.prod.internal 'sudo journalctl -u redis-server --since "-2h" | grep -iE "background saving|fork|MISCONF"' # "fork: Cannot allocate memory" -> commit limit ssh redis-features-01.prod.internal 'sysctl vm.overcommit_memory vm.overcommit_ratio; grep -E "^(CommitLimit|Committed_AS):" /proc/meminfo' # expected: vm.overcommit_memory = 1 # with 2 (strict), CommitLimit = swap + RAM * overcommit_ratio%. The fork's child is # charged about as much as Redis already uses, so once Redis holds about half the # limit, BGSAVE's fork fails and stop-writes-on-bgsave-error refuses writes (MISCONF). # disk full on the RDB dir also fails BGSAVE: ssh redis-features-01.prod.internal 'df -h /var/lib/redis'
+> `RB-019#1` r PING # PONG = server is up, reads work r INCR oncall:probe # MISCONF... or OOM... = writes refused r DEL oncall:probe # ===== WHICH ONE ===== r INFO persistence | grep -E '^(rdb_last_bgsave_status|rdb_bgsave_in_progress|rdb_changes_since_last_save):' r INFO memory | grep -E '^(used_memory_human|maxmemory_human|maxmemory_policy):' # rdb_last_bgsave_status:err -> MISCONF path # used_memory at maxmemory, noeviction -> OOM path ("OOM command not allowed when used memory > 'maxmemory'") # ===== MISCONF PATH: WHY DID BGSAVE FAIL =====
 
 SUPPORTED H002 C2: ___
 
@@ -825,23 +836,29 @@ PRESENT H002 K4: ___
 
 **Question:** catalog-api QueuePool limit errors with edge 504s on cache misses on 15 October 2025, no migration involved, what held the pool?
 
-**Summary:** On 15 October 2025 the catalog‑api QueuePool was quickly exhausted because a burst of cache‑miss requests each held a database connection, filling the 30‑connection pool.
+**Summary:** On 15 Oct 2025 the catalog‑api QueuePool filled up, causing edge 504s. Evidence shows connections were held by slow work on catalog‑db, with cache‑miss reads and writes each blocking a pool connection until the pool exhausted. The specific query or root cause of the slowness is not recorded.
 
-**Likely cause:** High rate of cache‑miss requests that kept pooled DB connections, draining the pool.
+**Likely cause:** slow queries on catalog‑db that held connections (cause of slowness not recorded)
 
 **Claims**
 
-C1. A surge of ~60 cache misses and 5 writes per second kept connections occupied, draining the 30‑connection pool almost immediately.
+C1. Connections were held by slow work on catalog‑db
 
-> `INC-0042#1` Roughly 60 misses and 5 writes reach the database each second, about 65 requests a second. A stalled request keeps its pooled connection, and the pods hold only 30 between them, so the pool drained almost immediately. catalog-api-01 and catalog-api-02 began logging QueuePool timeouts at 14:02:30, which fits requests that had started waiting for a connection thirty seconds earlier. ## Clock log ``` 13:30 weekly products export under way 14:02 release migration on products starts and stalls 14:02:15 first 504 at the edge 14:02:30 QueuePool timeouts begin on catalog-api-01 and catalog-api-02 14:06 504-rate alert pages catalog on-call 14:07 catalog-db-01 checked: CPU low, 32 sessions of 97 usable 14:09 migration cancelled; 504s stop within the minute 14:40 migration run again, completed ``` The numbers point to waiting, rather than work, as what filled the pool. ## Follow-up - Run migrations with a short `lock_timeout` so a blocked one gives up quickly; this took effect from 2025-05-16.
+> `INC-0091#1` That 30-second wait is longer than the edge's 15-second route timeout. So a request that waited for a connection typically drew a `504` from the edge at 15 seconds, and the pool timeout followed in the service log about 15 seconds later (30 - 15), after the edge had already answered. What kept the connections busy was slow work on catalog-db. A query that normally returns quickly took long enough that each connection stayed checked out far beyond its usual short stay. With 30 connections in total, it took only a modest number of those slow queries running together to use up the whole supply. The query was not recorded, and neither was the reason it was slow. ## What people did The edge alerts on its `504` rate. RB-028 is the runbook for catalog-api pool trouble, so it was the one cited. It is about a migration waiting on a lock, and nothing in this incident was a migration. The catalog on-call took the incident. The pool errors and the `504`s had stopped by 22:10, when it was closed. What ended the slow query was not recorded.
 
 SUPPORTED Q043 C1: ___
 
-C2. Metrics showed the pool usage jump from a few connections to the full 30 connections.
+C2. Cache misses and writes each stuck while holding its pool connection, quickly exhausting the pool
 
-> `RB-028#3` At that rate, 30 connections were gone in under half a second. > *What the graphs showed afterwards:* the pool graph jumped from a handful in use to 30 between two scrapes. **14:02:15.** First `504`s at the edge, for requests stuck since 14:02:00 that reached the 15-second route timeout. Requests answered from the cache kept succeeding, so most product pages still loaded. **14:02:30.** catalog-
+> `RB-028#2` ## Minute by minute **13:30.** The weekly export begins. Its open transaction holds an `ACCESS SHARE` lock on `products` until it ends. Ordinary reads and writes don't conflict with that. **14:02:00.** The release's migration runs `ALTER TABLE products ADD COLUMN discontinued_at timestamptz;`. Adding a nullable column with no default is quick, but it needs an `ACCESS EXCLUSIVE` lock, if only for an instant, and that conflicts with the export's lock. The ALTER waits. > *What it meant:* a lock request that conflicts with one already *waiting* queues behind it, even when it would be compatible with the lock actually held. From here on, every new `SELECT` or `UPDATE` on `products` waited behind the ALTER, which waited behind the export. **14:02:00 to about 14:02:00.5.** Cache misses and writes reached catalog-db at about 65 a second, and each one stuck while holding its pool connection. At that rate, 30 connections were gone in under half a second.
 
 SUPPORTED Q043 C2: ___
+
+C3. 30 connections were consumed in under half a second
+
+> `RB-028#2` ## Minute by minute **13:30.** The weekly export begins. Its open transaction holds an `ACCESS SHARE` lock on `products` until it ends. Ordinary reads and writes don't conflict with that. **14:02:00.** The release's migration runs `ALTER TABLE products ADD COLUMN discontinued_at timestamptz;`. Adding a nullable column with no default is quick, but it needs an `ACCESS EXCLUSIVE` lock, if only for an instant, and that conflicts with the export's lock. The ALTER waits. > *What it meant:* a lock request that conflicts with one already *waiting* queues behind it, even when it would be compatible with the lock actually held. From here on, every new `SELECT` or `UPDATE` on `products` waited behind the ALTER, which waited behind the export. **14:02:00 to about 14:02:00.5.** Cache misses and writes reached catalog-db at about 65 a second, and each one stuck while holding its pool connection. At that rate, 30 connections were gone in under half a second.
+
+SUPPORTED Q043 C3: ___
 
 **Key facts**
 
@@ -857,32 +874,31 @@ PRESENT Q043 K2: ___
 
 **Question:** orders-api pods ran out of connections at 10:15 on 8 August 2026, the database has plenty of slots, so what is it?
 
-**Summary:** On 8 August 2026 the orders‑api pods exhausted their PostgreSQL connection pools at 10:15 UTC. The database had sufficient connection slots, so the outage was caused by connections being held too long, likely by a slow query, not by a lack of available slots.
+**Summary:** The orders‑api pods exhausted their own connection pools at 10:15 UTC on 8 August 2026 despite the orders‑db having ample slots. Each pod’s pool is limited to 25 connections (75 total), and a slow query kept those connections occupied, filling the pools and causing ORD‑5003 errors until the issue cleared at 10:40.
 
-**Likely cause:** Connections were held for an extended time (slow query), filling the pods' 25‑connection pools.
+**Likely cause:** A slow database query held connections open, filling the limited per‑pod pools and causing exhaustion despite sufficient database capacity.
 
 **Claims**
 
-C1. The incident was caused by connections being held too long, not by insufficient database slots.
+C1. Each orders‑api pod is limited to 25 connections, giving a total pool capacity of 75, far below the database’s 300‑connection limit.
 
 > `INC-0182#1` The service runs more pods, but nothing was recorded about them for this window. **Was the database out of connection slots?** The arithmetic says it was not. orders-api runs three pods with 25 connections each, so its pools together reach 75 at most, and orders-db allows 300 connections. The trouble sat in how long each connection was held, not in how many could be opened. **What ended the slow query?** That was not recorded either, so the write-up stops at the moment the errors stopped. **Were the pool settings touched?** No change to pool settings is recorded for the window. **How long did it last?** From 10:15 to 10:40, which is 25 minutes. The on-call took it, and the errors were gone by 10:40. **What did the logs show, in order?** Pool usage on the two pods rose to its ceiling of 25 first. Only after that did requests start failing with `ORD-5003`, and the failures continued while the pools stayed full. Once the incident ended, usage returned to its ordinary range.
 
 SUPPORTED Q047 C1: ___
 
-C2. Pools on the pods reached their maximum of 25 connections, after which requests started failing.
+C2. The exhaustion was due to connections being held too long, not a shortage of available database slots.
 
 > `INC-0182#1` The service runs more pods, but nothing was recorded about them for this window. **Was the database out of connection slots?** The arithmetic says it was not. orders-api runs three pods with 25 connections each, so its pools together reach 75 at most, and orders-db allows 300 connections. The trouble sat in how long each connection was held, not in how many could be opened. **What ended the slow query?** That was not recorded either, so the write-up stops at the moment the errors stopped. **Were the pool settings touched?** No change to pool settings is recorded for the window. **How long did it last?** From 10:15 to 10:40, which is 25 minutes. The on-call took it, and the errors were gone by 10:40. **What did the logs show, in order?** Pool usage on the two pods rose to its ceiling of 25 first. Only after that did requests start failing with `ORD-5003`, and the failures continued while the pools stayed full. Once the incident ended, usage returned to its ordinary range.
 
 SUPPORTED Q047 C2: ___
 
-C3. Log lines show pool usage at 16 of 25 and later errors when no pool connection became free.
+C3. Pool usage hit the 25‑connection ceiling on the pods before requests began failing with ORD‑5003.
 
-> `log:7533` 2026-08-08T10:15:08Z WARN orders-api-03.prod.internal pg pool in use 16 of 25, waiting requests 1
-> `log:7540` 2026-08-08T10:18:57Z ERROR orders-api-02.prod.internal ORD-5003 database call failed from orders-api: no pool connection became free
+> `INC-0182#1` The service runs more pods, but nothing was recorded about them for this window. **Was the database out of connection slots?** The arithmetic says it was not. orders-api runs three pods with 25 connections each, so its pools together reach 75 at most, and orders-db allows 300 connections. The trouble sat in how long each connection was held, not in how many could be opened. **What ended the slow query?** That was not recorded either, so the write-up stops at the moment the errors stopped. **Were the pool settings touched?** No change to pool settings is recorded for the window. **How long did it last?** From 10:15 to 10:40, which is 25 minutes. The on-call took it, and the errors were gone by 10:40. **What did the logs show, in order?** Pool usage on the two pods rose to its ceiling of 25 first. Only after that did requests start failing with `ORD-5003`, and the failures continued while the pools stayed full. Once the incident ended, usage returned to its ordinary range.
 
 SUPPORTED Q047 C3: ___
 
-C4. The incident lasted from 10:15 to 10:40 UTC, about 25 minutes.
+C4. The incident lasted from 10:15 to 10:40 UTC, a 25‑minute window.
 
 > `INC-0182#1` The service runs more pods, but nothing was recorded about them for this window. **Was the database out of connection slots?** The arithmetic says it was not. orders-api runs three pods with 25 connections each, so its pools together reach 75 at most, and orders-db allows 300 connections. The trouble sat in how long each connection was held, not in how many could be opened. **What ended the slow query?** That was not recorded either, so the write-up stops at the moment the errors stopped. **Were the pool settings touched?** No change to pool settings is recorded for the window. **How long did it last?** From 10:15 to 10:40, which is 25 minutes. The on-call took it, and the errors were gone by 10:40. **What did the logs show, in order?** Pool usage on the two pods rose to its ceiling of 25 first. Only after that did requests start failing with `ORD-5003`, and the failures continued while the pools stayed full. Once the incident ended, usage returned to its ordinary range.
 
@@ -902,43 +918,35 @@ PRESENT Q047 K2: ___
 
 **Question:** both notification-worker pods slow at name lookups from 03:00 on 23 July 2026 with some EAI_AGAIN. what's the angle?
 
-**Summary:** Both notification-worker pods experienced slow DNS lookups and occasional EAI_AGAIN errors starting at 03:00 on 23 July 2026, caused by the cluster’s default ndots:5 setting causing multiple queries per lookup and occasional UDP packet loss leading to 5 s timeouts and retries.
+**Summary:** Both notification-worker pods experienced slow DNS lookups starting at 03:00 UTC on 23 July 2026, caused by the cluster default ndots:5 expanding short names into multiple queries, occasional lost UDP replies triggering 5‑second timeouts and retries, and rare double‑losses producing EAI_AGAIN errors; the issue lasted 215 minutes.
 
-**Likely cause:** Cluster default ndots:5 expands short names, generating multiple DNS queries; occasional lost UDP replies trigger the resolver’s 5 s timeout and retries, producing slow lookups and EAI_AGAIN errors.
+**Likely cause:** Cluster default ndots:5 caused many DNS queries per short name, increasing the chance of lost replies that led to 5‑second timeout retries and occasional EAI_AGAIN failures.
 
 **Claims**
 
-C1. Both workers resolved names slowly and some lookups finished with EAI_AGAIN.
+C1. The cluster default ndots:5 caused each short name to generate multiple DNS queries, increasing chance of lost replies.
 
-> `INC-0179#0` # Questions and answers: the early-morning lookup slowdown, 23 July 2026 sev4. 03:00 to 06:35 UTC on 23 July 2026, a span of 215 minutes. Pods affected: notification-worker-01 and notification-worker-02. Runbook: RB-021. **What was wrong, in one line?** Both workers resolved names slowly, and a few lookups finished in `EAI_AGAIN`, the status that means a try-again. **Did mail stop?** How many sends were delayed, and whether any failed, was not counted. notification-worker hands each message to an external email provider over HTTP, with 20 sends in flight per pod, so a lookup that stalls holds up the send that needs it. **What was behind the slow lookups?** With the cluster default of `ndots:5` in place, a short name is expanded with the cluster's suffixes first and only then looked up as given. **Was this particular to notification-worker?** The default belongs to the cluster; a Deployment has to override it to escape it, and the record does not show that notification-worker did.
+> `RB-021#4` The pod's resolver config: ``` $ kubectl -n commerce exec deploy/orders-api -- cat /etc/resolv.conf search commerce.svc.cluster.local svc.cluster.local cluster.local nameserver <cluster DNS service IP> options ndots:5 ``` `ndots:5` means a name with fewer than five dots gets each search suffix appended first, and is asked as written only after those. Our database name has two dots. So one lookup is four names: three suffixed ones, each answered with NXDOMAIN (quickly), then the real one. glibc asks for an A and an AAAA record per name. **One lookup is 4 names × 2 record types = 8 queries over UDP.** UDP doesn't promise delivery, and now and then a reply is lost. We never found out why on this cluster. When a reply is missing, the resolver waits out its 5 s timeout and asks that query again; the retry usually succeeds, so the lookup just comes back 5 s late.
 
 SUPPORTED Q083 C1: ___
 
-C2. The slowdown was due to ndots:5 causing multiple queries per lookup.
+C2. Lost DNS replies triggered a 5‑second timeout and retry, producing ~5 s lookup delays.
 
 > `RB-021#4` The pod's resolver config: ``` $ kubectl -n commerce exec deploy/orders-api -- cat /etc/resolv.conf search commerce.svc.cluster.local svc.cluster.local cluster.local nameserver <cluster DNS service IP> options ndots:5 ``` `ndots:5` means a name with fewer than five dots gets each search suffix appended first, and is asked as written only after those. Our database name has two dots. So one lookup is four names: three suffixed ones, each answered with NXDOMAIN (quickly), then the real one. glibc asks for an A and an AAAA record per name. **One lookup is 4 names × 2 record types = 8 queries over UDP.** UDP doesn't promise delivery, and now and then a reply is lost. We never found out why on this cluster. When a reply is missing, the resolver waits out its 5 s timeout and asks that query again; the retry usually succeeds, so the lookup just comes back 5 s late.
-> `INC-0179#0` # Questions and answers: the early-morning lookup slowdown, 23 July 2026 sev4. 03:00 to 06:35 UTC on 23 July 2026, a span of 215 minutes. Pods affected: notification-worker-01 and notification-worker-02. Runbook: RB-021. **What was wrong, in one line?** Both workers resolved names slowly, and a few lookups finished in `EAI_AGAIN`, the status that means a try-again. **Did mail stop?** How many sends were delayed, and whether any failed, was not counted. notification-worker hands each message to an external email provider over HTTP, with 20 sends in flight per pod, so a lookup that stalls holds up the send that needs it. **What was behind the slow lookups?** With the cluster default of `ndots:5` in place, a short name is expanded with the cluster's suffixes first and only then looked up as given. **Was this particular to notification-worker?** The default belongs to the cluster; a Deployment has to override it to escape it, and the record does not show that notification-worker did.
 
 SUPPORTED Q083 C2: ___
 
-C3. Lost UDP replies caused the resolver to wait 5 s and retry, producing the delay.
+C3. Notification‑worker deployments did not override ndots, so they inherited the cluster default and suffered the slowdown.
 
-> `RB-021#4` The pod's resolver config: ``` $ kubectl -n commerce exec deploy/orders-api -- cat /etc/resolv.conf search commerce.svc.cluster.local svc.cluster.local cluster.local nameserver <cluster DNS service IP> options ndots:5 ``` `ndots:5` means a name with fewer than five dots gets each search suffix appended first, and is asked as written only after those. Our database name has two dots. So one lookup is four names: three suffixed ones, each answered with NXDOMAIN (quickly), then the real one. glibc asks for an A and an AAAA record per name. **One lookup is 4 names × 2 record types = 8 queries over UDP.** UDP doesn't promise delivery, and now and then a reply is lost. We never found out why on this cluster. When a reply is missing, the resolver waits out its 5 s timeout and asks that query again; the retry usually succeeds, so the lookup just comes back 5 s late.
-> `RB-021#5` Two lost replies on two different queries of the same lookup, each recovered by its retry, cost about 10 s: still a `200`, just slow. That's the 10 s group. `getaddrinfo EAI_AGAIN` needs both tries of one query lost (the default is `attempts:2`), which is rarer still; a handful of those lines from those evenings were in the logs, for a name that resolved fine whenever I tried it. Eight chances per lookup to lose a reply, not two. That's what lifted a rare event into the p99. **21:50.** Why did whole bursts suffer, not only the requests that opened a connection? Four libuv threads. A burst opened a dozen connections at once; with two or three of those lookups sitting in a 5 s wait, every other lookup and file read queued for the remaining threads.
+> `INC-0179#0` # Questions and answers: the early-morning lookup slowdown, 23 July 2026 sev4. 03:00 to 06:35 UTC on 23 July 2026, a span of 215 minutes. Pods affected: notification-worker-01 and notification-worker-02. Runbook: RB-021. **What was wrong, in one line?** Both workers resolved names slowly, and a few lookups finished in `EAI_AGAIN`, the status that means a try-again. **Did mail stop?** How many sends were delayed, and whether any failed, was not counted. notification-worker hands each message to an external email provider over HTTP, with 20 sends in flight per pod, so a lookup that stalls holds up the send that needs it. **What was behind the slow lookups?** With the cluster default of `ndots:5` in place, a short name is expanded with the cluster's suffixes first and only then looked up as given. **Was this particular to notification-worker?** The default belongs to the cluster; a Deployment has to override it to escape it, and the record does not show that notification-worker did.
 
 SUPPORTED Q083 C3: ___
 
-C4. EAI_AGAIN occurs when both attempts of a query are lost.
-
-> `RB-021#5` Two lost replies on two different queries of the same lookup, each recovered by its retry, cost about 10 s: still a `200`, just slow. That's the 10 s group. `getaddrinfo EAI_AGAIN` needs both tries of one query lost (the default is `attempts:2`), which is rarer still; a handful of those lines from those evenings were in the logs, for a name that resolved fine whenever I tried it. Eight chances per lookup to lose a reply, not two. That's what lifted a rare event into the p99. **21:50.** Why did whole bursts suffer, not only the requests that opened a connection? Four libuv threads. A burst opened a dozen connections at once; with two or three of those lookups sitting in a 5 s wait, every other lookup and file read queued for the remaining threads.
-
-SUPPORTED Q083 C4: ___
-
-C5. The incident lasted from 03:00 to 06:35 UTC, a span of 215 minutes.
+C4. The slowdown persisted from 03:00 to 06:35 UTC on 23 July 2026, a total of 215 minutes.
 
 > `INC-0179#2` **How long did it last?** The incident record starts at 03:00 and ends at 06:35, which is 215 minutes. Nothing between those times is dated. **Who dealt with it, and when did it end?** The engineer on call handled it, and lookups were normal again at 06:35. The step that ended the problem is unrecorded.
 
-SUPPORTED Q083 C5: ___
+SUPPORTED Q083 C4: ___
 
 **Key facts**
 
@@ -954,29 +962,37 @@ PRESENT Q083 K2: ___
 
 **Question:** orders-api, auth-service and catalog-api all timing out on lookups, should i just bounce the coredns deployment?
 
-**Summary:** Orders‑api, auth‑service and catalog‑api experience request timeouts due to DNS lookup delays caused by lost UDP replies and libuv thread‑pool contention, not because CoreDNS is unhealthy.
+**Summary:** Orders‑api, auth‑service and catalog‑api saw lookup timeouts caused by an overloaded CoreDNS deployment; scaling the CoreDNS pods cleared the failures.
 
-**Likely cause:** Intermittent DNS query loss leading to 5 s resolver timeouts and thread‑pool exhaustion in the services.
+**Likely cause:** CoreDNS pods were saturated (high CPU and latency), causing DNS resolution timeouts for prod.internal names.
 
 **Claims**
 
-C1. CoreDNS pods are running and ready, with no restarts.
+C1. The affected services were reported healthy at the time of the incident
 
-> `RB-022#3` ## Look at the cluster DNS pods - [ ] `kubectl -n kube-system get pods -l k8s-app=kube-dns -o wide`: all Running and Ready? Restarts? - [ ] `kubectl -n kube-system top pod -l k8s-app=kube-dns`: each pod near its CPU limit is the usual picture. - [ ] Grafana, CoreDNS dashboard: requests per pod, the p99 of `coredns_dns_request_duration_seconds`, and `coredns_cache_hits_total` against `coredns_cach
+> `status:orders-api` orders-api: healthy (owner team-commerce; depends on orders-db, payments-api, inventory-service, kafka)
+> `status:auth-service` auth-service: healthy (owner team-identity; depends on auth-db, redis-sessions)
+> `status:catalog-api` catalog-api: healthy (owner team-catalog; depends on catalog-db, redis-cache)
 
 SUPPORTED Q087 C1: ___
 
-C2. The resolver config causes each lookup to generate multiple queries, increasing chance of lost replies.
+C2. Name resolution began failing for catalog‑api, orders‑api and auth‑service at 19:50
 
-> `RB-021#4` The pod's resolver config: ``` $ kubectl -n commerce exec deploy/orders-api -- cat /etc/resolv.conf search commerce.svc.cluster.local svc.cluster.local cluster.local nameserver <cluster DNS service IP> options ndots:5 ``` `ndots:5` means a name with fewer than five dots gets each search suffix appended first, and is asked as written only after those. Our database name has two dots. So one lookup is four names: three suffixed ones, each answered with NXDOMAIN (quickly), then the real one. glibc asks for an A and an AAAA record per name. **One lookup is 4 names × 2 record types = 8 queries over UDP.** UDP doesn't promise delivery, and now and then a reply is lost. We never found out why on this cluster. When a reply is missing, the resolver waits out its 5 s timeout and asks that query again; the retry usually succeeds, so the lookup just comes back 5 s late.
+> `INC-0016#1` ``` 19:50 catalog-api, orders-api, auth-service: name resolution begins failing, all at once 19:56 paged on orders-api checkout errors. Pods print getaddrinfo EAI_AGAIN: the resolver gave up waiting; no connection was ever refused 19:58 auth-service-01 and -02 report Go lookup timeouts; catalog-api-01 and catalog-api-02 report Python resolver errors. Three runtimes, three namespaces, one start 20:00 RB-020 first, since what fails are prod.internal hostnames. dig from a VM at both authoritative servers: fast replies, matching SOA serials, records present. internal-dns is fine, so we leave those VMs untouched 20:02 so the authoritative side is not it. Failures in three namespaces at once point at the one path all three apps share: CoreDNS running as pods inside Kubernetes 20:03 kubectl top for those pods: 2 replicas, each flat against its CPU ceiling 20:05 CoreDNS dashboard: request p99 is measured in seconds now, while the query volume is only at the upper end of a normal evening. Pod logs show no errors talking upstream 20:06 decided against a restart: bouncing the pods would cut serving capacity further 20:08 scaled coredns to 4 replicas 20:09 both new pods Ready and answering 20:11 EAI_AGAIN on orders-api-01, orders-api-02 and orders-api-03 dropping away; pooled connections had kept working throughout, and fresh ones resolve again 20:15 lookups clean everywhere; closed ```
 
 SUPPORTED Q087 C2: ___
 
-C3. Lost UDP replies trigger the resolver's 5 s timeout and retry, producing 5‑second delays.
+C3. CoreDNS pods were at their CPU ceiling and request latency spiked to seconds
 
-> `RB-021#4` The pod's resolver config: ``` $ kubectl -n commerce exec deploy/orders-api -- cat /etc/resolv.conf search commerce.svc.cluster.local svc.cluster.local cluster.local nameserver <cluster DNS service IP> options ndots:5 ``` `ndots:5` means a name with fewer than five dots gets each search suffix appended first, and is asked as written only after those. Our database name has two dots. So one lookup is four names: three suffixed ones, each answered with NXDOMAIN (quickly), then the real one. glibc asks for an A and an AAAA record per name. **One lookup is 4 names × 2 record types = 8 queries over UDP.** UDP doesn't promise delivery, and now and then a reply is lost. We never found out why on this cluster. When a reply is missing, the resolver waits out its 5 s timeout and asks that query again; the retry usually succeeds, so the lookup just comes back 5 s late.
+> `INC-0016#1` ``` 19:50 catalog-api, orders-api, auth-service: name resolution begins failing, all at once 19:56 paged on orders-api checkout errors. Pods print getaddrinfo EAI_AGAIN: the resolver gave up waiting; no connection was ever refused 19:58 auth-service-01 and -02 report Go lookup timeouts; catalog-api-01 and catalog-api-02 report Python resolver errors. Three runtimes, three namespaces, one start 20:00 RB-020 first, since what fails are prod.internal hostnames. dig from a VM at both authoritative servers: fast replies, matching SOA serials, records present. internal-dns is fine, so we leave those VMs untouched 20:02 so the authoritative side is not it. Failures in three namespaces at once point at the one path all three apps share: CoreDNS running as pods inside Kubernetes 20:03 kubectl top for those pods: 2 replicas, each flat against its CPU ceiling 20:05 CoreDNS dashboard: request p99 is measured in seconds now, while the query volume is only at the upper end of a normal evening. Pod logs show no errors talking upstream 20:06 decided against a restart: bouncing the pods would cut serving capacity further 20:08 scaled coredns to 4 replicas 20:09 both new pods Ready and answering 20:11 EAI_AGAIN on orders-api-01, orders-api-02 and orders-api-03 dropping away; pooled connections had kept working throughout, and fresh ones resolve again 20:15 lookups clean everywhere; closed ```
 
 SUPPORTED Q087 C3: ___
+
+C4. Scaling CoreDNS to four replicas restored DNS lookups
+
+> `INC-0016#1` ``` 19:50 catalog-api, orders-api, auth-service: name resolution begins failing, all at once 19:56 paged on orders-api checkout errors. Pods print getaddrinfo EAI_AGAIN: the resolver gave up waiting; no connection was ever refused 19:58 auth-service-01 and -02 report Go lookup timeouts; catalog-api-01 and catalog-api-02 report Python resolver errors. Three runtimes, three namespaces, one start 20:00 RB-020 first, since what fails are prod.internal hostnames. dig from a VM at both authoritative servers: fast replies, matching SOA serials, records present. internal-dns is fine, so we leave those VMs untouched 20:02 so the authoritative side is not it. Failures in three namespaces at once point at the one path all three apps share: CoreDNS running as pods inside Kubernetes 20:03 kubectl top for those pods: 2 replicas, each flat against its CPU ceiling 20:05 CoreDNS dashboard: request p99 is measured in seconds now, while the query volume is only at the upper end of a normal evening. Pod logs show no errors talking upstream 20:06 decided against a restart: bouncing the pods would cut serving capacity further 20:08 scaled coredns to 4 replicas 20:09 both new pods Ready and answering 20:11 EAI_AGAIN on orders-api-01, orders-api-02 and orders-api-03 dropping away; pooled connections had kept working throughout, and fresh ones resolve again 20:15 lookups clean everywhere; closed ```
+
+SUPPORTED Q087 C4: ___
 
 **Key facts**
 
@@ -996,30 +1012,41 @@ PRESENT Q087 K3: ___
 
 **Question:** ledger instance cpu is climbing and the hikari pool is near full, is bumping maximumPoolSize a good idea mid-incident?
 
-**Summary:** During the month‑end incident the pool was full and pending connections rose, but the team chose to reduce batch parallelism instead of increasing maximumPoolSize. Evidence shows they explicitly did not raise the pool and advise against enlarging it mid‑incident.
+**Summary:** CPU usage rose but the main issue was HikariCP pool exhaustion caused by the month‑end reconciliation batch; increasing maximumPoolSize mid‑incident is not recommended.
 
-**Likely cause:** Reconciliation batch workers held all pool connections, causing pool exhaustion; the fix was to lower batch parallelism, not to increase the pool size.
+**Likely cause:** Reconciliation batch parallelism (LEDGER_RECON_PARALLELISM) exceeds the pool size, causing all connections to be held and pending requests to grow.
 
 **Claims**
 
-C1. The team did not raise maximumPoolSize during the incident.
+C1. CPU was elevated but never near its limit, indicating it was not the primary cause
 
-> `RB-013#6` ## What we did 1. Took the thread dump and the `pg_stat_activity` output first, as evidence. 2. Set `LEDGER_RECON_PARALLELISM=4` in the ledger-service ConfigMap. 3. Restarted the pod running the batch: `kubectl -n payments delete pod <ledger-service-02 pod>`. The reconciliation resumed from its last committed chunk with four workers (the in-flight chunks were redone), which left 16 connections for API traffic. 4. Watched `hikaricp_connections_pending` drop to 0 and the `503`s stop within a couple of minutes. The batch finished around 03:10, slower but without further trouble. We did not raise `maximumPoolSize`. A bigger pool would have let the batch hold even more of ledger-db.
+> `RB-013#2` ## What we checked first, and why it misled us The month-end reconciliation batch had started on ledger-service-02 at 23:30. Everyone knows that batch is CPU-heavy, so the first guess was a CPU incident. CPU on that pod was clearly elevated, around two thirds of its limit, but it never got close to the limit. `top -H` showed the top CPU thread was an `http-nio-*` thread in Jackson serializer frames (the reconciliation result being serialized), with nothing spinning. The `recon-worker-*` threads, as we found later, were the ones holding the connections. Elevated, not saturated: that was the first hint the CPU was a bystander. The deciding signal was the pool metrics in Grafana: - `hikaricp_connections_active` flat at 20, the full pool - `hikaricp_connections_pending` climbing from 0 to about 40 threads waiting for a connection A thread dump agreed:
 
 SUPPORTED Q104 C1: ___
 
-C2. Increasing the pool would have let the batch hold even more connections, which was not the desired action.
+C2. The pool was full (20 connections) while pending requests climbed to ~40
 
-> `RB-013#6` ## What we did 1. Took the thread dump and the `pg_stat_activity` output first, as evidence. 2. Set `LEDGER_RECON_PARALLELISM=4` in the ledger-service ConfigMap. 3. Restarted the pod running the batch: `kubectl -n payments delete pod <ledger-service-02 pod>`. The reconciliation resumed from its last committed chunk with four workers (the in-flight chunks were redone), which left 16 connections for API traffic. 4. Watched `hikaricp_connections_pending` drop to 0 and the `503`s stop within a couple of minutes. The batch finished around 03:10, slower but without further trouble. We did not raise `maximumPoolSize`. A bigger pool would have let the batch hold even more of ledger-db.
+> `RB-013#2` ## What we checked first, and why it misled us The month-end reconciliation batch had started on ledger-service-02 at 23:30. Everyone knows that batch is CPU-heavy, so the first guess was a CPU incident. CPU on that pod was clearly elevated, around two thirds of its limit, but it never got close to the limit. `top -H` showed the top CPU thread was an `http-nio-*` thread in Jackson serializer frames (the reconciliation result being serialized), with nothing spinning. The `recon-worker-*` threads, as we found later, were the ones holding the connections. Elevated, not saturated: that was the first hint the CPU was a bystander. The deciding signal was the pool metrics in Grafana: - `hikaricp_connections_active` flat at 20, the full pool - `hikaricp_connections_pending` climbing from 0 to about 40 threads waiting for a connection A thread dump agreed:
 
 SUPPORTED Q104 C2: ___
 
-C3. The recommended mitigation was to shrink batch parallelism, not to enlarge the pool.
+C3. Batch parallelism (24 workers) exceeded the pool of 20 connections, exhausting the pool
 
 > `RB-013#5` The cause, put together: the reconciliation code wraps each chunk of accounts in a single transaction, and a chunk took about four minutes. The batch's parallelism was `LEDGER_RECON_PARALLELISM=24`, more workers than the pool has connections. The workers took all 20 connections and kept them, and normal API traffic on that instance had nothing left.
-> `INC-0124#1` CPU on the pod was elevated but not saturated, which did not match that story, and the investigation turned to the connection pool instead. There the picture was plain. The pool of 20 stood at 20/20 and `hikaricp_connections_pending` climbed to about 40. The connections were held by `recon-worker-*` threads, and on ledger-db-01 the 20 matching sessions were sitting in long transactions. The batch had been started with `LEDGER_RECON_PARALLELISM=24`, a higher worker count than there are connections to give them. The decision was to shrink the batch, not the traffic and not the pool. Parallelism went from 24 to 4 and the pod running the batch was restarted so that it would read the new value. Four workers left 16 of the 20 connections to requests. The job carried on, more slowly, until 03:10. The pool size was left as it was, in line with RB-001's advice not to enlarge it mid-incident.
 
 SUPPORTED Q104 C3: ___
+
+C4. Operators chose not to raise maximumPoolSize and instead reduced parallelism
+
+> `RB-013#6` ## What we did 1. Took the thread dump and the `pg_stat_activity` output first, as evidence. 2. Set `LEDGER_RECON_PARALLELISM=4` in the ledger-service ConfigMap. 3. Restarted the pod running the batch: `kubectl -n payments delete pod <ledger-service-02 pod>`. The reconciliation resumed from its last committed chunk with four workers (the in-flight chunks were redone), which left 16 connections for API traffic. 4. Watched `hikaricp_connections_pending` drop to 0 and the `503`s stop within a couple of minutes. The batch finished around 03:10, slower but without further trouble. We did not raise `maximumPoolSize`. A bigger pool would have let the batch hold even more of ledger-db.
+
+SUPPORTED Q104 C4: ___
+
+C5. Guidance advises throttling the batch and not touching the pool during such incidents
+
+> `RB-013#7` ## Next time, faster - When `LEDGER-W210` fires at month-end, look at `hikaricp_connections_pending` and the `getConnection` stacks before the CPU graph. Pending above zero with the CPU short of its limit means connections, not CPU. - Count which thread names hold connections. If it's the batch, throttle the batch; don't touch the pool. - `LEDGER_RECON_PARALLELISM` is set to 4 in the ledger-service ConfigMap. - Proposed, not done yet: give reconciliation its own small pool so it can never take the API's connections, and commit per page instead of per chunk.
+
+SUPPORTED Q104 C5: ___
 
 **Key facts**
 
@@ -1035,19 +1062,19 @@ PRESENT Q104 K2: ___
 
 **Question:** I see a record of the catalog database creating massive latency upstream for the API and gateway in July 2025. What was querying the database so hard?
 
-**Summary:** The incident on 30 July 2025 showed catalog-db-01 experiencing massive latency due to slow queries originating from a bloated table accessed by catalog-api-02.
+**Summary:** In July 2025 catalog-db-01 experienced massive latency caused by slow queries from a bloated table, driven by catalog-api-02.
 
-**Likely cause:** Slow queries on a bloated table in catalog-db caused high query volume and latency.
+**Likely cause:** catalog-api-02 was issuing heavy queries against a bloated table in catalog-db-01.
 
 **Claims**
 
-C1. Catalog-db-01 suffered slow queries from a bloated table during the incident.
+C1. catalog-api-02 made database calls that took much longer than normal.
 
 > `INC-0065#0` # catalog-db-01: slow queries from a bloated table (sev4) Wednesday 30 July 2025, 06:50 to 09:45 UTC, 175 minutes. Hosts: catalog-api-02 and catalog-db-01. Runbooks: RB-014, RB-015. From 06:50, database calls made by catalog-api-02 took much longer than normal, and the slowest ended in a `504` at the gateway. RB-014 reads that status as an upstream that ran past the gateway's time limit, so the
 
 SUPPORTED H026 C1: ___
 
-C2. The slow queries were issued by catalog-api-02, leading to increased latency upstream.
+C2. The slow queries originated from a bloated table.
 
 > `INC-0065#0` # catalog-db-01: slow queries from a bloated table (sev4) Wednesday 30 July 2025, 06:50 to 09:45 UTC, 175 minutes. Hosts: catalog-api-02 and catalog-db-01. Runbooks: RB-014, RB-015. From 06:50, database calls made by catalog-api-02 took much longer than normal, and the slowest ended in a `504` at the gateway. RB-014 reads that status as an upstream that ran past the gateway's time limit, so the
 
@@ -1071,17 +1098,23 @@ PRESENT H026 K3: ___
 
 **Question:** Order services were running super hot and timing out at the edge in April 2025. What was driving up the processor load?
 
-**Summary:** During the April 2025 incident, orders‑api pods experienced high CPU usage leading to edge timeouts. The evidence attributes the load to CPU‑bound work on the orders‑api event loop.
+**Summary:** During the 29 April 2025 incident the orders‑api pods showed a busy event loop and CPU‑bound work, which drove processor load up.
 
-**Likely cause:** CPU‑bound processing in the orders‑api event loop
+**Likely cause:** CPU‑bound work on the orders‑api event loop caused the high processor load.
 
 **Claims**
 
-C1. Orders‑api pods had CPU‑bound work on their event loop causing high processor load.
+C1. The orders‑api pods had a busy event loop causing high CPU usage.
 
 > `INC-0037#0` # orders-api-02 and -03: busy event loop, edge 504 (sev3) Tuesday 29 April 2025, 21:55 to 23:00 UTC, 65 minutes. Runbooks RB-002 and RB-004. From 21:55 the edge answered some orders-api requests with `504`; the pods behind them were orders-api-02 and orders-api-03, where CPU-bound work on the event loop held requests until the gateway gave up. Which function or request type consumed the CPU was
 
 SUPPORTED H027 C1: ___
+
+C2. CPU‑bound work on the event loop was the source of the load.
+
+> `INC-0037#0` # orders-api-02 and -03: busy event loop, edge 504 (sev3) Tuesday 29 April 2025, 21:55 to 23:00 UTC, 65 minutes. Runbooks RB-002 and RB-004. From 21:55 the edge answered some orders-api requests with `504`; the pods behind them were orders-api-02 and orders-api-03, where CPU-bound work on the event loop held requests until the gateway gave up. Which function or request type consumed the CPU was
+
+SUPPORTED H027 C2: ___
 
 **Key facts**
 
@@ -1101,29 +1134,35 @@ PRESENT H027 K3: ___
 
 **Question:** Internal name resolution completely tanked in February 2025, taking out auth, catalog, and orders. What triggered this cascading failure?
 
-**Summary:** In February 2025 the cluster’s CoreDNS pods hit their CPU limits, causing DNS lookups to time out across multiple services; the upstream internal‑dns remained healthy, and scaling CoreDNS from 2 to 4 replicas restored resolution.
+**Summary:** In February 2025 the cluster’s CoreDNS pods hit their CPU limits, causing DNS lookups to time out across multiple services (auth, catalog, orders). The overload was triggered by the cluster growing without increasing the CoreDNS replica count, and scaling CoreDNS to four replicas restored resolution.
 
-**Likely cause:** CPU saturation of the two CoreDNS replicas leading to overload of the cluster DNS service.
+**Likely cause:** CPU saturation of the two CoreDNS replicas due to insufficient replica count during peak traffic
 
 **Claims**
 
-C1. Both CoreDNS replicas reached their CPU limit at ~19:50, causing lookups to time out.
+C1. Both CoreDNS replicas were at their CPU limit and lookups began timing out
 
 > `RB-022#6` ## History February 2025: the cluster had grown, the replica count hadn't. At the evening peak, about 19:50, both replicas sat at their CPU limit and lookups began timing out in auth-service, catalog-api and orders-api together. internal-dns answered at once when asked directly. The page came at 19:56. Scaling `coredns` from 2 to 4 replicas at 20:08 cleared it by 20:15, and it has run with 4 since.
 
 SUPPORTED H029 C1: ___
 
-C2. VMs querying internal‑dns directly received fast replies, showing the authoritative side was fine.
+C2. When CoreDNS is overloaded, every namespace that needs a name suffers
 
-> `INC-0016#1` ``` 19:50 catalog-api, orders-api, auth-service: name resolution begins failing, all at once 19:56 paged on orders-api checkout errors. Pods print getaddrinfo EAI_AGAIN: the resolver gave up waiting; no connection was ever refused 19:58 auth-service-01 and -02 report Go lookup timeouts; catalog-api-01 and catalog-api-02 report Python resolver errors. Three runtimes, three namespaces, one start 20:00 RB-020 first, since what fails are prod.internal hostnames. dig from a VM at both authoritative servers: fast replies, matching SOA serials, records present. internal-dns is fine, so we leave those VMs untouched 20:02 so the authoritative side is not it. Failures in three namespaces at once point at the one path all three apps share: CoreDNS running as pods inside Kubernetes 20:03 kubectl top for those pods: 2 replicas, each flat against its CPU ceiling 20:05 CoreDNS dashboard: request p99 is measured in seconds now, while the query volume is only at the upper end of a normal evening. Pod logs show no errors talking upstream 20:06 decided against a restart: bouncing the pods would cut serving capacity further 20:08 scaled coredns to 4 replicas 20:09 both new pods Ready and answering 20:11 EAI_AGAIN on orders-api-01, orders-api-02 and orders-api-03 dropping away; pooled connections had kept working throughout, and fresh ones resolve again 20:15 lookups clean everywhere; closed ```
+> `RB-022#0` # Cluster DNS is falling over Pods never talk to internal-dns themselves. Each pod's resolver points at the cluster DNS Service: the `coredns` Deployment in `kube-system`, pods labelled `k8s-app=kube-dns`, 4 replicas. It answers cluster names on its own and forwards `prod.internal` to the two internal-dns VMs. When it's overloaded, everything in every namespace that needs a name suffers in the same minute.
 
 SUPPORTED H029 C2: ___
 
-C3. Scaling CoreDNS from 2 to 4 replicas cleared the failures by 20:15.
+C3. CoreDNS request latency spiked to seconds, indicating overload
+
+> `INC-0016#1` ``` 19:50 catalog-api, orders-api, auth-service: name resolution begins failing, all at once 19:56 paged on orders-api checkout errors. Pods print getaddrinfo EAI_AGAIN: the resolver gave up waiting; no connection was ever refused 19:58 auth-service-01 and -02 report Go lookup timeouts; catalog-api-01 and catalog-api-02 report Python resolver errors. Three runtimes, three namespaces, one start 20:00 RB-020 first, since what fails are prod.internal hostnames. dig from a VM at both authoritative servers: fast replies, matching SOA serials, records present. internal-dns is fine, so we leave those VMs untouched 20:02 so the authoritative side is not it. Failures in three namespaces at once point at the one path all three apps share: CoreDNS running as pods inside Kubernetes 20:03 kubectl top for those pods: 2 replicas, each flat against its CPU ceiling 20:05 CoreDNS dashboard: request p99 is measured in seconds now, while the query volume is only at the upper end of a normal evening. Pod logs show no errors talking upstream 20:06 decided against a restart: bouncing the pods would cut serving capacity further 20:08 scaled coredns to 4 replicas 20:09 both new pods Ready and answering 20:11 EAI_AGAIN on orders-api-01, orders-api-02 and orders-api-03 dropping away; pooled connections had kept working throughout, and fresh ones resolve again 20:15 lookups clean everywhere; closed ```
+
+SUPPORTED H029 C3: ___
+
+C4. Scaling CoreDNS from 2 to 4 replicas cleared the issue by 20:15
 
 > `RB-022#6` ## History February 2025: the cluster had grown, the replica count hadn't. At the evening peak, about 19:50, both replicas sat at their CPU limit and lookups began timing out in auth-service, catalog-api and orders-api together. internal-dns answered at once when asked directly. The page came at 19:56. Scaling `coredns` from 2 to 4 replicas at 20:08 cleared it by 20:15, and it has run with 4 since.
 
-SUPPORTED H029 C3: ___
+SUPPORTED H029 C4: ___
 
 **Key facts**
 
@@ -1143,29 +1182,17 @@ PRESENT H029 K3: ___
 
 **Question:** API connection limits to the payment connection pooler got maxed out and slowed everything down in June 2025. Why didn't the pooler recycle the idle connections?
 
-**Summary:** The pooler did not recycle idle connections because during June 2025 the payments export ran long transactions that occupied all server connections, leaving no idle connections to recycle.
+**Summary:** Evidence shows that idle client sessions remain open until they are manually terminated or the pods are restarted, so the pooler did not automatically recycle idle connections in June 2025.
 
-**Likely cause:** All server connections were held by long-running transactions from the refunds export, so PgBouncer had no idle connections to recycle.
+**Likely cause:** Idle connections were not automatically closed by the pooler; they required manual termination or a pod restart to be reclaimed.
 
 **Claims**
 
-C1. A refunds export ran transactions of about 2 s each, taking every server connection on both instances.
+C1. Restarting pods frees all held connections, implying they were not recycled automatically.
 
-> `RB-011#8` ## History June 2025: a refunds export inside payments-api ran transactions of about 2 s each through the transaction pool, taking every server connection on both instances. `cl_waiting` sat at about 30 per instance with `maxwait` near 4 s. No `query_wait_timeout` errors appeared because waits stayed under 10 s, but pgx pools filled and `PAYAPI-E1042` followed. Disabling the export cleared it.
+> `RB-010#6` ## Mitigation - Restarting the pods (`kubectl -n payments rollout restart deploy/payments-api`) frees every held connection and usually restores service for a while, but take the goroutine dump first. - Raising `pool_max_conns` hides the problem and moves the pressure to payments-pgbouncer and payments-db. Only do it if you've confirmed the pool is simply undersized for current traffic, and tell
 
 SUPPORTED H038 C1: ___
-
-C2. During that period `cl_waiting` was high and `sv_idle` was zero, indicating no idle server connections.
-
-> `RB-011#2` ## Procedure **1. Look at the pools on both instances.** ``` psql -h payments-pgbouncer-01.prod.internal -p 6432 -U pgbouncer pgbouncer -c 'SHOW POOLS;' psql -h payments-pgbouncer-02.prod.internal -p 6432 -U pgbouncer pgbouncer -c 'SHOW POOLS;' ``` Expected when healthy: `cl_waiting` 0, `maxwait` 0, `sv_active` well under 40, some `sv_idle`. Saturated: `sv_active` at 40, then 50 once the reserve pool engages; `sv_idle` 0; `cl_waiting` above 0; `maxwait` in whole seconds. The reserve opens only after a client has waited `reserve_pool_timeout`, so `maxwait` past 3 s is normal here. With about 80 clients on 50 server connections, `cl_waiting` tops out near 30 per instance. A value well above that means more clients than usual are connected; go to step 2.
-
-SUPPORTED H038 C2: ___
-
-C3. No `query_wait_timeout` errors appeared because waits stayed under the 10 s timeout, but the pgx pools filled and errors followed.
-
-> `RB-011#8` ## History June 2025: a refunds export inside payments-api ran transactions of about 2 s each through the transaction pool, taking every server connection on both instances. `cl_waiting` sat at about 30 per instance with `maxwait` near 4 s. No `query_wait_timeout` errors appeared because waits stayed under 10 s, but pgx pools filled and `PAYAPI-E1042` followed. Disabling the export cleared it.
-
-SUPPORTED H038 C3: ___
 
 **Key facts**
 

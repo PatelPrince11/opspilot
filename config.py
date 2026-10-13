@@ -55,9 +55,11 @@ class Settings(BaseSettings):
     verify_enabled: bool = True
     verify_quotes: bool = True
     agent_max_tool_calls: int = 8
-    # Look before reading: the first named service's status and WARN+ logs in the triage window
-    # are fetched before the model's own calls (count toward the cap).
-    agent_first_look: bool = True
+    # Look before reading: for a live incident (triage incident_time), the first named service's
+    # status and WARN+ logs in the triage window are fetched before the model's own calls (they
+    # count toward the cap). LOCKED off (Phase 3b.3): on dev it cost gold-doc coverage, and the
+    # live-only version did not recover it (NOTES). The code stays for live-incident work.
+    agent_first_look: bool = False
     agent_max_seconds: float = 300.0
     # Password of the read-only role opspilot_ro (migration 0004) that the agent's tools use.
     readonly_db_password: SecretStr = SecretStr("readonly-change-me")

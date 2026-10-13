@@ -259,8 +259,9 @@ def test_paired_bootstrap_is_seeded_and_zero_for_identical_configs():
 def test_latency_ignores_cache_hits():
     r = run_row()
     r["llm_calls"].append(r["llm_calls"][0] | {"cached": True, "latency_ms": 0.0})
-    lat = ge.latency([r])
-    assert lat["llm_call_ms"] == {"p50": 50.0, "p95": 50.0, "n": 1}
+    lat = ge.latency([r, run_row()])
+    assert lat["llm_call_ms"] == {"p50": 50.0, "p95": 50.0, "n": 2}
+    assert lat["end_to_end_s"]["n"] == 1  # the run with a cache hit is not timed
 
 
 # ---------------------------------------------------------------------- resumable agent stage
@@ -408,3 +409,21 @@ def test_a_cache_replay_keeps_the_measured_latency_and_spend(tmp_path, monkeypat
     second = json.loads(path.read_text())
     assert second["metrics"]["overall"]["gold_all"]["value"] == 1.0
     assert second["latency"] == first["latency"] and second["spend_usd"] == 0.001
+
+
+def test_a_replay_never_inherits_another_configs_latency(tmp_path, monkeypatch):
+    monkeypatch.setattr(ge, "PROGRESS", tmp_path)
+    monkeypatch.setattr(ge, "RESULTS", tmp_path)
+    monkeypatch.setattr(ge, "store", lambda *a: None)
+    path = tmp_path / "dev_generation_verify_off.json"
+    ge.append_jsonl(ge.runs_path("dev", "verify_off"), run_row())
+    ge.write_results([Q], "verify_off", "dev")
+    other = json.loads(path.read_text())
+    other["config"]["draft_effort"] = "something else"  # a file left by another config
+    path.write_text(json.dumps(other))
+    replay = run_row()
+    replay["llm_calls"] = [c | {"cached": True} for c in replay["llm_calls"]]
+    ge.runs_path("dev", "verify_off").write_text(json.dumps(replay) + "\n")
+    ge.write_results([Q], "verify_off", "dev")
+    lat = json.loads(path.read_text())["latency"]
+    assert lat["llm_call_ms"]["n"] == 0 and lat["end_to_end_s"]["n"] == 0

@@ -372,9 +372,8 @@ def generation_section(questions: list[dict]) -> list[str]:
             continue
         for k, unit in (("end_to_end_s", "s"), ("llm_call_ms", "ms"), ("tool_call_ms", "ms")):
             v = lat[k]
-            out.append(
-                f"| {k} | {name} | {v['n']} | {v['p50']:.1f} {unit} | {v['p95']:.1f} {unit} |"
-            )
+            p50, p95 = (f"{v[q]:.1f} {unit}" if v[q] is not None else "-" for q in ("p50", "p95"))
+            out.append(f"| {k} | {name} | {v['n']} | {p50} | {p95} |")
     if on["unjudged"] or off["unjudged"]:
         out += ["", f"Not judged: verify on {on['unjudged']}, verify off {off['unjudged']}."]
     return out
