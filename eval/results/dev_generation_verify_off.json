@@ -1,8 +1,10 @@
 {
- "commit": "8388fbb3cee98db04ccf75a5853210e6a18e333b",
+ "commit": "003dea092b09157daa711a0220cd8f589ef7fe3a",
  "config": {
   "agent_max_tool_calls": 8,
   "as_of": "2026-10-06T14:52:00Z",
+  "draft_effort": "low",
+  "first_look": true,
   "judge_prompt_version": "judge-v1",
   "llm_token_budget": 6000,
   "max_loops": 2,
@@ -50,6 +52,16 @@
     "n": 80,
     "value": 4.775
    },
+   "gold_all": {
+    "den": 80,
+    "n": 80,
+    "value": 0.5375
+   },
+   "gold_frac": {
+    "den": 80,
+    "n": 80,
+    "value": 0.7495833333333334
+   },
    "no_diagnosis": {
     "den": 80,
     "n": 80,
@@ -61,6 +73,9 @@
     "llm_calls": 6.4,
     "n": 80,
     "prompt_tokens": 10478.425,
+    "query_logs": 1.225,
+    "reads_ok": 1.1375,
+    "runs_with_query_logs": 80,
     "tool_calls": 5.6375
    },
    "premise_corrected": {
@@ -91,19 +106,29 @@
     "value": 0.671875
    },
    "citation_b": {
-    "den": 25,
-    "n": 10,
-    "value": 0.96
+    "den": 64,
+    "n": 20,
+    "value": 0.984375
    },
    "completeness": {
-    "den": 28,
-    "n": 10,
-    "value": 0.6428571428571429
+    "den": 56,
+    "n": 20,
+    "value": 0.7142857142857143
    },
    "faithfulness": {
-    "den": 10,
-    "n": 10,
-    "value": 4.6
+    "den": 20,
+    "n": 20,
+    "value": 4.75
+   },
+   "gold_all": {
+    "den": 20,
+    "n": 20,
+    "value": 0.85
+   },
+   "gold_frac": {
+    "den": 20,
+    "n": 20,
+    "value": 0.925
    },
    "no_diagnosis": {
     "den": 20,
@@ -116,12 +141,15 @@
     "llm_calls": 7.15,
     "n": 20,
     "prompt_tokens": 11855.25,
+    "query_logs": 1.05,
+    "reads_ok": 1.5,
+    "runs_with_query_logs": 20,
     "tool_calls": 6.75
    },
    "premise_corrected": {
-    "den": 4,
-    "n": 4,
-    "value": 1.0
+    "den": 7,
+    "n": 7,
+    "value": 0.7142857142857143
    },
    "tool_success": {
     "den": 135,
@@ -129,9 +157,9 @@
     "value": 0.8740740740740741
    },
    "unrecorded_respected": {
-    "den": 3,
-    "n": 3,
-    "value": 0.0
+    "den": 6,
+    "n": 6,
+    "value": 0.5
    },
    "verify_loop": {
     "den": 20,
@@ -146,19 +174,29 @@
     "value": 0.6805555555555556
    },
    "citation_b": {
-    "den": 141,
-    "n": 44,
-    "value": 0.9787234042553191
+    "den": 144,
+    "n": 45,
+    "value": 0.9791666666666666
    },
    "completeness": {
-    "den": 107,
-    "n": 44,
-    "value": 0.7289719626168224
+    "den": 109,
+    "n": 45,
+    "value": 0.7339449541284404
    },
    "faithfulness": {
-    "den": 44,
-    "n": 44,
-    "value": 4.7727272727272725
+    "den": 45,
+    "n": 45,
+    "value": 4.777777777777778
+   },
+   "gold_all": {
+    "den": 45,
+    "n": 45,
+    "value": 0.5333333333333333
+   },
+   "gold_frac": {
+    "den": 45,
+    "n": 45,
+    "value": 0.7222222222222222
    },
    "no_diagnosis": {
     "den": 45,
@@ -171,6 +209,9 @@
     "llm_calls": 6.044444444444444,
     "n": 45,
     "prompt_tokens": 9581.244444444445,
+    "query_logs": 1.3555555555555556,
+    "reads_ok": 0.9555555555555556,
+    "runs_with_query_logs": 45,
     "tool_calls": 5.2
    },
    "premise_corrected": {
@@ -201,19 +242,29 @@
     "value": 0.6756756756756757
    },
    "citation_b": {
-    "den": 95,
-    "n": 25,
-    "value": 0.968421052631579
+    "den": 111,
+    "n": 28,
+    "value": 0.972972972972973
    },
    "completeness": {
-    "den": 67,
-    "n": 25,
-    "value": 0.6567164179104478
+    "den": 77,
+    "n": 28,
+    "value": 0.6753246753246753
    },
    "faithfulness": {
-    "den": 25,
-    "n": 25,
-    "value": 4.72
+    "den": 28,
+    "n": 28,
+    "value": 4.75
+   },
+   "gold_all": {
+    "den": 28,
+    "n": 28,
+    "value": 0.5357142857142857
+   },
+   "gold_frac": {
+    "den": 28,
+    "n": 28,
+    "value": 0.7845238095238096
    },
    "no_diagnosis": {
     "den": 28,
@@ -226,6 +277,9 @@
     "llm_calls": 7.285714285714286,
     "n": 28,
     "prompt_tokens": 12524.964285714286,
+    "query_logs": 1.1071428571428572,
+    "reads_ok": 1.5714285714285714,
+    "runs_with_query_logs": 28,
     "tool_calls": 6.857142857142857
    },
    "premise_corrected": {
@@ -239,9 +293,9 @@
     "value": 0.90625
    },
    "unrecorded_respected": {
-    "den": 0,
-    "n": 0,
-    "value": null
+    "den": 1,
+    "n": 1,
+    "value": 1.0
    },
    "verify_loop": {
     "den": 28,
@@ -256,19 +310,29 @@
     "value": 0.6511627906976745
    },
    "citation_b": {
-    "den": 66,
-    "n": 21,
-    "value": 0.9696969696969697
+    "den": 86,
+    "n": 27,
+    "value": 0.9767441860465116
    },
    "completeness": {
-    "den": 52,
-    "n": 21,
-    "value": 0.7115384615384616
+    "den": 68,
+    "n": 27,
+    "value": 0.7205882352941176
    },
    "faithfulness": {
-    "den": 21,
-    "n": 21,
-    "value": 4.761904761904762
+    "den": 27,
+    "n": 27,
+    "value": 4.777777777777778
+   },
+   "gold_all": {
+    "den": 27,
+    "n": 27,
+    "value": 0.7777777777777778
+   },
+   "gold_frac": {
+    "den": 27,
+    "n": 27,
+    "value": 0.8888888888888888
    },
    "no_diagnosis": {
     "den": 27,
@@ -281,12 +345,15 @@
     "llm_calls": 6.62962962962963,
     "n": 27,
     "prompt_tokens": 10871.25925925926,
+    "query_logs": 1.0,
+    "reads_ok": 1.2592592592592593,
+    "runs_with_query_logs": 27,
     "tool_calls": 5.925925925925926
    },
    "premise_corrected": {
-    "den": 2,
-    "n": 2,
-    "value": 1.0
+    "den": 5,
+    "n": 5,
+    "value": 0.6
    },
    "tool_success": {
     "den": 160,
@@ -294,9 +361,9 @@
     "value": 0.9125
    },
    "unrecorded_respected": {
-    "den": 3,
-    "n": 3,
-    "value": 0.0
+    "den": 5,
+    "n": 5,
+    "value": 0.4
    },
    "verify_loop": {
     "den": 27,
@@ -311,19 +378,29 @@
     "value": 0.671875
    },
    "citation_b": {
-    "den": 291,
-    "n": 86,
-    "value": 0.9759450171821306
+    "den": 320,
+    "n": 93,
+    "value": 0.978125
    },
    "completeness": {
-    "den": 213,
-    "n": 86,
-    "value": 0.7089201877934272
+    "den": 232,
+    "n": 93,
+    "value": 0.7241379310344828
    },
    "faithfulness": {
-    "den": 86,
-    "n": 86,
-    "value": 4.77906976744186
+    "den": 93,
+    "n": 93,
+    "value": 4.795698924731183
+   },
+   "gold_all": {
+    "den": 93,
+    "n": 93,
+    "value": 0.5806451612903226
+   },
+   "gold_frac": {
+    "den": 93,
+    "n": 93,
+    "value": 0.7738351254480287
    },
    "no_diagnosis": {
     "den": 93,
@@ -336,6 +413,9 @@
     "llm_calls": 6.473118279569892,
     "n": 93,
     "prompt_tokens": 10616.247311827958,
+    "query_logs": 1.1935483870967742,
+    "reads_ok": 1.1827956989247312,
+    "runs_with_query_logs": 93,
     "tool_calls": 5.741935483870968
    },
    "premise_corrected": {
@@ -349,9 +429,9 @@
     "value": 0.9456928838951311
    },
    "unrecorded_respected": {
-    "den": 2,
-    "n": 2,
-    "value": 0.0
+    "den": 3,
+    "n": 3,
+    "value": 0.3333333333333333
    },
    "verify_loop": {
     "den": 93,
@@ -366,19 +446,29 @@
     "value": 0.6666666666666666
    },
    "citation_b": {
-    "den": 11,
-    "n": 4,
-    "value": 0.9090909090909091
+    "den": 21,
+    "n": 7,
+    "value": 0.9523809523809523
    },
    "completeness": {
-    "den": 13,
-    "n": 4,
-    "value": 0.6153846153846154
+    "den": 22,
+    "n": 7,
+    "value": 0.5909090909090909
    },
    "faithfulness": {
-    "den": 4,
-    "n": 4,
-    "value": 4.25
+    "den": 7,
+    "n": 7,
+    "value": 4.428571428571429
+   },
+   "gold_all": {
+    "den": 7,
+    "n": 7,
+    "value": 0.8571428571428571
+   },
+   "gold_frac": {
+    "den": 7,
+    "n": 7,
+    "value": 0.9285714285714286
    },
    "no_diagnosis": {
     "den": 7,
@@ -391,12 +481,15 @@
     "llm_calls": 7.571428571428571,
     "n": 7,
     "prompt_tokens": 12581.142857142857,
+    "query_logs": 1.1428571428571428,
+    "reads_ok": 1.5714285714285714,
+    "runs_with_query_logs": 7,
     "tool_calls": 7.428571428571429
    },
    "premise_corrected": {
-    "den": 4,
-    "n": 4,
-    "value": 1.0
+    "den": 7,
+    "n": 7,
+    "value": 0.7142857142857143
    },
    "tool_success": {
     "den": 52,
@@ -404,9 +497,9 @@
     "value": 0.8461538461538461
    },
    "unrecorded_respected": {
-    "den": 1,
-    "n": 1,
-    "value": 0.0
+    "den": 3,
+    "n": 3,
+    "value": 0.6666666666666666
    },
    "verify_loop": {
     "den": 7,
@@ -421,19 +514,29 @@
     "value": 0.6715542521994134
    },
    "citation_b": {
-    "den": 302,
-    "n": 90,
-    "value": 0.9735099337748344
+    "den": 341,
+    "n": 100,
+    "value": 0.9765395894428153
    },
    "completeness": {
-    "den": 226,
-    "n": 90,
-    "value": 0.7035398230088495
+    "den": 254,
+    "n": 100,
+    "value": 0.7125984251968503
    },
    "faithfulness": {
-    "den": 90,
-    "n": 90,
-    "value": 4.7555555555555555
+    "den": 100,
+    "n": 100,
+    "value": 4.77
+   },
+   "gold_all": {
+    "den": 100,
+    "n": 100,
+    "value": 0.6
+   },
+   "gold_frac": {
+    "den": 100,
+    "n": 100,
+    "value": 0.7846666666666667
    },
    "no_diagnosis": {
     "den": 100,
@@ -446,12 +549,15 @@
     "llm_calls": 6.55,
     "n": 100,
     "prompt_tokens": 10753.79,
+    "query_logs": 1.19,
+    "reads_ok": 1.21,
+    "runs_with_query_logs": 100,
     "tool_calls": 5.86
    },
    "premise_corrected": {
-    "den": 4,
-    "n": 4,
-    "value": 1.0
+    "den": 7,
+    "n": 7,
+    "value": 0.7142857142857143
    },
    "tool_success": {
     "den": 586,
@@ -459,9 +565,9 @@
     "value": 0.9368600682593856
    },
    "unrecorded_respected": {
-    "den": 3,
-    "n": 3,
-    "value": 0.0
+    "den": 6,
+    "n": 6,
+    "value": 0.5
    },
    "verify_loop": {
     "den": 100,
@@ -520,6 +626,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -588,6 +702,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.0,
      1
     ],
     "no_diagnosis": [
@@ -660,6 +782,14 @@
     ],
     "faithfulness": [
      3,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -742,6 +872,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -808,6 +946,14 @@
     ],
     "faithfulness": [
      2,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -882,6 +1028,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -952,6 +1106,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -1030,6 +1192,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1104,6 +1274,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.3333333333333333,
      1
     ],
     "no_diagnosis": [
@@ -1186,6 +1364,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1258,6 +1444,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.6666666666666666,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1326,6 +1520,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1388,6 +1590,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.0,
      1
     ],
     "no_diagnosis": [
@@ -1466,6 +1676,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1540,6 +1758,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -1622,6 +1848,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1694,6 +1928,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1760,6 +2002,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -1832,6 +2082,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -1910,6 +2168,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -1982,6 +2248,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2048,6 +2322,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -2124,6 +2406,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -2206,6 +2496,14 @@
      4,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2280,6 +2578,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -2358,6 +2664,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2434,6 +2748,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2502,6 +2824,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2568,6 +2898,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -2646,6 +2984,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2716,6 +3062,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -2792,6 +3146,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -2874,6 +3236,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -2950,6 +3320,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3020,6 +3398,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -3102,6 +3488,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3178,6 +3572,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3244,6 +3646,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -3330,6 +3740,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3408,6 +3826,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -3494,6 +3920,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3578,6 +4012,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3654,6 +4096,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.8333333333333334,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3728,6 +4178,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -3814,6 +4272,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -3880,6 +4346,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -3960,6 +4434,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -4046,6 +4528,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4120,6 +4610,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.3333333333333333,
      1
     ],
     "no_diagnosis": [
@@ -4206,6 +4704,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4278,6 +4784,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4348,6 +4862,14 @@
     ],
     "faithfulness": [
      3,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -4430,6 +4952,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4506,6 +5036,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4580,6 +5118,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -4670,6 +5216,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4746,6 +5300,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4820,6 +5382,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -4902,6 +5472,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.8,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -4980,6 +5558,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -5062,6 +5648,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5138,6 +5732,14 @@
      4,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5212,6 +5814,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -5298,6 +5908,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5372,6 +5990,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -5450,6 +6076,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5524,6 +6158,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -5606,6 +6248,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5682,6 +6332,14 @@
      4,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5748,6 +6406,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.0,
      1
     ],
     "no_diagnosis": [
@@ -5822,6 +6488,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -5892,6 +6566,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -5974,6 +6656,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6048,6 +6738,14 @@
     ],
     "faithfulness": [
      3,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -6134,6 +6832,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6218,6 +6924,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6288,6 +7002,14 @@
     ],
     "faithfulness": [
      3,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -6374,6 +7096,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6446,6 +7176,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6516,6 +7254,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -6596,6 +7342,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -6686,6 +7440,14 @@
      4,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6712,7 +7474,55 @@
    "cost_usd": 0.00323685,
    "dropped_claims": 0,
    "id": "H007",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     },
+     {
+      "claim": 6,
+      "supported": true
+     },
+     {
+      "claim": 7,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 8,
    "loops": 0,
    "prompt_tokens": 14979,
@@ -6721,9 +7531,26 @@
      5,
      7
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     7,
+     7
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6747,7 +7574,47 @@
    "cost_usd": 0.003141,
    "dropped_claims": 0,
    "id": "H008",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 8,
    "loops": 0,
    "prompt_tokens": 15620,
@@ -6756,9 +7623,26 @@
      3,
      5
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     5,
+     5
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6782,7 +7666,47 @@
    "cost_usd": 0.0029259,
    "dropped_claims": 0,
    "id": "H009",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": true
+     },
+     {
+      "fact": 4,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": true
+   },
    "llm_calls": 8,
    "loops": 0,
    "prompt_tokens": 13742,
@@ -6791,9 +7715,26 @@
      3,
      4
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     3,
+     4
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6803,7 +7744,10 @@
      6,
      8
     ],
-    "unrecorded_respected": null,
+    "unrecorded_respected": [
+     1,
+     1
+    ],
     "verify_loop": [
      0,
      1
@@ -6862,6 +7806,14 @@
      5,
      1
     ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6885,7 +7837,35 @@
    "cost_usd": 0.00269835,
    "dropped_claims": 0,
    "id": "H015",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 8,
    "loops": 0,
    "prompt_tokens": 12641,
@@ -6894,9 +7874,26 @@
      2,
      3
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -6920,7 +7917,43 @@
    "cost_usd": 0.0029535,
    "dropped_claims": 0,
    "id": "H018",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": false,
+    "unrecorded_respected": true
+   },
    "llm_calls": 8,
    "loops": 0,
    "prompt_tokens": 12898,
@@ -6929,19 +7962,42 @@
      2,
      4
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     1,
+     3
+    ],
+    "faithfulness": [
+     4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
     ],
-    "premise_corrected": null,
+    "premise_corrected": [
+     0,
+     1
+    ],
     "tool_success": [
      6,
      8
     ],
-    "unrecorded_respected": null,
+    "unrecorded_respected": [
+     1,
+     1
+    ],
     "verify_loop": [
      0,
      1
@@ -6998,6 +8054,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -7071,6 +8135,14 @@
      4,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7094,7 +8166,39 @@
    "cost_usd": 0.0026865,
    "dropped_claims": 0,
    "id": "H023",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": true,
+    "unrecorded_respected": true
+   },
    "llm_calls": 8,
    "loops": 0,
    "prompt_tokens": 13378,
@@ -7103,19 +8207,42 @@
      2,
      3
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
     ],
-    "premise_corrected": null,
+    "premise_corrected": [
+     1,
+     1
+    ],
     "tool_success": [
      6,
      8
     ],
-    "unrecorded_respected": null,
+    "unrecorded_respected": [
+     1,
+     1
+    ],
     "verify_loop": [
      0,
      1
@@ -7176,6 +8303,14 @@
     ],
     "faithfulness": [
      4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -7252,6 +8387,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7278,7 +8421,47 @@
    "cost_usd": 0.0018519,
    "dropped_claims": 0,
    "id": "H029",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 5,
    "loops": 0,
    "prompt_tokens": 7174,
@@ -7287,9 +8470,26 @@
      2,
      5
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     5,
+     5
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7366,6 +8566,14 @@
      5,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7389,7 +8597,31 @@
    "cost_usd": 0.00159075,
    "dropped_claims": 0,
    "id": "H034",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 5,
    "loops": 0,
    "prompt_tokens": 6821,
@@ -7398,9 +8630,26 @@
      1,
      2
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     2,
+     2
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7467,6 +8716,14 @@
     ],
     "faithfulness": [
      5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -7548,6 +8805,14 @@
      4,
      1
     ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7574,7 +8839,35 @@
    "cost_usd": 0.0016374,
    "dropped_claims": 0,
    "id": "H039",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 5,
    "loops": 0,
    "prompt_tokens": 7416,
@@ -7583,9 +8876,26 @@
      2,
      3
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
@@ -7609,7 +8919,39 @@
    "cost_usd": 0.00294645,
    "dropped_claims": 0,
    "id": "H040",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": false,
+    "unrecorded_respected": null
+   },
    "llm_calls": 8,
    "loops": 0,
    "prompt_tokens": 15047,
@@ -7618,14 +8960,34 @@
      0,
      3
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     1,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
     "no_diagnosis": [
      0,
      1
     ],
-    "premise_corrected": null,
+    "premise_corrected": [
+     0,
+     1
+    ],
     "tool_success": [
      8,
      8
@@ -7644,17 +9006,6 @@
  "spend_usd": 0,
  "split": "dev",
  "uncommitted_changes": [],
- "unjudged": [
-  "H007",
-  "H008",
-  "H009",
-  "H015",
-  "H018",
-  "H023",
-  "H029",
-  "H034",
-  "H039",
-  "H040"
- ],
+ "unjudged": [],
  "wall_s_total": 11.5
 }
