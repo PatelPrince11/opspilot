@@ -57,6 +57,8 @@ ARMS = {
     "arm_a": {"draft_effort": None},  # draft reasoning effort back to the provider default
     "arm_b": {"first_look": False},  # no first look
     "arm_c": {"max_tool_calls": 10},  # first look on, tool-call cap 10
+    # 3b.3: default draft effort, first look only for live incidents (in the graph), cap 8
+    "arm_d": {"draft_effort": None},
 }
 CONFIGS = {"verify_on": (True, {}), "verify_off": (False, {})} | {
     f"{arm}_{v}": (v == "on", over) for arm, over in ARMS.items() for v in ("on", "off")
@@ -131,6 +133,7 @@ def run_one(q: dict, config: str, spec: str) -> dict:
     return {
         "id": q["id"],
         "verify_enabled": verify,
+        "triage": final["triage"],
         "diagnosis": d,
         "cited_evidence": {x: ev[x] for x in sorted(cited) if x in ev},
         "evidence_count": len(ev),
@@ -716,7 +719,7 @@ def ablation_report(questions: list[dict], split: str = "dev") -> str:
         out.append(f"| {k} per run |" + " | ".join(cells) + " |")
     p95 = [data[v]["lat"]["end_to_end_s"]["p95"] for v in names]
     out.append("| end-to-end p95 s | " + " | ".join(f"{x:.1f}" if x else "-" for x in p95) + " |")
-    for ref in ("3b.1", "old (3b)"):
+    for ref in ("3b.1", "old (3b)", "ARM A", "ARM B"):
         others = [v for v in names if v != ref]
         out += [
             "",
