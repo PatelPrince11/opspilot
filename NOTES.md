@@ -2959,6 +2959,8 @@ on deterministic metrics (gold-doc coverage, first-draft citation (a)), which th
   completeness -0.019 [-0.056, +0.018], faithfulness -0.011 [-0.080, +0.046]: no claimable
   difference, as before. Still unjudged: Q156, Q158, Q159, H001, H002, H007, H008, H009, H018,
   H026, H029, H030, H038; `make gen-eval` finishes them after the quota resets.
+- Retry (Phase 4 Part B step 0, one attempt): Q158 and H002 judged; the other 11 got 429 again
+  (Q156, Q159, H001, H007, H008, H009, H018, H026, H029, H030, H038). Verify-off judged n 89.
 - **Judge verdict** (from the judge validation entry): the judge **failed validation on claim
   support** (kappa -0.05) and is **moderate on completeness** (kappa 0.47, 71% agreement, more
   lenient than Prince). So citation (b) is context only, never a headline number. **Resume

@@ -1,5 +1,5 @@
 {
- "commit": "a6cbcb989eb8aad3279a74a4c8982b4dd8e44f6a",
+ "commit": "8095cae6f3508643203539976b46a56a9be06ea6",
  "config": {
   "agent_max_tool_calls": 8,
   "as_of": "2026-10-06T14:52:00Z",
@@ -38,19 +38,19 @@
     "value": 0.8029739776951673
    },
    "citation_b": {
-    "den": 254,
-    "n": 77,
-    "value": 0.9724409448818898
+    "den": 259,
+    "n": 78,
+    "value": 0.9691119691119691
    },
    "completeness": {
-    "den": 190,
-    "n": 77,
-    "value": 0.6789473684210526
+    "den": 192,
+    "n": 78,
+    "value": 0.6822916666666666
    },
    "faithfulness": {
-    "den": 77,
-    "n": 77,
-    "value": 4.740259740259741
+    "den": 78,
+    "n": 78,
+    "value": 4.730769230769231
    },
    "gold_all": {
     "den": 80,
@@ -106,19 +106,19 @@
     "value": 0.6981132075471698
    },
    "citation_b": {
-    "den": 21,
-    "n": 10,
-    "value": 0.9523809523809523
+    "den": 24,
+    "n": 11,
+    "value": 0.9583333333333334
    },
    "completeness": {
-    "den": 25,
-    "n": 10,
-    "value": 0.56
+    "den": 29,
+    "n": 11,
+    "value": 0.6206896551724138
    },
    "faithfulness": {
-    "den": 10,
-    "n": 10,
-    "value": 4.8
+    "den": 11,
+    "n": 11,
+    "value": 4.818181818181818
    },
    "gold_all": {
     "den": 20,
@@ -147,9 +147,9 @@
     "tool_calls": 5.85
    },
    "premise_corrected": {
-    "den": 3,
-    "n": 3,
-    "value": 0.6666666666666666
+    "den": 4,
+    "n": 4,
+    "value": 0.75
    },
    "tool_success": {
     "den": 117,
@@ -242,19 +242,19 @@
     "value": 0.7757009345794392
    },
    "citation_b": {
-    "den": 83,
-    "n": 23,
-    "value": 0.9879518072289156
+    "den": 91,
+    "n": 25,
+    "value": 0.978021978021978
    },
    "completeness": {
-    "den": 61,
-    "n": 23,
-    "value": 0.5901639344262295
+    "den": 67,
+    "n": 25,
+    "value": 0.6268656716417911
    },
    "faithfulness": {
-    "den": 23,
-    "n": 23,
-    "value": 4.782608695652174
+    "den": 25,
+    "n": 25,
+    "value": 4.76
    },
    "gold_all": {
     "den": 28,
@@ -283,9 +283,9 @@
     "tool_calls": 6.5
    },
    "premise_corrected": {
-    "den": 0,
-    "n": 0,
-    "value": null
+    "den": 1,
+    "n": 1,
+    "value": 1.0
    },
    "tool_success": {
     "den": 182,
@@ -378,19 +378,19 @@
     "value": 0.7987012987012987
    },
    "citation_b": {
-    "den": 268,
-    "n": 84,
-    "value": 0.9738805970149254
+    "den": 273,
+    "n": 85,
+    "value": 0.9706959706959707
    },
    "completeness": {
-    "den": 206,
-    "n": 84,
-    "value": 0.6844660194174758
+    "den": 208,
+    "n": 85,
+    "value": 0.6875
    },
    "faithfulness": {
-    "den": 84,
-    "n": 84,
-    "value": 4.761904761904762
+    "den": 85,
+    "n": 85,
+    "value": 4.752941176470588
    },
    "gold_all": {
     "den": 93,
@@ -446,19 +446,19 @@
     "value": 0.5
    },
    "citation_b": {
-    "den": 7,
-    "n": 3,
-    "value": 0.8571428571428571
+    "den": 10,
+    "n": 4,
+    "value": 0.9
    },
    "completeness": {
-    "den": 9,
-    "n": 3,
-    "value": 0.2222222222222222
+    "den": 13,
+    "n": 4,
+    "value": 0.46153846153846156
    },
    "faithfulness": {
-    "den": 3,
-    "n": 3,
-    "value": 4.333333333333333
+    "den": 4,
+    "n": 4,
+    "value": 4.5
    },
    "gold_all": {
     "den": 7,
@@ -487,9 +487,9 @@
     "tool_calls": 7.0
    },
    "premise_corrected": {
-    "den": 3,
-    "n": 3,
-    "value": 0.6666666666666666
+    "den": 4,
+    "n": 4,
+    "value": 0.75
    },
    "tool_success": {
     "den": 49,
@@ -514,19 +514,19 @@
     "value": 0.7857142857142857
    },
    "citation_b": {
-    "den": 275,
-    "n": 87,
-    "value": 0.9709090909090909
+    "den": 283,
+    "n": 89,
+    "value": 0.9681978798586572
    },
    "completeness": {
-    "den": 215,
-    "n": 87,
-    "value": 0.6651162790697674
+    "den": 221,
+    "n": 89,
+    "value": 0.6742081447963801
    },
    "faithfulness": {
-    "den": 87,
-    "n": 87,
-    "value": 4.747126436781609
+    "den": 89,
+    "n": 89,
+    "value": 4.741573033707865
    },
    "gold_all": {
     "den": 100,
@@ -555,9 +555,9 @@
     "tool_calls": 4.79
    },
    "premise_corrected": {
-    "den": 3,
-    "n": 3,
-    "value": 0.6666666666666666
+    "den": 4,
+    "n": 4,
+    "value": 0.75
    },
    "tool_success": {
     "den": 479,
@@ -7026,7 +7026,43 @@
    "cost_usd": 0.00248865,
    "dropped_claims": 0,
    "id": "Q158",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": false
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 5,
    "loops": 0,
    "prompt_tokens": 7611,
@@ -7035,9 +7071,18 @@
      2,
      5
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     4,
+     5
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     4,
+     1
+    ],
     "gold_all": [
      0,
      1
@@ -7155,7 +7200,43 @@
    "cost_usd": 0.0041727,
    "dropped_claims": 0,
    "id": "H002",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     },
+     {
+      "fact": 4,
+      "present": true
+     }
+    ],
+    "premise_corrected": true,
+    "unrecorded_respected": null
+   },
    "llm_calls": 10,
    "loops": 0,
    "prompt_tokens": 17934,
@@ -7164,9 +7245,18 @@
      0,
      3
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     4,
+     4
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      0,
      1
@@ -7179,7 +7269,10 @@
      0,
      1
     ],
-    "premise_corrected": null,
+    "premise_corrected": [
+     1,
+     1
+    ],
     "tool_success": [
      5,
      8
@@ -8346,10 +8439,8 @@
  "uncommitted_changes": [],
  "unjudged": [
   "Q156",
-  "Q158",
   "Q159",
   "H001",
-  "H002",
   "H007",
   "H008",
   "H009",
