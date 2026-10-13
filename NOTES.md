@@ -2674,6 +2674,62 @@ not again on a verify loop; repeated read refused with ids (two spellings), list
 across a loop; draft at low effort, empty reply retried at low (draft and triage); reasoning
 effort reaches openrouter and groq only, and is in the cache key only when set; ledger flags.
 
+## 2026-10-13: Phase 3b.1, dev generation results after the fixes
+
+Same 100 dev questions, same judge (gemini-3.5-flash-lite, judge-v1), concurrency 3, code
+8388fbb. Old = Phase 3b (code b25000c). Verify on unless marked.
+
+| | old | new | new - old, paired [95% CI] |
+|---|---|---|---|
+| tool-call success | 0.677 (601 calls) | 0.899 (694) | +0.222 [+0.181, +0.261] |
+| read_document repeats refused / reads | 124 / 327 | 32 / 185 | |
+| query_logs calls (runs using it) | 8 (6 of 100) | 138 (100 of 100) | |
+| unrecorded respected | 2/6 | 3/6 | n 6: no claim |
+| premise corrected | 6/7 | 5/7 | n 7: no claim |
+| no-diagnosis runs | 2/100 | 0/100 | |
+| first-draft citation (a) failures (verify off) | 0.237 (333 claims) | 0.328 (341) | (a) -0.091 [-0.170, -0.014] |
+| citation (b), verify on | 0.974 (270) | 0.954 (238) | -0.015 [-0.051, +0.019], n 89 |
+| completeness, verify on | 0.732 (254 facts) | 0.657 (254) | -0.075 [-0.154, +0.004] |
+| completeness, verify off | 0.783 (254) | 0.704 (226, n 90) | -0.084 [-0.162, -0.004], n 90 |
+| faithfulness, verify on | 4.77 | 4.59 | -0.18 [-0.41, +0.04] |
+| cost per run, verify on | $0.0044 | $0.0037 | |
+| tokens per run, verify on | 15,643 / 4,248 | 15,815 / 2,891 | |
+| end to end p50 / p95, verify on | 12.0 / 25.9 s | 8.4 / 13.4 s | |
+
+Verify on vs off (new): citation (a) +0.298 [+0.242, +0.359], n 91, claimable; citation (b)
+-0.016 [-0.045, +0.009]; completeness -0.040 [-0.082, +0.000]; faithfulness -0.18 [-0.36,
+-0.02] (context only, see 3b.1 item 5).
+
+- What worked: tool success, repeats (124 -> 32), logs (every run now looks at logs), no
+  fallback diagnoses, cheaper and faster runs (low draft effort: completion tokens -32%).
+- What got worse: first drafts quote less exactly (failures 23.7% -> 32.8%, CI excludes 0) and
+  completeness fell (verify off CI excludes 0 by a hair; verify on touches 0). Four changes went
+  in together, so the cause is not separable from this run. Candidates: the low draft effort
+  (copying quotes and stating facts exactly may need the reasoning), first look taking 2 of the
+  8 calls (reads fell from 327 to 185; runs at the cap 58 -> 64), and more evidence competing for
+  the draft prompt (drafts that dropped evidence lines: 50 of 163 -> 62 of 203). An ablation
+  (DRAFT_EFFORT back to the default; AGENT_FIRST_LOOK off) would separate them at about $0.35
+  per config. Not run: Prince decides.
+- Correction to the 3b entry: of 327 read_document calls, 124 were refused repeats and 51 asked
+  for a part that does not exist (175 failed reads in all), not 175 repeats.
+- Gemini's daily quota ran out while judging verify off: 10 answers unjudged (H007, H008, H009,
+  H015, H018, H023, H029, H034, H039, H040; retry-after about 23 h), so verify off's judged
+  metrics have n 90 and its author=gemini slice n 10. Root cause: the judge counted requests per
+  UTC day (147 on the 12th, 165 on the 13th), but Google resets at midnight Pacific, so both
+  counts fell into one quota day, along with Gemini calls the counter cannot see (Gemini as the
+  agent in 3a.6). The limiter now counts Pacific days (f7cb0b3). `make gen-eval` judges the 10
+  once the quota resets; everything else is cached.
+- Demo smoke after the fixes (one run, report only): 0/9 key facts (1 partial: it names the
+  misspelled pool_mode as why pgbouncer failed to load, without "transction" or exit status 1,
+  and without separating pgbouncer-01 from -02), 0 forbidden claims, logs queried twice (first
+  look on payments-api WARN+, then payments-pgbouncer ERROR), 8/8 calls ok, 1 loop, $0.0038. In
+  3a.6 gpt-oss stopped at "payments-pgbouncer degraded".
+- eval/judge_validation.md regenerated from the new verify-on answers: the same 30 questions
+  (seeded, stratified), 160 blanks.
+- Spend: eval $0.3290 + demo $0.0038 + checks; OpenRouter account total $0.8056 (cap $2 for this
+  phase, $5 credit). Time: verify-on agent 4.6 min, judge 6.6 min; verify-off agent 4 s (cache),
+  judge 4.1 min until the quota stopped it.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
