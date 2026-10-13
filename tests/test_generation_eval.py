@@ -313,8 +313,8 @@ def test_sheet_round_trip_agreement_and_kappa(tmp_path, monkeypatch):
     text = ge.sheet([Q])
     assert "SUPPORTED Q900 C4: ___" in text and "PRESENT Q900 K2: ___" in text
     assert "> `RB-404#0` (not gathered)" in text and "supported" not in text.split("## 1.")[1]
-    results = {"questions": [{"id": "Q900", "judge": VERDICT}]}
-    assert ge.agreement(text, results)["blank"] == 6
+    results = {"split": "dev", "commit": "c" * 40, "questions": [{"id": "Q900", "judge": VERDICT}]}
+    assert ge.agreement_report(text, results, [Q])["blank"] == 6
     # Prince: C1 yes, C2 yes, C3 yes (judge no), C4 no; K1 yes, K2 no -> 5 of 6 agree.
     filled = text
     for mark, val in [
@@ -326,10 +326,28 @@ def test_sheet_round_trip_agreement_and_kappa(tmp_path, monkeypatch):
         ("K2", "no"),
     ]:
         filled = filled.replace(f"Q900 {mark}: ___", f"Q900 {mark}: {val}")
-    a = ge.agreement(filled, results)
-    assert a["blank"] == 0 and a["all"]["n"] == 6 and a["all"]["agreement"] == pytest.approx(5 / 6)
-    assert a["claims"]["agreement"] == 0.75 and a["key_facts"]["agreement"] == 1.0
-    assert a["key_facts"]["kappa"] == 1.0
+    a = ge.agreement_report(filled, results, [Q])
+    o = a["overall"]
+    assert a["blank"] == 0 and o["all"]["n"] == 6 and o["all"]["agreement"] == pytest.approx(5 / 6)
+    assert o["claims"]["agreement"] == 0.75 and o["key_facts"]["agreement"] == 1.0
+    assert o["key_facts"]["kappa"] == 1.0
+    # Judge: C1, C2 supported; C3, C4 not. Prince: C1-C3 yes, C4 no.
+    assert o["claims"]["table"] == {
+        "prince_yes_judge_yes": 2,
+        "prince_yes_judge_no": 1,
+        "prince_no_judge_yes": 0,
+        "prince_no_judge_no": 1,
+    }
+    assert o["claims"]["prince_yes_judge_no"] == 1 and o["claims"]["prince_no_judge_yes"] == 0
+    assert a["disagreements"] == [{"id": "Q900", "item": "C3", "prince": True, "judge": False}]
+    assert a["by"]["author=claude"]["claims"]["n"] == 4
+    assert a["sensitivity"]["citation_b"] == {
+        "n_items": 4,
+        "n_questions": 1,
+        "judge": 0.5,
+        "prince": 0.75,
+    }
+    assert a["sensitivity"]["completeness"]["judge"] == a["sensitivity"]["completeness"]["prince"]
 
 
 def test_kappa_known_values():
@@ -427,3 +445,22 @@ def test_a_replay_never_inherits_another_configs_latency(tmp_path, monkeypatch):
     ge.write_results([Q], "verify_off", "dev")
     lat = json.loads(path.read_text())["latency"]
     assert lat["llm_call_ms"]["n"] == 0 and lat["end_to_end_s"]["n"] == 0
+
+
+def test_kappa_ci_resamples_questions_and_is_seeded():
+    items = [{"id": f"q{i}", "prince": i % 3 != 0, "judge": i % 2 == 0} for i in range(30)]
+    ci = ge.kappa_ci(items)
+    assert (
+        ci == ge.kappa_ci(items)
+        and ci[0] <= ge.kappa([(i["prince"], i["judge"]) for i in items]) <= ci[1]
+    )
+    assert ge.kappa_ci([{"id": "a", "prince": True, "judge": True}]) is None  # pe = 1 always
+
+
+def test_ledger_rule_by_kappa():
+    from scripts.results import kappa_rule
+
+    assert kappa_rule(-0.05).startswith("unreliable")
+    assert kappa_rule(0.47).startswith("moderate")
+    assert kappa_rule(0.7).startswith("report normally")
+    assert kappa_rule(None) == "not validated"

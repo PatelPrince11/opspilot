@@ -182,6 +182,44 @@ Per slice, verify off (value (denominator)):
 
 Not judged: verify on [], verify off ['Q073', 'Q117', 'Q118', 'Q125', 'Q126', 'Q132', 'Q138', 'Q146', 'Q156', 'Q158', 'Q159', 'H001', 'H002', 'H007', 'H008', 'H009', 'H018', 'H026', 'H029', 'H030', 'H038'].
 
+## (c2) Judge validation (Prince's 30 hand labels)
+
+Prince's labels (`eval/prince_labels.txt`) against the judge's verdicts on the same 30 verify-on dev answers (`eval/results/dev_generation_verify_on.json`, commit e69bfe87e354). Kappa CI: 95% percentile bootstrap resampling questions, 10,000 resamples, seed 20261003. Prince marked 'no' when unsure, so key-fact presence is a strict standard; the disagreement pattern is reported, not corrected.
+
+| items | n items (questions) | agreement | Cohen's kappa [95% CI] | Prince yes rate | judge yes rate |
+|---|---|---|---|---|---|
+| claim support | 87 (29) | 0.874 | -0.053 [-0.103, +0.000] | 0.908 | 0.966 |
+| key-fact presence | 77 (30) | 0.714 | +0.471 [+0.283, +0.667] | 0.377 | 0.662 |
+| both | 164 (30) | 0.799 | +0.494 [+0.327, +0.646] | 0.659 | 0.823 |
+
+| 2x2, Prince x judge | judge yes | judge no |
+|---|---|---|
+| claim support: Prince yes | 76 | 3 |
+| claim support: Prince no | 8 | 0 |
+| key-fact presence: Prince yes | 29 | 0 |
+| key-fact presence: Prince no | 22 | 26 |
+
+| slice | items | n items (questions) | agreement | kappa |
+|---|---|---|---|---|
+| author=claude | claims | 75 (23) | 0.867 | -0.059 |
+| author=claude | key_facts | 59 (24) | 0.763 | +0.541 |
+| author=gemini | claims | 12 (6) | 0.917 | +0.000 |
+| author=gemini | key_facts | 18 (6) | 0.556 | +0.182 |
+| difficulty=exact-token | claims | 33 (12) | 0.818 | -0.053 |
+| difficulty=exact-token | key_facts | 32 (13) | 0.688 | +0.429 |
+| difficulty=multi-doc | claims | 25 (8) | 0.960 | +0.000 |
+| difficulty=multi-doc | key_facts | 22 (8) | 0.727 | +0.476 |
+| difficulty=paraphrase | claims | 29 (9) | 0.862 | -0.074 |
+| difficulty=paraphrase | key_facts | 23 (9) | 0.739 | +0.504 |
+
+| judged metric on these 30 answers | from the judge | from Prince's labels | n items (questions) | rule (by kappa) |
+|---|---|---|---|---|
+| citation (b) | 0.966 | 0.908 | 87 (29) | unreliable: lean on deterministic metrics |
+| completeness | 0.662 | 0.377 | 77 (30) | moderate: report with the agreement beside it |
+| faithfulness, premise corrected, unrecorded respected | - | - | 0 | not validated: no hand labels |
+
+Disagreements: 33 of 164 items. Claims: Prince no / judge yes 8, Prince yes / judge no 3. Key facts: Prince no / judge yes 22, Prince yes / judge no 0. Full list: eval/results/judge_agreement.json.
+
 ## (d) Not measured yet
 
 | metric | status |
@@ -190,7 +228,6 @@ Not judged: verify on [], verify off ['Q073', 'Q117', 'Q118', 'Q125', 'Q126', 'Q
 | Attack success before defenses, held-out half (15) | not measured yet (Phase 4) |
 | Attack success after defenses, tune half (15) | not measured yet (Phase 4) |
 | Attack success after defenses, held-out half (15) | not measured yet (Phase 4) |
-| Judge agreement with Prince's 30 hand labels | not measured yet (Phase 3) |
 | p50 / p95 latency, end to end per investigation | not measured yet (Phase 4) |
 | p50 / p95 latency, retrieval on EC2 | not measured yet (Phase 5) |
 | Tokens per investigation (input / output) | not measured yet (Phase 4) |

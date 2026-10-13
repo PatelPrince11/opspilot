@@ -66,6 +66,8 @@ CONFIGS = {"verify_on": (True, {}), "verify_off": (False, {})} | {
 PROGRESS = ROOT / ".cache" / "gen_eval"
 SHEET = ROOT / "eval" / "judge_validation.md"
 SHEET_N = 30
+LABELS = ROOT / "eval" / "prince_labels.txt"  # Prince's marks, copied from the filled sheet
+AGREEMENT = ROOT / "eval" / "results" / "judge_agreement.json"
 ABLATION = ROOT / "eval" / "results" / "dev_generation_ablation.md"
 NO_DIAGNOSIS = "No valid diagnosis was produced."
 METRICS = (
@@ -597,40 +599,6 @@ def kappa(pairs: list[tuple[bool, bool]]) -> float | None:
     return None if pe == 1 else (po - pe) / (1 - pe)
 
 
-def agreement(text: str, results: dict) -> dict:
-    judged = {r["id"]: r["judge"] for r in results["questions"]}
-    pairs = {"claims": [], "key_facts": []}
-    blank = missing = 0
-    for _kind, qid, ck, num, val in LABEL.findall(text):
-        if val == "___":
-            blank += 1
-            continue
-        v = judged.get(qid)
-        if v is None:
-            missing += 1
-            continue
-        key, field, idx = (
-            ("claims", "supported", "claim")
-            if ck.upper() == "C"
-            else ("key_facts", "present", "fact")
-        )
-        jl = {x[idx]: x[field] for x in v[key]}
-        if int(num) not in jl:
-            missing += 1
-            continue
-        pairs[key].append((val.lower() == "yes", jl[int(num)]))
-    out = {"blank": blank, "not_judged": missing}
-    for k, ps in [*pairs.items(), ("all", pairs["claims"] + pairs["key_facts"])]:
-        out[k] = {
-            "n": len(ps),
-            "agreement": sum(a == b for a, b in ps) / len(ps) if ps else None,
-            "kappa": kappa(ps),
-            "prince_yes": sum(a for a, _ in ps),
-            "judge_yes": sum(b for _, b in ps),
-        }
-    return out
-
-
 # ---------------------------------------------------------------------- 3b.2 ablation report
 
 ABLATION_ROWS = [  # (metric, config, sign): sign -1 = first-draft failure = 1 - citation (a)
@@ -748,6 +716,146 @@ def ablation_report(questions: list[dict], split: str = "dev") -> str:
     return "\n".join(out) + "\n"
 
 
+def table2x2(pairs: list[tuple[bool, bool]]) -> dict:
+    """Prince (first) x judge (second) counts."""
+    return {
+        f"prince_{'yes' if a else 'no'}_judge_{'yes' if b else 'no'}": sum(
+            (x, y) == (a, b) for x, y in pairs
+        )
+        for a in (True, False)
+        for b in (True, False)
+    }
+
+
+def agree_stats(items: list[dict]) -> dict:
+    pairs = [(i["prince"], i["judge"]) for i in items]
+    n = len(pairs)
+    return {
+        "n": n,
+        "questions": len({i["id"] for i in items}),
+        "agreement": sum(a == b for a, b in pairs) / n if n else None,
+        "kappa": kappa(pairs),
+        "table": table2x2(pairs),
+        "prince_yes_rate": sum(a for a, _ in pairs) / n if n else None,
+        "judge_yes_rate": sum(b for _, b in pairs) / n if n else None,
+    }
+
+
+def kappa_ci(items: list[dict], seed: int = SEED) -> list[float] | None:
+    """95% percentile bootstrap of kappa, resampling questions (their items stay together)."""
+    by_q = defaultdict(list)
+    for i in items:
+        by_q[i["id"]].append((i["prince"], i["judge"]))
+    ids, rng, ks = sorted(by_q), random.Random(seed), []
+    for _ in range(RESAMPLES):
+        k = kappa([p for q in rng.choices(ids, k=len(ids)) for p in by_q[q]])
+        if k is not None:
+            ks.append(k)
+    if not ks:
+        return None
+    ks.sort()
+    return [ks[int(0.025 * len(ks))], ks[int(0.975 * len(ks)) - 1]]
+
+
+def agreement_report(text: str, results: dict, questions: list[dict]) -> dict:
+    """Prince's labels vs the judge's verdicts on the same verify-on answers. Labels are read,
+    never changed; an item the judge did not grade is counted and left out."""
+    judged = {r["id"]: r["judge"] for r in results["questions"]}
+    by_id = {q["id"]: q for q in questions}
+    items, not_judged, blank = [], [], 0
+    for _kind, qid, ck, num, val in LABEL.findall(text):
+        if val == "___":
+            blank += 1
+            continue
+        claim = ck.upper() == "C"
+        v = judged.get(qid)
+        key, field, idx = (
+            ("claims", "supported", "claim") if claim else ("key_facts", "present", "fact")
+        )
+        jl = {x[idx]: x[field] for x in v[key]} if v else {}
+        if int(num) not in jl:
+            not_judged.append(f"{qid} {ck}{num}")
+            continue
+        q = by_id[qid]
+        items.append(
+            {
+                "id": qid,
+                "item": f"{ck.upper()}{num}",
+                "kind": "claims" if claim else "key_facts",
+                "prince": val.lower() == "yes",
+                "judge": jl[int(num)],
+                "author": q["author"],
+                "difficulty": q["difficulty"],
+            }
+        )
+
+    def block(sel: list[dict]) -> dict:
+        out = {}
+        for kind in ("claims", "key_facts", "all"):
+            sub = [i for i in sel if kind == "all" or i["kind"] == kind]
+            out[kind] = agree_stats(sub)
+        return out
+
+    report = {
+        "labels_file": "eval/prince_labels.txt",
+        "results_file": f"eval/results/{results['split']}_generation_verify_on.json",
+        "results_commit": results.get("commit"),
+        "blank": blank,
+        "not_judged": not_judged,
+        "overall": block(items),
+        "by": {
+            f"{dim}={v}": block([i for i in items if i[dim] == v])
+            for dim in ("author", "difficulty")
+            for v in sorted({i[dim] for i in items})
+        },
+        "disagreements": [
+            {k: i[k] for k in ("id", "item", "prince", "judge")}
+            for i in items
+            if i["prince"] != i["judge"]
+        ],
+    }
+    for kind in ("claims", "key_facts", "all"):
+        sel = [i for i in items if kind == "all" or i["kind"] == kind]
+        report["overall"][kind]["kappa_ci95"] = kappa_ci(sel)
+    for kind in ("claims", "key_facts"):
+        sel = [i for i in items if i["kind"] == kind]
+        report["overall"][kind]["prince_no_judge_yes"] = sum(
+            not i["prince"] and i["judge"] for i in sel
+        )
+        report["overall"][kind]["prince_yes_judge_no"] = sum(
+            i["prince"] and not i["judge"] for i in sel
+        )
+    # Sensitivity: the judged metrics on these answers, from the judge vs from Prince's labels.
+    sens = {}
+    for metric, kind in (("citation_b", "claims"), ("completeness", "key_facts")):
+        sel = [i for i in items if i["kind"] == kind]
+        sens[metric] = {
+            "n_items": len(sel),
+            "n_questions": len({i["id"] for i in sel}),
+            "judge": sum(i["judge"] for i in sel) / len(sel) if sel else None,
+            "prince": sum(i["prince"] for i in sel) / len(sel) if sel else None,
+        }
+    report["sensitivity"] = sens
+    return report
+
+
+def agreement_text(a: dict) -> str:
+    def row(name, s):
+        ci = s.get("kappa_ci95")
+        ci = f" [{ci[0]:+.3f}, {ci[1]:+.3f}]" if ci else ""
+        k = "-" if s["kappa"] is None else f"{s['kappa']:+.3f}{ci}"
+        n = f"n {s['n']} items / {s['questions']} q"
+        return f"{name}: {n}, agreement {s['agreement']:.3f}, kappa {k}"
+
+    lines = [row(k, a["overall"][k]) for k in ("claims", "key_facts", "all")]
+    for k in ("claims", "key_facts"):
+        lines.append(f"  {k} 2x2 {a['overall'][k]['table']}")
+    lines += [row(f"{sl} {k}", b[k]) for sl, b in a["by"].items() for k in ("claims", "key_facts")]
+    lines.append(f"disagreements: {len(a['disagreements'])}")
+    lines.append(f"sensitivity: {a['sensitivity']}")
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------- main
 
 
@@ -779,11 +887,13 @@ def main(argv=None) -> int:
         return 0
     if args.action == "agreement":
         path = RESULTS / f"{args.split}_generation_verify_on.json"
-        a = agreement(SHEET.read_text(), json.loads(path.read_text()))
-        print(json.dumps(a, indent=1))
-        if a["all"]["n"] == 0:
+        a = agreement_report(LABELS.read_text(), json.loads(path.read_text()), questions)
+        if a["overall"]["all"]["n"] == 0:
             print("no labels filled in yet")
             return 1
+        AGREEMENT.write_text(json.dumps(a, indent=1, sort_keys=True) + "\n")
+        print(agreement_text(a))
+        print(f"wrote {AGREEMENT.relative_to(ROOT)}")
         return 0
 
     if args.limit:
