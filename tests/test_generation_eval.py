@@ -155,7 +155,9 @@ def test_judge_is_cached_and_a_cache_hit_skips_the_rate_limiter(keys, tmp_path):
     )
     judge(llm, Q, DIAG, EVIDENCE)
     judge(llm, Q, DIAG, EVIDENCE)
-    assert len(n) == 1 and json.loads((tmp_path / "count.json").read_text()) == {"1970-01-01": 1}
+    assert len(n) == 1 and json.loads((tmp_path / "count.json").read_text()) == {
+        "1969-12-31": 1
+    }  # Pacific
 
 
 def test_rate_limiter_spaces_requests_and_stops_at_the_daily_cap(tmp_path):

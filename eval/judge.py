@@ -9,16 +9,17 @@ the client caches by prompt hash, and PROMPT_VERSION is part of the prompt, so c
 prompt can never reuse an old verdict.
 
 Rate limits (Gemini free tier): RateLimiter spaces real requests (cache hits never wait) to
-JUDGE_RPM per minute and refuses past JUDGE_RPD per UTC day, counted in a file so a resumed run
-keeps the count. A daily-limit 429 (retry-after over the client's cap) raises LLMError; the
-eval leaves that answer unjudged and a rerun picks it up.
+JUDGE_RPM per minute and refuses past JUDGE_RPD per Pacific day (Gemini's reset), counted in a
+file so a resumed run keeps the count. A daily-limit 429 (retry-after over the client's cap)
+raises LLMError; the eval leaves that answer unjudged and a rerun picks it up.
 """
 
 import json
 import threading
 import time
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -29,6 +30,9 @@ PROMPT_VERSION = "judge-v1"
 JUDGE_MAX_TOKENS = 1500
 JUDGE_RPM = 15
 JUDGE_RPD = 500
+# Gemini's daily quota resets at midnight Pacific; it also counts Gemini calls made elsewhere
+# (e.g. Gemini as the agent), which this counter cannot see.
+QUOTA_TZ = ZoneInfo("America/Los_Angeles")
 EVIDENCE_CHARS = 1200  # per cited item; shrunk if the prompt would pass the budget
 NOT_GATHERED = "(this id was not in the gathered evidence: nothing supports the claim)"
 
@@ -69,7 +73,7 @@ class Verdict(BaseModel):
 
 
 class RateLimiter:
-    """At most rpm requests per minute (evenly spaced) and rpd per UTC day, across threads."""
+    """At most rpm requests per minute (evenly spaced) and rpd per Pacific day, across threads."""
 
     def __init__(self, rpm: int, rpd: int, state: Path | None, clock=time.time, sleep=time.sleep):
         self.gap, self.rpd, self.state = 60.0 / rpm, rpd, state
@@ -83,10 +87,10 @@ class RateLimiter:
 
     def acquire(self) -> None:
         with self.lock:
-            day = datetime.fromtimestamp(self.clock(), UTC).date().isoformat()
+            day = datetime.fromtimestamp(self.clock(), QUOTA_TZ).date().isoformat()
             counts = self.counts()
             if counts.get(day, 0) >= self.rpd:
-                raise LLMError(f"judge: {self.rpd} requests already made on {day} (UTC)")
+                raise LLMError(f"judge: {self.rpd} requests already made on {day} (Pacific)")
             wait = self.next_at - self.clock()
             if wait > 0:
                 self.sleep(wait)
