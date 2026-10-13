@@ -1,0 +1,50 @@
+# Synthetic logs for INC-0109. Fictional log-agent, disk-monitor and ops lines only.
+[[burst]]
+from = "15:12:00"
+to = "15:46:30"
+count = 24
+service = "inventory-db"
+level = "ERROR"
+hosts = ["inventory-db-01.prod.internal"]
+message = "log-agent: saving state file under /var/lib/log-agent failed: ENOSPC"
+
+[[burst]]
+from = "15:12:00"
+to = "15:46:00"
+count = 8
+service = "inventory-db"
+level = "WARN"
+hosts = ["inventory-db-01.prod.internal"]
+message = "disk-monitor: /var usage 100%"
+
+[[line]]
+at = "15:47:20"
+service = "inventory-db"
+host = "inventory-db-01.prod.internal"
+level = "INFO"
+message = "ops: journal vacuumed to 500M"
+
+[[line]]
+at = "15:55:40"
+service = "inventory-db"
+host = "inventory-db-01.prod.internal"
+level = "INFO"
+message = "ops: SystemMaxUse=500M written to journald.conf; systemd-journald restarted"
+
+[[burst]]
+from = "15:48:00"
+to = "16:40:00"
+count = 10
+service = "inventory-db"
+level = "INFO"
+hosts = ["inventory-db-01.prod.internal"]
+message = "log-agent: buffered lines {ramp:10-100}% shipped"
+
+[[burst]]
+from = "15:48:00"
+to = "16:45:00"
+count = 12
+service = "inventory-db"
+level = "INFO"
+hosts = ["inventory-db-01.prod.internal"]
+message = "disk-monitor: /var usage steady"

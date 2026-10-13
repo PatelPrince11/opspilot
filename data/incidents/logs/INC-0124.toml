@@ -1,0 +1,85 @@
+# Synthetic logs for INC-0124. HikariCP timeout text as verified in NOTES; the rest is our own format.
+[[line]]
+at = "23:30:05"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "INFO"
+message = "month-end reconciliation started, parallelism 24"
+
+[[line]]
+at = "23:35:10"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "WARN"
+message = "LEDGER-W210 hikari active connections above 90% of pool (20 of 20)"
+
+[[line]]
+at = "23:36:20"
+service = "payments-api"
+host = "payments-api-01.prod.internal"
+level = "ERROR"
+message = "ledger-service call failed with 503"
+
+[[line]]
+date = "2026-02-01"
+at = "00:15:00"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "INFO"
+message = "LEDGER_RECON_PARALLELISM set to 4; restarting pod"
+
+[[line]]
+date = "2026-02-01"
+at = "00:21:30"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "INFO"
+message = "reconciliation resumed from last committed chunk, 4 workers"
+
+[[line]]
+date = "2026-02-01"
+at = "03:10:00"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "INFO"
+message = "month-end reconciliation finished"
+
+[[burst]]
+from = "23:35:30"
+to_date = "2026-02-01"
+to = "00:14:00"
+count = 40
+service = "ledger-service"
+level = "ERROR"
+hosts = ["ledger-service-02.prod.internal"]
+message = "HikariPool-1 - Connection is not available, request timed out after 30000ms."
+
+[[burst]]
+from = "23:35:30"
+to_date = "2026-02-01"
+to = "00:14:00"
+count = 20
+service = "ledger-service"
+level = "WARN"
+hosts = ["ledger-service-02.prod.internal"]
+message = "LEDGER-W210 hikari active connections above 90% of pool (20 of 20), pending {ramp:5-40}"
+
+[[burst]]
+from = "23:36:00"
+to_date = "2026-02-01"
+to = "00:14:30"
+count = 30
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "ledger-service call failed with 503"
+
+[[burst]]
+date = "2026-02-01"
+from = "00:25:00"
+to = "03:09:00"
+count = 15
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-02.prod.internal"]
+message = "reconciliation chunk committed"

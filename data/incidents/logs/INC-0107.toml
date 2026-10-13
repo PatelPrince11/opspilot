@@ -1,0 +1,50 @@
+# Synthetic logs for INC-0107. Our own services' formats.
+[[line]]
+at = "01:00:30"
+service = "search-api"
+host = "search-api-01.prod.internal"
+level = "WARN"
+message = "search request slow: upstream search-cluster-03 answered late"
+
+[[line]]
+at = "01:20:10"
+service = "search-cluster"
+host = "search-cluster-03.prod.internal"
+level = "WARN"
+message = "hot threads: node busy in garbage collection, not in search"
+
+[[burst]]
+from = "01:00:10"
+to = "01:44:00"
+count = 30
+service = "search-cluster"
+level = "WARN"
+hosts = ["search-cluster-03.prod.internal"]
+message = "gc pause of {int:1200-4800}ms on this node"
+
+[[burst]]
+from = "01:00:40"
+to = "01:44:00"
+count = 20
+service = "search-api"
+level = "WARN"
+hosts = ["search-api-01.prod.internal"]
+message = "search request took {int:1800-6500}ms"
+
+[[burst]]
+from = "00:52:00"
+to = "00:59:50"
+count = 8
+service = "search-api"
+level = "INFO"
+hosts = ["search-api-01.prod.internal"]
+message = "search request took {int:40-180}ms"
+
+[[burst]]
+from = "01:45:10"
+to = "01:54:50"
+count = 8
+service = "search-api"
+level = "INFO"
+hosts = ["search-api-01.prod.internal"]
+message = "search request took {int:40-180}ms"

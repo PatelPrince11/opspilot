@@ -1,0 +1,60 @@
+# Synthetic logs for INC-0163. One "starting" line per restart; kills are a sample.
+[[line]]
+at = "22:00:03"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "INFO"
+message = "entrypoint: WEB_CONCURRENCY unset, starting 32 gunicorn workers (cpu count)"
+
+[[line]]
+at = "22:11:12"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "ERROR"
+message = "kubelet: container fraud-scorer terminated reason=OOMKilled exitCode=137"
+
+[[burst]]
+from = "22:20:00"
+to = "02:30:00"
+to_date = "2026-05-29"
+count = 19
+service = "fraud-scorer"
+level = "ERROR"
+hosts = ["fraud-scorer-02.prod.internal"]
+message = "kubelet: container fraud-scorer terminated reason=OOMKilled exitCode=137"
+
+[[burst]]
+from = "22:12:00"
+to = "02:29:00"
+to_date = "2026-05-29"
+count = 19
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-02.prod.internal"]
+message = "entrypoint: WEB_CONCURRENCY unset, starting 32 gunicorn workers (cpu count)"
+
+[[burst]]
+from = "21:50:00"
+to = "03:05:00"
+to_date = "2026-05-29"
+count = 20
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "score ok latency_ms={int:8-40}"
+
+[[line]]
+date = "2026-05-29"
+at = "02:31:30"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "INFO"
+message = "entrypoint: WEB_CONCURRENCY=16, starting 16 gunicorn workers"
+
+[[line]]
+date = "2026-05-29"
+at = "02:36:10"
+service = "fraud-scorer"
+host = "fraud-scorer-01.prod.internal"
+level = "INFO"
+message = "entrypoint: WEB_CONCURRENCY=16, starting 16 gunicorn workers"

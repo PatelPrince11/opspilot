@@ -1,0 +1,6 @@
+LineId,Logrecord,Date,Time,Pid,Level,Component,ADDR,Content,EventId,EventTemplate
+1,nova-api.log.1.2017-05-16_13:53:08,2017-05-16,00:00:00.008,111,INFO,nova.osapi_compute.wsgi.server,req-fixture-1 - - - - -,"10.1.1.1 ""GET /v2/fixture/servers/detail HTTP/1.1"" status: 200 len: 100 time: 0.1",E1,"<*> ""GET <*>"" status: <*> len: <*> time: <*>"
+2,nova-api.log.1.2017-05-16_13:53:08,2017-05-16,00:00:00.272,111,INFO,nova.osapi_compute.wsgi.server,req-fixture-2 - - - - -,"10.1.1.1 ""GET /v2/fixture/servers/detail HTTP/1.1"" status: 200 len: 100 time: 0.2",E1,"<*> ""GET <*>"" status: <*> len: <*> time: <*>"
+3,nova-compute.log.1.2017-05-16_13:55:31,2017-05-16,00:00:20.345,222,WARNING,nova.virt.libvirt.imagecache,req-fixture-3 - - - - -,Unknown base file: /var/lib/nova/instances/_base/fixture,E2,Unknown base file: <*>
+4,nova-compute.log.1.2017-05-16_13:55:31,2017-05-16,00:01:01.698,222,INFO,nova.compute.manager,req-fixture-4 - - - - -,[instance: fixture] VM Started (Lifecycle Event),E3,[instance: <*>] VM Started (Lifecycle Event)
+5,nova-scheduler.log.1.2017-05-16_13:55:31,2017-05-16,00:01:30.000,333,INFO,nova.scheduler.host_manager,req-fixture-5 - - - - -,Successfully synced instances from host 'fixture-host',E4,Successfully synced instances from host <*>

@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0152. "OOM command not allowed" is the error Redis returns; logged by fraud-scorer.
+[[burst]]
+from = "18:01:00"
+to = "18:09:30"
+count = 6
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "score ok latency_ms={int:9-36}"
+
+[[burst]]
+from = "18:10:00"
+to = "19:10:00"
+count = 50
+service = "fraud-scorer"
+level = "ERROR"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "FRD-E140 velocity counter INCR rejected by redis-features: OOM command not allowed card={hex8}"
+
+[[burst]]
+from = "18:12:00"
+to = "19:08:00"
+count = 12
+service = "fraud-scorer"
+level = "WARN"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "velocity counters stale for {ramp:2-58} min, scoring with last known values"
+
+[[burst]]
+from = "19:11:00"
+to = "19:25:00"
+count = 10
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "score ok latency_ms={int:8-34}"

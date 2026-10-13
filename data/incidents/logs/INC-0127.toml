@@ -1,0 +1,50 @@
+# Synthetic logs for INC-0127. Fictional health-check, disk-monitor and ops lines only.
+[[burst]]
+from = "15:50:00"
+to = "15:59:30"
+count = 5
+service = "ledger-db"
+level = "WARN"
+hosts = ["ledger-db-02.prod.internal"]
+message = "disk-monitor: /var usage {ramp:98-99}%"
+
+[[burst]]
+from = "16:00:00"
+to = "16:13:30"
+count = 14
+service = "ledger-db"
+level = "ERROR"
+hosts = ["ledger-db-02.prod.internal"]
+message = "health-check: cannot create scratch file in /var/tmp: ENOSPC; check skipped"
+
+[[line]]
+at = "16:14:05"
+service = "ledger-db"
+host = "ledger-db-02.prod.internal"
+level = "INFO"
+message = "ops: journal vacuumed to 500M"
+
+[[line]]
+at = "16:21:30"
+service = "ledger-db"
+host = "ledger-db-02.prod.internal"
+level = "INFO"
+message = "ops: SystemMaxUse=500M set in journald.conf; systemd-journald restarted"
+
+[[burst]]
+from = "16:15:00"
+to = "16:55:00"
+count = 16
+service = "ledger-db"
+level = "INFO"
+hosts = ["ledger-db-02.prod.internal"]
+message = "health-check: ok in {int:40-90}ms"
+
+[[burst]]
+from = "16:15:00"
+to = "16:50:00"
+count = 8
+service = "ledger-db"
+level = "INFO"
+hosts = ["ledger-db-02.prod.internal"]
+message = "disk-monitor: /var usage steady"

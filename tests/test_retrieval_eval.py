@@ -1,0 +1,163 @@
+"""eval/retrieval_eval.py: metric maths, the test-split guard, a stored run on the fixture DB."""
+
+import pytest
+
+from eval.ablation import bootstrap
+from eval.retrieval_eval import (
+    agent_view,
+    check_split,
+    dedupe,
+    run,
+    score,
+    store,
+    summarize,
+    token_gold,
+    with_hits,
+)
+from eval.validate_questions import QUESTIONS, Corpus, load
+from rag.retrieval import Hit, RetrievalConfig
+from tests.test_retrieval import conn  # noqa: F401  (module fixture: the tiny DB)
+
+
+def hit(doc: str) -> Hit:
+    return Hit(0, doc, 0, "", {}, 0.0)
+
+
+def test_dedupe_keeps_each_docs_best_rank():
+    assert dedupe([hit("A"), hit("B"), hit("A"), hit("C"), hit("B")]) == ["A", "B", "C"]
+
+
+def test_score():
+    s = score(["B", "A", "X", "Y", "Z", "C"], ["A", "C"])
+    assert s == {
+        "recall@5": 0.5,  # mean fraction: one of two gold docs in the top 5
+        "recall@10": 1.0,
+        "hit@5": 1.0,  # at least one gold doc in the top 5
+        "hit@10": 1.0,
+        "rr": 0.5,
+        "all_gold@10": 1.0,
+    }
+    s = score(["X", "Y"], ["A"])
+    assert s == {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "hit@5": 0.0,
+        "hit@10": 0.0,
+        "rr": 0.0,
+        "all_gold@10": None,
+    }
+    assert score(["A"] + ["X"] * 9 + ["C"], ["A", "C"])["all_gold@10"] == 0.0
+
+
+def q(i, difficulty, gold, author="claude", fp=None):
+    return {
+        "id": f"Q{i}",
+        "difficulty": difficulty,
+        "author": author,
+        "relevant_doc_ids": gold,
+        "false_premise": fp,
+    }
+
+
+def test_with_hits_rebuilds_hit_at_k_from_stored_docs():
+    rows = [{"id": "Q1", "docs": ["X", "Y", "Z", "W", "V", "A"]}, {"id": "Q2", "hit@5": 0.0}]
+    out = with_hits(rows, {"Q1": ["A", "B"], "Q2": ["A"]})
+    assert (out[0]["hit@5"], out[0]["hit@10"]) == (0.0, 1.0)
+    assert out[1] == {"id": "Q2", "hit@5": 0.0}  # already has it: untouched
+
+
+def test_summarize_slices_carry_their_sample_size():
+    questions = [
+        q(1, "exact-token", ["A"]),
+        q(2, "exact-token", ["A", "B"]),
+        q(3, "paraphrase", ["A", "B"], author="gemini", fp=True),
+    ]
+    rows = [
+        {"id": "Q1", "recall@5": 1.0, "recall@10": 1.0, "rr": 1.0, "all_gold@10": None},
+        {"id": "Q2", "recall@5": 0.5, "recall@10": 1.0, "rr": 0.5, "all_gold@10": 1.0},
+        {"id": "Q3", "recall@5": 0.0, "recall@10": 0.5, "rr": 0.0, "all_gold@10": 0.0},
+    ]
+    for r, (h5, h10) in zip(rows, [(1.0, 1.0), (1.0, 1.0), (0.0, 1.0)], strict=True):
+        r |= {"hit@5": h5, "hit@10": h10}
+    for i, r in enumerate(rows):
+        r["latency_ms"] = 10.0 * (i + 1)
+    s = summarize(rows, questions)
+    assert s["overall"]["n"] == 3 and s["overall"]["recall@5"] == pytest.approx(0.5)
+    assert s["overall"]["hit@5"] == pytest.approx(2 / 3) and s["overall"]["hit@10"] == 1.0
+    assert s["overall"]["all_gold@10"] == 0.5 and s["overall"]["n_multi"] == 2
+    assert s["difficulty=exact-token"]["n"] == 2
+    assert s["difficulty=exact-token"]["mrr"] == pytest.approx(0.75)
+    assert s["author=gemini"]["n"] == 1 and s["false_premise=True"]["n"] == 1
+    assert s["gold bucket=1"]["all_gold@10"] is None
+    assert s["latency"]["p50_ms"] == 20.0
+    assert s["overall"]["token_doc@5"] is None and s["overall"]["n_token"] == 0
+    rows[0] |= {"token_doc@5": 1.0, "agent_recall@10": 1.0, "agent_all_gold@10": None}
+    rows[1] |= {"token_doc@5": 0.0, "agent_recall@10": 0.5, "agent_all_gold@10": 0.0}
+    m = summarize(rows, questions)["overall"]
+    assert m["token_doc@5"] == 0.5 and m["n_token"] == 2
+    assert m["agent_recall@10"] == 0.75 and m["agent_all_gold@10"] == 0.0
+
+
+def test_test_split_needs_final_test(capsys):
+    check_split("dev", False)
+    with pytest.raises(SystemExit, match="final-test"):
+        check_split("test", False)
+    check_split("test", True)
+    assert "touched once, in Phase 5" in capsys.readouterr().err
+
+
+def test_run_and_store_on_the_fixture_db(conn):  # noqa: F811
+    questions = [
+        q(1, "exact-token", ["INC-9001"]),
+        q(2, "paraphrase", ["RB-901", "INC-9002"]),
+    ]
+    questions[0]["question"] = "what does PAYAPI-E1042 mean for checkout"
+    questions[1]["question"] = "cache keys evicted and a full disk on logs-01"
+    cfg = RetrievalConfig(mode="hybrid", bge_prefix=True, candidates=30)
+    rows = run(conn, questions, cfg)
+    assert rows[0]["rr"] == 1.0 and rows[0]["docs"][0] == "INC-9001"
+    assert rows[1]["recall@10"] == 1.0  # the fixture has only 3 docs
+    assert rows[1]["agent_recall@10"] == 1.0 and rows[1]["agent_all_gold@10"] == 1.0
+    assert rows[0]["token_doc@5"] is None  # no token gold passed
+    assert all(r["latency_ms"] > 0 and r["top_chunks"] for r in rows)
+
+    with conn.transaction():
+        run_id = store(conn, "dev", cfg, rows)
+        stored = conn.execute(
+            "SELECT git_commit, eval_type, split, config, models, created_at FROM eval_runs"
+            " WHERE id = %s",
+            (run_id,),
+        ).fetchone()
+        commit, eval_type, split, config, models, created = stored
+        assert len(commit.removesuffix("-dirty")) == 40
+        assert (eval_type, split) == ("retrieval", "dev")
+        assert config["mode"] == "hybrid" and config["chunk_size"] and config["k"] == 30
+        assert "@" in models["embed"] and "@" in models["rerank"] and created
+        n = conn.execute("SELECT count(*) FROM eval_results WHERE run_id = %s", (run_id,))
+        assert n.fetchone()[0] == 2
+
+
+def test_paired_bootstrap_ci():
+    assert bootstrap([1.0] * 50, [1.0] * 50) == (0.0, 0.0, 0.0)
+    assert bootstrap([1.0] * 50, [0.0] * 50) == (1.0, 1.0, 1.0)
+    a = [1.0] * 30 + [0.0] * 70  # A wins 30 questions, B wins 10, 60 ties
+    b = [0.0] * 30 + [1.0] * 10 + [0.0] * 60
+    diff, lo, hi = bootstrap(a, b)
+    assert diff == pytest.approx(0.2) and 0 < lo < 0.2 < hi
+    assert bootstrap(a, b) == (diff, lo, hi)  # seeded
+    diff, lo, hi = bootstrap(a[:20] + [0.0] * 80, [0.0] * 20 + [1.0] * 20 + [0.0] * 60)
+    assert diff == 0.0 and lo < 0 < hi
+
+
+def test_agent_view_is_runbooks_then_incidents(conn):  # noqa: F811
+    cfg = RetrievalConfig(mode="hybrid", k=30, candidates=30)
+    view = agent_view(conn, "PAYAPI-E1042 redis-01 logs-01", cfg)
+    assert view[0] == "RB-901" and sorted(view[1:]) == ["INC-9001", "INC-9002"]
+
+
+def test_token_gold_keeps_gold_docs_holding_the_questions_token():
+    qs = {q["id"]: q for q in load(QUESTIONS)}
+    tg = token_gold([qs["Q003"], qs["Q027"], qs["H020"]], Corpus())
+    assert tg["Q003"] == ["INC-0015"]  # card-processor-proxy-01 is in the incident
+    assert sorted(tg["Q027"]) == ["INC-0185", "RB-027"]  # RB-027 names kafka-01 too
+    assert "H020" in tg  # orders-db-01

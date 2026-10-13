@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0194. ledger-service and payments-api lines are our own services'.
+[[burst]]
+from = "13:05:00"
+to = "13:14:59"
+count = 12
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "ledger entry written account={hex8} latency_ms={int:8-40}"
+
+[[burst]]
+from = "13:15:00"
+to = "13:39:59"
+count = 45
+service = "ledger-service"
+level = "ERROR"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "request failed status=503 caller=payments-api req={hex8}"
+
+[[burst]]
+from = "13:15:00"
+to = "13:39:59"
+count = 35
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "ledger call failed status=503 req={hex8}"
+
+[[burst]]
+from = "13:40:00"
+to = "13:50:00"
+count = 12
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "ledger entry written account={hex8} latency_ms={int:8-40}"

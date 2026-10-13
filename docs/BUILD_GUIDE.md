@@ -264,7 +264,8 @@ The evals are what make OpsPilot stand out; the demo only shows it runs. Tune on
 
 | Layer | Metric | Definition |
 | --- | --- | --- |
-| Retrieval | Recall@5, Recall@10 | Share of questions with at least one relevant doc in the top k (chunks deduped to docs by best-ranked chunk) |
+| Retrieval | Recall@5, Recall@10 | Recall@k (mean fraction of gold docs found): per question, the share of its relevant docs in the top k, averaged over questions (chunks deduped to docs by best-ranked chunk) |
+| Retrieval | Hit@5, Hit@10 | Share of questions with at least one relevant doc in the top k. Flatters multi-gold questions: finding one of two docs counts as a full hit |
 | Retrieval | MRR | Mean of 1 / rank of the first relevant doc |
 | Generation | Citation accuracy (a) | Share of claims whose cited id was in the retrieved evidence (deterministic) |
 | Generation | Citation accuracy (b) | Share of claims whose cited evidence supports the claim (judged) |
@@ -328,7 +329,7 @@ Fill the brackets only with test-split numbers from `make eval`. Drop any bullet
 
 **Bullet templates** (pick 4)
 
-- Built hybrid RAG over \[N\] incident and runbook documents with PostgreSQL/pgvector, full-text search, RRF fusion and cross-encoder reranking, raising Recall@5 from \[X\]% to \[Y\]% on a \[N\]-question held-out set.
+- Built hybrid BM25 + dense retrieval over \[N\] incident and runbook documents with PostgreSQL/pgvector (BM25 keyword ranking in SQL, RRF fusion), raising Recall@5 (mean fraction of gold docs found) from \[X\]% for a dense baseline to \[Y\]% on a \[N\]-question held-out set.
 - Developed a LangGraph incident-investigation agent with 4 read-only tools and a citation-verification loop, reaching \[X\]% citation accuracy and \[Y\]% tool-call success.
 - Cut prompt-injection attack success from \[X\]% to \[Y\]% on \[N\] adversarial cases by isolating untrusted log and runbook content and keeping tools read-only.
 - Built an automated eval pipeline (retrieval, faithfulness, citation accuracy, latency) with an LLM judge validated at \[X\]% agreement against hand labels.

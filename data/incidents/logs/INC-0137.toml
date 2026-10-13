@@ -1,0 +1,30 @@
+# Synthetic logs for INC-0137. Everything is our own service format.
+[[line]]
+at = "09:05:08"
+service = "edge-gateway"
+host = "edge-gateway-02.prod.internal"
+level = "WARN"
+message = "local rate limit: GET /search refused with 429, body code EDGE-RL01"
+
+[[line]]
+at = "09:42:30"
+service = "edge-gateway"
+host = "edge-gateway-01.prod.internal"
+level = "INFO"
+message = "config change merged: /search local rate limit 250 per pod; restart needed to apply"
+
+[[line]]
+at = "09:46:20"
+service = "edge-gateway"
+host = "edge-gateway-03.prod.internal"
+level = "INFO"
+message = "restarting to read new edge-gateway-envoy settings"
+
+[[burst]]
+from = "09:05:10"
+to = "09:49:40"
+count = 40
+service = "edge-gateway"
+level = "WARN"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "local rate limit: GET /search?q={hex8} refused with 429, body code EDGE-RL01"

@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0061. edge-gateway lines are our own summaries of Envoy listener stats.
+[[burst]]
+from = "17:10:30"
+to = "17:19:59"
+count = 10
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal"]
+message = "listener summary: tls handshakes last minute={int:600-900} abandoned by peer={int:0-1}"
+
+[[burst]]
+from = "17:20:20"
+to = "21:24:30"
+count = 30
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal"]
+message = "listener summary: tls handshakes last minute={int:600-900} abandoned by peer={int:1-3}"
+
+[[burst]]
+from = "17:20:40"
+to = "21:24:50"
+count = 12
+service = "edge-gateway"
+level = "WARN"
+hosts = ["edge-gateway-01.prod.internal"]
+message = "tls handshake abandoned by peer before sending a request"
+
+[[burst]]
+from = "21:25:20"
+to = "21:34:30"
+count = 8
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal"]
+message = "listener summary: tls handshakes last minute={int:600-900} abandoned by peer={int:0-1}"

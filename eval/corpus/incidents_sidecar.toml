@@ -1,0 +1,1271 @@
+# Eval-only sidecar for data/incidents/skeleton.toml. Never ingested.
+# constraint: the NOTES past-events row this incident satisfies.
+# mechanism: tag the skeleton rules (tests/test_incidents.py) check.
+
+[[incidents]]
+id = "INC-0001"
+mechanism = "var_journal_growth"
+
+[[incidents]]
+id = "INC-0002"
+mechanism = "app_release_regression"
+anchor_tokens = ["INV-E220", "inventory-service-01"]
+multi_doc = ["INC-0059", "INC-0151"]
+
+[[incidents]]
+id = "INC-0003"
+mechanism = "table_bloat"
+anchor_tokens = ["orders-db-02"]
+
+[[incidents]]
+id = "INC-0004"
+constraint = "RB-023/2025-01-14"
+mechanism = "client_cert_expired"
+absent_codes = ["CPX-W429", "CPX-W430"]
+anchor_tokens = ["CPX-E600"]
+multi_doc = ["INC-0110", "INC-0113"]
+facts = { paged = "00:04", new_certificate = "02:30", secret_and_restart = "02:38", failures_per_pod_per_s_offpeak = 3.5 }
+
+[[incidents]]
+id = "INC-0005"
+mechanism = "expensive_wildcard_query"
+anchor_tokens = ["SRCH-E502", "search-api-01"]
+multi_doc = ["INC-0052", "INC-0129"]
+
+[[incidents]]
+id = "INC-0006"
+mechanism = "template_cache_growth"
+anchor_tokens = ["notification-worker-01"]
+multi_doc = ["INC-0133"]
+
+[[incidents]]
+id = "INC-0007"
+mechanism = "edge_client_clock"
+cause_component = "client device clock wrong"
+multi_doc = ["INC-0023", "INC-0043"]
+
+[[incidents]]
+id = "INC-0008"
+mechanism = "cpu_throttling"
+anchor_tokens = ["payments-api-01", "payments-api-02"]
+multi_doc = ["INC-0104", "INC-0140"]
+
+[[incidents]]
+id = "INC-0009"
+mechanism = "plan_flip"
+multi_doc = ["RB-010", "INC-0098"]
+
+[[incidents]]
+id = "INC-0010"
+mechanism = "servfail_zone_load"
+anchor_tokens = ["SERVFAIL"]
+multi_doc = ["INC-0025", "INC-0033"]
+
+[[incidents]]
+id = "INC-0011"
+mechanism = "var_journal_growth"
+anchor_tokens = ["orders-db-01"]
+
+[[incidents]]
+id = "INC-0012"
+mechanism = "kafka_broker_disk"
+anchor_tokens = ["kafka-03"]
+multi_doc = ["RB-001", "INC-0070", "INC-0089"]
+facts = { top_topics = ["ledger.entries", "notifications.outbound"] }
+
+[[incidents]]
+id = "INC-0013"
+mechanism = "fraud_feature_cache_growth"
+anchor_tokens = ["FRD-W118"]
+multi_doc = ["RB-005", "INC-0063", "INC-0080"]
+
+[[incidents]]
+id = "INC-0014"
+mechanism = "search_pool_rejection"
+anchor_tokens = ["SRCH-E502", "search-cluster-01"]
+multi_doc = ["INC-0028", "INC-0146"]
+facts = { limiter = false }
+
+[[incidents]]
+id = "INC-0015"
+mechanism = "processor_latency"
+cause_component = "external card processor latency"
+multi_doc = ["INC-0022"]
+facts = { retry_storm = false }
+
+[[incidents]]
+id = "INC-0016"
+constraint = "RB-022/2025-02-20"
+mechanism = "cluster_dns_capacity"
+cause_component = "cluster CoreDNS (kube-system)"
+anchor_tokens = ["EAI_AGAIN"]
+multi_doc = ["RB-020", "INC-0025", "INC-0033"]
+hard_negative_pair = ["RB-020", "RB-022"]
+discriminators = ["replicas"]
+facts = { replicas_before = 2, replicas_after = 4, paged = "19:56", scaled = "20:08", internal_dns_healthy = true }
+
+[[incidents]]
+id = "INC-0017"
+mechanism = "app_release_regression"
+multi_doc = ["INC-0021", "INC-0053"]
+
+[[incidents]]
+id = "INC-0018"
+mechanism = "processor_429_blip"
+anchor_tokens = ["CPX-W429"]
+multi_doc = ["INC-0019", "INC-0048"]
+facts = { retry_storm = false }
+
+[[incidents]]
+id = "INC-0019"
+mechanism = "processor_429_blip"
+anchor_tokens = ["CPX-W429"]
+multi_doc = ["INC-0018", "INC-0048"]
+facts = { retry_storm = false }
+
+[[incidents]]
+id = "INC-0020"
+mechanism = "max_connections_adhoc"
+anchor_tokens = ["53300", "LEDGER-W210"]
+multi_doc = ["RB-001"]
+
+[[incidents]]
+id = "INC-0021"
+mechanism = "app_release_regression"
+multi_doc = ["RB-005", "INC-0017", "INC-0053"]
+
+[[incidents]]
+id = "INC-0022"
+mechanism = "processor_latency"
+cause_component = "external card processor latency"
+multi_doc = ["INC-0015"]
+facts = { retry_storm = false }
+
+[[incidents]]
+id = "INC-0023"
+mechanism = "edge_leaf_missed_restart"
+anchor_tokens = ["edge-gateway-01"]
+multi_doc = ["INC-0007", "INC-0043"]
+
+[[incidents]]
+id = "INC-0024"
+constraint = "RB-002/2025-03"
+mechanism = "cpu_throttling"
+multi_doc = ["INC-0030", "INC-0189"]
+facts = { throttled_periods_pct = 30, avg_cpu_pct = 45, w0310_per_s = 40 }
+
+[[incidents]]
+id = "INC-0025"
+mechanism = "vm_config_push"
+anchor_tokens = ["NXDOMAIN"]
+multi_doc = ["RB-027", "INC-0010", "INC-0016"]
+hard_negative_pair = ["RB-020", "RB-027"]
+discriminators = ["Type=simple"]
+facts = { failed_hosts = 0 }
+
+[[incidents]]
+id = "INC-0026"
+mechanism = "pgbouncer_single_core_cpu"
+anchor_tokens = ["payments-pgbouncer-01"]
+multi_doc = ["RB-002", "INC-0148"]
+
+[[incidents]]
+id = "INC-0027"
+mechanism = "go_goroutine_leak"
+anchor_tokens = ["inventory-service-01"]
+
+[[incidents]]
+id = "INC-0028"
+mechanism = "search_pool_rejection"
+anchor_tokens = ["SRCH-E502", "search-cluster-02"]
+multi_doc = ["INC-0014", "INC-0146"]
+facts = { limiter = false }
+
+[[incidents]]
+id = "INC-0029"
+mechanism = "payments_slow_cascade"
+anchor_tokens = ["payments-api-02"]
+multi_doc = ["RB-014", "INC-0064", "INC-0114"]
+
+[[incidents]]
+id = "INC-0030"
+mechanism = "cpu_throttling"
+multi_doc = ["RB-006", "INC-0024", "INC-0189"]
+
+[[incidents]]
+id = "INC-0031"
+constraint = "RB-024/2025-04-08"
+mechanism = "cert_not_reloaded"
+anchor_tokens = ["x509: certificate has expired", "auth-db-02"]
+multi_doc = ["INC-0073", "INC-0126"]
+facts = { renewal_written = "2025-03-09", paged = "09:38", s_client = "09:47", reload = "09:51", failing_login_pct = "not stated" }
+
+[[incidents]]
+id = "INC-0032"
+mechanism = "wal_archive_failure"
+multi_doc = ["RB-010", "INC-0084", "INC-0147"]
+
+[[incidents]]
+id = "INC-0033"
+mechanism = "vm_config_push"
+anchor_tokens = ["NXDOMAIN", "internal-dns-02"]
+multi_doc = ["RB-027", "INC-0010", "INC-0016"]
+hard_negative_pair = ["RB-020", "RB-027"]
+discriminators = ["Type=simple"]
+facts = { failed_hosts = 0 }
+
+[[incidents]]
+id = "INC-0034"
+mechanism = "jvm_heap_growth"
+multi_doc = ["RB-001"]
+
+[[incidents]]
+id = "INC-0035"
+mechanism = "pgx_slow_queries"
+anchor_tokens = ["payments-api-04"]
+multi_doc = ["INC-0055", "INC-0095"]
+
+[[incidents]]
+id = "INC-0036"
+mechanism = "ledger_monthend_serialization"
+multi_doc = ["INC-0045", "INC-0093"]
+
+[[incidents]]
+id = "INC-0037"
+mechanism = "event_loop_cpu"
+multi_doc = ["RB-004", "INC-0075"]
+
+[[incidents]]
+id = "INC-0038"
+mechanism = "vm_config_push"
+anchor_tokens = ["NXDOMAIN", "ledger-service-01"]
+multi_doc = ["RB-027", "INC-0010", "INC-0016"]
+hard_negative_pair = ["RB-020", "RB-027"]
+discriminators = ["Type=simple"]
+facts = { failed_hosts = 0 }
+
+[[incidents]]
+id = "INC-0039"
+mechanism = "go_goroutine_leak"
+
+[[incidents]]
+id = "INC-0040"
+mechanism = "zone_stale_serial"
+anchor_tokens = ["internal-dns-02", "notification-worker-01"]
+multi_doc = ["INC-0010", "INC-0016"]
+
+[[incidents]]
+id = "INC-0041"
+mechanism = "redis_cache_primary_loss"
+anchor_tokens = ["ETIMEDOUT", "CAT-E301"]
+multi_doc = ["INC-0054", "INC-0062"]
+
+[[incidents]]
+id = "INC-0042"
+constraint = "RB-028/2025-05-15"
+mechanism = "migration_lock_queue"
+absent_codes = ["CAT-E301", "53300"]
+multi_doc = ["RB-012", "INC-0112"]
+hard_negative_pair = ["RB-012", "RB-028"]
+discriminators = ["lock_timeout"]
+facts = { export_start = "13:30", first_504 = "14:02:15", queuepool = "14:02:30", paged = "14:06", cancelled = "14:09", rerun = "14:40", miss_reads_per_s = 60, writes_per_s = 5, connections = 30, sessions_in_use = 32, usable_slots = 97 }
+
+[[incidents]]
+id = "INC-0043"
+mechanism = "edge_intermediate_missing"
+anchor_tokens = ["edge-gateway-02", "edge-gateway-01"]
+multi_doc = ["INC-0007", "INC-0023"]
+
+[[incidents]]
+id = "INC-0044"
+mechanism = "app_release_regression"
+anchor_tokens = ["SRCH-E502", "search-api-01"]
+
+[[incidents]]
+id = "INC-0045"
+mechanism = "ledger_retry_spin"
+anchor_tokens = ["LEDGER-E455", "ledger-service-01"]
+multi_doc = ["INC-0036", "INC-0093"]
+
+[[incidents]]
+id = "INC-0046"
+mechanism = "pgx_slow_queries"
+
+[[incidents]]
+id = "INC-0047"
+mechanism = "cluster_dns_config"
+cause_component = "cluster CoreDNS (kube-system)"
+anchor_tokens = ["EAI_AGAIN"]
+multi_doc = ["INC-0010", "INC-0016"]
+
+[[incidents]]
+id = "INC-0048"
+mechanism = "processor_429_blip"
+anchor_tokens = ["CPX-W429"]
+multi_doc = ["INC-0018", "INC-0019"]
+facts = { retry_storm = false }
+
+[[incidents]]
+id = "INC-0049"
+mechanism = "reservations_lock_contention"
+anchor_tokens = ["INV-E220", "inventory-db-01"]
+multi_doc = ["INC-0181"]
+
+[[incidents]]
+id = "INC-0050"
+mechanism = "vm_config_push"
+anchor_tokens = ["ledger-db-02"]
+multi_doc = ["RB-012"]
+facts = { unit = "postgresql@16-main", failed_hosts = 1 }
+
+[[incidents]]
+id = "INC-0051"
+mechanism = "processor_429_blip"
+anchor_tokens = ["CPX-W429"]
+multi_doc = ["INC-0018", "INC-0019"]
+facts = { retry_storm = false }
+
+[[incidents]]
+id = "INC-0052"
+mechanism = "expensive_wildcard_query"
+anchor_tokens = ["search-cluster-02"]
+multi_doc = ["INC-0005", "INC-0129"]
+
+[[incidents]]
+id = "INC-0053"
+mechanism = "app_release_regression"
+multi_doc = ["RB-005", "INC-0017", "INC-0021"]
+
+[[incidents]]
+id = "INC-0054"
+mechanism = "redis_cache_planned_failover"
+anchor_tokens = ["CAT-E301", "redis-cache-01"]
+multi_doc = ["INC-0041", "INC-0062"]
+
+[[incidents]]
+id = "INC-0055"
+constraint = "RB-011/2025-06"
+mechanism = "pgbouncer_long_transactions"
+cause_component = "refunds export inside payments-api"
+absent_codes = ["query_wait_timeout"]
+anchor_tokens = ["payments-pgbouncer-02", "payments-pgbouncer-01"]
+multi_doc = ["RB-010", "INC-0035", "INC-0095"]
+hard_negative_pair = ["RB-010", "RB-011"]
+discriminators = ["cl_waiting"]
+facts = { cl_waiting_per_instance = 30, maxwait_s = 4, transaction_s = 2, wal_or_disk = false }
+
+[[incidents]]
+id = "INC-0056"
+mechanism = "plan_flip"
+anchor_tokens = ["ledger-db-02"]
+multi_doc = ["RB-001"]
+
+[[incidents]]
+id = "INC-0057"
+mechanism = "max_connections_adhoc"
+anchor_tokens = ["53300"]
+
+[[incidents]]
+id = "INC-0058"
+mechanism = "redis_features_scan_latency"
+anchor_tokens = ["FRD-W118"]
+multi_doc = ["INC-0074"]
+
+[[incidents]]
+id = "INC-0059"
+constraint = "RB-015/2025-07"
+mechanism = "inventory_missing_index"
+anchor_tokens = ["INV-E220", "inventory-db-01"]
+multi_doc = ["INC-0002", "INC-0151"]
+facts = { index = "reservations_expires_at_idx", built = "concurrently, same afternoon" }
+
+[[incidents]]
+id = "INC-0060"
+mechanism = "edge_node_pressure"
+multi_doc = ["INC-0119"]
+
+[[incidents]]
+id = "INC-0061"
+mechanism = "edge_client_clock"
+cause_component = "client device clock wrong"
+anchor_tokens = ["edge-gateway-01"]
+multi_doc = ["INC-0007", "INC-0023"]
+
+[[incidents]]
+id = "INC-0062"
+mechanism = "redis_cache_primary_loss"
+anchor_tokens = ["ETIMEDOUT", "CAT-E301"]
+multi_doc = ["INC-0041", "INC-0054"]
+
+[[incidents]]
+id = "INC-0063"
+constraint = "RB-006/2025-01..09"
+mechanism = "fraud_feature_cache_growth"
+anchor_tokens = ["FRD-W118"]
+multi_doc = ["INC-0013", "INC-0080"]
+
+[[incidents]]
+id = "INC-0064"
+mechanism = "payments_slow_cascade"
+anchor_tokens = ["payments-api-01", "payments-api-02"]
+multi_doc = ["RB-014", "INC-0029", "INC-0114"]
+
+[[incidents]]
+id = "INC-0065"
+mechanism = "table_bloat"
+multi_doc = ["RB-015", "INC-0138"]
+
+[[incidents]]
+id = "INC-0066"
+mechanism = "edge_leaf_missed_restart"
+anchor_tokens = ["edge-gateway-02"]
+multi_doc = ["INC-0007", "INC-0023"]
+
+[[incidents]]
+id = "INC-0067"
+mechanism = "login_hash_cpu"
+
+[[incidents]]
+id = "INC-0068"
+mechanism = "edge_intermediate_expired"
+anchor_tokens = ["edge-gateway-02", "edge-gateway-01"]
+multi_doc = ["INC-0007", "INC-0023"]
+
+[[incidents]]
+id = "INC-0069"
+mechanism = "node_heap_leak"
+multi_doc = ["RB-005", "INC-0130", "INC-0150"]
+
+[[incidents]]
+id = "INC-0070"
+constraint = "RB-008/2025-08"
+mechanism = "var_gc_logs"
+anchor_tokens = ["kafka-02"]
+multi_doc = ["INC-0012", "INC-0089"]
+facts = { path = "/var/log/kafka", data_kafka_involved = false }
+
+[[incidents]]
+id = "INC-0071"
+mechanism = "go_goroutine_leak"
+anchor_tokens = ["payments-api-02"]
+multi_doc = ["RB-004", "INC-0131"]
+
+[[incidents]]
+id = "INC-0072"
+mechanism = "servfail_zone_load"
+anchor_tokens = ["SERVFAIL"]
+multi_doc = ["INC-0010", "INC-0016"]
+
+[[incidents]]
+id = "INC-0073"
+mechanism = "cert_san_mismatch"
+anchor_tokens = ["auth-db-01"]
+multi_doc = ["INC-0031", "INC-0126"]
+
+[[incidents]]
+id = "INC-0074"
+mechanism = "redis_features_scan_latency"
+anchor_tokens = ["FRD-W118"]
+multi_doc = ["INC-0058"]
+
+[[incidents]]
+id = "INC-0075"
+mechanism = "event_loop_cpu"
+multi_doc = ["RB-004", "INC-0037"]
+
+[[incidents]]
+id = "INC-0076"
+mechanism = "servfail_zone_load"
+anchor_tokens = ["SERVFAIL", "notification-worker-01"]
+multi_doc = ["INC-0010", "INC-0016"]
+
+[[incidents]]
+id = "INC-0077"
+mechanism = "hikari_slow_queries"
+anchor_tokens = ["LEDGER-W210", "ledger-db-01"]
+multi_doc = ["RB-012", "INC-0124", "INC-0136"]
+
+[[incidents]]
+id = "INC-0078"
+constraint = "RB-019/2025-09"
+mechanism = "overcommit_fork"
+anchor_tokens = ["MISCONF", "FRD-E140"]
+multi_doc = ["INC-0102", "INC-0123"]
+facts = { overcommit_memory = 2, ratio = 80, redis_gb = 14, commit_limit_gb = 25.6 }
+
+[[incidents]]
+id = "INC-0079"
+mechanism = "var_journal_growth"
+
+[[incidents]]
+id = "INC-0080"
+mechanism = "fraud_feature_cache_growth"
+anchor_tokens = ["FRD-W118"]
+multi_doc = ["RB-005", "INC-0013", "INC-0063"]
+
+[[incidents]]
+id = "INC-0081"
+mechanism = "vm_config_push"
+anchor_tokens = ["NXDOMAIN", "internal-dns-02"]
+multi_doc = ["RB-027", "INC-0010", "INC-0016"]
+hard_negative_pair = ["RB-020", "RB-027"]
+discriminators = ["Type=simple"]
+facts = { failed_hosts = 0 }
+
+[[incidents]]
+id = "INC-0082"
+mechanism = "edge_client_clock"
+cause_component = "client device clock wrong"
+multi_doc = ["INC-0007", "INC-0023"]
+
+[[incidents]]
+id = "INC-0083"
+mechanism = "app_release_regression"
+anchor_tokens = ["payments-api-01"]
+multi_doc = ["RB-014", "INC-0115"]
+
+[[incidents]]
+id = "INC-0084"
+constraint = "RB-007/WAL-1"
+mechanism = "wal_inactive_slot"
+absent_codes = ["ENOSPC"]
+multi_doc = ["INC-0032", "INC-0147"]
+facts = { slot = "cdc_payments", caught_by = "50 GB retained-WAL alert" }
+
+[[incidents]]
+id = "INC-0085"
+mechanism = "large_export_response"
+multi_doc = ["INC-0128", "INC-0139"]
+
+[[incidents]]
+id = "INC-0086"
+mechanism = "edge_intermediate_missing"
+anchor_tokens = ["edge-gateway-02", "edge-gateway-01"]
+multi_doc = ["INC-0007", "INC-0023"]
+
+[[incidents]]
+id = "INC-0087"
+constraint = "RB-018/2025-10"
+mechanism = "sessions_planned_failover"
+anchor_tokens = ["READONLY", "AUTH-E401X"]
+multi_doc = ["INC-0099", "INC-0121"]
+facts = { window = "a few seconds", users = "few" }
+
+[[incidents]]
+id = "INC-0088"
+mechanism = "table_bloat"
+anchor_tokens = ["INV-E220", "inventory-db-01"]
+
+[[incidents]]
+id = "INC-0089"
+mechanism = "var_journal_growth"
+anchor_tokens = ["kafka-01"]
+multi_doc = ["RB-009", "INC-0012", "INC-0070"]
+
+[[incidents]]
+id = "INC-0090"
+mechanism = "redis_cache_primary_loss"
+anchor_tokens = ["ETIMEDOUT", "CAT-E301"]
+multi_doc = ["INC-0041", "INC-0054"]
+
+[[incidents]]
+id = "INC-0091"
+mechanism = "queuepool_slow_query"
+
+[[incidents]]
+id = "INC-0092"
+mechanism = "max_connections_adhoc"
+anchor_tokens = ["53300", "INV-E220"]
+multi_doc = ["RB-015"]
+
+[[incidents]]
+id = "INC-0093"
+constraint = "RB-001/2025-10"
+mechanism = "ledger_retry_spin"
+cause_component = "Kafka broker outage (scope not stated)"
+anchor_tokens = ["LEDGER-E455", "ledger-service-01"]
+multi_doc = ["INC-0036", "INC-0045"]
+facts = { fixed_by = "release 4.12, shipped 2025-11-12", last_retry_spin = true }
+
+[[incidents]]
+id = "INC-0094"
+mechanism = "redis_loading_after_restart"
+anchor_tokens = ["LOADING", "CAT-E301"]
+multi_doc = ["INC-0041", "INC-0054"]
+
+[[incidents]]
+id = "INC-0095"
+mechanism = "pgbouncer_long_transactions"
+anchor_tokens = ["query_wait_timeout", "payments-pgbouncer-02"]
+multi_doc = ["INC-0035", "INC-0055"]
+
+[[incidents]]
+id = "INC-0096"
+mechanism = "app_release_regression"
+
+[[incidents]]
+id = "INC-0097"
+mechanism = "fraud_feature_cache_growth"
+anchor_tokens = ["FRD-W118"]
+multi_doc = ["RB-005", "INC-0013", "INC-0063"]
+
+[[incidents]]
+id = "INC-0098"
+mechanism = "plan_flip"
+multi_doc = ["RB-010", "INC-0009"]
+
+[[incidents]]
+id = "INC-0099"
+mechanism = "sessions_failover"
+anchor_tokens = ["READONLY", "AUTH-E401X"]
+multi_doc = ["INC-0087", "INC-0121"]
+facts = { after_rb018_review = true }
+
+[[incidents]]
+id = "INC-0100"
+mechanism = "servfail_zone_load"
+anchor_tokens = ["SERVFAIL", "ledger-service-01"]
+multi_doc = ["INC-0010", "INC-0016"]
+
+[[incidents]]
+id = "INC-0101"
+constraint = "RB-008/2025-11"
+mechanism = "var_unrotated_log"
+anchor_tokens = ["search-cluster-02"]
+multi_doc = ["INC-0106", "INC-0183"]
+facts = { path = "/var/log/opensearch/*.log" }
+
+[[incidents]]
+id = "INC-0102"
+mechanism = "bgsave_disk_full"
+anchor_tokens = ["MISCONF", "FRD-E140"]
+multi_doc = ["RB-008", "INC-0078", "INC-0123"]
+
+[[incidents]]
+id = "INC-0103"
+mechanism = "max_connections_job_leak"
+anchor_tokens = ["53300", "orders-db-01"]
+facts = { held_by = "idle sessions left open by an orders-api batch Job in namespace commerce, which opened a new connection for each batch and never closed it", idle_sessions = 222, usable_slots = 297, fix = "Job stopped, then its idle sessions ended with pg_terminate_backend after team-commerce agreed" }
+
+[[incidents]]
+id = "INC-0104"
+mechanism = "cpu_throttling"
+anchor_tokens = ["payments-api-01", "payments-api-02"]
+multi_doc = ["INC-0008", "INC-0140"]
+
+[[incidents]]
+id = "INC-0105"
+mechanism = "ledger_monthend_serialization"
+anchor_tokens = ["LEDGER-W210", "ledger-service-01"]
+multi_doc = ["INC-0036", "INC-0045"]
+
+[[incidents]]
+id = "INC-0106"
+mechanism = "search_disk_watermark"
+multi_doc = ["INC-0101", "INC-0183"]
+
+[[incidents]]
+id = "INC-0107"
+mechanism = "search_gc_pauses"
+anchor_tokens = ["search-api-01"]
+multi_doc = ["INC-0187"]
+
+[[incidents]]
+id = "INC-0108"
+constraint = "RB-017/2025-12"
+mechanism = "redis_cache_primary_loss"
+anchor_tokens = ["ETIMEDOUT", "CAT-E301"]
+multi_doc = ["INC-0041", "INC-0054"]
+facts = { outage_s = 40, detection_s = 30, catalog_db_cpu_pct = 90, payments_inventory_extra_db_reads = false }
+
+[[incidents]]
+id = "INC-0109"
+mechanism = "var_journal_growth"
+anchor_tokens = ["inventory-db-01"]
+
+[[incidents]]
+id = "INC-0110"
+mechanism = "processor_ca_rotation"
+anchor_tokens = ["CPX-E600"]
+multi_doc = ["INC-0004"]
+
+[[incidents]]
+id = "INC-0111"
+mechanism = "app_release_regression"
+anchor_tokens = ["NTF-E710", "notification-worker-02"]
+
+[[incidents]]
+id = "INC-0112"
+mechanism = "migration_lock_timeout_retry"
+multi_doc = ["INC-0042"]
+facts = { lock_timeout_s = 5, release_delayed = true }
+
+[[incidents]]
+id = "INC-0113"
+mechanism = "cpx_renewal_bad_chain"
+anchor_tokens = ["CPX-E600"]
+multi_doc = ["INC-0004"]
+
+[[incidents]]
+id = "INC-0114"
+mechanism = "go_gc_pressure"
+anchor_tokens = ["payments-api-04"]
+multi_doc = ["INC-0029", "INC-0064"]
+
+[[incidents]]
+id = "INC-0115"
+mechanism = "app_release_regression"
+anchor_tokens = ["payments-api-01", "payments-api-04"]
+multi_doc = ["RB-014", "INC-0083"]
+
+[[incidents]]
+id = "INC-0116"
+mechanism = "fd_limit"
+anchor_tokens = ["EMFILE", "payments-pgbouncer-02"]
+
+[[incidents]]
+id = "INC-0117"
+mechanism = "route_config_change"
+anchor_tokens = ["edge-gateway-02", "edge-gateway-01"]
+
+[[incidents]]
+id = "INC-0118"
+mechanism = "vm_config_push"
+anchor_tokens = ["SRCH-E502", "search-cluster-01"]
+multi_doc = ["RB-003"]
+facts = { unit = "opensearch", failed_hosts = 2 }
+
+[[incidents]]
+id = "INC-0119"
+mechanism = "edge_node_pressure"
+multi_doc = ["INC-0060"]
+
+[[incidents]]
+id = "INC-0120"
+constraint = "RB-009/2025-04..2026-04"
+mechanism = "kafka_broker_disk"
+anchor_tokens = ["kafka-03"]
+multi_doc = ["INC-0012", "INC-0070"]
+facts = { top_topics = ["ledger.entries", "notifications.outbound"] }
+
+[[incidents]]
+id = "INC-0121"
+mechanism = "sessions_failover"
+anchor_tokens = ["READONLY", "AUTH-E401X"]
+multi_doc = ["INC-0087", "INC-0099"]
+facts = { after_rb018_review = true }
+
+[[incidents]]
+id = "INC-0122"
+mechanism = "servfail_zone_load"
+anchor_tokens = ["SERVFAIL", "internal-dns-02"]
+multi_doc = ["INC-0010", "INC-0016"]
+
+[[incidents]]
+id = "INC-0123"
+mechanism = "redis_loading_after_restart"
+anchor_tokens = ["LOADING", "FRD-W118"]
+multi_doc = ["INC-0078", "INC-0102"]
+
+[[incidents]]
+id = "INC-0124"
+constraint = "RB-013/2026-01-31"
+mechanism = "recon_parallelism"
+absent_codes = ["LEDGER-E455"]
+anchor_tokens = ["LEDGER-W210", "ledger-db-01"]
+multi_doc = ["RB-001", "INC-0077", "INC-0136"]
+hard_negative_pair = ["RB-001", "RB-013"]
+discriminators = ["hikaricp_connections_pending"]
+facts = { pool = "20/20", pending = 40, parallelism_before = 24, parallelism_after = 4, batch_start = "23:30", batch_finished = "03:10", cpu = "elevated, not saturated" }
+
+[[incidents]]
+id = "INC-0125"
+mechanism = "vm_resolver_first_down"
+anchor_tokens = ["kafka-02"]
+multi_doc = ["INC-0010", "INC-0016"]
+
+[[incidents]]
+id = "INC-0126"
+mechanism = "cert_san_mismatch"
+anchor_tokens = ["auth-db-01"]
+multi_doc = ["INC-0031", "INC-0073"]
+
+[[incidents]]
+id = "INC-0127"
+mechanism = "var_journal_growth"
+anchor_tokens = ["ledger-db-02"]
+
+[[incidents]]
+id = "INC-0128"
+constraint = "RB-005/2026-02-catalog"
+mechanism = "unbounded_response_cache"
+multi_doc = ["INC-0085", "INC-0139"]
+facts = { oom_every_min = 50 }
+
+[[incidents]]
+id = "INC-0129"
+mechanism = "expensive_wildcard_query"
+anchor_tokens = ["SRCH-E502", "search-cluster-01"]
+multi_doc = ["INC-0005", "INC-0052"]
+
+[[incidents]]
+id = "INC-0130"
+mechanism = "node_heap_leak"
+multi_doc = ["RB-005", "INC-0069", "INC-0150"]
+
+[[incidents]]
+id = "INC-0131"
+mechanism = "go_goroutine_leak"
+anchor_tokens = ["payments-api-04"]
+multi_doc = ["RB-004", "INC-0071"]
+
+[[incidents]]
+id = "INC-0132"
+mechanism = "jvm_heap_growth"
+
+[[incidents]]
+id = "INC-0133"
+constraint = "RB-005/2026-02-notification"
+mechanism = "limit_below_batch_peak"
+anchor_tokens = ["notification-worker-01"]
+multi_doc = ["INC-0006"]
+facts = { batch = "Monday-morning email batch", memory_otherwise = "flat" }
+
+[[incidents]]
+id = "INC-0134"
+mechanism = "pg_pool_slow_query"
+multi_doc = ["INC-0182"]
+facts = { cause = "month-end order-summary requests each held a pg Pool connection for about 30 s while their query ran on orders-db, filling the 25-connection pools on orders-api-01 and orders-api-03", query_seconds = 30, pool_max = 25, fix = "team-commerce switched off the order-summary endpoint at 07:58 and the pools drained by 08:05" }
+
+[[incidents]]
+id = "INC-0135"
+mechanism = "app_release_regression"
+multi_doc = ["INC-0161", "INC-0178"]
+
+[[incidents]]
+id = "INC-0136"
+mechanism = "hikari_slow_queries"
+anchor_tokens = ["LEDGER-W210", "ledger-db-01"]
+multi_doc = ["RB-012", "INC-0077", "INC-0124"]
+
+[[incidents]]
+id = "INC-0137"
+constraint = "RB-030/2026-03-10"
+mechanism = "edge_search_limit"
+cause_component = "growth spring campaign traffic"
+absent_codes = ["SRCH-E502"]
+anchor_tokens = ["EDGE-RL01", "edge-gateway-02"]
+multi_doc = ["RB-014", "INC-0167"]
+hard_negative_pair = ["RB-014", "RB-030"]
+discriminators = ["EDGE-RL01"]
+facts = { peak_rps = 420, edge_limit_per_pod = 100, refused_per_s = 120, refused_pct = 29, new_limit_per_pod = 250, search_api_rps = 300 }
+
+[[incidents]]
+id = "INC-0138"
+mechanism = "table_bloat"
+multi_doc = ["RB-015", "INC-0065"]
+
+[[incidents]]
+id = "INC-0139"
+mechanism = "large_export_response"
+multi_doc = ["INC-0085", "INC-0128"]
+
+[[incidents]]
+id = "INC-0140"
+mechanism = "cpu_throttling"
+anchor_tokens = ["payments-api-04"]
+multi_doc = ["INC-0008", "INC-0104"]
+
+[[incidents]]
+id = "INC-0141"
+mechanism = "kafka_broker_disk"
+anchor_tokens = ["kafka-03"]
+multi_doc = ["RB-001", "INC-0012", "INC-0070"]
+facts = { top_topics = ["ledger.entries", "notifications.outbound"] }
+
+[[incidents]]
+id = "INC-0142"
+constraint = "RB-020/2026-03"
+mechanism = "vm_config_push"
+anchor_tokens = ["NXDOMAIN", "internal-dns-02"]
+multi_doc = ["INC-0010", "INC-0016"]
+facts = { zone_reached = ["internal-dns-02"], missing_record = "inventory-db-01.prod.internal", failed_hosts = 0, intermittent = true }
+
+[[incidents]]
+id = "INC-0143"
+mechanism = "sessions_failover"
+anchor_tokens = ["AUTH-E401X", "redis-sessions-01"]
+multi_doc = ["INC-0087", "INC-0099"]
+facts = { after_rb018_review = true }
+
+[[incidents]]
+id = "INC-0144"
+mechanism = "vm_resolver_first_down"
+anchor_tokens = ["kafka-02"]
+multi_doc = ["INC-0010", "INC-0016"]
+
+[[incidents]]
+id = "INC-0145"
+mechanism = "segment_merge_cpu"
+anchor_tokens = ["search-cluster-02"]
+
+[[incidents]]
+id = "INC-0146"
+mechanism = "search_pool_rejection"
+cause_component = "growth campaign traffic above search-cluster capacity"
+anchor_tokens = ["SRCH-E502", "search-cluster-02"]
+multi_doc = ["INC-0014", "INC-0028"]
+facts = { limiter = false, edge_limit_per_pod = 250 }
+
+[[incidents]]
+id = "INC-0147"
+mechanism = "wal_inactive_slot"
+multi_doc = ["RB-010", "INC-0032", "INC-0084"]
+facts = { slot = "cdc_payments", caught_by = "50 GB retained-WAL alert" }
+
+[[incidents]]
+id = "INC-0148"
+mechanism = "pgbouncer_single_core_cpu"
+anchor_tokens = ["payments-pgbouncer-01"]
+multi_doc = ["INC-0026"]
+
+[[incidents]]
+id = "INC-0149"
+mechanism = "var_journal_growth"
+anchor_tokens = ["kafka-03"]
+multi_doc = ["RB-009", "INC-0012", "INC-0070"]
+
+[[incidents]]
+id = "INC-0150"
+mechanism = "node_heap_leak"
+multi_doc = ["RB-005", "INC-0069", "INC-0130"]
+
+[[incidents]]
+id = "INC-0151"
+constraint = "RB-012/2026-04"
+mechanism = "pool_size_release"
+anchor_tokens = ["53300", "inventory-db-01"]
+multi_doc = ["INC-0002", "INC-0059"]
+facts = { pool_before = 20, pool_after = 80, usable = 97 }
+
+[[incidents]]
+id = "INC-0152"
+mechanism = "maxmemory_noeviction"
+anchor_tokens = ["OOM command not allowed", "FRD-E140"]
+multi_doc = ["INC-0078", "INC-0102"]
+
+[[incidents]]
+id = "INC-0153"
+mechanism = "redis_cache_restart_refused"
+anchor_tokens = ["ECONNREFUSED", "CAT-E301"]
+multi_doc = ["INC-0041", "INC-0054"]
+facts = { port = 6379, demo_near_miss = true, payments_served_in_process_copy = true }
+
+[[incidents]]
+id = "INC-0154"
+mechanism = "sessions_failover"
+anchor_tokens = ["AUTH-E401X", "redis-sessions-01"]
+multi_doc = ["INC-0087", "INC-0099"]
+facts = { after_rb018_review = true }
+
+[[incidents]]
+id = "INC-0155"
+mechanism = "maxmemory_noeviction"
+anchor_tokens = ["OOM command not allowed", "FRD-E140"]
+multi_doc = ["INC-0078", "INC-0102"]
+
+[[incidents]]
+id = "INC-0156"
+mechanism = "pgx_slow_queries"
+anchor_tokens = ["payments-api-02"]
+multi_doc = ["INC-0035", "INC-0055"]
+
+[[incidents]]
+id = "INC-0157"
+constraint = "RB-007/WAL-2"
+mechanism = "wal_archive_failure"
+anchor_tokens = ["57P02"]
+multi_doc = ["INC-0032", "INC-0084"]
+
+[[incidents]]
+id = "INC-0158"
+mechanism = "node_heap_leak"
+multi_doc = ["RB-005", "INC-0069", "INC-0130"]
+
+[[incidents]]
+id = "INC-0159"
+mechanism = "processor_429_blip"
+anchor_tokens = ["CPX-W429"]
+multi_doc = ["INC-0018", "INC-0019"]
+facts = { retry_storm = false }
+
+[[incidents]]
+id = "INC-0160"
+mechanism = "max_connections_adhoc"
+anchor_tokens = ["53300"]
+
+[[incidents]]
+id = "INC-0161"
+mechanism = "app_release_regression"
+anchor_tokens = ["AUTH-E401X"]
+multi_doc = ["INC-0135", "INC-0178"]
+
+[[incidents]]
+id = "INC-0162"
+constraint = "RB-016/2026-05"
+mechanism = "processor_slowdown_retry_storm"
+cause_component = "external card processor slowdown"
+anchor_tokens = ["CPX-W429"]
+multi_doc = ["RB-014", "INC-0018", "INC-0019"]
+hard_negative_pair = ["RB-014", "RB-016"]
+discriminators = ["CPX_MAX_ATTEMPTS"]
+facts = { edge_504_min = 40, ended_after = "CPX_MAX_ATTEMPTS=1", retry_storm = true }
+
+[[incidents]]
+id = "INC-0163"
+mechanism = "gunicorn_worker_growth"
+multi_doc = ["INC-0013", "INC-0063"]
+
+[[incidents]]
+id = "INC-0164"
+mechanism = "sessions_failover"
+anchor_tokens = ["READONLY", "AUTH-E401X"]
+multi_doc = ["INC-0087", "INC-0099"]
+facts = { after_rb018_review = true }
+
+[[incidents]]
+id = "INC-0165"
+mechanism = "ledger_monthend_serialization"
+anchor_tokens = ["LEDGER-W210", "ledger-service-01"]
+multi_doc = ["INC-0036", "INC-0045"]
+
+[[incidents]]
+id = "INC-0166"
+mechanism = "sync_crypto_event_loop"
+multi_doc = ["RB-004"]
+
+[[incidents]]
+id = "INC-0167"
+mechanism = "edge_search_limit"
+cause_component = "crawler burst on /search"
+anchor_tokens = ["EDGE-RL01", "edge-gateway-02"]
+multi_doc = ["INC-0137"]
+facts = { edge_limit_per_pod = 250 }
+
+[[incidents]]
+id = "INC-0168"
+constraint = "RB-021/2026-06"
+mechanism = "search_suffix_latency"
+anchor_tokens = ["EAI_AGAIN", "orders-db-01"]
+multi_doc = ["RB-020"]
+hard_negative_pair = ["RB-020", "RB-021"]
+discriminators = ["idleTimeoutMillis"]
+facts = { p99_s = 5, some_s = 10, queries_per_lookup = 8, idle_timeout_before_ms = 10000, idle_timeout_after_ms = 60000, lost_reply_cause = "not claimed" }
+
+[[incidents]]
+id = "INC-0169"
+mechanism = "maxmemory_noeviction"
+anchor_tokens = ["OOM command not allowed", "FRD-E140"]
+multi_doc = ["INC-0078", "INC-0102"]
+
+[[incidents]]
+id = "INC-0170"
+mechanism = "cluster_dns_config"
+cause_component = "cluster CoreDNS (kube-system)"
+anchor_tokens = ["EAI_AGAIN"]
+multi_doc = ["INC-0010", "INC-0016"]
+
+[[incidents]]
+id = "INC-0171"
+mechanism = "email_provider_slow"
+cause_component = "external email provider"
+anchor_tokens = ["NTF-E710", "notification-worker-02"]
+
+[[incidents]]
+id = "INC-0172"
+mechanism = "app_release_regression"
+multi_doc = ["RB-006"]
+
+[[incidents]]
+id = "INC-0173"
+mechanism = "pgbouncer_long_transactions"
+anchor_tokens = ["payments-pgbouncer-02", "payments-pgbouncer-01"]
+multi_doc = ["INC-0035", "INC-0055"]
+
+[[incidents]]
+id = "INC-0174"
+constraint = "RB-007/WAL-3"
+mechanism = "wal_inactive_slot"
+absent_codes = ["ENOSPC"]
+anchor_tokens = ["payments-db-02"]
+multi_doc = ["INC-0032", "INC-0084"]
+facts = { slot = "payments_db_02", caught_by = "50 GB retained-WAL alert" }
+
+[[incidents]]
+id = "INC-0175"
+mechanism = "vm_config_push"
+anchor_tokens = ["redis-sessions-02"]
+multi_doc = ["RB-017", "INC-0191"]
+facts = { unit = "redis-sentinel", failed_hosts = 3 }
+
+[[incidents]]
+id = "INC-0176"
+mechanism = "max_connections_adhoc"
+anchor_tokens = ["53300", "auth-db-01"]
+
+[[incidents]]
+id = "INC-0177"
+mechanism = "cpx_restart_halved_budget"
+anchor_tokens = ["CPX-W430"]
+multi_doc = ["RB-023", "INC-0018", "INC-0019"]
+hard_negative_pair = ["RB-023", "RB-029"]
+discriminators = ["rollout restart"]
+facts = { budget_while_rolling = 180 }
+
+[[incidents]]
+id = "INC-0178"
+constraint = "RB-026/2026-07-21"
+mechanism = "session_encoding"
+absent_codes = ["READONLY"]
+anchor_tokens = ["AUTH-E401X"]
+multi_doc = ["RB-018", "INC-0135", "INC-0161"]
+hard_negative_pair = ["RB-018", "RB-026"]
+discriminators = ["sess:"]
+facts = { first_wave = "14:08", paged = "14:14", rollback = "14:20", second_wave = "14:23", data_lost = false }
+
+[[incidents]]
+id = "INC-0179"
+mechanism = "search_suffix_latency"
+anchor_tokens = ["EAI_AGAIN", "notification-worker-02"]
+
+[[incidents]]
+id = "INC-0180"
+mechanism = "pgx_slow_queries"
+anchor_tokens = ["payments-api-01", "payments-api-04"]
+multi_doc = ["INC-0035", "INC-0055"]
+
+[[incidents]]
+id = "INC-0181"
+mechanism = "reservations_lock_contention"
+anchor_tokens = ["INV-E220", "inventory-db-01"]
+multi_doc = ["RB-016", "INC-0049"]
+
+[[incidents]]
+id = "INC-0182"
+mechanism = "pg_pool_slow_query"
+multi_doc = ["INC-0134"]
+
+[[incidents]]
+id = "INC-0183"
+mechanism = "var_journal_growth"
+anchor_tokens = ["search-cluster-01"]
+multi_doc = ["INC-0101", "INC-0106"]
+
+[[incidents]]
+id = "INC-0184"
+mechanism = "maxmemory_noeviction"
+anchor_tokens = ["OOM command not allowed", "FRD-E140"]
+multi_doc = ["INC-0078", "INC-0102"]
+
+[[incidents]]
+id = "INC-0185"
+constraint = "RB-027/2026-08-13"
+mechanism = "vm_config_push"
+absent_codes = ["ORD-5003", "NTF-E710"]
+anchor_tokens = ["LEDGER-E455", "kafka-01"]
+facts = { setting = "message.max.bytes=10MB", failed_hosts = 2, writes_failed = "10:17-10:27", run_stopped = "10:20", kafka_03_due = "10:22", ledger_cpu_spin = false }
+
+[[incidents]]
+id = "INC-0186"
+mechanism = "cpx_traffic_above_budget"
+anchor_tokens = ["CPX-W430"]
+multi_doc = ["INC-0018", "INC-0019"]
+facts = { total_budget = 360 }
+
+[[incidents]]
+id = "INC-0187"
+mechanism = "search_gc_pauses"
+anchor_tokens = ["search-cluster-01"]
+multi_doc = ["INC-0107"]
+
+[[incidents]]
+id = "INC-0188"
+mechanism = "hikari_slow_queries"
+anchor_tokens = ["LEDGER-W210", "ledger-db-02"]
+multi_doc = ["RB-012", "INC-0077", "INC-0124"]
+
+[[incidents]]
+id = "INC-0189"
+mechanism = "cpu_throttling"
+anchor_tokens = ["payments-api-01"]
+multi_doc = ["RB-006", "INC-0024", "INC-0030"]
+
+[[incidents]]
+id = "INC-0190"
+mechanism = "zone_stale_serial"
+anchor_tokens = ["internal-dns-02"]
+multi_doc = ["INC-0010", "INC-0016"]
+
+[[incidents]]
+id = "INC-0191"
+mechanism = "vm_config_push"
+multi_doc = ["RB-017", "INC-0175"]
+facts = { unit = "redis-server", failed_hosts = 1, gate_stopped_run = true }
+
+[[incidents]]
+id = "INC-0192"
+mechanism = "vm_config_push"
+facts = { unit = "coredns", failed_hosts = 1, gate_stopped_run = true }
+
+[[incidents]]
+id = "INC-0193"
+mechanism = "plan_flip"
+anchor_tokens = ["auth-db-01"]
+
+[[incidents]]
+id = "INC-0194"
+mechanism = "app_release_regression"
+anchor_tokens = ["ledger-service-01"]
+
+[[incidents]]
+id = "INC-0195"
+mechanism = "processor_429_blip"
+anchor_tokens = ["CPX-W429"]
+multi_doc = ["INC-0018", "INC-0019"]
+facts = { retry_storm = false }
+
+[[incidents]]
+id = "INC-0196"
+mechanism = "search_suffix_latency"
+anchor_tokens = ["EAI_AGAIN"]
+
+[[incidents]]
+id = "INC-0197"
+constraint = "RB-029/2026-09-16"
+mechanism = "egress_node_cordon"
+absent_codes = ["CPX-W429"]
+anchor_tokens = ["CPX-W430"]
+multi_doc = ["RB-016", "INC-0018", "INC-0019"]
+hard_negative_pair = ["RB-016", "RB-029"]
+discriminators = ["CPX-W430"]
+facts = { tokens_per_s = 180, arrivals_per_s = 240, e1107_per_s = 60, uncordon = "20:20", reboot_done = "20:18", cpx_max_attempts = 3 }
+
+[[incidents]]
+id = "INC-0198"
+mechanism = "pgx_slow_queries"
+anchor_tokens = ["payments-api-04", "payments-api-02"]
+multi_doc = ["INC-0035", "INC-0055"]
+
+[[incidents]]
+id = "INC-0199"
+mechanism = "kafka_broker_disk"
+anchor_tokens = ["kafka-02"]
+multi_doc = ["RB-001", "INC-0012", "INC-0070"]
+facts = { top_topics = ["ledger.entries", "notifications.outbound"] }
+
+[[incidents]]
+id = "INC-0200"
+mechanism = "processor_429_blip"
+anchor_tokens = ["CPX-W429"]
+multi_doc = ["INC-0018", "INC-0019"]
+facts = { retry_storm = false }

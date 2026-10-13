@@ -1,0 +1,44 @@
+# Synthetic logs for INC-0112. lock_timeout is 5s; no Postgres or Alembic error text is quoted.
+[[line]]
+at = "20:37:08"
+service = "catalog-db"
+host = "catalog-db-01.prod.internal"
+level = "WARN"
+message = "migration statement waited the full lock_timeout for a lock and was cancelled"
+
+[[line]]
+at = "20:37:10"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "WARN"
+message = "catalog-api-migrate: migration attempt failed, lock not acquired within lock_timeout; retrying"
+
+[[line]]
+at = "20:37:20"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "INFO"
+message = "release held: Deployment does not roll until catalog-api-migrate succeeds"
+
+[[line]]
+at = "21:20:08"
+service = "catalog-db"
+host = "catalog-db-01.prod.internal"
+level = "WARN"
+message = "migration statement waited the full lock_timeout for a lock and was cancelled"
+
+[[line]]
+at = "21:20:10"
+service = "catalog-api"
+host = "catalog-api-02.prod.internal"
+level = "WARN"
+message = "catalog-api-migrate: migration attempt failed, lock not acquired within lock_timeout; retrying"
+
+[[burst]]
+from = "20:28:00"
+to = "21:50:00"
+count = 40
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-02.prod.internal"]
+message = "GET /catalog {int:10-40}ms"

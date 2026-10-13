@@ -1,0 +1,50 @@
+# Synthetic logs for INC-0038. rollout lines are our tool's own journal lines.
+[[burst]]
+from = "06:20:00"
+to = "06:29:59"
+count = 8
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal"]
+message = "posted ledger entry ok latency_ms={int:15-80} id={hex8}"
+
+[[line]]
+at = "06:29:48"
+service = "internal-dns"
+host = "internal-dns-01.prod.internal"
+level = "INFO"
+message = "rollout: placed /etc/coredns/zones/prod.internal.db"
+
+[[line]]
+at = "06:29:52"
+service = "internal-dns"
+host = "internal-dns-01.prod.internal"
+level = "INFO"
+message = "rollout: systemctl restart coredns exit=0"
+
+[[burst]]
+from = "06:30:20"
+to = "07:44:40"
+count = 28
+service = "ledger-service"
+level = "ERROR"
+hosts = ["ledger-service-01.prod.internal"]
+message = "cannot obtain database connection: name of ledger database resolved to NXDOMAIN id={hex8}"
+
+[[burst]]
+from = "06:30:30"
+to = "07:44:50"
+count = 20
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal"]
+message = "posted ledger entry ok latency_ms={int:15-90} id={hex8}"
+
+[[burst]]
+from = "07:45:10"
+to = "07:54:00"
+count = 6
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal"]
+message = "posted ledger entry ok latency_ms={int:15-80} id={hex8}"

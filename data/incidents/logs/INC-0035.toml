@@ -1,0 +1,52 @@
+# Synthetic logs for INC-0035. Only the verified payments-api texts are used.
+[[line]]
+at = "01:55:30"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "WARN"
+message = "payments_app sessions running long on a shared statement"
+
+[[burst]]
+from = "01:46:00"
+to = "01:54:59"
+count = 6
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "db pool acquired {int:8-15} of 40 connections"
+
+[[burst]]
+from = "01:55:00"
+to = "01:57:00"
+count = 6
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "db pool acquired {ramp:16-40} of 40 connections"
+
+[[burst]]
+from = "01:57:30"
+to = "02:19:00"
+count = 14
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "db pool acquired {int:39-40} of 40 connections"
+
+[[burst]]
+from = "01:57:30"
+to = "02:19:30"
+count = 60
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-E1042 no pooled connection free within the 500ms deadline; responding 503"
+
+[[burst]]
+from = "02:20:30"
+to = "02:29:00"
+count = 8
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "db pool acquired {int:8-15} of 40 connections"

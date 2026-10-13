@@ -1,0 +1,48 @@
+# Synthetic logs for INC-0120. Our own services' formats.
+[[line]]
+at = "21:00:10"
+service = "kafka"
+host = "kafka-03.prod.internal"
+level = "WARN"
+message = "disk alert: /data/kafka usage above threshold"
+
+[[line]]
+at = "21:30:20"
+service = "kafka"
+host = "kafka-03.prod.internal"
+level = "INFO"
+message = "topic config changed: notifications.outbound retention.ms=86400000"
+
+[[line]]
+at = "23:28:40"
+service = "kafka"
+host = "kafka-03.prod.internal"
+level = "INFO"
+message = "topic config changed: notifications.outbound retention.ms override removed"
+
+[[burst]]
+from = "20:50:00"
+to = "20:59:50"
+count = 10
+service = "kafka"
+level = "WARN"
+hosts = ["kafka-03.prod.internal"]
+message = "disk check: /data/kafka at {int:88-94}%"
+
+[[burst]]
+from = "21:35:00"
+to = "23:25:00"
+count = 30
+service = "kafka"
+level = "INFO"
+hosts = ["kafka-03.prod.internal"]
+message = "log cleanup: deleted expired segment of notifications.outbound"
+
+[[burst]]
+from = "21:40:00"
+to = "23:29:00"
+count = 10
+service = "kafka"
+level = "INFO"
+hosts = ["kafka-03.prod.internal"]
+message = "disk check: /data/kafka at {ramp:85-60}%"

@@ -1,0 +1,45 @@
+# Synthetic logs for INC-0083. Pool ceiling 40 per pod; E1042 starts after the pool is full.
+[[burst]]
+from = "10:50:00"
+to = "10:59:59"
+count = 6
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-03.prod.internal"]
+message = "db pool acquired {int:8-15} of 40 connections"
+
+[[burst]]
+from = "11:00:00"
+to = "11:02:00"
+count = 6
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal", "payments-api-03.prod.internal"]
+message = "db pool acquired {ramp:16-40} of 40 connections"
+
+[[burst]]
+from = "11:02:30"
+to = "11:29:00"
+count = 14
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal", "payments-api-03.prod.internal"]
+message = "db pool acquired {int:39-40} of 40 connections"
+
+[[burst]]
+from = "11:02:40"
+to = "11:29:30"
+count = 60
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-03.prod.internal"]
+message = "PAYAPI-E1042 no pooled connection free within the 500ms deadline; responding 503"
+
+[[burst]]
+from = "11:30:30"
+to = "11:39:00"
+count = 6
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-03.prod.internal"]
+message = "db pool acquired {int:8-15} of 40 connections"

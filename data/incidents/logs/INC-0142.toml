@@ -1,0 +1,63 @@
+# Synthetic logs for INC-0142. Our own services' formats; no external error text is quoted
+# except the Go resolver's "no such host" wording from RB-020.
+[[line]]
+at = "13:29:40"
+service = "internal-dns"
+host = "internal-dns-02.prod.internal"
+level = "INFO"
+message = "coredns: zone prod.internal reloaded from /etc/coredns/zones/prod.internal.db, SOA serial changed"
+
+[[line]]
+at = "13:41:20"
+service = "internal-dns"
+host = "internal-dns-01.prod.internal"
+level = "INFO"
+message = "coredns: query for the inventory database record answered NOERROR"
+
+[[line]]
+at = "13:41:25"
+service = "internal-dns"
+host = "internal-dns-02.prod.internal"
+level = "WARN"
+message = "coredns: query for the inventory database record answered NXDOMAIN"
+
+[[line]]
+at = "13:52:30"
+service = "internal-dns"
+host = "internal-dns-01.prod.internal"
+level = "INFO"
+message = "coredns: zone prod.internal reloaded from /etc/coredns/zones/prod.internal.db, SOA serial changed"
+
+[[line]]
+at = "13:57:50"
+service = "internal-dns"
+host = "internal-dns-02.prod.internal"
+level = "INFO"
+message = "coredns: zone prod.internal reloaded from /etc/coredns/zones/prod.internal.db, SOA serial changed"
+
+[[burst]]
+from = "13:30:05"
+to = "13:58:59"
+count = 24
+service = "inventory-service"
+level = "ERROR"
+hosts = ["inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+message = "reservation write failed: database name did not resolve (NXDOMAIN, no such host)"
+
+[[burst]]
+from = "13:30:10"
+to = "13:58:59"
+count = 24
+service = "inventory-service"
+level = "INFO"
+hosts = ["inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+message = "reservation {hex8} created for sku {int:1000-9999}"
+
+[[burst]]
+from = "14:00:00"
+to = "14:14:50"
+count = 10
+service = "inventory-service"
+level = "INFO"
+hosts = ["inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+message = "reservation {hex8} created for sku {int:1000-9999}"

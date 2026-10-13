@@ -1,0 +1,56 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    env_file: .env # POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
+    ports:
+      # Loopback only, for host-side psql/tests; dropped on EC2. Host port is
+      # configurable so it can't clash with other local stacks; inside the
+      # network the app still uses db:5432.
+      - "127.0.0.1:${DB_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # One-shot: applies migrations, then exits. The app only starts if this exits 0,
+  # so it never runs against a half-migrated schema.
+  migrate:
+    image: opspilot:local # same image as app, built once
+    build: .
+    env_file: .env # DATABASE_URL=...@db:5432 is correct inside the network
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    image: opspilot:local
+    build: .
+    env_file: .env # runtime secrets; reaches Postgres at db:5432 on the compose network
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT:-8001}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Ollama on the host; makes this work on Linux too
+
+  # One-shot corpus build (`make corpus`). Profile "tools" keeps it out of `make up`.
+  # Writes files only, so no database dependency. data/ is mounted so outputs land on
+  # the host; the eval sidecar is read-only because the build only validates against it.
+  corpus:
+    image: opspilot:local
+    build: .
+    command: ["python", "-m", "scripts.build_corpus"]
+    volumes:
+      - ./data:/app/data
+      - ./eval/corpus:/app/eval/corpus:ro
+    profiles: ["tools"]
+    restart: "no"
+
+volumes:
+  pgdata:

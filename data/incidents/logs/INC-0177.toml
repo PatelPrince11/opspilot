@@ -1,0 +1,32 @@
+# Synthetic logs for INC-0177. Everything is our own service format.
+[[line]]
+at = "06:40:14"
+service = "card-processor-proxy"
+host = "card-processor-proxy-01.prod.internal"
+level = "WARN"
+message = "CPX-W430 local egress limit: attempt waited 2s for a token, rejected, not sent to processor"
+
+[[line]]
+at = "06:44:20"
+service = "card-processor-proxy"
+host = "card-processor-proxy-01.prod.internal"
+level = "INFO"
+message = "egress limiter: 180 tokens/s for this instance"
+
+[[burst]]
+from = "06:40:20"
+to = "06:44:50"
+count = 28
+service = "card-processor-proxy"
+level = "WARN"
+hosts = ["card-processor-proxy-01.prod.internal"]
+message = "CPX-W430 local egress limit: attempt waited 2s for a token, rejected, not sent to processor"
+
+[[burst]]
+from = "06:40:25"
+to = "06:44:50"
+count = 12
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "proxy rejected attempt, retrying ({int:1-2} of 3)"

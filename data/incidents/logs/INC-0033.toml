@@ -1,0 +1,50 @@
+# Synthetic logs for INC-0033. rollout lines are our tool's own journal lines.
+[[burst]]
+from = "01:05:00"
+to = "01:14:59"
+count = 8
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal"]
+message = "POST /v1/auth/login ok latency_ms={int:40-160} req={hex8}"
+
+[[line]]
+at = "01:15:03"
+service = "internal-dns"
+host = "internal-dns-02.prod.internal"
+level = "INFO"
+message = "rollout: placed /etc/coredns/zones/prod.internal.db"
+
+[[line]]
+at = "01:15:07"
+service = "internal-dns"
+host = "internal-dns-02.prod.internal"
+level = "INFO"
+message = "rollout: systemctl restart coredns exit=0"
+
+[[burst]]
+from = "01:15:20"
+to = "01:39:40"
+count = 18
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-01.prod.internal"]
+message = "new database connection failed: lookup of auth database name answered NXDOMAIN req={hex8}"
+
+[[burst]]
+from = "01:15:30"
+to = "01:39:50"
+count = 14
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal"]
+message = "POST /v1/auth/login ok latency_ms={int:40-180} req={hex8}"
+
+[[burst]]
+from = "01:40:10"
+to = "01:49:00"
+count = 6
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal"]
+message = "POST /v1/auth/login ok latency_ms={int:40-160} req={hex8}"

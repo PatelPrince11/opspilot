@@ -1,0 +1,45 @@
+# Synthetic logs for INC-0196. Lines are our own wording; EAI_AGAIN is the resolver status name.
+[[burst]]
+from = "17:45:30"
+to = "17:54:59"
+count = 8
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "GET /products served from cache in {int:4-20}ms"
+
+[[burst]]
+from = "17:55:10"
+to = "22:39:30"
+count = 40
+service = "catalog-api"
+level = "WARN"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "name lookup was slow to answer"
+
+[[burst]]
+from = "17:56:00"
+to = "22:38:00"
+count = 14
+service = "catalog-api"
+level = "ERROR"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "name lookup failed: EAI_AGAIN"
+
+[[burst]]
+from = "17:55:30"
+to = "22:39:00"
+count = 20
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "GET /products served from cache in {int:4-20}ms"
+
+[[burst]]
+from = "22:40:20"
+to = "22:49:30"
+count = 8
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "GET /products served from cache in {int:4-20}ms"

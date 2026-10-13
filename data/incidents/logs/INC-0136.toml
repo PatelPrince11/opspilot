@@ -1,0 +1,61 @@
+# Synthetic logs for INC-0136. Hikari timeout text is the verified tail "request timed out after 30000ms".
+[[burst]]
+from = "04:30:00"
+to = "04:39:59"
+count = 6
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-02.prod.internal"]
+message = "HikariPool-1 active connections {int:5-12} of 20"
+
+[[burst]]
+from = "04:40:00"
+to = "04:40:50"
+count = 4
+service = "ledger-service"
+level = "WARN"
+hosts = ["ledger-service-02.prod.internal"]
+message = "LEDGER-W210 HikariPool-1 active connections {ramp:18-20} of 20, pending {ramp:2-30}"
+
+[[burst]]
+from = "04:41:00"
+to = "05:19:00"
+count = 14
+service = "ledger-service"
+level = "WARN"
+hosts = ["ledger-service-02.prod.internal"]
+message = "LEDGER-W210 HikariPool-1 active connections 20 of 20, pending {int:15-40}"
+
+[[burst]]
+from = "04:41:30"
+to = "05:19:30"
+count = 40
+service = "ledger-service"
+level = "ERROR"
+hosts = ["ledger-service-02.prod.internal"]
+message = "HikariPool-1 - Connection is not available, request timed out after 30000ms."
+
+[[burst]]
+from = "04:41:30"
+to = "05:19:30"
+count = 40
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "ledger-service returned 503 for ledger lookup"
+
+[[line]]
+at = "04:42:00"
+service = "ledger-db"
+host = "ledger-db-01.prod.internal"
+level = "WARN"
+message = "ledger_app sessions running long on a shared statement"
+
+[[burst]]
+from = "05:20:30"
+to = "05:29:00"
+count = 6
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-02.prod.internal"]
+message = "HikariPool-1 active connections {int:5-12} of 20"

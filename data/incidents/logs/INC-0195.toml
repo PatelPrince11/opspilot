@@ -1,0 +1,50 @@
+# Synthetic logs for INC-0195. Everything is our own service format.
+[[line]]
+at = "00:30:06"
+service = "card-processor-proxy"
+host = "card-processor-proxy-01.prod.internal"
+level = "WARN"
+message = "CPX-W429 processor answered with its rate-limit reply; relayed to caller"
+
+[[line]]
+at = "00:30:09"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "WARN"
+message = "CPX-W429 processor answered with its rate-limit reply; relayed to caller"
+
+[[burst]]
+from = "00:30:10"
+to = "00:34:50"
+count = 30
+service = "card-processor-proxy"
+level = "WARN"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "CPX-W429 processor answered with its rate-limit reply; relayed to caller"
+
+[[burst]]
+from = "00:30:12"
+to = "00:34:55"
+count = 18
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-E1107 card processor call failed after 3 attempts; payment {hex8} not completed"
+
+[[burst]]
+from = "00:20:00"
+to = "00:29:50"
+count = 12
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "card processor call ok; payment {hex8} completed"
+
+[[burst]]
+from = "00:35:10"
+to = "00:44:50"
+count = 12
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "card processor call ok; payment {hex8} completed"

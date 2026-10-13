@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0074. Our own service formats.
+[[burst]]
+from = "03:25:00"
+to = "03:34:59"
+count = 10
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal"]
+message = "scored txn={hex8} features_ms={int:2-15}"
+
+[[burst]]
+from = "03:35:00"
+to = "03:59:00"
+count = 14
+service = "fraud-scorer"
+level = "WARN"
+hosts = ["fraud-scorer-01.prod.internal"]
+message = "FRD-W118 slow feature read from redis-features-01, {int:300-1800} ms txn={hex8}"
+
+[[burst]]
+from = "03:36:00"
+to = "03:59:00"
+count = 12
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal"]
+message = "PAYAPI-W0310 req={hex8}"
+
+[[burst]]
+from = "04:01:00"
+to = "04:09:00"
+count = 8
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal"]
+message = "scored txn={hex8} features_ms={int:2-15}"

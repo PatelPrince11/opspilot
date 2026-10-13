@@ -1,0 +1,59 @@
+# Synthetic logs for INC-0055 (see scripts/corpus/synthetic_logs.py). A sample, not every line.
+[[line]]
+at = "13:10:04"
+service = "payments-api"
+host = "payments-api-02.prod.internal"
+level = "INFO"
+message = "refunds export started requested_by=finance-ops"
+
+[[line]]
+at = "13:50:12"
+service = "payments-api"
+host = "payments-api-02.prod.internal"
+level = "INFO"
+message = "refunds export stopped by operator"
+
+[[burst]]
+from = "13:10:00"
+to = "13:15:59"
+count = 15
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "POST /v1/payments status=200 latency_ms={int:35-120} req={hex8}"
+
+[[burst]]
+from = "13:16:00"
+to = "13:21:59"
+count = 10
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "POST /v1/payments status=200 latency_ms={int:600-1900} req={hex8} slow"
+
+[[burst]]
+from = "13:20:00"
+to = "13:51:59"
+count = 45
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-E1042 db pool acquire timed out after 500ms route=/v1/payments status=503 req={hex8}"
+
+[[burst]]
+from = "13:20:00"
+to = "13:51:59"
+count = 14
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "db pool acquired=40/40 acquire_wait_p99_ms={int:470-500}"
+
+[[burst]]
+from = "13:52:00"
+to = "14:15:00"
+count = 20
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "POST /v1/payments status=200 latency_ms={int:35-110} req={hex8}"

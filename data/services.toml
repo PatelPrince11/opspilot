@@ -1,0 +1,528 @@
+# OpsPilot services: SYNTHETIC. A fictional payments / e-commerce company.
+#
+# Source of truth for the services table, the hosts that appear in logs, and the
+# error codes that runbooks, incidents and logs may use. Hosts follow
+# <service>-NN.prod.internal; each service owns one 10.0.<subnet>.0/24.
+#
+# status is the current snapshot that get_service_status returns. payments-api and
+# payments-pgbouncer are degraded by the open demo incident (data/live/);
+# search-api is degraded for an unrelated reason, as a distractor.
+
+[meta]
+company = "fictional"
+domain = "prod.internal"
+synthetic = true
+
+# ---------------------------------------------------------------- applications
+
+[[services]]
+name = "edge-gateway"
+kind = "app"
+owner = "team-platform"
+tech = "Envoy"
+port = 443
+status = "healthy"
+dependencies = ["auth-service", "payments-api", "orders-api", "catalog-api", "search-api", "internal-dns"]
+hosts = [
+  { name = "edge-gateway-01.prod.internal", ip = "10.0.1.11" },
+  { name = "edge-gateway-02.prod.internal", ip = "10.0.1.12" },
+  { name = "edge-gateway-03.prod.internal", ip = "10.0.1.13" },
+]
+
+[[services]]
+name = "auth-service"
+kind = "app"
+owner = "team-identity"
+tech = "Go"
+port = 8080
+status = "healthy"
+dependencies = ["auth-db", "redis-sessions"]
+hosts = [
+  { name = "auth-service-01.prod.internal", ip = "10.0.2.11" },
+  { name = "auth-service-02.prod.internal", ip = "10.0.2.12" },
+]
+
+[[services]]
+name = "payments-api"
+kind = "app"
+owner = "team-payments"
+tech = "Go (pgx)"
+port = 8080
+status = "degraded"
+dependencies = ["payments-pgbouncer", "redis-cache", "fraud-scorer", "ledger-service", "card-processor-proxy"]
+hosts = [
+  { name = "payments-api-01.prod.internal", ip = "10.0.3.11" },
+  { name = "payments-api-02.prod.internal", ip = "10.0.3.12" },
+  { name = "payments-api-03.prod.internal", ip = "10.0.3.13" },
+  { name = "payments-api-04.prod.internal", ip = "10.0.3.14" },
+]
+
+[[services]]
+name = "payments-pgbouncer"
+kind = "app"
+owner = "team-payments"
+tech = "PgBouncer"
+port = 6432
+status = "degraded"
+dependencies = ["payments-db"]
+hosts = [
+  { name = "payments-pgbouncer-01.prod.internal", ip = "10.0.4.21" },
+  { name = "payments-pgbouncer-02.prod.internal", ip = "10.0.4.22" },
+]
+
+[[services]]
+name = "ledger-service"
+kind = "app"
+owner = "team-payments"
+tech = "Java (HikariCP)"
+port = 8080
+status = "healthy"
+dependencies = ["ledger-db", "kafka"]
+hosts = [
+  { name = "ledger-service-01.prod.internal", ip = "10.0.5.11" },
+  { name = "ledger-service-02.prod.internal", ip = "10.0.5.12" },
+]
+
+[[services]]
+name = "card-processor-proxy"
+kind = "app"
+owner = "team-payments"
+tech = "egress proxy, mTLS to the external card processor"
+port = 8443
+status = "healthy"
+dependencies = ["internal-dns"]
+hosts = [
+  { name = "card-processor-proxy-01.prod.internal", ip = "10.0.6.11" },
+  { name = "card-processor-proxy-02.prod.internal", ip = "10.0.6.12" },
+]
+
+[[services]]
+name = "fraud-scorer"
+kind = "app"
+owner = "team-risk"
+tech = "Python"
+port = 8080
+status = "healthy"
+dependencies = ["redis-features"]
+hosts = [
+  { name = "fraud-scorer-01.prod.internal", ip = "10.0.7.11" },
+  { name = "fraud-scorer-02.prod.internal", ip = "10.0.7.12" },
+]
+
+[[services]]
+name = "orders-api"
+kind = "app"
+owner = "team-commerce"
+tech = "Node"
+port = 8080
+status = "healthy"
+dependencies = ["orders-db", "payments-api", "inventory-service", "kafka"]
+hosts = [
+  { name = "orders-api-01.prod.internal", ip = "10.0.8.11" },
+  { name = "orders-api-02.prod.internal", ip = "10.0.8.12" },
+  { name = "orders-api-03.prod.internal", ip = "10.0.8.13" },
+]
+
+[[services]]
+name = "inventory-service"
+kind = "app"
+owner = "team-commerce"
+tech = "Go"
+port = 8080
+status = "healthy"
+dependencies = ["inventory-db", "redis-cache"]
+hosts = [
+  { name = "inventory-service-01.prod.internal", ip = "10.0.9.11" },
+  { name = "inventory-service-02.prod.internal", ip = "10.0.9.12" },
+]
+
+[[services]]
+name = "catalog-api"
+kind = "app"
+owner = "team-catalog"
+tech = "Python"
+port = 8080
+status = "healthy"
+dependencies = ["catalog-db", "redis-cache"]
+hosts = [
+  { name = "catalog-api-01.prod.internal", ip = "10.0.10.11" },
+  { name = "catalog-api-02.prod.internal", ip = "10.0.10.12" },
+]
+
+[[services]]
+name = "search-api"
+kind = "app"
+owner = "team-catalog"
+tech = "Java"
+port = 8080
+status = "degraded"
+dependencies = ["search-cluster"]
+hosts = [
+  { name = "search-api-01.prod.internal", ip = "10.0.11.11" },
+  { name = "search-api-02.prod.internal", ip = "10.0.11.12" },
+]
+
+[[services]]
+name = "notification-worker"
+kind = "app"
+owner = "team-growth"
+tech = "Node"
+port = 8080
+status = "healthy"
+dependencies = ["kafka"]
+hosts = [
+  { name = "notification-worker-01.prod.internal", ip = "10.0.12.11" },
+  { name = "notification-worker-02.prod.internal", ip = "10.0.12.12" },
+]
+
+[[services]]
+name = "internal-dns"
+kind = "app"
+owner = "team-platform"
+tech = "CoreDNS"
+port = 53
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "internal-dns-01.prod.internal", ip = "10.0.0.53" },
+  { name = "internal-dns-02.prod.internal", ip = "10.0.0.54" },
+]
+
+# ------------------------------------------------------------------ datastores
+
+[[services]]
+name = "payments-db"
+kind = "datastore"
+owner = "team-dba"
+tech = "PostgreSQL 16 (01 primary, 02 replica)"
+port = 5432
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "payments-db-01.prod.internal", ip = "10.0.20.11" },
+  { name = "payments-db-02.prod.internal", ip = "10.0.20.12" },
+]
+
+[[services]]
+name = "auth-db"
+kind = "datastore"
+owner = "team-dba"
+tech = "PostgreSQL 16"
+port = 5432
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "auth-db-01.prod.internal", ip = "10.0.21.11" },
+  { name = "auth-db-02.prod.internal", ip = "10.0.21.12" },
+]
+
+[[services]]
+name = "ledger-db"
+kind = "datastore"
+owner = "team-dba"
+tech = "PostgreSQL 16"
+port = 5432
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "ledger-db-01.prod.internal", ip = "10.0.22.11" },
+  { name = "ledger-db-02.prod.internal", ip = "10.0.22.12" },
+]
+
+[[services]]
+name = "orders-db"
+kind = "datastore"
+owner = "team-dba"
+tech = "PostgreSQL 16"
+port = 5432
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "orders-db-01.prod.internal", ip = "10.0.23.11" },
+  { name = "orders-db-02.prod.internal", ip = "10.0.23.12" },
+]
+
+[[services]]
+name = "inventory-db"
+kind = "datastore"
+owner = "team-dba"
+tech = "PostgreSQL 16"
+port = 5432
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "inventory-db-01.prod.internal", ip = "10.0.24.11" },
+]
+
+[[services]]
+name = "catalog-db"
+kind = "datastore"
+owner = "team-dba"
+tech = "PostgreSQL 16"
+port = 5432
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "catalog-db-01.prod.internal", ip = "10.0.25.11" },
+]
+
+[[services]]
+name = "redis-cache"
+kind = "datastore"
+owner = "team-platform"
+tech = "Redis 7 (primary + replica, Sentinel)"
+port = 6379
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "redis-cache-01.prod.internal", ip = "10.0.30.11" },
+  { name = "redis-cache-02.prod.internal", ip = "10.0.30.12" },
+]
+
+[[services]]
+name = "redis-sessions"
+kind = "datastore"
+owner = "team-platform"
+tech = "Redis 7 (primary + replica, Sentinel)"
+port = 6379
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "redis-sessions-01.prod.internal", ip = "10.0.31.11" },
+  { name = "redis-sessions-02.prod.internal", ip = "10.0.31.12" },
+]
+
+[[services]]
+name = "redis-features"
+kind = "datastore"
+owner = "team-platform"
+tech = "Redis 7"
+port = 6379
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "redis-features-01.prod.internal", ip = "10.0.32.11" },
+]
+
+[[services]]
+name = "kafka"
+kind = "datastore"
+owner = "team-platform"
+tech = "Kafka (3 brokers)"
+port = 9092
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "kafka-01.prod.internal", ip = "10.0.33.11" },
+  { name = "kafka-02.prod.internal", ip = "10.0.33.12" },
+  { name = "kafka-03.prod.internal", ip = "10.0.33.13" },
+]
+
+[[services]]
+name = "search-cluster"
+kind = "datastore"
+owner = "team-platform"
+tech = "OpenSearch (3 nodes)"
+port = 9200
+status = "healthy"
+dependencies = []
+hosts = [
+  { name = "search-cluster-01.prod.internal", ip = "10.0.34.11" },
+  { name = "search-cluster-02.prod.internal", ip = "10.0.34.12" },
+  { name = "search-cluster-03.prod.internal", ip = "10.0.34.13" },
+]
+
+# ----------------------------------------------------------------- error codes
+# Standard tokens (service = "*") are real-world error strings any service may log.
+# Internal codes are fictional and appear only in this corpus, which gives the eval
+# exact-token questions that dense retrieval should find hard.
+
+[[error_codes]]
+code = "ECONNREFUSED"
+service = "*"
+meaning = "TCP connect refused: nothing listening on the target host:port"
+
+[[error_codes]]
+code = "ETIMEDOUT"
+service = "*"
+meaning = "TCP connect or read timed out"
+
+[[error_codes]]
+code = "ENOSPC"
+service = "*"
+meaning = "No space left on device"
+
+[[error_codes]]
+code = "EMFILE"
+service = "*"
+meaning = "Too many open files (process file-descriptor limit)"
+
+[[error_codes]]
+code = "53300"
+service = "*"
+meaning = "Postgres SQLSTATE too_many_connections"
+
+[[error_codes]]
+code = "57P01"
+service = "*"
+meaning = "Postgres SQLSTATE admin_shutdown (server terminated the connection)"
+
+[[error_codes]]
+code = "57P02"
+service = "*"
+meaning = "Postgres SQLSTATE crash_shutdown (another server process crashed; sessions terminated)"
+
+[[error_codes]]
+code = "SERVFAIL"
+service = "*"
+meaning = "DNS server failed to answer"
+
+[[error_codes]]
+code = "NXDOMAIN"
+service = "*"
+meaning = "DNS name does not exist"
+
+[[error_codes]]
+code = "EAI_AGAIN"
+service = "*"
+meaning = "getaddrinfo: temporary failure in name resolution (resolver timed out or got no usable answer)"
+
+[[error_codes]]
+code = "x509: certificate has expired"
+service = "*"
+meaning = "TLS handshake failed: peer certificate past its notAfter date"
+
+[[error_codes]]
+code = "429"
+service = "*"
+meaning = "HTTP Too Many Requests"
+
+[[error_codes]]
+code = "502"
+service = "*"
+meaning = "HTTP Bad Gateway"
+
+[[error_codes]]
+code = "503"
+service = "*"
+meaning = "HTTP Service Unavailable"
+
+[[error_codes]]
+code = "504"
+service = "*"
+meaning = "HTTP Gateway Timeout"
+
+[[error_codes]]
+code = "OOMKilled"
+service = "*"
+meaning = "Container killed by the kernel OOM killer (exit code 137)"
+
+[[error_codes]]
+code = "MISCONF"
+service = "*"
+meaning = "Redis refuses writes because RDB snapshotting failed"
+
+[[error_codes]]
+code = "LOADING"
+service = "*"
+meaning = "Redis is loading its dataset into memory and rejects commands"
+
+[[error_codes]]
+code = "query_wait_timeout"
+service = "*"
+meaning = "PgBouncer disconnected a client whose query waited longer than query_wait_timeout for a server connection"
+
+[[error_codes]]
+code = "READONLY"
+service = "*"
+meaning = "Redis rejected a write sent to a replica (READONLY You can't write against a read only replica.)"
+
+[[error_codes]]
+code = "OOM command not allowed"
+service = "*"
+meaning = "Redis rejected a write because used memory is above maxmemory and the policy cannot evict"
+
+[[error_codes]]
+code = "PAYAPI-E1042"
+service = "payments-api"
+meaning = "Could not acquire a database connection from the pgx pool before the DB_ACQUIRE_TIMEOUT context deadline (an app setting, not a pgxpool one); handler returns 503"
+
+[[error_codes]]
+code = "PAYAPI-E1107"
+service = "payments-api"
+meaning = "Card processor call failed after retries"
+
+[[error_codes]]
+code = "PAYAPI-W0310"
+service = "payments-api"
+meaning = "Fraud score unavailable or not returned in time; fell back to the static rules"
+
+[[error_codes]]
+code = "LEDGER-W210"
+service = "ledger-service"
+meaning = "HikariCP pool near capacity (active connections above 90%)"
+
+[[error_codes]]
+code = "LEDGER-E455"
+service = "ledger-service"
+meaning = "Kafka publish of a ledger entry failed and was queued for retry"
+
+[[error_codes]]
+code = "ORD-5003"
+service = "orders-api"
+meaning = "Checkout failed because a call to a downstream dependency failed or timed out from orders-api's side (the dependency itself may be healthy)"
+
+[[error_codes]]
+code = "INV-E220"
+service = "inventory-service"
+meaning = "Stock reservation timed out"
+
+[[error_codes]]
+code = "AUTH-E401X"
+service = "auth-service"
+meaning = "Session lookup failed; user forced to log in again"
+
+[[error_codes]]
+code = "CPX-E600"
+service = "card-processor-proxy"
+meaning = "Upstream TLS handshake with the card processor failed"
+
+[[error_codes]]
+code = "CPX-W429"
+service = "card-processor-proxy"
+meaning = "Card processor rate limit hit; request delayed or rejected"
+
+[[error_codes]]
+code = "CPX-W430"
+service = "card-processor-proxy"
+meaning = "Proxy's own egress limiter (each instance's fixed share of the processor's rate limit) delayed or rejected a request; the processor was not called"
+
+[[error_codes]]
+code = "FRD-W118"
+service = "fraud-scorer"
+meaning = "Feature fetch from redis-features exceeded its latency budget"
+
+[[error_codes]]
+code = "FRD-E140"
+service = "fraud-scorer"
+meaning = "Velocity-counter write to redis-features rejected; counters stale until writes recover"
+
+[[error_codes]]
+code = "CAT-E301"
+service = "catalog-api"
+meaning = "Cache miss storm: cache unavailable, reading through to catalog-db"
+
+[[error_codes]]
+code = "SRCH-E502"
+service = "search-api"
+meaning = "search-cluster query rejected (thread pool queue full)"
+
+[[error_codes]]
+code = "EDGE-RL01"
+service = "edge-gateway"
+meaning = "Request rejected by the gateway's own rate limiter (local_rate_limit)"
+
+[[error_codes]]
+code = "NTF-E710"
+service = "notification-worker"
+meaning = "Consumer lag above threshold on the notifications topic"

@@ -1,0 +1,45 @@
+# Synthetic logs for INC-0076. Lines are our own wording; SERVFAIL is the DNS status name.
+[[burst]]
+from = "11:10:30"
+to = "11:19:59"
+count = 8
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal"]
+message = "resolved prod.internal name for outbound send"
+
+[[burst]]
+from = "11:20:10"
+to = "11:34:30"
+count = 24
+service = "notification-worker"
+level = "ERROR"
+hosts = ["notification-worker-01.prod.internal"]
+message = "lookup of prod.internal name failed: SERVFAIL"
+
+[[burst]]
+from = "11:20:20"
+to = "11:34:40"
+count = 14
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal"]
+message = "resolved prod.internal name for outbound send"
+
+[[burst]]
+from = "11:20:00"
+to = "11:34:50"
+count = 12
+service = "internal-dns"
+level = "ERROR"
+hosts = ["internal-dns-01.prod.internal"]
+message = "internal-dns-01 answering SERVFAIL for prod.internal"
+
+[[burst]]
+from = "11:35:10"
+to = "11:44:30"
+count = 8
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal"]
+message = "resolved prod.internal name for outbound send"

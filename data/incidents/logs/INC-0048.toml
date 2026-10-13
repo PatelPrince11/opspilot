@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0048.
+[[burst]]
+from = "21:55:00"
+to = "22:05:19"
+count = 8
+service = "card-processor-proxy"
+level = "INFO"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "processor call ok latency_ms={int:180-420}"
+
+[[burst]]
+from = "22:05:20"
+to = "22:09:10"
+count = 30
+service = "card-processor-proxy"
+level = "WARN"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "CPX-W429 processor rejected the request with its rate-limit response"
+
+[[burst]]
+from = "22:05:25"
+to = "22:09:10"
+count = 15
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-E1107 card processor call failed after retries payment={hex8}"
+
+[[burst]]
+from = "22:09:11"
+to = "22:20:00"
+count = 10
+service = "card-processor-proxy"
+level = "INFO"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "processor call ok latency_ms={int:170-400}"

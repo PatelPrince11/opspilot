@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0049. Our own service formats.
+[[burst]]
+from = "15:45:00"
+to = "15:54:59"
+count = 10
+service = "inventory-service"
+level = "INFO"
+hosts = ["inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+message = "reserved stock sku={hex8} latency_ms={int:10-60}"
+
+[[burst]]
+from = "15:55:00"
+to = "17:29:00"
+count = 16
+service = "inventory-service"
+level = "ERROR"
+hosts = ["inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+message = "INV-E220 stock reservation timed out sku={hex8}"
+
+[[burst]]
+from = "16:00:00"
+to = "17:25:00"
+count = 8
+service = "inventory-db"
+level = "WARN"
+hosts = ["inventory-db-01.prod.internal"]
+message = "lock monitor: {int:3-25} sessions waiting on row locks in reservations"
+
+[[burst]]
+from = "17:31:00"
+to = "17:39:00"
+count = 8
+service = "inventory-service"
+level = "INFO"
+hosts = ["inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+message = "reserved stock sku={hex8} latency_ms={int:10-60}"

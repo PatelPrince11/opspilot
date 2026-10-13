@@ -1,0 +1,43 @@
+# Synthetic logs for INC-0088.
+[[line]]
+at = "03:51:00"
+service = "inventory-db"
+host = "inventory-db-01.prod.internal"
+level = "WARN"
+message = "inventory_app queries on reservations running slower than usual"
+
+[[burst]]
+from = "03:40:00"
+to = "03:49:59"
+count = 6
+service = "inventory-service"
+level = "INFO"
+hosts = ["inventory-service-02.prod.internal"]
+message = "reservation placed sku={hex8} in {int:20-60}ms"
+
+[[burst]]
+from = "03:50:20"
+to = "04:24:30"
+count = 45
+service = "inventory-service"
+level = "ERROR"
+hosts = ["inventory-service-02.prod.internal"]
+message = "INV-E220 stock reservation timed out sku={hex8}"
+
+[[burst]]
+from = "03:50:40"
+to = "04:24:40"
+count = 40
+service = "orders-api"
+level = "ERROR"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "ORD-5003 stock reservation did not complete; orders-api gave up on the inventory call"
+
+[[burst]]
+from = "04:25:30"
+to = "04:34:30"
+count = 6
+service = "inventory-service"
+level = "INFO"
+hosts = ["inventory-service-02.prod.internal"]
+message = "reservation placed sku={hex8} in {int:20-60}ms"

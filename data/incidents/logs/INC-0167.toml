@@ -1,0 +1,39 @@
+# Synthetic logs for INC-0167. Everything is our own service format.
+[[line]]
+at = "10:55:12"
+service = "edge-gateway"
+host = "edge-gateway-02.prod.internal"
+level = "WARN"
+message = "/search rejected 429 EDGE-RL01 local limit reached on this pod"
+
+[[line]]
+at = "10:55:30"
+service = "edge-gateway"
+host = "edge-gateway-01.prod.internal"
+level = "WARN"
+message = "/search rejected 429 EDGE-RL01 local limit reached on this pod"
+
+[[line]]
+at = "10:55:41"
+service = "edge-gateway"
+host = "edge-gateway-03.prod.internal"
+level = "WARN"
+message = "/search rejected 429 EDGE-RL01 local limit reached on this pod"
+
+[[burst]]
+from = "10:55:45"
+to = "11:19:30"
+count = 60
+service = "edge-gateway"
+level = "WARN"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "/search rejected 429 EDGE-RL01 local limit reached on this pod"
+
+[[burst]]
+from = "10:45:00"
+to = "11:25:00"
+count = 30
+service = "search-api"
+level = "INFO"
+hosts = ["search-api-01.prod.internal", "search-api-02.prod.internal"]
+message = "search request served in {int:40-180}ms"

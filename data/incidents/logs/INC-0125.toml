@@ -1,0 +1,32 @@
+# Synthetic logs for INC-0125. Our own services' formats.
+[[line]]
+at = "07:20:10"
+service = "internal-dns"
+host = "internal-dns-01.prod.internal"
+level = "ERROR"
+message = "coredns: no queries answered; health check failing"
+
+[[line]]
+at = "07:58:30"
+service = "internal-dns"
+host = "internal-dns-01.prod.internal"
+level = "INFO"
+message = "coredns answering queries again"
+
+[[burst]]
+from = "07:20:20"
+to = "07:57:59"
+count = 30
+service = "kafka"
+level = "WARN"
+hosts = ["kafka-02.prod.internal"]
+message = "resolver: first nameserver did not reply, retrying; lookup took {int:5-11}s"
+
+[[burst]]
+from = "08:00:00"
+to = "08:04:50"
+count = 12
+service = "kafka"
+level = "INFO"
+hosts = ["kafka-02.prod.internal"]
+message = "resolver: lookup answered in {int:1-9}ms"

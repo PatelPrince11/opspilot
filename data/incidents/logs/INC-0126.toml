@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0126. auth-service lines are our own wording; the "tls error" token is the one RB-024 quotes.
+[[burst]]
+from = "08:51:00"
+to = "08:59:59"
+count = 10
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8}"
+
+[[burst]]
+from = "09:00:05"
+to = "09:54:30"
+count = 40
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "db connect to auth-db-01.prod.internal failed: tls error: server certificate does not carry the host name dialled"
+
+[[burst]]
+from = "09:00:10"
+to = "09:54:40"
+count = 40
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "POST /v1/auth/login failed: database unavailable, returning 503"
+
+[[burst]]
+from = "09:55:10"
+to = "10:04:30"
+count = 10
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8}"

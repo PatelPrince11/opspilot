@@ -1,0 +1,2604 @@
+# OpsPilot incident skeleton: SYNTHETIC. 200 rows, no prose (batch 4).
+# Fields a real incident tracker would hold. Eval-only labels live in
+# eval/corpus/incidents_sidecar.toml and are never ingested.
+# service = cause service of record; failure_types[0] = cause type. Times are UTC.
+
+[[incidents]]
+id = "INC-0001"
+service = "catalog-db"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-01-02T21:25:00Z
+resolved_at = 2025-01-02T23:15:00Z
+failure_types = ["disk_full"]
+codes = ["ENOSPC"]
+hosts = ["catalog-db-01.prod.internal"]
+runbook_ids = ["RB-008"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0002"
+service = "inventory-service"
+symptom_services = ["orders-api"]
+severity = "sev3"
+started_at = 2025-01-05T07:30:00Z
+resolved_at = 2025-01-05T07:45:00Z
+failure_types = ["bad_deploy"]
+codes = ["INV-E220"]
+hosts = ["inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+runbook_ids = ["RB-015"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0003"
+service = "orders-db"
+symptom_services = ["orders-api"]
+severity = "sev3"
+started_at = 2025-01-13T01:30:00Z
+resolved_at = 2025-01-13T02:50:00Z
+failure_types = ["api_latency"]
+codes = ["ORD-5003"]
+hosts = ["orders-api-02.prod.internal", "orders-db-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0004"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev1"
+started_at = 2025-01-14T00:00:00Z
+resolved_at = 2025-01-14T02:40:00Z
+failure_types = ["tls_expired"]
+codes = ["CPX-E600", "PAYAPI-E1107"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = ["RB-023"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0005"
+service = "search-api"
+symptom_services = ["search-cluster"]
+severity = "sev3"
+started_at = 2025-01-15T22:30:00Z
+resolved_at = 2025-01-15T23:40:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = ["SRCH-E502"]
+hosts = ["search-api-01.prod.internal", "search-cluster-02.prod.internal", "search-cluster-03.prod.internal"]
+runbook_ids = ["RB-003"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0006"
+service = "notification-worker"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-01-18T23:40:00Z
+resolved_at = 2025-01-19T00:40:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["notification-worker-01.prod.internal"]
+runbook_ids = ["RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0007"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-01-19T13:40:00Z
+resolved_at = 2025-01-19T15:25:00Z
+failure_types = ["tls_expired"]
+codes = []
+hosts = ["edge-gateway-03.prod.internal"]
+runbook_ids = ["RB-025"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0008"
+service = "payments-api"
+symptom_services = ["edge-gateway"]
+severity = "sev2"
+started_at = 2025-01-23T18:10:00Z
+resolved_at = 2025-01-23T19:15:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = ["504"]
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+runbook_ids = ["RB-002"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0009"
+service = "payments-db"
+symptom_services = ["payments-api"]
+severity = "sev2"
+started_at = 2025-01-26T23:45:00Z
+resolved_at = 2025-01-27T01:05:00Z
+failure_types = ["api_latency"]
+codes = ["504"]
+hosts = ["payments-api-03.prod.internal", "payments-db-01.prod.internal"]
+runbook_ids = ["RB-014", "RB-010"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0010"
+service = "internal-dns"
+symptom_services = ["search-api"]
+severity = "sev2"
+started_at = 2025-02-03T02:30:00Z
+resolved_at = 2025-02-03T03:30:00Z
+failure_types = ["dns_failure"]
+codes = ["SERVFAIL"]
+hosts = ["internal-dns-01.prod.internal", "search-api-02.prod.internal"]
+runbook_ids = ["RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0011"
+service = "orders-db"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-02-04T03:05:00Z
+resolved_at = 2025-02-04T05:05:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["orders-db-01.prod.internal"]
+runbook_ids = ["RB-008"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0012"
+service = "kafka"
+symptom_services = []
+severity = "sev2"
+started_at = 2025-02-06T23:45:00Z
+resolved_at = 2025-02-07T01:45:00Z
+failure_types = ["disk_full"]
+codes = ["ENOSPC"]
+hosts = ["kafka-03.prod.internal"]
+runbook_ids = ["RB-009", "RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0013"
+service = "fraud-scorer"
+symptom_services = ["payments-api", "redis-features"]
+severity = "sev2"
+started_at = 2025-02-15T08:50:00Z
+resolved_at = 2025-02-15T10:50:00Z
+failure_types = ["memory_leak"]
+codes = ["FRD-W118", "PAYAPI-W0310"]
+hosts = ["fraud-scorer-01.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-006", "RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0014"
+service = "search-cluster"
+symptom_services = ["search-api"]
+severity = "sev4"
+started_at = 2025-02-19T07:00:00Z
+resolved_at = 2025-02-19T07:45:00Z
+failure_types = ["rate_limiting"]
+codes = ["SRCH-E502"]
+hosts = ["search-api-02.prod.internal", "search-cluster-01.prod.internal", "search-cluster-03.prod.internal"]
+runbook_ids = ["RB-003"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0015"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2025-02-20T10:05:00Z
+resolved_at = 2025-02-20T10:45:00Z
+failure_types = ["api_latency"]
+codes = ["PAYAPI-E1107"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0016"
+service = "internal-dns"
+symptom_services = ["auth-service", "catalog-api", "orders-api"]
+severity = "sev2"
+started_at = 2025-02-20T19:50:00Z
+resolved_at = 2025-02-20T20:15:00Z
+failure_types = ["dns_failure"]
+codes = ["EAI_AGAIN"]
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal", "catalog-api-01.prod.internal", "catalog-api-02.prod.internal", "orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+runbook_ids = ["RB-022", "RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0017"
+service = "orders-api"
+symptom_services = ["edge-gateway"]
+severity = "sev1"
+started_at = 2025-02-21T14:00:00Z
+resolved_at = 2025-02-21T14:30:00Z
+failure_types = ["bad_deploy", "api_latency"]
+codes = ["ORD-5003", "504"]
+hosts = ["orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0018"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev4"
+started_at = 2025-02-23T19:10:00Z
+resolved_at = 2025-02-23T19:15:00Z
+failure_types = ["rate_limiting"]
+codes = ["CPX-W429"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0019"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2025-03-02T16:25:00Z
+resolved_at = 2025-03-02T16:35:00Z
+failure_types = ["rate_limiting"]
+codes = ["CPX-W429"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0020"
+service = "ledger-db"
+symptom_services = ["ledger-service"]
+severity = "sev3"
+started_at = 2025-03-05T01:15:00Z
+resolved_at = 2025-03-05T01:40:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["53300", "LEDGER-W210"]
+hosts = ["ledger-db-01.prod.internal"]
+runbook_ids = ["RB-012", "RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0021"
+service = "orders-api"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-03-09T15:05:00Z
+resolved_at = 2025-03-09T16:15:00Z
+failure_types = ["bad_deploy", "memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["orders-api-01.prod.internal", "orders-api-03.prod.internal"]
+runbook_ids = ["RB-004", "RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0022"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2025-03-15T18:15:00Z
+resolved_at = 2025-03-15T18:35:00Z
+failure_types = ["api_latency"]
+codes = ["504"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0023"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-03-16T10:15:00Z
+resolved_at = 2025-03-16T11:15:00Z
+failure_types = ["tls_expired"]
+codes = []
+hosts = ["edge-gateway-01.prod.internal"]
+runbook_ids = ["RB-025"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0024"
+service = "fraud-scorer"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2025-03-18T15:10:00Z
+resolved_at = 2025-03-18T16:05:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = ["PAYAPI-W0310"]
+hosts = ["fraud-scorer-01.prod.internal", "payments-api-03.prod.internal"]
+runbook_ids = ["RB-002"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0025"
+service = "internal-dns"
+symptom_services = ["orders-api"]
+severity = "sev2"
+started_at = 2025-03-19T15:15:00Z
+resolved_at = 2025-03-19T15:50:00Z
+failure_types = ["dns_failure", "bad_deploy"]
+codes = ["NXDOMAIN"]
+hosts = ["internal-dns-01.prod.internal", "orders-api-02.prod.internal"]
+runbook_ids = ["RB-020", "RB-027"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0026"
+service = "payments-pgbouncer"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2025-03-22T14:15:00Z
+resolved_at = 2025-03-22T15:00:00Z
+failure_types = ["high_cpu"]
+codes = ["PAYAPI-E1042"]
+hosts = ["payments-pgbouncer-01.prod.internal"]
+runbook_ids = ["RB-011", "RB-002"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0027"
+service = "inventory-service"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-03-23T23:25:00Z
+resolved_at = 2025-03-24T03:20:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["inventory-service-01.prod.internal"]
+runbook_ids = ["RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0028"
+service = "search-cluster"
+symptom_services = ["search-api"]
+severity = "sev3"
+started_at = 2025-03-26T12:30:00Z
+resolved_at = 2025-03-26T13:00:00Z
+failure_types = ["rate_limiting"]
+codes = ["SRCH-E502"]
+hosts = ["search-api-02.prod.internal", "search-cluster-02.prod.internal", "search-cluster-03.prod.internal"]
+runbook_ids = ["RB-003"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0029"
+service = "payments-api"
+symptom_services = ["orders-api", "edge-gateway"]
+severity = "sev3"
+started_at = 2025-04-01T05:35:00Z
+resolved_at = 2025-04-01T06:15:00Z
+failure_types = ["api_latency"]
+codes = ["ORD-5003", "504"]
+hosts = ["orders-api-03.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal"]
+runbook_ids = ["RB-010", "RB-014"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0030"
+service = "fraud-scorer"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2025-04-08T01:00:00Z
+resolved_at = 2025-04-08T02:20:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = ["PAYAPI-W0310"]
+hosts = ["fraud-scorer-01.prod.internal", "payments-api-03.prod.internal"]
+runbook_ids = ["RB-002", "RB-006"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0031"
+service = "auth-db"
+symptom_services = ["auth-service"]
+severity = "sev2"
+started_at = 2025-04-08T09:00:00Z
+resolved_at = 2025-04-08T09:53:00Z
+failure_types = ["tls_expired"]
+codes = ["x509: certificate has expired", "503"]
+hosts = ["auth-db-01.prod.internal", "auth-db-02.prod.internal", "auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+runbook_ids = ["RB-024"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0032"
+service = "payments-db"
+symptom_services = ["payments-api"]
+severity = "sev1"
+started_at = 2025-04-13T21:05:00Z
+resolved_at = 2025-04-14T00:35:00Z
+failure_types = ["disk_full"]
+codes = ["ENOSPC"]
+hosts = ["payments-db-01.prod.internal"]
+runbook_ids = ["RB-007", "RB-010"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0033"
+service = "internal-dns"
+symptom_services = ["auth-service"]
+severity = "sev3"
+started_at = 2025-04-21T01:15:00Z
+resolved_at = 2025-04-21T01:40:00Z
+failure_types = ["dns_failure", "bad_deploy"]
+codes = ["NXDOMAIN"]
+hosts = ["auth-service-01.prod.internal", "internal-dns-02.prod.internal"]
+runbook_ids = ["RB-020", "RB-027"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0034"
+service = "ledger-service"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-04-21T18:05:00Z
+resolved_at = 2025-04-21T22:30:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["ledger-service-02.prod.internal"]
+runbook_ids = ["RB-005", "RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0035"
+service = "payments-api"
+symptom_services = ["payments-db"]
+severity = "sev1"
+started_at = 2025-04-24T01:55:00Z
+resolved_at = 2025-04-24T02:20:00Z
+failure_types = ["conn_pool_exhaustion", "api_latency"]
+codes = ["PAYAPI-E1042", "503"]
+hosts = ["payments-api-03.prod.internal", "payments-api-04.prod.internal", "payments-db-01.prod.internal"]
+runbook_ids = ["RB-010"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0036"
+service = "ledger-service"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-04-28T05:45:00Z
+resolved_at = 2025-04-28T07:15:00Z
+failure_types = ["high_cpu"]
+codes = []
+hosts = ["ledger-service-02.prod.internal"]
+runbook_ids = ["RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0037"
+service = "orders-api"
+symptom_services = ["edge-gateway"]
+severity = "sev3"
+started_at = 2025-04-29T21:55:00Z
+resolved_at = 2025-04-29T23:00:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = ["504"]
+hosts = ["orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+runbook_ids = ["RB-002", "RB-004"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0038"
+service = "internal-dns"
+symptom_services = ["ledger-service"]
+severity = "sev3"
+started_at = 2025-05-02T06:30:00Z
+resolved_at = 2025-05-02T07:45:00Z
+failure_types = ["dns_failure", "bad_deploy"]
+codes = ["NXDOMAIN"]
+hosts = ["internal-dns-01.prod.internal", "ledger-service-01.prod.internal"]
+runbook_ids = ["RB-020", "RB-027"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0039"
+service = "auth-service"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-05-04T12:35:00Z
+resolved_at = 2025-05-04T21:25:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["auth-service-01.prod.internal"]
+runbook_ids = ["RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0040"
+service = "internal-dns"
+symptom_services = ["notification-worker"]
+severity = "sev3"
+started_at = 2025-05-09T16:00:00Z
+resolved_at = 2025-05-09T17:15:00Z
+failure_types = ["dns_failure"]
+codes = []
+hosts = ["internal-dns-02.prod.internal", "notification-worker-01.prod.internal"]
+runbook_ids = ["RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0041"
+service = "redis-cache"
+symptom_services = ["catalog-api", "catalog-db"]
+severity = "sev2"
+started_at = 2025-05-14T07:50:00Z
+resolved_at = 2025-05-14T08:30:00Z
+failure_types = ["redis_down"]
+codes = ["ETIMEDOUT", "CAT-E301"]
+hosts = ["catalog-db-01.prod.internal", "redis-cache-01.prod.internal", "redis-cache-02.prod.internal"]
+runbook_ids = ["RB-017"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0042"
+service = "catalog-api"
+symptom_services = ["catalog-db", "edge-gateway"]
+severity = "sev3"
+started_at = 2025-05-15T14:02:00Z
+resolved_at = 2025-05-15T14:09:00Z
+failure_types = ["bad_deploy", "api_latency"]
+codes = ["504"]
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal", "catalog-db-01.prod.internal"]
+runbook_ids = ["RB-028", "RB-012"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0043"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev1"
+started_at = 2025-05-15T16:07:00Z
+resolved_at = 2025-05-15T16:32:00Z
+failure_types = ["tls_expired"]
+codes = []
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+runbook_ids = ["RB-025"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0044"
+service = "search-api"
+symptom_services = ["search-cluster"]
+severity = "sev3"
+started_at = 2025-05-17T18:02:00Z
+resolved_at = 2025-05-17T18:32:00Z
+failure_types = ["bad_deploy", "high_cpu"]
+codes = ["SRCH-E502"]
+hosts = ["search-api-01.prod.internal", "search-api-02.prod.internal"]
+runbook_ids = ["RB-003"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0045"
+service = "ledger-service"
+symptom_services = []
+severity = "sev2"
+started_at = 2025-05-18T23:17:00Z
+resolved_at = 2025-05-19T00:42:00Z
+failure_types = ["high_cpu"]
+codes = ["LEDGER-E455"]
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+runbook_ids = ["RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0046"
+service = "auth-service"
+symptom_services = ["auth-db"]
+severity = "sev2"
+started_at = 2025-05-22T21:32:00Z
+resolved_at = 2025-05-22T21:52:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["503"]
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+runbook_ids = ["RB-010"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0047"
+service = "internal-dns"
+symptom_services = ["catalog-api", "auth-service"]
+severity = "sev3"
+started_at = 2025-05-30T06:52:00Z
+resolved_at = 2025-05-30T07:32:00Z
+failure_types = ["dns_failure"]
+codes = ["EAI_AGAIN"]
+hosts = ["auth-service-02.prod.internal", "catalog-api-01.prod.internal"]
+runbook_ids = ["RB-022"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0048"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev4"
+started_at = 2025-06-02T22:05:00Z
+resolved_at = 2025-06-02T22:10:00Z
+failure_types = ["rate_limiting"]
+codes = ["CPX-W429", "PAYAPI-E1107"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0049"
+service = "inventory-service"
+symptom_services = ["inventory-db", "orders-api"]
+severity = "sev2"
+started_at = 2025-06-04T15:55:00Z
+resolved_at = 2025-06-04T17:30:00Z
+failure_types = ["api_latency"]
+codes = ["INV-E220"]
+hosts = ["inventory-db-01.prod.internal", "inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+runbook_ids = ["RB-015"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0050"
+service = "ledger-db"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-06-08T17:05:00Z
+resolved_at = 2025-06-08T17:20:00Z
+failure_types = ["bad_deploy"]
+codes = []
+hosts = ["ledger-db-02.prod.internal"]
+runbook_ids = ["RB-027", "RB-012"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0051"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev4"
+started_at = 2025-06-09T13:10:00Z
+resolved_at = 2025-06-09T13:20:00Z
+failure_types = ["rate_limiting"]
+codes = ["CPX-W429", "PAYAPI-E1107"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0052"
+service = "search-api"
+symptom_services = ["search-cluster"]
+severity = "sev4"
+started_at = 2025-06-13T12:40:00Z
+resolved_at = 2025-06-13T14:40:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = []
+hosts = ["search-api-02.prod.internal", "search-cluster-02.prod.internal", "search-cluster-03.prod.internal"]
+runbook_ids = ["RB-003"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0053"
+service = "orders-api"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-06-16T18:00:00Z
+resolved_at = 2025-06-16T19:10:00Z
+failure_types = ["bad_deploy", "memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["orders-api-01.prod.internal", "orders-api-03.prod.internal"]
+runbook_ids = ["RB-004", "RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0054"
+service = "redis-cache"
+symptom_services = ["catalog-api"]
+severity = "sev4"
+started_at = 2025-06-19T02:25:00Z
+resolved_at = 2025-06-19T02:40:00Z
+failure_types = ["redis_down"]
+codes = ["CAT-E301"]
+hosts = ["redis-cache-01.prod.internal", "redis-cache-02.prod.internal"]
+runbook_ids = ["RB-017"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0055"
+service = "payments-api"
+symptom_services = ["payments-pgbouncer"]
+severity = "sev2"
+started_at = 2025-06-24T13:20:00Z
+resolved_at = 2025-06-24T14:05:00Z
+failure_types = ["conn_pool_exhaustion", "api_latency"]
+codes = ["PAYAPI-E1042", "503"]
+hosts = ["payments-pgbouncer-01.prod.internal", "payments-pgbouncer-02.prod.internal"]
+runbook_ids = ["RB-011", "RB-010"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0056"
+service = "ledger-db"
+symptom_services = ["ledger-service", "payments-api"]
+severity = "sev3"
+started_at = 2025-06-25T23:40:00Z
+resolved_at = 2025-06-26T00:15:00Z
+failure_types = ["api_latency"]
+codes = ["504"]
+hosts = ["ledger-db-02.prod.internal", "ledger-service-02.prod.internal"]
+runbook_ids = ["RB-014", "RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0057"
+service = "payments-db"
+symptom_services = ["payments-pgbouncer", "payments-api"]
+severity = "sev1"
+started_at = 2025-07-04T07:00:00Z
+resolved_at = 2025-07-04T07:15:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["53300", "PAYAPI-E1042"]
+hosts = ["payments-db-01.prod.internal"]
+runbook_ids = ["RB-012"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0058"
+service = "redis-features"
+symptom_services = ["fraud-scorer", "payments-api"]
+severity = "sev4"
+started_at = 2025-07-04T17:20:00Z
+resolved_at = 2025-07-04T18:00:00Z
+failure_types = ["api_latency"]
+codes = ["FRD-W118", "PAYAPI-W0310"]
+hosts = ["fraud-scorer-02.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-006"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0059"
+service = "inventory-service"
+symptom_services = ["inventory-db", "orders-api"]
+severity = "sev3"
+started_at = 2025-07-09T10:40:00Z
+resolved_at = 2025-07-09T15:30:00Z
+failure_types = ["bad_deploy", "api_latency"]
+codes = ["INV-E220", "ORD-5003"]
+hosts = ["inventory-db-01.prod.internal", "inventory-service-01.prod.internal", "inventory-service-02.prod.internal", "orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+runbook_ids = ["RB-015"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0060"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-07-16T05:50:00Z
+resolved_at = 2025-07-16T06:35:00Z
+failure_types = ["api_latency"]
+codes = ["504"]
+hosts = ["edge-gateway-03.prod.internal"]
+runbook_ids = ["RB-014"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0061"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-07-17T17:20:00Z
+resolved_at = 2025-07-17T21:25:00Z
+failure_types = ["tls_expired"]
+codes = []
+hosts = ["edge-gateway-01.prod.internal"]
+runbook_ids = ["RB-025"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0062"
+service = "redis-cache"
+symptom_services = ["catalog-api", "catalog-db"]
+severity = "sev2"
+started_at = 2025-07-22T01:35:00Z
+resolved_at = 2025-07-22T02:00:00Z
+failure_types = ["redis_down"]
+codes = ["ETIMEDOUT", "CAT-E301"]
+hosts = ["catalog-db-01.prod.internal", "redis-cache-01.prod.internal", "redis-cache-02.prod.internal"]
+runbook_ids = ["RB-017"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0063"
+service = "fraud-scorer"
+symptom_services = ["payments-api", "redis-features"]
+severity = "sev3"
+started_at = 2025-07-22T08:15:00Z
+resolved_at = 2025-07-22T11:00:00Z
+failure_types = ["memory_leak"]
+codes = ["FRD-W118", "PAYAPI-W0310"]
+hosts = ["fraud-scorer-02.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-006"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0064"
+service = "payments-api"
+symptom_services = ["orders-api", "edge-gateway"]
+severity = "sev2"
+started_at = 2025-07-30T03:40:00Z
+resolved_at = 2025-07-30T04:40:00Z
+failure_types = ["api_latency"]
+codes = ["ORD-5003", "504"]
+hosts = ["orders-api-03.prod.internal", "payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+runbook_ids = ["RB-010", "RB-014"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0065"
+service = "catalog-db"
+symptom_services = ["catalog-api", "edge-gateway"]
+severity = "sev4"
+started_at = 2025-07-30T06:50:00Z
+resolved_at = 2025-07-30T09:45:00Z
+failure_types = ["api_latency"]
+codes = ["504"]
+hosts = ["catalog-api-02.prod.internal", "catalog-db-01.prod.internal"]
+runbook_ids = ["RB-014", "RB-015"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0066"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev2"
+started_at = 2025-07-31T09:25:00Z
+resolved_at = 2025-07-31T10:05:00Z
+failure_types = ["tls_expired"]
+codes = []
+hosts = ["edge-gateway-02.prod.internal"]
+runbook_ids = ["RB-025"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0067"
+service = "auth-service"
+symptom_services = ["edge-gateway"]
+severity = "sev2"
+started_at = 2025-08-03T10:10:00Z
+resolved_at = 2025-08-03T10:45:00Z
+failure_types = ["high_cpu"]
+codes = ["503"]
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+runbook_ids = ["RB-002"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0068"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev1"
+started_at = 2025-08-07T04:10:00Z
+resolved_at = 2025-08-07T06:55:00Z
+failure_types = ["tls_expired"]
+codes = []
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+runbook_ids = ["RB-025"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0069"
+service = "orders-api"
+symptom_services = []
+severity = "sev2"
+started_at = 2025-08-09T23:25:00Z
+resolved_at = 2025-08-10T11:35:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["orders-api-03.prod.internal"]
+runbook_ids = ["RB-004", "RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0070"
+service = "kafka"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-08-12T02:30:00Z
+resolved_at = 2025-08-12T03:45:00Z
+failure_types = ["disk_full"]
+codes = ["ENOSPC"]
+hosts = ["kafka-02.prod.internal"]
+runbook_ids = ["RB-008"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0071"
+service = "payments-api"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-08-16T18:10:00Z
+resolved_at = 2025-08-17T00:55:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["payments-api-02.prod.internal"]
+runbook_ids = ["RB-005", "RB-004"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0072"
+service = "internal-dns"
+symptom_services = ["orders-api"]
+severity = "sev3"
+started_at = 2025-08-19T22:20:00Z
+resolved_at = 2025-08-19T22:55:00Z
+failure_types = ["dns_failure"]
+codes = ["SERVFAIL"]
+hosts = ["internal-dns-01.prod.internal", "orders-api-03.prod.internal"]
+runbook_ids = ["RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0073"
+service = "auth-db"
+symptom_services = ["auth-service"]
+severity = "sev3"
+started_at = 2025-08-21T16:05:00Z
+resolved_at = 2025-08-21T16:40:00Z
+failure_types = ["tls_expired"]
+codes = ["503"]
+hosts = ["auth-db-01.prod.internal", "auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+runbook_ids = ["RB-024"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0074"
+service = "redis-features"
+symptom_services = ["fraud-scorer", "payments-api"]
+severity = "sev3"
+started_at = 2025-08-23T03:35:00Z
+resolved_at = 2025-08-23T04:00:00Z
+failure_types = ["api_latency"]
+codes = ["FRD-W118", "PAYAPI-W0310"]
+hosts = ["fraud-scorer-01.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-006"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0075"
+service = "orders-api"
+symptom_services = ["edge-gateway"]
+severity = "sev3"
+started_at = 2025-08-23T12:10:00Z
+resolved_at = 2025-08-23T12:45:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = ["504"]
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal"]
+runbook_ids = ["RB-002", "RB-004"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0076"
+service = "internal-dns"
+symptom_services = ["notification-worker"]
+severity = "sev2"
+started_at = 2025-09-02T11:20:00Z
+resolved_at = 2025-09-02T11:35:00Z
+failure_types = ["dns_failure"]
+codes = ["SERVFAIL"]
+hosts = ["internal-dns-01.prod.internal", "notification-worker-01.prod.internal"]
+runbook_ids = ["RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0077"
+service = "ledger-service"
+symptom_services = ["payments-api", "ledger-db"]
+severity = "sev2"
+started_at = 2025-09-08T10:05:00Z
+resolved_at = 2025-09-08T11:35:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["LEDGER-W210", "503"]
+hosts = ["ledger-db-01.prod.internal", "ledger-service-01.prod.internal"]
+runbook_ids = ["RB-001", "RB-012"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0078"
+service = "redis-features"
+symptom_services = ["fraud-scorer"]
+severity = "sev3"
+started_at = 2025-09-09T11:20:00Z
+resolved_at = 2025-09-09T13:05:00Z
+failure_types = ["redis_down"]
+codes = ["MISCONF", "FRD-E140"]
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-019"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0079"
+service = "redis-cache"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-09-16T03:35:00Z
+resolved_at = 2025-09-16T04:35:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["redis-cache-02.prod.internal"]
+runbook_ids = ["RB-008"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0080"
+service = "fraud-scorer"
+symptom_services = ["payments-api", "redis-features"]
+severity = "sev2"
+started_at = 2025-09-19T03:40:00Z
+resolved_at = 2025-09-19T06:55:00Z
+failure_types = ["memory_leak"]
+codes = ["FRD-W118", "PAYAPI-W0310"]
+hosts = ["fraud-scorer-02.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-006", "RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0081"
+service = "internal-dns"
+symptom_services = ["catalog-api"]
+severity = "sev2"
+started_at = 2025-09-19T20:25:00Z
+resolved_at = 2025-09-19T21:40:00Z
+failure_types = ["dns_failure", "bad_deploy"]
+codes = ["NXDOMAIN"]
+hosts = ["catalog-api-02.prod.internal", "internal-dns-02.prod.internal"]
+runbook_ids = ["RB-020", "RB-027"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0082"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-09-21T10:45:00Z
+resolved_at = 2025-09-21T15:05:00Z
+failure_types = ["tls_expired"]
+codes = []
+hosts = ["edge-gateway-03.prod.internal"]
+runbook_ids = ["RB-025"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0083"
+service = "payments-api"
+symptom_services = ["payments-db"]
+severity = "sev2"
+started_at = 2025-09-23T11:00:00Z
+resolved_at = 2025-09-23T11:30:00Z
+failure_types = ["bad_deploy", "conn_pool_exhaustion"]
+codes = ["PAYAPI-E1042", "503"]
+hosts = ["payments-api-01.prod.internal", "payments-api-03.prod.internal"]
+runbook_ids = ["RB-010", "RB-014"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0084"
+service = "payments-db"
+symptom_services = []
+severity = "sev2"
+started_at = 2025-09-25T04:10:00Z
+resolved_at = 2025-09-25T07:30:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["payments-db-01.prod.internal"]
+runbook_ids = ["RB-007"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0085"
+service = "catalog-api"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-09-29T09:55:00Z
+resolved_at = 2025-09-29T14:05:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["catalog-api-01.prod.internal"]
+runbook_ids = ["RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0086"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-10-06T18:20:00Z
+resolved_at = 2025-10-06T19:25:00Z
+failure_types = ["tls_expired"]
+codes = []
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+runbook_ids = ["RB-025"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0087"
+service = "redis-sessions"
+symptom_services = ["auth-service"]
+severity = "sev4"
+started_at = 2025-10-07T06:10:00Z
+resolved_at = 2025-10-07T06:20:00Z
+failure_types = ["redis_down"]
+codes = ["READONLY", "AUTH-E401X"]
+hosts = ["auth-service-01.prod.internal", "redis-sessions-01.prod.internal", "redis-sessions-02.prod.internal"]
+runbook_ids = ["RB-018"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0088"
+service = "inventory-db"
+symptom_services = ["inventory-service", "orders-api"]
+severity = "sev2"
+started_at = 2025-10-09T03:50:00Z
+resolved_at = 2025-10-09T04:25:00Z
+failure_types = ["api_latency"]
+codes = ["INV-E220", "ORD-5003"]
+hosts = ["inventory-db-01.prod.internal", "inventory-service-02.prod.internal"]
+runbook_ids = ["RB-015"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0089"
+service = "kafka"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-10-11T11:55:00Z
+resolved_at = 2025-10-11T13:40:00Z
+failure_types = ["disk_full"]
+codes = ["ENOSPC"]
+hosts = ["kafka-01.prod.internal"]
+runbook_ids = ["RB-008", "RB-009"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0090"
+service = "redis-cache"
+symptom_services = ["catalog-api", "catalog-db"]
+severity = "sev2"
+started_at = 2025-10-14T05:40:00Z
+resolved_at = 2025-10-14T06:20:00Z
+failure_types = ["redis_down"]
+codes = ["ETIMEDOUT", "CAT-E301"]
+hosts = ["catalog-db-01.prod.internal", "redis-cache-01.prod.internal", "redis-cache-02.prod.internal"]
+runbook_ids = ["RB-017"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0091"
+service = "catalog-api"
+symptom_services = ["catalog-db"]
+severity = "sev3"
+started_at = 2025-10-15T21:30:00Z
+resolved_at = 2025-10-15T22:10:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["504"]
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+runbook_ids = ["RB-028"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0092"
+service = "inventory-db"
+symptom_services = ["inventory-service"]
+severity = "sev3"
+started_at = 2025-10-17T15:10:00Z
+resolved_at = 2025-10-17T15:25:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["53300", "INV-E220"]
+hosts = ["inventory-db-01.prod.internal", "inventory-service-02.prod.internal"]
+runbook_ids = ["RB-012", "RB-015"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0093"
+service = "ledger-service"
+symptom_services = []
+severity = "sev2"
+started_at = 2025-10-23T16:40:00Z
+resolved_at = 2025-10-23T17:55:00Z
+failure_types = ["high_cpu"]
+codes = ["LEDGER-E455"]
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+runbook_ids = ["RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0094"
+service = "redis-cache"
+symptom_services = ["catalog-api"]
+severity = "sev3"
+started_at = 2025-10-26T02:50:00Z
+resolved_at = 2025-10-26T03:10:00Z
+failure_types = ["redis_down"]
+codes = ["LOADING", "CAT-E301"]
+hosts = ["catalog-api-02.prod.internal", "redis-cache-02.prod.internal"]
+runbook_ids = ["RB-017"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0095"
+service = "payments-api"
+symptom_services = ["payments-pgbouncer"]
+severity = "sev2"
+started_at = 2025-10-27T11:05:00Z
+resolved_at = 2025-10-27T11:40:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["PAYAPI-E1042", "query_wait_timeout"]
+hosts = ["payments-pgbouncer-01.prod.internal", "payments-pgbouncer-02.prod.internal"]
+runbook_ids = ["RB-011"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0096"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev1"
+started_at = 2025-11-05T09:05:00Z
+resolved_at = 2025-11-05T09:15:00Z
+failure_types = ["bad_deploy"]
+codes = ["PAYAPI-E1107"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0097"
+service = "fraud-scorer"
+symptom_services = ["payments-api", "redis-features"]
+severity = "sev3"
+started_at = 2025-11-06T17:25:00Z
+resolved_at = 2025-11-06T21:25:00Z
+failure_types = ["memory_leak"]
+codes = ["FRD-W118", "PAYAPI-W0310", "OOMKilled"]
+hosts = ["fraud-scorer-02.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-006", "RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0098"
+service = "payments-db"
+symptom_services = ["payments-api"]
+severity = "sev2"
+started_at = 2025-11-12T00:10:00Z
+resolved_at = 2025-11-12T01:35:00Z
+failure_types = ["api_latency"]
+codes = ["504"]
+hosts = ["payments-api-03.prod.internal", "payments-db-01.prod.internal"]
+runbook_ids = ["RB-014", "RB-010"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0099"
+service = "redis-sessions"
+symptom_services = ["auth-service"]
+severity = "sev3"
+started_at = 2025-11-12T18:05:00Z
+resolved_at = 2025-11-12T18:15:00Z
+failure_types = ["redis_down"]
+codes = ["READONLY", "AUTH-E401X"]
+hosts = ["auth-service-02.prod.internal", "redis-sessions-01.prod.internal", "redis-sessions-02.prod.internal"]
+runbook_ids = ["RB-018"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0100"
+service = "internal-dns"
+symptom_services = ["ledger-service"]
+severity = "sev2"
+started_at = 2025-11-16T20:20:00Z
+resolved_at = 2025-11-16T20:50:00Z
+failure_types = ["dns_failure"]
+codes = ["SERVFAIL"]
+hosts = ["internal-dns-01.prod.internal", "ledger-service-01.prod.internal"]
+runbook_ids = ["RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0101"
+service = "search-cluster"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-11-18T05:30:00Z
+resolved_at = 2025-11-18T06:40:00Z
+failure_types = ["disk_full"]
+codes = ["ENOSPC"]
+hosts = ["search-cluster-02.prod.internal"]
+runbook_ids = ["RB-008"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0102"
+service = "redis-features"
+symptom_services = ["fraud-scorer"]
+severity = "sev3"
+started_at = 2025-11-19T13:20:00Z
+resolved_at = 2025-11-19T14:40:00Z
+failure_types = ["redis_down"]
+codes = ["MISCONF", "FRD-E140"]
+hosts = ["fraud-scorer-01.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-019", "RB-008"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0103"
+service = "orders-db"
+symptom_services = ["orders-api"]
+severity = "sev2"
+started_at = 2025-11-22T22:15:00Z
+resolved_at = 2025-11-22T22:45:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["53300", "ORD-5003"]
+hosts = ["orders-db-01.prod.internal"]
+runbook_ids = ["RB-012"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0104"
+service = "payments-api"
+symptom_services = ["edge-gateway"]
+severity = "sev3"
+started_at = 2025-11-23T12:05:00Z
+resolved_at = 2025-11-23T13:05:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = ["504"]
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+runbook_ids = ["RB-002"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0105"
+service = "ledger-service"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-11-28T10:35:00Z
+resolved_at = 2025-11-28T12:20:00Z
+failure_types = ["high_cpu"]
+codes = ["LEDGER-W210"]
+hosts = ["ledger-service-01.prod.internal"]
+runbook_ids = ["RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0106"
+service = "search-cluster"
+symptom_services = ["search-api"]
+severity = "sev3"
+started_at = 2025-12-05T15:25:00Z
+resolved_at = 2025-12-05T19:00:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["search-cluster-03.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0107"
+service = "search-cluster"
+symptom_services = ["search-api"]
+severity = "sev4"
+started_at = 2025-12-08T01:00:00Z
+resolved_at = 2025-12-08T01:45:00Z
+failure_types = ["api_latency"]
+codes = []
+hosts = ["search-api-01.prod.internal", "search-cluster-03.prod.internal"]
+runbook_ids = ["RB-003"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0108"
+service = "redis-cache"
+symptom_services = ["catalog-api", "catalog-db", "payments-api", "inventory-service"]
+severity = "sev2"
+started_at = 2025-12-09T03:12:00Z
+resolved_at = 2025-12-09T03:40:00Z
+failure_types = ["redis_down"]
+codes = ["ETIMEDOUT", "CAT-E301"]
+hosts = ["catalog-db-01.prod.internal", "redis-cache-01.prod.internal", "redis-cache-02.prod.internal"]
+runbook_ids = ["RB-017"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0109"
+service = "inventory-db"
+symptom_services = []
+severity = "sev3"
+started_at = 2025-12-11T15:22:00Z
+resolved_at = 2025-12-11T16:37:00Z
+failure_types = ["disk_full"]
+codes = ["ENOSPC"]
+hosts = ["inventory-db-01.prod.internal"]
+runbook_ids = ["RB-008"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0110"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev1"
+started_at = 2025-12-19T21:37:00Z
+resolved_at = 2025-12-19T22:47:00Z
+failure_types = ["tls_expired"]
+codes = ["CPX-E600", "PAYAPI-E1107"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = ["RB-023"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0111"
+service = "notification-worker"
+symptom_services = []
+severity = "sev4"
+started_at = 2025-12-20T18:37:00Z
+resolved_at = 2025-12-20T19:12:00Z
+failure_types = ["bad_deploy"]
+codes = ["NTF-E710"]
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+runbook_ids = ["RB-009"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0112"
+service = "catalog-api"
+symptom_services = ["catalog-db"]
+severity = "sev4"
+started_at = 2025-12-22T20:37:00Z
+resolved_at = 2025-12-22T21:42:00Z
+failure_types = ["bad_deploy"]
+codes = []
+hosts = ["catalog-api-02.prod.internal", "catalog-db-01.prod.internal"]
+runbook_ids = ["RB-028"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0113"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2025-12-27T23:42:00Z
+resolved_at = 2025-12-28T00:12:00Z
+failure_types = ["tls_expired"]
+codes = ["CPX-E600"]
+hosts = ["card-processor-proxy-01.prod.internal"]
+runbook_ids = ["RB-023"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0114"
+service = "payments-api"
+symptom_services = ["edge-gateway"]
+severity = "sev3"
+started_at = 2025-12-30T13:42:00Z
+resolved_at = 2025-12-30T14:32:00Z
+failure_types = ["api_latency"]
+codes = ["504"]
+hosts = ["payments-api-04.prod.internal"]
+runbook_ids = ["RB-002"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0115"
+service = "payments-api"
+symptom_services = ["payments-db"]
+severity = "sev1"
+started_at = 2026-01-02T16:50:00Z
+resolved_at = 2026-01-02T17:20:00Z
+failure_types = ["bad_deploy", "conn_pool_exhaustion"]
+codes = ["PAYAPI-E1042", "503"]
+hosts = ["payments-api-01.prod.internal", "payments-api-04.prod.internal"]
+runbook_ids = ["RB-010", "RB-014"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0116"
+service = "payments-pgbouncer"
+symptom_services = ["payments-api"]
+severity = "sev2"
+started_at = 2026-01-04T02:20:00Z
+resolved_at = 2026-01-04T02:55:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["EMFILE", "503"]
+hosts = ["payments-pgbouncer-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0117"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-01-09T11:45:00Z
+resolved_at = 2026-01-09T12:25:00Z
+failure_types = ["bad_deploy", "api_latency"]
+codes = ["504"]
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+runbook_ids = ["RB-014"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0118"
+service = "search-cluster"
+symptom_services = ["search-api"]
+severity = "sev2"
+started_at = 2026-01-13T04:35:00Z
+resolved_at = 2026-01-13T05:05:00Z
+failure_types = ["bad_deploy"]
+codes = ["SRCH-E502"]
+hosts = ["search-cluster-01.prod.internal", "search-cluster-03.prod.internal"]
+runbook_ids = ["RB-027", "RB-003"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0119"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-01-16T21:25:00Z
+resolved_at = 2026-01-16T22:25:00Z
+failure_types = ["api_latency"]
+codes = ["504"]
+hosts = ["edge-gateway-03.prod.internal"]
+runbook_ids = ["RB-014"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0120"
+service = "kafka"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-01-19T21:00:00Z
+resolved_at = 2026-01-19T23:30:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["kafka-03.prod.internal"]
+runbook_ids = ["RB-009"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0121"
+service = "redis-sessions"
+symptom_services = ["auth-service"]
+severity = "sev3"
+started_at = 2026-01-24T21:20:00Z
+resolved_at = 2026-01-24T21:30:00Z
+failure_types = ["redis_down"]
+codes = ["READONLY", "AUTH-E401X"]
+hosts = ["auth-service-01.prod.internal", "redis-sessions-01.prod.internal", "redis-sessions-02.prod.internal"]
+runbook_ids = ["RB-018"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0122"
+service = "internal-dns"
+symptom_services = ["auth-service"]
+severity = "sev2"
+started_at = 2026-01-24T21:30:00Z
+resolved_at = 2026-01-24T21:40:00Z
+failure_types = ["dns_failure"]
+codes = ["SERVFAIL"]
+hosts = ["auth-service-02.prod.internal", "internal-dns-02.prod.internal"]
+runbook_ids = ["RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0123"
+service = "redis-features"
+symptom_services = ["fraud-scorer"]
+severity = "sev4"
+started_at = 2026-01-25T01:50:00Z
+resolved_at = 2026-01-25T02:00:00Z
+failure_types = ["redis_down"]
+codes = ["LOADING", "FRD-W118"]
+hosts = ["fraud-scorer-01.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-019"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0124"
+service = "ledger-service"
+symptom_services = ["payments-api", "ledger-db"]
+severity = "sev2"
+started_at = 2026-01-31T23:35:00Z
+resolved_at = 2026-02-01T03:10:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["LEDGER-W210", "503"]
+hosts = ["ledger-db-01.prod.internal", "ledger-service-02.prod.internal"]
+runbook_ids = ["RB-013", "RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0125"
+service = "internal-dns"
+symptom_services = ["kafka", "redis-cache"]
+severity = "sev3"
+started_at = 2026-02-03T07:20:00Z
+resolved_at = 2026-02-03T08:05:00Z
+failure_types = ["dns_failure"]
+codes = []
+hosts = ["internal-dns-01.prod.internal", "kafka-02.prod.internal"]
+runbook_ids = ["RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0126"
+service = "auth-db"
+symptom_services = ["auth-service"]
+severity = "sev2"
+started_at = 2026-02-08T09:00:00Z
+resolved_at = 2026-02-08T09:55:00Z
+failure_types = ["tls_expired"]
+codes = ["503"]
+hosts = ["auth-db-01.prod.internal", "auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+runbook_ids = ["RB-024"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0127"
+service = "ledger-db"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-02-09T16:00:00Z
+resolved_at = 2026-02-09T16:45:00Z
+failure_types = ["disk_full"]
+codes = ["ENOSPC"]
+hosts = ["ledger-db-02.prod.internal"]
+runbook_ids = ["RB-008"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0128"
+service = "catalog-api"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-02-10T09:00:00Z
+resolved_at = 2026-02-10T15:20:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["catalog-api-02.prod.internal"]
+runbook_ids = ["RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0129"
+service = "search-api"
+symptom_services = ["search-cluster"]
+severity = "sev4"
+started_at = 2026-02-11T04:45:00Z
+resolved_at = 2026-02-11T06:10:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = ["SRCH-E502"]
+hosts = ["search-api-02.prod.internal", "search-cluster-01.prod.internal", "search-cluster-03.prod.internal"]
+runbook_ids = ["RB-003"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0130"
+service = "orders-api"
+symptom_services = []
+severity = "sev4"
+started_at = 2026-02-13T16:35:00Z
+resolved_at = 2026-02-14T07:10:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled", "ORD-5003"]
+hosts = ["orders-api-03.prod.internal"]
+runbook_ids = ["RB-004", "RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0131"
+service = "payments-api"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-02-16T15:45:00Z
+resolved_at = 2026-02-16T23:55:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["payments-api-04.prod.internal"]
+runbook_ids = ["RB-005", "RB-004"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0132"
+service = "search-api"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-02-19T00:40:00Z
+resolved_at = 2026-02-19T03:40:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["search-api-02.prod.internal"]
+runbook_ids = ["RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0133"
+service = "notification-worker"
+symptom_services = []
+severity = "sev4"
+started_at = 2026-02-23T07:00:00Z
+resolved_at = 2026-02-23T08:10:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["notification-worker-01.prod.internal"]
+runbook_ids = ["RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0134"
+service = "orders-api"
+symptom_services = ["orders-db"]
+severity = "sev3"
+started_at = 2026-02-28T07:05:00Z
+resolved_at = 2026-02-28T08:05:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["ORD-5003"]
+hosts = ["orders-api-01.prod.internal", "orders-api-03.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0135"
+service = "auth-service"
+symptom_services = []
+severity = "sev1"
+started_at = 2026-03-04T10:25:00Z
+resolved_at = 2026-03-04T11:00:00Z
+failure_types = ["bad_deploy"]
+codes = ["503"]
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+runbook_ids = ["RB-026"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0136"
+service = "ledger-service"
+symptom_services = ["payments-api", "ledger-db"]
+severity = "sev3"
+started_at = 2026-03-08T04:40:00Z
+resolved_at = 2026-03-08T05:20:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["LEDGER-W210", "503"]
+hosts = ["ledger-db-01.prod.internal", "ledger-service-02.prod.internal"]
+runbook_ids = ["RB-013", "RB-012"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0137"
+service = "edge-gateway"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-03-10T09:05:00Z
+resolved_at = 2026-03-10T09:50:00Z
+failure_types = ["rate_limiting"]
+codes = ["429", "EDGE-RL01"]
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+runbook_ids = ["RB-030", "RB-014"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0138"
+service = "catalog-db"
+symptom_services = ["catalog-api", "edge-gateway"]
+severity = "sev3"
+started_at = 2026-03-11T17:35:00Z
+resolved_at = 2026-03-11T18:25:00Z
+failure_types = ["api_latency"]
+codes = ["504"]
+hosts = ["catalog-api-02.prod.internal", "catalog-db-01.prod.internal"]
+runbook_ids = ["RB-014", "RB-015"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0139"
+service = "catalog-api"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-03-13T17:30:00Z
+resolved_at = 2026-03-13T19:50:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["catalog-api-01.prod.internal"]
+runbook_ids = ["RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0140"
+service = "payments-api"
+symptom_services = ["edge-gateway"]
+severity = "sev2"
+started_at = 2026-03-14T13:20:00Z
+resolved_at = 2026-03-14T14:50:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = ["504"]
+hosts = ["payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+runbook_ids = ["RB-002"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0141"
+service = "kafka"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-03-20T11:30:00Z
+resolved_at = 2026-03-20T13:20:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["kafka-03.prod.internal"]
+runbook_ids = ["RB-009", "RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0142"
+service = "internal-dns"
+symptom_services = ["inventory-service"]
+severity = "sev3"
+started_at = 2026-03-24T13:30:00Z
+resolved_at = 2026-03-24T14:15:00Z
+failure_types = ["dns_failure", "bad_deploy"]
+codes = ["NXDOMAIN"]
+hosts = ["internal-dns-01.prod.internal", "internal-dns-02.prod.internal", "inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+runbook_ids = ["RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0143"
+service = "redis-sessions"
+symptom_services = ["auth-service"]
+severity = "sev2"
+started_at = 2026-03-25T08:40:00Z
+resolved_at = 2026-03-25T09:00:00Z
+failure_types = ["redis_down"]
+codes = ["AUTH-E401X"]
+hosts = ["auth-service-01.prod.internal", "redis-sessions-01.prod.internal", "redis-sessions-02.prod.internal"]
+runbook_ids = ["RB-018"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0144"
+service = "internal-dns"
+symptom_services = ["kafka", "redis-cache"]
+severity = "sev4"
+started_at = 2026-03-29T13:05:00Z
+resolved_at = 2026-03-29T13:25:00Z
+failure_types = ["dns_failure"]
+codes = []
+hosts = ["internal-dns-01.prod.internal", "kafka-02.prod.internal"]
+runbook_ids = ["RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0145"
+service = "search-cluster"
+symptom_services = ["search-api"]
+severity = "sev4"
+started_at = 2026-04-02T12:45:00Z
+resolved_at = 2026-04-02T15:25:00Z
+failure_types = ["high_cpu"]
+codes = []
+hosts = ["search-cluster-02.prod.internal"]
+runbook_ids = ["RB-003"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0146"
+service = "search-cluster"
+symptom_services = ["search-api", "edge-gateway"]
+severity = "sev3"
+started_at = 2026-04-15T11:05:00Z
+resolved_at = 2026-04-15T11:45:00Z
+failure_types = ["rate_limiting"]
+codes = ["SRCH-E502"]
+hosts = ["search-api-02.prod.internal", "search-cluster-02.prod.internal", "search-cluster-03.prod.internal"]
+runbook_ids = ["RB-030"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0147"
+service = "payments-db"
+symptom_services = []
+severity = "sev2"
+started_at = 2026-04-15T18:30:00Z
+resolved_at = 2026-04-15T22:20:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["payments-db-01.prod.internal"]
+runbook_ids = ["RB-007", "RB-010"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0148"
+service = "payments-pgbouncer"
+symptom_services = ["payments-api"]
+severity = "sev4"
+started_at = 2026-04-17T23:15:00Z
+resolved_at = 2026-04-17T23:35:00Z
+failure_types = ["high_cpu"]
+codes = ["PAYAPI-E1042"]
+hosts = ["payments-pgbouncer-01.prod.internal"]
+runbook_ids = ["RB-011"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0149"
+service = "kafka"
+symptom_services = []
+severity = "sev4"
+started_at = 2026-04-19T22:55:00Z
+resolved_at = 2026-04-20T00:05:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["kafka-03.prod.internal"]
+runbook_ids = ["RB-008", "RB-009"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0150"
+service = "orders-api"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-04-20T20:05:00Z
+resolved_at = 2026-04-21T06:40:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled", "ORD-5003"]
+hosts = ["orders-api-02.prod.internal"]
+runbook_ids = ["RB-004", "RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0151"
+service = "inventory-service"
+symptom_services = ["inventory-db"]
+severity = "sev2"
+started_at = 2026-04-21T10:05:00Z
+resolved_at = 2026-04-21T10:40:00Z
+failure_types = ["bad_deploy", "conn_pool_exhaustion"]
+codes = ["53300"]
+hosts = ["inventory-db-01.prod.internal", "inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+runbook_ids = ["RB-012"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0152"
+service = "redis-features"
+symptom_services = ["fraud-scorer"]
+severity = "sev3"
+started_at = 2026-04-26T18:10:00Z
+resolved_at = 2026-04-26T19:15:00Z
+failure_types = ["redis_down"]
+codes = ["OOM command not allowed", "FRD-E140"]
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-019"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0153"
+service = "redis-cache"
+symptom_services = ["payments-api", "catalog-api", "inventory-service"]
+severity = "sev3"
+started_at = 2026-04-29T03:45:00Z
+resolved_at = 2026-04-29T03:50:00Z
+failure_types = ["redis_down"]
+codes = ["ECONNREFUSED", "CAT-E301"]
+hosts = ["catalog-api-01.prod.internal", "payments-api-02.prod.internal", "redis-cache-01.prod.internal"]
+runbook_ids = ["RB-017"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0154"
+service = "redis-sessions"
+symptom_services = ["auth-service"]
+severity = "sev4"
+started_at = 2026-05-03T11:30:00Z
+resolved_at = 2026-05-03T12:00:00Z
+failure_types = ["redis_down"]
+codes = ["AUTH-E401X"]
+hosts = ["auth-service-02.prod.internal", "redis-sessions-01.prod.internal", "redis-sessions-02.prod.internal"]
+runbook_ids = ["RB-018"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0155"
+service = "redis-features"
+symptom_services = ["fraud-scorer"]
+severity = "sev2"
+started_at = 2026-05-03T19:25:00Z
+resolved_at = 2026-05-03T20:45:00Z
+failure_types = ["redis_down"]
+codes = ["OOM command not allowed", "FRD-E140"]
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-019"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0156"
+service = "payments-api"
+symptom_services = ["payments-db"]
+severity = "sev2"
+started_at = 2026-05-06T02:35:00Z
+resolved_at = 2026-05-06T03:10:00Z
+failure_types = ["conn_pool_exhaustion", "api_latency"]
+codes = ["PAYAPI-E1042", "503"]
+hosts = ["payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-db-01.prod.internal"]
+runbook_ids = ["RB-010"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0157"
+service = "payments-db"
+symptom_services = ["payments-api"]
+severity = "sev2"
+started_at = 2026-05-12T02:20:00Z
+resolved_at = 2026-05-12T05:10:00Z
+failure_types = ["disk_full"]
+codes = ["ENOSPC", "57P02"]
+hosts = ["payments-db-01.prod.internal"]
+runbook_ids = ["RB-007"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0158"
+service = "orders-api"
+symptom_services = []
+severity = "sev2"
+started_at = 2026-05-18T00:05:00Z
+resolved_at = 2026-05-18T03:50:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["orders-api-01.prod.internal"]
+runbook_ids = ["RB-004", "RB-005"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0159"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2026-05-19T06:55:00Z
+resolved_at = 2026-05-19T07:05:00Z
+failure_types = ["rate_limiting"]
+codes = ["CPX-W429"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0160"
+service = "catalog-db"
+symptom_services = ["catalog-api"]
+severity = "sev3"
+started_at = 2026-05-19T11:50:00Z
+resolved_at = 2026-05-19T12:50:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["53300"]
+hosts = ["catalog-db-01.prod.internal"]
+runbook_ids = ["RB-012"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0161"
+service = "auth-service"
+symptom_services = []
+severity = "sev2"
+started_at = 2026-05-21T04:10:00Z
+resolved_at = 2026-05-21T04:30:00Z
+failure_types = ["bad_deploy"]
+codes = ["AUTH-E401X", "503"]
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+runbook_ids = ["RB-026"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0162"
+service = "card-processor-proxy"
+symptom_services = ["payments-api", "orders-api", "edge-gateway"]
+severity = "sev1"
+started_at = 2026-05-26T17:05:00Z
+resolved_at = 2026-05-26T17:50:00Z
+failure_types = ["rate_limiting", "api_latency"]
+codes = ["CPX-W429", "PAYAPI-E1107", "ORD-5003", "504"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = ["RB-016", "RB-014"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0163"
+service = "fraud-scorer"
+symptom_services = []
+severity = "sev4"
+started_at = 2026-05-28T22:00:00Z
+resolved_at = 2026-05-29T02:55:00Z
+failure_types = ["memory_leak"]
+codes = ["OOMKilled"]
+hosts = ["fraud-scorer-02.prod.internal"]
+runbook_ids = ["RB-006"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0164"
+service = "redis-sessions"
+symptom_services = ["auth-service"]
+severity = "sev3"
+started_at = 2026-06-01T02:15:00Z
+resolved_at = 2026-06-01T02:20:00Z
+failure_types = ["redis_down"]
+codes = ["READONLY", "AUTH-E401X"]
+hosts = ["auth-service-02.prod.internal", "redis-sessions-01.prod.internal", "redis-sessions-02.prod.internal"]
+runbook_ids = ["RB-018"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0165"
+service = "ledger-service"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-06-01T23:35:00Z
+resolved_at = 2026-06-02T00:45:00Z
+failure_types = ["high_cpu"]
+codes = ["LEDGER-W210"]
+hosts = ["ledger-service-01.prod.internal"]
+runbook_ids = ["RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0166"
+service = "orders-api"
+symptom_services = ["edge-gateway"]
+severity = "sev3"
+started_at = 2026-06-09T13:05:00Z
+resolved_at = 2026-06-09T13:30:00Z
+failure_types = ["api_latency"]
+codes = ["504"]
+hosts = ["orders-api-01.prod.internal"]
+runbook_ids = ["RB-014", "RB-004"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0167"
+service = "edge-gateway"
+symptom_services = ["search-api"]
+severity = "sev4"
+started_at = 2026-06-13T10:55:00Z
+resolved_at = 2026-06-13T11:20:00Z
+failure_types = ["rate_limiting"]
+codes = ["429", "EDGE-RL01"]
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+runbook_ids = ["RB-030"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0168"
+service = "orders-api"
+symptom_services = ["orders-db"]
+severity = "sev3"
+started_at = 2026-06-15T19:30:00Z
+resolved_at = 2026-06-18T16:00:00Z
+failure_types = ["dns_failure", "api_latency"]
+codes = ["EAI_AGAIN"]
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal", "orders-db-01.prod.internal"]
+runbook_ids = ["RB-021", "RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0169"
+service = "redis-features"
+symptom_services = ["fraud-scorer"]
+severity = "sev2"
+started_at = 2026-06-17T11:35:00Z
+resolved_at = 2026-06-17T13:20:00Z
+failure_types = ["redis_down"]
+codes = ["OOM command not allowed", "FRD-E140"]
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-019"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0170"
+service = "internal-dns"
+symptom_services = ["catalog-api", "auth-service"]
+severity = "sev2"
+started_at = 2026-06-19T07:50:00Z
+resolved_at = 2026-06-19T08:25:00Z
+failure_types = ["dns_failure"]
+codes = ["EAI_AGAIN"]
+hosts = ["auth-service-01.prod.internal", "catalog-api-01.prod.internal"]
+runbook_ids = ["RB-022"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0171"
+service = "notification-worker"
+symptom_services = []
+severity = "sev4"
+started_at = 2026-06-29T17:30:00Z
+resolved_at = 2026-06-29T21:10:00Z
+failure_types = ["api_latency"]
+codes = ["NTF-E710"]
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+runbook_ids = ["RB-009"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0172"
+service = "fraud-scorer"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2026-06-30T00:15:00Z
+resolved_at = 2026-06-30T00:50:00Z
+failure_types = ["bad_deploy", "high_cpu"]
+codes = ["PAYAPI-W0310"]
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+runbook_ids = ["RB-002", "RB-006"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0173"
+service = "payments-api"
+symptom_services = ["payments-pgbouncer"]
+severity = "sev2"
+started_at = 2026-07-03T06:40:00Z
+resolved_at = 2026-07-03T07:20:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["PAYAPI-E1042"]
+hosts = ["payments-pgbouncer-01.prod.internal", "payments-pgbouncer-02.prod.internal"]
+runbook_ids = ["RB-011"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0174"
+service = "payments-db"
+symptom_services = []
+severity = "sev2"
+started_at = 2026-07-07T09:00:00Z
+resolved_at = 2026-07-07T12:40:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["payments-db-01.prod.internal", "payments-db-02.prod.internal"]
+runbook_ids = ["RB-007"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0175"
+service = "redis-cache"
+symptom_services = ["redis-sessions", "internal-dns"]
+severity = "sev3"
+started_at = 2026-07-07T17:45:00Z
+resolved_at = 2026-07-07T18:00:00Z
+failure_types = ["bad_deploy"]
+codes = []
+hosts = ["internal-dns-01.prod.internal", "redis-cache-02.prod.internal", "redis-sessions-02.prod.internal"]
+runbook_ids = ["RB-027", "RB-017"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0176"
+service = "auth-db"
+symptom_services = ["auth-service"]
+severity = "sev2"
+started_at = 2026-07-12T09:00:00Z
+resolved_at = 2026-07-12T09:20:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["53300", "503"]
+hosts = ["auth-db-01.prod.internal"]
+runbook_ids = ["RB-012"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0177"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2026-07-15T06:40:00Z
+resolved_at = 2026-07-15T06:45:00Z
+failure_types = ["rate_limiting"]
+codes = ["CPX-W430"]
+hosts = ["card-processor-proxy-01.prod.internal"]
+runbook_ids = ["RB-029", "RB-023"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0178"
+service = "auth-service"
+symptom_services = []
+severity = "sev2"
+started_at = 2026-07-21T14:05:00Z
+resolved_at = 2026-07-21T14:30:00Z
+failure_types = ["bad_deploy"]
+codes = ["AUTH-E401X"]
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+runbook_ids = ["RB-026", "RB-018"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0179"
+service = "notification-worker"
+symptom_services = []
+severity = "sev4"
+started_at = 2026-07-23T03:00:00Z
+resolved_at = 2026-07-23T06:35:00Z
+failure_types = ["dns_failure", "api_latency"]
+codes = ["EAI_AGAIN"]
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+runbook_ids = ["RB-021"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0180"
+service = "payments-api"
+symptom_services = ["payments-db"]
+severity = "sev1"
+started_at = 2026-07-29T23:25:00Z
+resolved_at = 2026-07-30T00:35:00Z
+failure_types = ["conn_pool_exhaustion", "api_latency"]
+codes = ["PAYAPI-E1042", "503"]
+hosts = ["payments-api-01.prod.internal", "payments-api-04.prod.internal", "payments-db-01.prod.internal"]
+runbook_ids = ["RB-010"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0181"
+service = "inventory-service"
+symptom_services = ["inventory-db", "orders-api"]
+severity = "sev3"
+started_at = 2026-07-31T14:40:00Z
+resolved_at = 2026-07-31T15:15:00Z
+failure_types = ["api_latency"]
+codes = ["INV-E220", "ORD-5003"]
+hosts = ["inventory-db-01.prod.internal", "inventory-service-01.prod.internal", "inventory-service-02.prod.internal"]
+runbook_ids = ["RB-015", "RB-016"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0182"
+service = "orders-api"
+symptom_services = ["orders-db"]
+severity = "sev2"
+started_at = 2026-08-08T10:15:00Z
+resolved_at = 2026-08-08T10:40:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["ORD-5003"]
+hosts = ["orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0183"
+service = "search-cluster"
+symptom_services = []
+severity = "sev4"
+started_at = 2026-08-09T00:50:00Z
+resolved_at = 2026-08-09T02:25:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["search-cluster-01.prod.internal"]
+runbook_ids = ["RB-008"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0184"
+service = "redis-features"
+symptom_services = ["fraud-scorer"]
+severity = "sev3"
+started_at = 2026-08-11T04:10:00Z
+resolved_at = 2026-08-11T06:05:00Z
+failure_types = ["redis_down"]
+codes = ["OOM command not allowed", "FRD-E140"]
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal", "redis-features-01.prod.internal"]
+runbook_ids = ["RB-019"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0185"
+service = "kafka"
+symptom_services = ["ledger-service", "orders-api"]
+severity = "sev2"
+started_at = 2026-08-13T10:12:00Z
+resolved_at = 2026-08-13T10:36:00Z
+failure_types = ["bad_deploy"]
+codes = ["LEDGER-E455"]
+hosts = ["kafka-01.prod.internal", "kafka-02.prod.internal"]
+runbook_ids = ["RB-027"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0186"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev1"
+started_at = 2026-08-13T21:52:00Z
+resolved_at = 2026-08-13T22:07:00Z
+failure_types = ["rate_limiting"]
+codes = ["CPX-W430", "PAYAPI-E1107"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = ["RB-029"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0187"
+service = "search-cluster"
+symptom_services = ["search-api"]
+severity = "sev4"
+started_at = 2026-08-19T09:47:00Z
+resolved_at = 2026-08-19T10:32:00Z
+failure_types = ["api_latency"]
+codes = []
+hosts = ["search-api-02.prod.internal", "search-cluster-01.prod.internal"]
+runbook_ids = ["RB-003"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0188"
+service = "ledger-service"
+symptom_services = ["payments-api", "ledger-db"]
+severity = "sev2"
+started_at = 2026-08-21T03:07:00Z
+resolved_at = 2026-08-21T03:37:00Z
+failure_types = ["conn_pool_exhaustion"]
+codes = ["LEDGER-W210", "503"]
+hosts = ["ledger-db-02.prod.internal", "ledger-service-02.prod.internal"]
+runbook_ids = ["RB-013", "RB-012"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0189"
+service = "fraud-scorer"
+symptom_services = ["payments-api"]
+severity = "sev3"
+started_at = 2026-08-22T14:02:00Z
+resolved_at = 2026-08-22T15:22:00Z
+failure_types = ["high_cpu", "api_latency"]
+codes = ["PAYAPI-W0310"]
+hosts = ["fraud-scorer-02.prod.internal", "payments-api-01.prod.internal"]
+runbook_ids = ["RB-002", "RB-006"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0190"
+service = "internal-dns"
+symptom_services = ["ledger-service"]
+severity = "sev3"
+started_at = 2026-08-27T20:47:00Z
+resolved_at = 2026-08-27T22:07:00Z
+failure_types = ["dns_failure"]
+codes = []
+hosts = ["internal-dns-02.prod.internal", "ledger-service-02.prod.internal"]
+runbook_ids = ["RB-020"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0191"
+service = "redis-cache"
+symptom_services = []
+severity = "sev4"
+started_at = 2026-08-30T21:17:00Z
+resolved_at = 2026-08-30T21:27:00Z
+failure_types = ["bad_deploy"]
+codes = []
+hosts = ["redis-cache-02.prod.internal"]
+runbook_ids = ["RB-027", "RB-017"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0192"
+service = "internal-dns"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-09-08T19:45:00Z
+resolved_at = 2026-09-08T19:50:00Z
+failure_types = ["bad_deploy"]
+codes = []
+hosts = ["internal-dns-01.prod.internal"]
+runbook_ids = ["RB-027"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0193"
+service = "auth-db"
+symptom_services = ["auth-service"]
+severity = "sev3"
+started_at = 2026-09-10T13:40:00Z
+resolved_at = 2026-09-10T14:20:00Z
+failure_types = ["api_latency"]
+codes = ["503"]
+hosts = ["auth-db-01.prod.internal", "auth-service-01.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0194"
+service = "ledger-service"
+symptom_services = ["payments-api"]
+severity = "sev2"
+started_at = 2026-09-11T13:15:00Z
+resolved_at = 2026-09-11T13:40:00Z
+failure_types = ["bad_deploy"]
+codes = ["503"]
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+runbook_ids = []
+synthetic = true
+
+[[incidents]]
+id = "INC-0195"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev4"
+started_at = 2026-09-12T00:30:00Z
+resolved_at = 2026-09-12T00:35:00Z
+failure_types = ["rate_limiting"]
+codes = ["CPX-W429", "PAYAPI-E1107"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = ["RB-029"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0196"
+service = "catalog-api"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-09-15T17:55:00Z
+resolved_at = 2026-09-15T22:40:00Z
+failure_types = ["dns_failure", "api_latency"]
+codes = ["EAI_AGAIN"]
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+runbook_ids = ["RB-021"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0197"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev1"
+started_at = 2026-09-16T19:41:00Z
+resolved_at = 2026-09-16T20:23:00Z
+failure_types = ["rate_limiting"]
+codes = ["CPX-W430", "PAYAPI-E1107"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = ["RB-029", "RB-016"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0198"
+service = "payments-api"
+symptom_services = ["payments-db"]
+severity = "sev2"
+started_at = 2026-09-17T08:56:00Z
+resolved_at = 2026-09-17T10:26:00Z
+failure_types = ["conn_pool_exhaustion", "api_latency"]
+codes = ["PAYAPI-E1042", "503"]
+hosts = ["payments-api-02.prod.internal", "payments-api-04.prod.internal", "payments-db-01.prod.internal"]
+runbook_ids = ["RB-010"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0199"
+service = "kafka"
+symptom_services = []
+severity = "sev3"
+started_at = 2026-09-20T15:21:00Z
+resolved_at = 2026-09-20T17:26:00Z
+failure_types = ["disk_full"]
+codes = []
+hosts = ["kafka-02.prod.internal"]
+runbook_ids = ["RB-009", "RB-001"]
+synthetic = true
+
+[[incidents]]
+id = "INC-0200"
+service = "card-processor-proxy"
+symptom_services = ["payments-api"]
+severity = "sev4"
+started_at = 2026-09-25T01:51:00Z
+resolved_at = 2026-09-25T01:56:00Z
+failure_types = ["rate_limiting"]
+codes = ["CPX-W429"]
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+runbook_ids = ["RB-029"]
+synthetic = true

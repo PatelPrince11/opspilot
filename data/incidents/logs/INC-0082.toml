@@ -1,0 +1,25 @@
+# Synthetic logs for INC-0082. edge-gateway lines are our own summaries of Envoy listener events; no counts.
+[[line]]
+at = "10:45:12"
+service = "edge-gateway"
+host = "edge-gateway-03.prod.internal"
+level = "WARN"
+message = "tls handshake ended by peer before first request"
+
+[[burst]]
+from = "10:45:40"
+to = "15:04:30"
+count = 3
+service = "edge-gateway"
+level = "WARN"
+hosts = ["edge-gateway-03.prod.internal"]
+message = "tls handshake ended by peer before first request"
+
+[[burst]]
+from = "10:35:00"
+to = "15:14:00"
+count = 45
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-03.prod.internal"]
+message = "listener summary: tls handshakes completing, requests flowing"

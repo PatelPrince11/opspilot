@@ -1,0 +1,534 @@
+[
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.21.11",
+        "name": "auth-db-01.prod.internal"
+      },
+      {
+        "ip": "10.0.21.12",
+        "name": "auth-db-02.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "auth-db",
+    "owner": "team-dba",
+    "port": 5432,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "PostgreSQL 16"
+  },
+  {
+    "dependencies": [
+      "auth-db",
+      "redis-sessions"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.2.11",
+        "name": "auth-service-01.prod.internal"
+      },
+      {
+        "ip": "10.0.2.12",
+        "name": "auth-service-02.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "auth-service",
+    "owner": "team-identity",
+    "port": 8080,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Go"
+  },
+  {
+    "dependencies": [
+      "internal-dns"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.6.11",
+        "name": "card-processor-proxy-01.prod.internal"
+      },
+      {
+        "ip": "10.0.6.12",
+        "name": "card-processor-proxy-02.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "card-processor-proxy",
+    "owner": "team-payments",
+    "port": 8443,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "egress proxy, mTLS to the external card processor"
+  },
+  {
+    "dependencies": [
+      "catalog-db",
+      "redis-cache"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.10.11",
+        "name": "catalog-api-01.prod.internal"
+      },
+      {
+        "ip": "10.0.10.12",
+        "name": "catalog-api-02.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "catalog-api",
+    "owner": "team-catalog",
+    "port": 8080,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Python"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.25.11",
+        "name": "catalog-db-01.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "catalog-db",
+    "owner": "team-dba",
+    "port": 5432,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "PostgreSQL 16"
+  },
+  {
+    "dependencies": [
+      "auth-service",
+      "payments-api",
+      "orders-api",
+      "catalog-api",
+      "search-api",
+      "internal-dns"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.1.11",
+        "name": "edge-gateway-01.prod.internal"
+      },
+      {
+        "ip": "10.0.1.12",
+        "name": "edge-gateway-02.prod.internal"
+      },
+      {
+        "ip": "10.0.1.13",
+        "name": "edge-gateway-03.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "edge-gateway",
+    "owner": "team-platform",
+    "port": 443,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Envoy"
+  },
+  {
+    "dependencies": [
+      "redis-features"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.7.11",
+        "name": "fraud-scorer-01.prod.internal"
+      },
+      {
+        "ip": "10.0.7.12",
+        "name": "fraud-scorer-02.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "fraud-scorer",
+    "owner": "team-risk",
+    "port": 8080,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Python"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.0.53",
+        "name": "internal-dns-01.prod.internal"
+      },
+      {
+        "ip": "10.0.0.54",
+        "name": "internal-dns-02.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "internal-dns",
+    "owner": "team-platform",
+    "port": 53,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "CoreDNS"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.24.11",
+        "name": "inventory-db-01.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "inventory-db",
+    "owner": "team-dba",
+    "port": 5432,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "PostgreSQL 16"
+  },
+  {
+    "dependencies": [
+      "inventory-db",
+      "redis-cache"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.9.11",
+        "name": "inventory-service-01.prod.internal"
+      },
+      {
+        "ip": "10.0.9.12",
+        "name": "inventory-service-02.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "inventory-service",
+    "owner": "team-commerce",
+    "port": 8080,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Go"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.33.11",
+        "name": "kafka-01.prod.internal"
+      },
+      {
+        "ip": "10.0.33.12",
+        "name": "kafka-02.prod.internal"
+      },
+      {
+        "ip": "10.0.33.13",
+        "name": "kafka-03.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "kafka",
+    "owner": "team-platform",
+    "port": 9092,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Kafka (3 brokers)"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.22.11",
+        "name": "ledger-db-01.prod.internal"
+      },
+      {
+        "ip": "10.0.22.12",
+        "name": "ledger-db-02.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "ledger-db",
+    "owner": "team-dba",
+    "port": 5432,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "PostgreSQL 16"
+  },
+  {
+    "dependencies": [
+      "ledger-db",
+      "kafka"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.5.11",
+        "name": "ledger-service-01.prod.internal"
+      },
+      {
+        "ip": "10.0.5.12",
+        "name": "ledger-service-02.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "ledger-service",
+    "owner": "team-payments",
+    "port": 8080,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Java (HikariCP)"
+  },
+  {
+    "dependencies": [
+      "kafka"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.12.11",
+        "name": "notification-worker-01.prod.internal"
+      },
+      {
+        "ip": "10.0.12.12",
+        "name": "notification-worker-02.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "notification-worker",
+    "owner": "team-growth",
+    "port": 8080,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Node"
+  },
+  {
+    "dependencies": [
+      "orders-db",
+      "payments-api",
+      "inventory-service",
+      "kafka"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.8.11",
+        "name": "orders-api-01.prod.internal"
+      },
+      {
+        "ip": "10.0.8.12",
+        "name": "orders-api-02.prod.internal"
+      },
+      {
+        "ip": "10.0.8.13",
+        "name": "orders-api-03.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "orders-api",
+    "owner": "team-commerce",
+    "port": 8080,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Node"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.23.11",
+        "name": "orders-db-01.prod.internal"
+      },
+      {
+        "ip": "10.0.23.12",
+        "name": "orders-db-02.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "orders-db",
+    "owner": "team-dba",
+    "port": 5432,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "PostgreSQL 16"
+  },
+  {
+    "dependencies": [
+      "payments-pgbouncer",
+      "redis-cache",
+      "fraud-scorer",
+      "ledger-service",
+      "card-processor-proxy"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.3.11",
+        "name": "payments-api-01.prod.internal"
+      },
+      {
+        "ip": "10.0.3.12",
+        "name": "payments-api-02.prod.internal"
+      },
+      {
+        "ip": "10.0.3.13",
+        "name": "payments-api-03.prod.internal"
+      },
+      {
+        "ip": "10.0.3.14",
+        "name": "payments-api-04.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "payments-api",
+    "owner": "team-payments",
+    "port": 8080,
+    "status": "degraded",
+    "synthetic": true,
+    "tech": "Go (pgx)"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.20.11",
+        "name": "payments-db-01.prod.internal"
+      },
+      {
+        "ip": "10.0.20.12",
+        "name": "payments-db-02.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "payments-db",
+    "owner": "team-dba",
+    "port": 5432,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "PostgreSQL 16 (01 primary, 02 replica)"
+  },
+  {
+    "dependencies": [
+      "payments-db"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.4.21",
+        "name": "payments-pgbouncer-01.prod.internal"
+      },
+      {
+        "ip": "10.0.4.22",
+        "name": "payments-pgbouncer-02.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "payments-pgbouncer",
+    "owner": "team-payments",
+    "port": 6432,
+    "status": "degraded",
+    "synthetic": true,
+    "tech": "PgBouncer"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.30.11",
+        "name": "redis-cache-01.prod.internal"
+      },
+      {
+        "ip": "10.0.30.12",
+        "name": "redis-cache-02.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "redis-cache",
+    "owner": "team-platform",
+    "port": 6379,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Redis 7 (primary + replica, Sentinel)"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.32.11",
+        "name": "redis-features-01.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "redis-features",
+    "owner": "team-platform",
+    "port": 6379,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Redis 7"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.31.11",
+        "name": "redis-sessions-01.prod.internal"
+      },
+      {
+        "ip": "10.0.31.12",
+        "name": "redis-sessions-02.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "redis-sessions",
+    "owner": "team-platform",
+    "port": 6379,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "Redis 7 (primary + replica, Sentinel)"
+  },
+  {
+    "dependencies": [
+      "search-cluster"
+    ],
+    "hosts": [
+      {
+        "ip": "10.0.11.11",
+        "name": "search-api-01.prod.internal"
+      },
+      {
+        "ip": "10.0.11.12",
+        "name": "search-api-02.prod.internal"
+      }
+    ],
+    "kind": "app",
+    "name": "search-api",
+    "owner": "team-catalog",
+    "port": 8080,
+    "status": "degraded",
+    "synthetic": true,
+    "tech": "Java"
+  },
+  {
+    "dependencies": [],
+    "hosts": [
+      {
+        "ip": "10.0.34.11",
+        "name": "search-cluster-01.prod.internal"
+      },
+      {
+        "ip": "10.0.34.12",
+        "name": "search-cluster-02.prod.internal"
+      },
+      {
+        "ip": "10.0.34.13",
+        "name": "search-cluster-03.prod.internal"
+      }
+    ],
+    "kind": "datastore",
+    "name": "search-cluster",
+    "owner": "team-platform",
+    "port": 9200,
+    "status": "healthy",
+    "synthetic": true,
+    "tech": "OpenSearch (3 nodes)"
+  }
+]

@@ -1,3 +1,12 @@
 .DS_Store
 .env
 .claude/settings.local.json
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+data/raw/*
+!data/raw/.gitkeep
+data/processed/log_events.loghub.jsonl
+scratchpad/
+.cache/

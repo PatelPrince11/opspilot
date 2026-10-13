@@ -1,0 +1,73 @@
+# Synthetic logs for INC-0025. rollout lines are our tool's own journal lines (identifier rollout).
+[[burst]]
+from = "15:05:00"
+to = "15:14:59"
+count = 10
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "checkout ok order={hex8} latency_ms={int:70-220}"
+
+[[line]]
+at = "15:15:02"
+service = "internal-dns"
+host = "internal-dns-01.prod.internal"
+level = "INFO"
+message = "rollout: placed /etc/coredns/zones/prod.internal.db (run scoped to this host)"
+
+[[line]]
+at = "15:15:06"
+service = "internal-dns"
+host = "internal-dns-01.prod.internal"
+level = "INFO"
+message = "rollout: systemctl restart coredns exit=0; run complete hosts=1 failed=0"
+
+[[burst]]
+from = "15:15:20"
+to = "15:38:35"
+count = 44
+service = "orders-api"
+level = "ERROR"
+hosts = ["orders-api-02.prod.internal"]
+message = "pg connect failed: database hostname lookup answered NXDOMAIN (getaddrinfo ENOTFOUND) req={hex8}"
+
+[[burst]]
+from = "15:15:20"
+to = "15:38:59"
+count = 14
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-02.prod.internal"]
+message = "pg connect ok after lookup req={hex8} latency_ms={int:3-12}"
+
+[[burst]]
+from = "15:15:30"
+to = "15:38:59"
+count = 10
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-02.prod.internal"]
+message = "pg pool waiting_clients={ramp:2-25}"
+
+[[line]]
+at = "15:38:03"
+service = "internal-dns"
+host = "internal-dns-01.prod.internal"
+level = "INFO"
+message = "rollout: placed /etc/coredns/zones/prod.internal.db (run scoped to this host)"
+
+[[line]]
+at = "15:38:07"
+service = "internal-dns"
+host = "internal-dns-01.prod.internal"
+level = "INFO"
+message = "rollout: systemctl restart coredns exit=0; run complete hosts=1 failed=0"
+
+[[burst]]
+from = "15:39:30"
+to = "16:00:00"
+count = 12
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "checkout ok order={hex8} latency_ms={int:70-240}"

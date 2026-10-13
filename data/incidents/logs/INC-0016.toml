@@ -1,0 +1,72 @@
+# Synthetic logs for INC-0016. App-side lines only; no CoreDNS log text used.
+[[burst]]
+from = "19:40:00"
+to = "19:49:59"
+count = 10
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "POST /checkout status=200 latency_ms={int:80-240} req={hex8}"
+
+[[burst]]
+from = "19:40:00"
+to = "19:49:59"
+count = 6
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8}"
+
+[[burst]]
+from = "19:50:00"
+to = "20:10:59"
+count = 40
+service = "orders-api"
+level = "ERROR"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "new connection failed: getaddrinfo EAI_AGAIN; checkout aborted req={hex8}"
+
+[[burst]]
+from = "19:50:00"
+to = "20:10:59"
+count = 20
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "db dial failed: name lookup timed out via cluster DNS; login not completed user={hex8}"
+
+[[burst]]
+from = "19:50:00"
+to = "20:10:59"
+count = 16
+service = "catalog-api"
+level = "WARN"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "db connect failed: [Errno -3] Temporary failure in name resolution req={hex8}"
+
+[[burst]]
+from = "20:11:00"
+to = "20:25:00"
+count = 12
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "POST /checkout status=200 latency_ms={int:80-260} req={hex8}"
+
+[[burst]]
+from = "20:11:00"
+to = "20:25:00"
+count = 8
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8}"
+
+[[burst]]
+from = "20:11:00"
+to = "20:25:00"
+count = 8
+service = "catalog-api"
+level = "INFO"
+hosts = ["catalog-api-01.prod.internal", "catalog-api-02.prod.internal"]
+message = "GET /products status=200 latency_ms={int:20-90} req={hex8}"

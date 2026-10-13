@@ -1,0 +1,27 @@
+{
+  "counts": {
+    "incidents": 117,
+    "live_log_events": 146,
+    "runbooks": 30,
+    "services": 24,
+    "synthetic_log_events": 8439
+  },
+  "files": {
+    "incidents.jsonl": "a4056d0a0f8c29e7c1de36ead3f4aa510b738144ab8c06d0f95f9bfe4e15ba51",
+    "log_events.live.jsonl": "76b6b928d231a6451d34def2aaa4c656db8100e59db0b53d3ad8785f45c4782a",
+    "log_events.synthetic.jsonl": "ef5a0aeb66f641adaff5052841da02f5cc5565b87e95025c46d20877a92f8353",
+    "runbooks.jsonl": "7ddd0f81add066216e8535b1b54726e3652a231289667342d0668d9726416a3d",
+    "services.json": "e91a6e9ac170dc5d865f6cfd0a08c47534558366a315c67fcb7f361f4506eece"
+  },
+  "loghub": {
+    "commit": "dd61d0952749ee7963bde24220d1be5ede023033",
+    "files": {
+      "LICENSE": "9ffa6ae259833cdc6e7ed8a0219fec72ef6455fb457b3c44096cb1ac1f0696d4",
+      "OpenStack/OpenStack_2k.log_structured.csv": "ecc88e7909777181824260e9bdacd1469bd24d55131d6fc14e9c8c17edc49ff0"
+    },
+    "note": "background noise only; downloaded at build time, not committed",
+    "repo": "https://github.com/logpai/loghub"
+  },
+  "seed": 20261003,
+  "synthetic": true
+}

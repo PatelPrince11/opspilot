@@ -1,0 +1,60 @@
+# Synthetic logs for INC-0004. No vendor error text is quoted; everything is our own service format.
+[[line]]
+at = "00:00:01"
+service = "card-processor-proxy"
+host = "card-processor-proxy-01.prod.internal"
+level = "ERROR"
+message = "CPX-E600 handshake with processor failed; call not sent"
+
+[[line]]
+at = "00:00:01"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "ERROR"
+message = "CPX-E600 handshake with processor failed; call not sent"
+
+[[line]]
+at = "00:04:10"
+service = "payments-api"
+host = "payments-api-01.prod.internal"
+level = "WARN"
+message = "paging payments on-call"
+
+[[line]]
+at = "00:25:30"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "INFO"
+message = "operator checked client certificate in Secret card-processor-client-tls; end date 2025-01-14 00:00:00 GMT"
+
+[[line]]
+at = "02:38:20"
+service = "card-processor-proxy"
+host = "card-processor-proxy-01.prod.internal"
+level = "INFO"
+message = "Secret card-processor-client-tls updated; restarting to load it"
+
+[[line]]
+at = "02:39:05"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "INFO"
+message = "client certificate loaded; processor handshake ok"
+
+[[burst]]
+from = "00:00:02"
+to = "02:37:59"
+count = 30
+service = "card-processor-proxy"
+level = "ERROR"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "CPX-E600 handshake with processor failed; call not sent"
+
+[[burst]]
+from = "00:00:03"
+to = "02:37:59"
+count = 30
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-E1107 card processor call failed after 3 attempts; payment {hex8} not completed"

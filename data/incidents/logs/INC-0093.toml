@@ -1,0 +1,62 @@
+# Synthetic logs for INC-0093. Our own service formats; no vendor text quoted.
+[[line]]
+at = "16:40:10"
+service = "ledger-service"
+host = "ledger-service-01.prod.internal"
+level = "ERROR"
+message = "LEDGER-E455 publish to ledger.entries failed; entry queued for retry"
+
+[[line]]
+at = "16:40:12"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "ERROR"
+message = "LEDGER-E455 publish to ledger.entries failed; entry queued for retry"
+
+[[line]]
+at = "17:48:00"
+service = "ledger-service"
+host = "ledger-service-01.prod.internal"
+level = "INFO"
+message = "publish to ledger.entries succeeded; retry queue draining"
+
+[[line]]
+at = "17:48:03"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "INFO"
+message = "publish to ledger.entries succeeded; retry queue draining"
+
+[[line]]
+at = "17:55:00"
+service = "ledger-service"
+host = "ledger-service-02.prod.internal"
+level = "INFO"
+message = "retry queue empty"
+
+[[burst]]
+from = "16:40:20"
+to = "17:47:00"
+count = 60
+service = "ledger-service"
+level = "ERROR"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "LEDGER-E455 publish to ledger.entries failed; entry queued for retry, queue={ramp:10-900}"
+
+[[burst]]
+from = "16:41:00"
+to = "17:47:00"
+count = 20
+service = "ledger-service"
+level = "WARN"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "ledger-retry threads busy; cpu elevated"
+
+[[burst]]
+from = "16:30:00"
+to = "16:39:30"
+count = 10
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "published entry to ledger.entries partition={int:0-11}"

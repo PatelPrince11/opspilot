@@ -1,0 +1,77 @@
+# Synthetic logs for INC-0099. READONLY text as in the catalog (Redis).
+[[burst]]
+from = "17:55:00"
+to = "18:05:04"
+count = 12
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8} session stored"
+
+[[burst]]
+from = "17:55:00"
+to = "18:05:04"
+count = 2
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "AUTH-E401X session lookup failed sess:{hex8}; user sent to login"
+
+[[line]]
+at = "18:05:05"
+service = "auth-service"
+host = "auth-service-01.prod.internal"
+level = "INFO"
+message = "redis: sessions master changed to 10.0.31.11:6379"
+
+[[burst]]
+from = "18:05:05"
+to = "18:07:44"
+count = 15
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-02.prod.internal"]
+message = "login ok user={hex8} session stored"
+
+[[burst]]
+from = "18:05:10"
+to = "18:08:59"
+count = 40
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "AUTH-E401X session lookup failed sess:{hex8}; user sent to login"
+
+[[burst]]
+from = "18:07:45"
+to = "18:07:48"
+count = 6
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-02.prod.internal"]
+message = "session write failed: READONLY You can't write against a read only replica.; login completed without a session user={hex8}"
+
+[[line]]
+at = "18:07:49"
+service = "auth-service"
+host = "auth-service-02.prod.internal"
+level = "INFO"
+message = "redis: sessions master changed to 10.0.31.11:6379"
+
+[[burst]]
+from = "18:09:00"
+to = "18:25:00"
+count = 12
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok user={hex8} session stored"
+
+[[burst]]
+from = "18:09:00"
+to = "18:25:00"
+count = 3
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "AUTH-E401X session lookup failed sess:{hex8}; user sent to login"

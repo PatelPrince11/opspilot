@@ -1,0 +1,92 @@
+# Synthetic logs for INC-0157. Our own service formats; ENOSPC and 57P02 as named in the runbook.
+[[line]]
+at = "02:20:10"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "ERROR"
+message = "archive command failed for WAL segment; will retry"
+
+[[line]]
+at = "02:31:00"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "FATAL"
+message = "postgres: cannot write WAL, no space left on device (ENOSPC); server stopping"
+
+[[line]]
+at = "02:31:01"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "FATAL"
+message = "terminating connection because of crash of another server process (57P02)"
+
+[[line]]
+at = "02:31:30"
+service = "payments-api"
+host = "payments-api-01.prod.internal"
+level = "ERROR"
+message = "database query failed; no connection available, returning an error"
+
+[[line]]
+at = "03:05:00"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "ballast file removed to free space"
+
+[[line]]
+at = "03:12:00"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "database system is ready to accept connections"
+
+[[line]]
+at = "04:40:00"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "archive command succeeding again; archived segments rising"
+
+[[line]]
+at = "04:55:00"
+service = "payments-db"
+host = "payments-db-01.prod.internal"
+level = "INFO"
+message = "CHECKPOINT complete; old WAL segments removed"
+
+[[burst]]
+from = "02:12:00"
+to = "02:30:00"
+count = 30
+service = "payments-db"
+level = "ERROR"
+hosts = ["payments-db-01.prod.internal"]
+message = "archive command failed for WAL segment; will retry"
+
+[[burst]]
+from = "02:12:00"
+to = "02:30:00"
+count = 10
+service = "payments-db"
+level = "WARN"
+hosts = ["payments-db-01.prod.internal"]
+message = "data volume usage rising, {int:80-99} percent"
+
+[[burst]]
+from = "02:31:10"
+to = "03:10:00"
+count = 25
+service = "payments-api"
+level = "ERROR"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "database query failed; no connection available, returning an error"
+
+[[burst]]
+from = "03:20:00"
+to = "05:09:00"
+count = 15
+service = "payments-api"
+level = "INFO"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal"]
+message = "POST /v1/payments 200"

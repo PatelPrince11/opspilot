@@ -1,0 +1,36 @@
+# Synthetic logs for INC-0119. edge-gateway lines are our own summaries.
+[[burst]]
+from = "21:15:30"
+to = "21:24:59"
+count = 10
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-03.prod.internal"]
+message = "route summary: p99 latency_ms={int:80-220} upstream timeouts last minute=0"
+
+[[burst]]
+from = "21:25:20"
+to = "22:24:30"
+count = 30
+service = "edge-gateway"
+level = "WARN"
+hosts = ["edge-gateway-03.prod.internal"]
+message = "route summary: p99 latency_ms={int:6000-15000} upstream timeouts last minute={int:3-40}"
+
+[[burst]]
+from = "21:25:40"
+to = "22:24:50"
+count = 20
+service = "edge-gateway"
+level = "ERROR"
+hosts = ["edge-gateway-03.prod.internal"]
+message = "request to upstream timed out after 15s, answered 504 req={hex8}"
+
+[[burst]]
+from = "22:25:20"
+to = "22:34:30"
+count = 10
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-03.prod.internal"]
+message = "route summary: p99 latency_ms={int:80-220} upstream timeouts last minute=0"
