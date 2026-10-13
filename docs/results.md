@@ -110,15 +110,15 @@ Agent `openrouter:openai/gpt-oss-120b`, judge `gemini:gemini-3.5-flash-lite` (pr
 | tool_success | tool calls that ran without error / tool calls (a repeated call counts as failed) | verify on | 100 | 0.853 (577) | dev_generation_verify_on.json | e69bfe87e354 |
 | verify_loop | runs where verify sent the agent back to gather / runs | verify on | 100 | 0.410 (100) | dev_generation_verify_on.json | e69bfe87e354 |
 | no_diagnosis | runs whose draft failed twice and returned the fallback / runs | verify on | 100 | 0.010 (100) | dev_generation_verify_on.json | e69bfe87e354 |
-| citation_a | claims whose every cited id was gathered and whose quote is in a cited item (deterministic) / claims | verify off | 100 | 0.786 (322) | dev_generation_verify_off.json | e69bfe87e354 |
-| citation_b | claims the judge marks supported by the evidence they cite / claims | verify off | 79 | 0.975 (239) | dev_generation_verify_off.json | e69bfe87e354 |
-| faithfulness | judge score 1-5 per answer: the whole diagnosis sticks to its cited evidence; mean | verify off | 79 | 4.759 (79) | dev_generation_verify_off.json | e69bfe87e354 |
-| completeness | expected key facts the judge marks present / key facts | verify off | 79 | 0.658 (193) | dev_generation_verify_off.json | e69bfe87e354 |
-| premise_corrected | false-premise questions whose answer corrects the premise (judge) | verify off | 3 | 0.667 (3) | dev_generation_verify_off.json | e69bfe87e354 |
-| unrecorded_respected | questions with an unrecorded part where the answer invents none (judge) | verify off | 3 | 0.667 (3) | dev_generation_verify_off.json | e69bfe87e354 |
-| tool_success | tool calls that ran without error / tool calls (a repeated call counts as failed) | verify off | 100 | 0.875 (479) | dev_generation_verify_off.json | e69bfe87e354 |
-| verify_loop | runs where verify sent the agent back to gather / runs | verify off | 100 | 0.000 (100) | dev_generation_verify_off.json | e69bfe87e354 |
-| no_diagnosis | runs whose draft failed twice and returned the fallback / runs | verify off | 100 | 0.000 (100) | dev_generation_verify_off.json | e69bfe87e354 |
+| citation_a | claims whose every cited id was gathered and whose quote is in a cited item (deterministic) / claims | verify off | 100 | 0.786 (322) | dev_generation_verify_off.json | a6cbcb989eb8 |
+| citation_b | claims the judge marks supported by the evidence they cite / claims | verify off | 87 | 0.971 (275) | dev_generation_verify_off.json | a6cbcb989eb8 |
+| faithfulness | judge score 1-5 per answer: the whole diagnosis sticks to its cited evidence; mean | verify off | 87 | 4.747 (87) | dev_generation_verify_off.json | a6cbcb989eb8 |
+| completeness | expected key facts the judge marks present / key facts | verify off | 87 | 0.665 (215) | dev_generation_verify_off.json | a6cbcb989eb8 |
+| premise_corrected | false-premise questions whose answer corrects the premise (judge) | verify off | 3 | 0.667 (3) | dev_generation_verify_off.json | a6cbcb989eb8 |
+| unrecorded_respected | questions with an unrecorded part where the answer invents none (judge) | verify off | 3 | 0.667 (3) | dev_generation_verify_off.json | a6cbcb989eb8 |
+| tool_success | tool calls that ran without error / tool calls (a repeated call counts as failed) | verify off | 100 | 0.875 (479) | dev_generation_verify_off.json | a6cbcb989eb8 |
+| verify_loop | runs where verify sent the agent back to gather / runs | verify off | 100 | 0.000 (100) | dev_generation_verify_off.json | a6cbcb989eb8 |
+| no_diagnosis | runs whose draft failed twice and returned the fallback / runs | verify off | 100 | 0.000 (100) | dev_generation_verify_off.json | a6cbcb989eb8 |
 
 | comparison (on - off) | slice | n | difference | 95% CI | claimable |
 |---|---|---|---|---|---|
@@ -130,16 +130,16 @@ Agent `openrouter:openai/gpt-oss-120b`, judge `gemini:gemini-3.5-flash-lite` (pr
 | citation_a | author=gemini | 20 | +0.302 | [+0.151, +0.488] | yes |
 | citation_a | false_premise=False | 92 | +0.193 | [+0.139, +0.250] | yes |
 | citation_a | false_premise=True | 7 | +0.500 | [+0.125, +0.933] | yes |
-| citation_b | overall | 79 | -0.006 | [-0.016, -0.000] | - |
-| citation_b | difficulty=exact-token | 38 | -0.002 | [-0.008, +0.000] | - |
-| citation_b | difficulty=multi-doc | 19 | -0.016 | [-0.049, +0.000] | - |
+| citation_b | overall | 86 | -0.003 | [-0.014, +0.008] | - |
+| citation_b | difficulty=exact-token | 41 | +0.004 | [-0.008, +0.023] | - |
+| citation_b | difficulty=multi-doc | 23 | -0.014 | [-0.042, +0.000] | - |
 | citation_b | difficulty=paraphrase | 22 | -0.001 | [-0.003, +0.000] | - |
-| citation_b | author=claude | 69 | -0.006 | [-0.017, -0.000] | - |
+| citation_b | author=claude | 76 | -0.003 | [-0.015, +0.009] | - |
 | citation_b | author=gemini | 10 | +0.000 | [+0.000, +0.000] | - |
-| citation_b | false_premise=False | 76 | -0.006 | [-0.016, -0.000] | - |
+| citation_b | false_premise=False | 83 | -0.003 | [-0.014, +0.008] | - |
 | citation_b | false_premise=True | 3 | +0.000 | [+0.000, +0.000] | - |
-| faithfulness | overall | 79 | -0.025 | [-0.101, +0.038] | - |
-| completeness | overall | 79 | -0.010 | [-0.046, +0.025] | - |
+| faithfulness | overall | 87 | -0.011 | [-0.080, +0.046] | - |
+| completeness | overall | 87 | -0.019 | [-0.056, +0.018] | - |
 | tool_success | overall | 100 | -0.022 | [-0.042, -0.005] | not a verify effect: verify-off replays the first draft and skips later gather rounds |
 
 Per slice, verify on (value (denominator)):
@@ -159,14 +159,14 @@ Per slice, verify off (value (denominator)):
 
 | slice | n | citation_a | citation_b | faithfulness | completeness | tool_success | verify_loop | no_diagnosis |
 |---|---|---|---|---|---|---|---|---|
-| author=claude | 80 | 0.803 (269) | 0.977 (218) | 4.754 (69) | 0.673 (168) | 0.901 (362) | 0.000 | 0.000 |
+| author=claude | 80 | 0.803 (269) | 0.972 (254) | 4.740 (77) | 0.679 (190) | 0.901 (362) | 0.000 | 0.000 |
 | author=gemini | 20 | 0.698 (53) | 0.952 (21) | 4.800 (10) | 0.560 (25) | 0.795 (117) | 0.000 | 0.000 |
-| difficulty=exact-token | 45 | 0.777 (139) | 0.981 (108) | 4.763 (38) | 0.722 (90) | 0.949 (175) | 0.000 | 0.000 |
-| difficulty=multi-doc | 28 | 0.776 (107) | 0.985 (65) | 4.789 (19) | 0.560 (50) | 0.797 (182) | 0.000 | 0.000 |
+| difficulty=exact-token | 45 | 0.777 (139) | 0.968 (126) | 4.738 (42) | 0.723 (101) | 0.949 (175) | 0.000 | 0.000 |
+| difficulty=multi-doc | 28 | 0.776 (107) | 0.988 (83) | 4.783 (23) | 0.590 (61) | 0.797 (182) | 0.000 | 0.000 |
 | difficulty=paraphrase | 27 | 0.816 (76) | 0.955 (66) | 4.727 (22) | 0.642 (53) | 0.885 (122) | 0.000 | 0.000 |
-| false_premise=False | 93 | 0.799 (308) | 0.978 (232) | 4.776 (76) | 0.679 (184) | 0.891 (430) | 0.000 | 0.000 |
+| false_premise=False | 93 | 0.799 (308) | 0.974 (268) | 4.762 (84) | 0.684 (206) | 0.891 (430) | 0.000 | 0.000 |
 | false_premise=True | 7 | 0.500 (14) | 0.857 (7) | 4.333 (3) | 0.222 (9) | 0.735 (49) | 0.000 | 0.000 |
-| overall | 100 | 0.786 (322) | 0.975 (239) | 4.759 (79) | 0.658 (193) | 0.875 (479) | 0.000 | 0.000 |
+| overall | 100 | 0.786 (322) | 0.971 (275) | 4.747 (87) | 0.665 (215) | 0.875 (479) | 0.000 | 0.000 |
 
 | cost and size per run | config | n | prompt tokens | completion tokens | LLM calls | tool calls | $ (reported) |
 |---|---|---|---|---|---|---|---|
@@ -180,7 +180,7 @@ Per slice, verify off (value (denominator)):
 | tool_call_ms | verify on | 577 | 15.3 ms | 74.9 ms |
 | all | verify off | - | not measured: every LLM call was a cache hit (verify off replays verify on's first pass) | - |
 
-Not judged: verify on [], verify off ['Q073', 'Q117', 'Q118', 'Q125', 'Q126', 'Q132', 'Q138', 'Q146', 'Q156', 'Q158', 'Q159', 'H001', 'H002', 'H007', 'H008', 'H009', 'H018', 'H026', 'H029', 'H030', 'H038'].
+Not judged: verify on [], verify off ['Q156', 'Q158', 'Q159', 'H001', 'H002', 'H007', 'H008', 'H009', 'H018', 'H026', 'H029', 'H030', 'H038'].
 
 ## (c2) Judge validation (Prince's 30 hand labels)
 

@@ -1,5 +1,5 @@
 {
- "commit": "e69bfe87e35472674d9758c5cca492df973ed160",
+ "commit": "a6cbcb989eb8aad3279a74a4c8982b4dd8e44f6a",
  "config": {
   "agent_max_tool_calls": 8,
   "as_of": "2026-10-06T14:52:00Z",
@@ -38,19 +38,19 @@
     "value": 0.8029739776951673
    },
    "citation_b": {
-    "den": 218,
-    "n": 69,
-    "value": 0.9770642201834863
+    "den": 254,
+    "n": 77,
+    "value": 0.9724409448818898
    },
    "completeness": {
-    "den": 168,
-    "n": 69,
-    "value": 0.6726190476190477
+    "den": 190,
+    "n": 77,
+    "value": 0.6789473684210526
    },
    "faithfulness": {
-    "den": 69,
-    "n": 69,
-    "value": 4.753623188405797
+    "den": 77,
+    "n": 77,
+    "value": 4.740259740259741
    },
    "gold_all": {
     "den": 80,
@@ -174,19 +174,19 @@
     "value": 0.7769784172661871
    },
    "citation_b": {
-    "den": 108,
-    "n": 38,
-    "value": 0.9814814814814815
+    "den": 126,
+    "n": 42,
+    "value": 0.9682539682539683
    },
    "completeness": {
-    "den": 90,
-    "n": 38,
-    "value": 0.7222222222222222
+    "den": 101,
+    "n": 42,
+    "value": 0.7227722772277227
    },
    "faithfulness": {
-    "den": 38,
-    "n": 38,
-    "value": 4.7631578947368425
+    "den": 42,
+    "n": 42,
+    "value": 4.738095238095238
    },
    "gold_all": {
     "den": 45,
@@ -242,19 +242,19 @@
     "value": 0.7757009345794392
    },
    "citation_b": {
-    "den": 65,
-    "n": 19,
-    "value": 0.9846153846153847
+    "den": 83,
+    "n": 23,
+    "value": 0.9879518072289156
    },
    "completeness": {
-    "den": 50,
-    "n": 19,
-    "value": 0.56
+    "den": 61,
+    "n": 23,
+    "value": 0.5901639344262295
    },
    "faithfulness": {
-    "den": 19,
-    "n": 19,
-    "value": 4.7894736842105265
+    "den": 23,
+    "n": 23,
+    "value": 4.782608695652174
    },
    "gold_all": {
     "den": 28,
@@ -378,19 +378,19 @@
     "value": 0.7987012987012987
    },
    "citation_b": {
-    "den": 232,
-    "n": 76,
-    "value": 0.978448275862069
+    "den": 268,
+    "n": 84,
+    "value": 0.9738805970149254
    },
    "completeness": {
-    "den": 184,
-    "n": 76,
-    "value": 0.6793478260869565
+    "den": 206,
+    "n": 84,
+    "value": 0.6844660194174758
    },
    "faithfulness": {
-    "den": 76,
-    "n": 76,
-    "value": 4.776315789473684
+    "den": 84,
+    "n": 84,
+    "value": 4.761904761904762
    },
    "gold_all": {
     "den": 93,
@@ -514,19 +514,19 @@
     "value": 0.7857142857142857
    },
    "citation_b": {
-    "den": 239,
-    "n": 79,
-    "value": 0.9748953974895398
+    "den": 275,
+    "n": 87,
+    "value": 0.9709090909090909
    },
    "completeness": {
-    "den": 193,
-    "n": 79,
-    "value": 0.6580310880829016
+    "den": 215,
+    "n": 87,
+    "value": 0.6651162790697674
    },
    "faithfulness": {
-    "den": 79,
-    "n": 79,
-    "value": 4.7594936708860756
+    "den": 87,
+    "n": 87,
+    "value": 4.747126436781609
    },
    "gold_all": {
     "den": 100,
@@ -3407,7 +3407,39 @@
    "cost_usd": 0.0024687,
    "dropped_claims": 0,
    "id": "Q073",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 7,
    "loops": 0,
    "prompt_tokens": 10826,
@@ -3416,9 +3448,18 @@
      0,
      3
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -5222,7 +5263,47 @@
    "cost_usd": 0.0043776,
    "dropped_claims": 0,
    "id": "Q117",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": false
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 9,
    "loops": 0,
    "prompt_tokens": 16092,
@@ -5231,9 +5312,18 @@
      4,
      5
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     4,
+     5
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     4,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -5265,7 +5355,43 @@
    "cost_usd": 0.00391875,
    "dropped_claims": 0,
    "id": "Q118",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 9,
    "loops": 0,
    "prompt_tokens": 15997,
@@ -5274,9 +5400,18 @@
      1,
      4
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     4,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -5476,7 +5611,47 @@
    "cost_usd": 0.005223,
    "dropped_claims": 0,
    "id": "Q125",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 10,
    "loops": 0,
    "prompt_tokens": 20788,
@@ -5485,9 +5660,18 @@
      2,
      5
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     5,
+     5
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -5519,7 +5703,47 @@
    "cost_usd": 0.00276585,
    "dropped_claims": 0,
    "id": "Q126",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 5,
    "loops": 0,
    "prompt_tokens": 7811,
@@ -5528,9 +5752,18 @@
      3,
      5
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     5,
+     5
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      0,
      1
@@ -5742,7 +5975,39 @@
    "cost_usd": 0.00297345,
    "dropped_claims": 0,
    "id": "Q132",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 8,
    "loops": 0,
    "prompt_tokens": 11431,
@@ -5751,9 +6016,18 @@
      3,
      4
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     1,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -5953,7 +6227,43 @@
    "cost_usd": 0.0041853,
    "dropped_claims": 0,
    "id": "Q138",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": false
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 10,
    "loops": 0,
    "prompt_tokens": 19118,
@@ -5962,9 +6272,18 @@
      4,
      5
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     4,
+     5
+    ],
+    "completeness": [
+     0,
+     2
+    ],
+    "faithfulness": [
+     4,
+     1
+    ],
     "gold_all": [
      0,
      1
@@ -6320,7 +6639,47 @@
    "cost_usd": 0.00473535,
    "dropped_claims": 0,
    "id": "Q146",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 10,
    "loops": 0,
    "prompt_tokens": 18689,
@@ -6329,9 +6688,18 @@
      4,
      5
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     5,
+     5
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -7977,14 +8345,6 @@
  "split": "dev",
  "uncommitted_changes": [],
  "unjudged": [
-  "Q073",
-  "Q117",
-  "Q118",
-  "Q125",
-  "Q126",
-  "Q132",
-  "Q138",
-  "Q146",
   "Q156",
   "Q158",
   "Q159",

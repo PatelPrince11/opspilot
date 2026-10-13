@@ -2950,6 +2950,21 @@ moderate; report it with "71% agreement, kappa 0.47 against a stricter human (ju
 labels, so not validated; report them as unvalidated. The 3b.2 and 3b.3 decisions already rested
 on deterministic metrics (gold-doc coverage, first-draft citation (a)), which this supports.
 
+## 2026-10-13: Phase 3 close-out (verify-off judging, judge verdict)
+
+- `make gen-eval` (everything else cached, $0 new agent spend) judged 8 of the 21 unjudged
+  verify-off answers (Q073, Q117, Q118, Q125, Q126, Q132, Q138, Q146); Gemini returned 429 again
+  for the other 13 (retry-after about 3.9 h). Verify off's judged metrics now have n 87:
+  citation (b) 0.971 (275 claims), faithfulness 4.747, completeness 0.665 (215 facts). On - off
+  completeness -0.019 [-0.056, +0.018], faithfulness -0.011 [-0.080, +0.046]: no claimable
+  difference, as before. Still unjudged: Q156, Q158, Q159, H001, H002, H007, H008, H009, H018,
+  H026, H029, H030, H038; `make gen-eval` finishes them after the quota resets.
+- **Judge verdict** (from the judge validation entry): the judge **failed validation on claim
+  support** (kappa -0.05) and is **moderate on completeness** (kappa 0.47, 71% agreement, more
+  lenient than Prince). So citation (b) is context only, never a headline number. **Resume
+  claims rest on deterministic metrics**: citation (a), gold-doc coverage, tool-call success,
+  and (Phase 4) injection attack success by string/regex check.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -3233,7 +3248,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Phase 3a (LLM wrapper, read-only tools, LangGraph graph, SSE API) is complete; Phase 3a.6 (OpenRouter agent, read_document) and Phase 3b (generation eval on dev, verify on vs off) are complete. Next: Prince's 30 hand labels (eval/judge_validation.md), then Phase 4.
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Phase 3a (LLM wrapper, read-only tools, LangGraph graph, SSE API) is complete; Phase 3a.6 (OpenRouter agent, read_document) and Phase 3b (generation eval on dev, verify on vs off) are complete. Judge validation is done (claim support failed, completeness moderate). Next: Phase 4.
 - Phase 0 accounts: Groq, Gemini and Langfuse Cloud keys are in .env and checked by live calls (2026-10-12). AWS, Anthropic credits and GitHub: not checked here.
 
 ## Unverified claims (check in Phase 0, record results here)
