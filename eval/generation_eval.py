@@ -432,9 +432,14 @@ def write_results(questions, config, split) -> dict | None:
         "wall_s_total": round(sum(r["wall_s"] for r in raw), 1),
     }
     path = RESULTS / f"{split}_generation_{config}.json"
-    if path.exists() and all(c["cached"] for r in raw for c in r["llm_calls"]):
-        # A pure cache replay measures nothing: keep the measured run's latency and spend.
-        old = json.loads(path.read_text())
+    old = json.loads(path.read_text()) if path.exists() else {}
+    same_run = {k: old.get(k) for k in ("config", "models")} == {
+        k: content[k] for k in ("config", "models")
+    }
+    measured = old.get("latency", {}).get("llm_call_ms", {}).get("n")
+    if same_run and measured and all(c["cached"] for r in raw for c in r["llm_calls"]):
+        # A pure cache replay measures nothing: keep the measured run's latency and spend, but
+        # only from a file of the same config that measured something.
         extra |= {k: old[k] for k in ("latency", "spend_usd", "wall_s_total") if k in old}
     wrote = write_named(path, content, extra)
     if wrote:
