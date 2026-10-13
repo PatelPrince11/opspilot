@@ -2819,6 +2819,86 @@ switch. The demo is not the reason: it is the only live question we have, and it
 Tests: a past question skips the first look (its first turn shows 0 of 8 calls); a live question
 runs status then WARN logs; the triage schema requires incident_time (live | past).
 
+## 2026-10-13: Phase 3b.3, arm D, the locked agent config, final dev generation results
+
+**Arm D** = 3b.1 with the default draft reasoning effort (arm A), log-first only for live
+incidents (triage incident_time), tool-call cap 8. Verify on, 100 dev questions, judged; the
+verify-off first draft from the cache. New spend $0.4286 (cap $0.75).
+
+| metric | 3b.1 | A | B | D | D - B [95% CI] | D - A | D - 3b.1 |
+|---|---|---|---|---|---|---|---|
+| completeness (254) | 0.657 | 0.665 | 0.693 | 0.669 | -0.024 [-0.110, +0.058] | +0.004 [-0.077, +0.084] | +0.012 [-0.072, +0.094] |
+| gold_all (100) | 0.670 | 0.660 | 0.800 | 0.690 | -0.110 [-0.190, -0.030]* | +0.030 [-0.060, +0.120] | +0.020 [-0.080, +0.120] |
+| gold_frac | 0.821 | 0.815 | 0.900 | 0.845 | -0.055 [-0.105, -0.009]* | +0.030 [-0.020, +0.082] | +0.023 [-0.030, +0.078] |
+| first-draft citation (a) failure | 0.328 | 0.222 | 0.367 | 0.209 | -0.158 [-0.239, -0.076]* | -0.013 [-0.079, +0.056] | -0.120 [-0.197, -0.043]* |
+| citation (b) | 0.954 | 0.973 | 0.972 | 0.965 | -0.009 [-0.037, +0.018] | -0.007 [-0.035, +0.018] | +0.009 [-0.025, +0.043] |
+| tool-call success | 0.899 | 0.914 | 0.854 | 0.862 | +0.008 [-0.021, +0.037] | -0.052 [-0.086, -0.018]* | -0.037 [-0.071, -0.006]* |
+| reads per run | 1.39 | 1.30 | 1.61 | 1.58 | | | |
+| query_logs per run (runs) | 1.38 (100) | 1.39 (100) | 0.22 (12) | 0.31 (21) | | | |
+| cost per run | $0.0037 | $0.0043 | $0.0042 | $0.0043 | | | |
+| end-to-end p95 | 13.4 s | - | - | 59.0 s | | | |
+
+n = 100 for every difference except citation (b) (86 to 99, questions with claims judged in
+both). End-to-end latency counts only runs made with no cache hits (fix e69bfe8 and 3f45b35):
+A, B and C reused 3b.1's cached triage, so theirs is not measured; D's 59.0 s is real.
+
+**Past/live split.** Triage labelled 90 of 100 dev questions past and 10 live: Q056, Q070, Q082,
+Q087, Q098, Q103, Q104, Q105, Q118, Q132. All ten describe a current symptom and name no past
+date or incident ("ledger instance cpu is climbing and the hikari pool is near full, is bumping
+maximumPoolSize a good idea mid-incident?"), so the label follows the definition; the >= 95%
+expectation was wrong for this dev set, about a tenth of which is phrased as live while its gold
+is a past write-up.
+
+**Lock rule.** D needed (1) no claimable gold-doc loss vs B: failed (gold_all -0.110, gold_frac
+-0.055, both CIs exclude 0); (2) no claimable first-draft citation (a) loss vs A: passed (-0.013,
+CI spans 0); (3) >= 95% of dev questions labelled past: failed (90%). So **B with the default
+draft reasoning is locked**: `AGENT_FIRST_LOOK=false` (config.py), `DRAFT_EFFORT = None` (the
+provider default, medium for gpt-oss; agent/graph.py), cap 8, verify on, quote check on, read
+list, not-recorded rule, empty-reply retry at low, agent openrouter:openai/gpt-oss-120b pinned to
+Groq, judge gemini:gemini-3.5-flash-lite (judge-v1). The live-only first look stays in the code
+behind the switch, for live-incident work later. Locked in commit da5bd8c.
+- The locked config was never run before this step (B ran with low draft effort and the old
+  triage). Measured now: gold_all 0.720 vs B 0.800, -0.080 [-0.160, +0.000]; gold_frac 0.857 vs
+  0.900, -0.043 [-0.092, +0.003]; first-draft failure 0.214 vs A 0.222, -0.008 [-0.076, +0.063];
+  none claimable. B's coverage gain did not fully carry over (point estimates lower, CIs touch 0).
+- On the 90 questions labelled past, the locked config and D make identical prompts (D's first
+  look runs only for live), so 90 of its runs came from D's cache: new spend $0.0412.
+
+**Tuning on dev stops here.** Several configs (3b, 3b.1, arms A to D, the locked one) were
+compared on the same 100 dev questions and the locked one was chosen from them, so dev numbers
+are slightly optimistic. Resume numbers come only from the Phase 5 test run.
+
+**Final dev results, locked config** (eval/results/dev_generation_verify_{on,off}.json, commit
+e69bfe8; docs/results.md section (c))
+
+| metric | verify on | verify off | on - off [95% CI] |
+|---|---|---|---|
+| citation (a) | 1.000 (285 claims) | 0.786 (322) | +0.207 [+0.151, +0.265], n 99, claimable |
+| citation (b), judge | 0.972 (285) | 0.975 (239, n 79) | -0.006 [-0.016, -0.000], n 79, context |
+| faithfulness 1-5 | 4.74 (100) | 4.76 (79) | -0.025 [-0.101, +0.038], context |
+| completeness | 0.665 (254 facts) | 0.658 (193, n 79) | -0.010 [-0.046, +0.025], context |
+| tool-call success | 0.853 (577) | 0.875 (479) | not a verify effect |
+| gold_all / gold_frac | 0.720 / 0.857 | 0.630 / 0.807 | |
+| premise corrected / unrecorded respected | 3/7, 5/6 | | |
+| verify loops / no diagnosis | 41/100, 1/100 | | |
+
+- 21 verify-off answers are unjudged: Gemini's daily quota ran out (retry-after about 4.9 h), so
+  verify off's judged metrics have n 79. `make gen-eval` judges them after the reset; everything
+  else is cached. Only citation (a) is a claim about verify, and it is complete.
+- Premise corrected fell to 3/7 (6/7 in 3b): n 7, not claimable, but worth watching.
+- eval/judge_validation.md regenerated from the locked verify-on answers: same 30 questions,
+  165 blanks.
+
+**Demo smoke, locked config** (one run, a check only): triage labelled it live (first look is
+off in the locked config, so no automatic calls); 0/9 key facts (1 partial: an invalid pool_mode
+made pgbouncer unable to load its config and stay down, without "transction", exit status 1 or
+which bouncer); 0 forbidden claims; logs queried once (payments-pgbouncer ERROR, chosen by the
+model); 7/8 calls ok (one repeated search refused); 0 loops; $0.0040.
+
+**Spend.** This step $0.4786 by the OpenRouter account (D $0.4286, locked $0.0412, demo
+$0.0040 from recorded calls; $0.0048 unattributed, possibly provider-rejected outputs, which
+return no usage). OpenRouter total $2.2751 of $5.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

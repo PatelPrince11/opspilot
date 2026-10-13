@@ -1,10 +1,10 @@
 {
- "commit": "003dea092b09157daa711a0220cd8f589ef7fe3a",
+ "commit": "e69bfe87e35472674d9758c5cca492df973ed160",
  "config": {
   "agent_max_tool_calls": 8,
   "as_of": "2026-10-06T14:52:00Z",
-  "draft_effort": "low",
-  "first_look": true,
+  "draft_effort": null,
+  "first_look": false,
   "judge_prompt_version": "judge-v1",
   "llm_token_budget": 6000,
   "max_loops": 2,
@@ -14,69 +14,69 @@
  },
  "latency": {
   "end_to_end_s": {
-   "n": 100,
-   "p50": 8.409999999999998,
-   "p95": 13.413
+   "n": 0,
+   "p50": null,
+   "p95": null
   },
   "llm_call_ms": {
-   "n": 783,
-   "p50": 755.1181669987272,
-   "p95": 2300.3272213973105
+   "n": 83,
+   "p50": 875.798292006948,
+   "p95": 3943.901675005327
   },
   "rate_limit_wait_s": 0.0,
   "tool_call_ms": {
-   "n": 694,
-   "p50": 3.283458499936387,
-   "p95": 111.65314560166735
+   "n": 577,
+   "p50": 15.29604199458845,
+   "p95": 74.8807668016525
   }
  },
  "metrics": {
   "author=claude": {
    "citation_a": {
-    "den": 203,
-    "n": 73,
+    "den": 237,
+    "n": 79,
     "value": 1.0
    },
    "citation_b": {
-    "den": 203,
-    "n": 73,
-    "value": 0.9556650246305419
+    "den": 237,
+    "n": 79,
+    "value": 0.9704641350210971
    },
    "completeness": {
     "den": 198,
     "n": 80,
-    "value": 0.6666666666666666
+    "value": 0.6717171717171717
    },
    "faithfulness": {
     "den": 80,
     "n": 80,
-    "value": 4.575
+    "value": 4.7375
    },
    "gold_all": {
     "den": 80,
     "n": 80,
-    "value": 0.6
+    "value": 0.6875
    },
    "gold_frac": {
     "den": 80,
     "n": 80,
-    "value": 0.7829166666666667
+    "value": 0.8395833333333332
    },
    "no_diagnosis": {
     "den": 80,
     "n": 80,
-    "value": 0.0
+    "value": 0.0125
    },
    "per_run": {
-    "completion_tokens": 2976.8125,
-    "cost_usd": 0.0037392506250000005,
-    "llm_calls": 8.825,
+    "completion_tokens": 4081.6625,
+    "cost_usd": 0.004392191249999998,
+    "llm_calls": 9.2,
     "n": 80,
-    "prompt_tokens": 15803.8125,
-    "query_logs": 1.4625,
-    "reads_ok": 1.35,
-    "runs_with_query_logs": 80,
-    "tool_calls": 6.8375
+    "prompt_tokens": 16390.75,
+    "query_logs": 0.2875,
+    "reads_ok": 1.5875,
+    "runs_with_query_logs": 13,
+    "tool_calls": 5.6
    },
    "premise_corrected": {
     "den": 0,
@@ -84,9 +84,9 @@
     "value": null
    },
    "tool_success": {
-    "den": 547,
+    "den": 448,
     "n": 80,
-    "value": 0.9122486288848263
+    "value": 0.8705357142857143
    },
    "unrecorded_respected": {
     "den": 0,
@@ -96,39 +96,39 @@
    "verify_loop": {
     "den": 80,
     "n": 80,
-    "value": 0.65
+    "value": 0.3875
    }
   },
   "author=gemini": {
    "citation_a": {
-    "den": 35,
-    "n": 18,
+    "den": 48,
+    "n": 20,
     "value": 1.0
    },
    "citation_b": {
-    "den": 35,
-    "n": 18,
-    "value": 0.9428571428571428
+    "den": 48,
+    "n": 20,
+    "value": 0.9791666666666666
    },
    "completeness": {
     "den": 56,
     "n": 20,
-    "value": 0.625
+    "value": 0.6428571428571429
    },
    "faithfulness": {
     "den": 20,
     "n": 20,
-    "value": 4.65
+    "value": 4.75
    },
    "gold_all": {
     "den": 20,
     "n": 20,
-    "value": 0.95
+    "value": 0.85
    },
    "gold_frac": {
     "den": 20,
     "n": 20,
-    "value": 0.975
+    "value": 0.925
    },
    "no_diagnosis": {
     "den": 20,
@@ -136,83 +136,83 @@
     "value": 0.0
    },
    "per_run": {
-    "completion_tokens": 2547.5,
-    "cost_usd": 0.0034727625000000014,
-    "llm_calls": 8.95,
+    "completion_tokens": 3991.15,
+    "cost_usd": 0.004437285000000001,
+    "llm_calls": 9.9,
     "n": 20,
-    "prompt_tokens": 15860.95,
-    "query_logs": 1.05,
-    "reads_ok": 1.55,
-    "runs_with_query_logs": 20,
-    "tool_calls": 7.35
+    "prompt_tokens": 17720.3,
+    "query_logs": 0.0,
+    "reads_ok": 1.85,
+    "runs_with_query_logs": 0,
+    "tool_calls": 6.45
    },
    "premise_corrected": {
     "den": 7,
     "n": 7,
-    "value": 0.7142857142857143
+    "value": 0.42857142857142855
    },
    "tool_success": {
-    "den": 147,
+    "den": 129,
     "n": 20,
-    "value": 0.8503401360544217
+    "value": 0.7906976744186046
    },
    "unrecorded_respected": {
     "den": 6,
     "n": 6,
-    "value": 0.5
+    "value": 0.8333333333333334
    },
    "verify_loop": {
     "den": 20,
     "n": 20,
-    "value": 0.65
+    "value": 0.5
    }
   },
   "difficulty=exact-token": {
    "citation_a": {
-    "den": 97,
-    "n": 40,
+    "den": 113,
+    "n": 44,
     "value": 1.0
    },
    "citation_b": {
-    "den": 97,
-    "n": 40,
-    "value": 0.9587628865979382
+    "den": 113,
+    "n": 44,
+    "value": 0.9734513274336283
    },
    "completeness": {
     "den": 109,
     "n": 45,
-    "value": 0.6788990825688074
+    "value": 0.7064220183486238
    },
    "faithfulness": {
     "den": 45,
     "n": 45,
-    "value": 4.555555555555555
+    "value": 4.822222222222222
    },
    "gold_all": {
     "den": 45,
     "n": 45,
-    "value": 0.6
+    "value": 0.7111111111111111
    },
    "gold_frac": {
     "den": 45,
     "n": 45,
-    "value": 0.7555555555555555
+    "value": 0.8333333333333334
    },
    "no_diagnosis": {
     "den": 45,
     "n": 45,
-    "value": 0.0
+    "value": 0.022222222222222223
    },
    "per_run": {
-    "completion_tokens": 2815.911111111111,
-    "cost_usd": 0.0036023366666666635,
-    "llm_calls": 8.688888888888888,
+    "completion_tokens": 4037.733333333333,
+    "cost_usd": 0.00432709,
+    "llm_calls": 9.133333333333333,
     "n": 45,
-    "prompt_tokens": 15371.666666666666,
-    "query_logs": 1.6888888888888889,
-    "reads_ok": 1.1333333333333333,
-    "runs_with_query_logs": 45,
-    "tool_calls": 6.5777777777777775
+    "prompt_tokens": 16263.755555555555,
+    "query_logs": 0.4222222222222222,
+    "reads_ok": 1.488888888888889,
+    "runs_with_query_logs": 10,
+    "tool_calls": 5.288888888888889
    },
    "premise_corrected": {
     "den": 1,
@@ -220,9 +220,9 @@
     "value": 1.0
    },
    "tool_success": {
-    "den": 296,
+    "den": 238,
     "n": 45,
-    "value": 0.918918918918919
+    "value": 0.8949579831932774
    },
    "unrecorded_respected": {
     "den": 0,
@@ -232,39 +232,39 @@
    "verify_loop": {
     "den": 45,
     "n": 45,
-    "value": 0.6444444444444445
+    "value": 0.4222222222222222
    }
   },
   "difficulty=multi-doc": {
    "citation_a": {
-    "den": 80,
-    "n": 26,
+    "den": 97,
+    "n": 28,
     "value": 1.0
    },
    "citation_b": {
-    "den": 80,
-    "n": 26,
-    "value": 0.95
+    "den": 97,
+    "n": 28,
+    "value": 0.979381443298969
    },
    "completeness": {
     "den": 77,
     "n": 28,
-    "value": 0.6493506493506493
+    "value": 0.6883116883116883
    },
    "faithfulness": {
     "den": 28,
     "n": 28,
-    "value": 4.535714285714286
+    "value": 4.678571428571429
    },
    "gold_all": {
     "den": 28,
     "n": 28,
-    "value": 0.6071428571428571
+    "value": 0.6428571428571429
    },
    "gold_frac": {
     "den": 28,
     "n": 28,
-    "value": 0.8261904761904761
+    "value": 0.8452380952380952
    },
    "no_diagnosis": {
     "den": 28,
@@ -272,15 +272,15 @@
     "value": 0.0
    },
    "per_run": {
-    "completion_tokens": 3330.6428571428573,
-    "cost_usd": 0.004005385714285715,
-    "llm_calls": 9.0,
+    "completion_tokens": 4810.892857142857,
+    "cost_usd": 0.005031658928571435,
+    "llm_calls": 10.178571428571429,
     "n": 28,
-    "prompt_tokens": 16452.928571428572,
-    "query_logs": 1.1785714285714286,
-    "reads_ok": 1.7142857142857142,
-    "runs_with_query_logs": 28,
-    "tool_calls": 7.428571428571429
+    "prompt_tokens": 18448.5,
+    "query_logs": 0.07142857142857142,
+    "reads_ok": 1.8571428571428572,
+    "runs_with_query_logs": 2,
+    "tool_calls": 6.892857142857143
    },
    "premise_corrected": {
     "den": 1,
@@ -288,9 +288,9 @@
     "value": 1.0
    },
    "tool_success": {
-    "den": 208,
+    "den": 193,
     "n": 28,
-    "value": 0.8990384615384616
+    "value": 0.7823834196891192
    },
    "unrecorded_respected": {
     "den": 1,
@@ -300,39 +300,39 @@
    "verify_loop": {
     "den": 28,
     "n": 28,
-    "value": 0.6428571428571429
+    "value": 0.4642857142857143
    }
   },
   "difficulty=paraphrase": {
    "citation_a": {
-    "den": 61,
-    "n": 25,
+    "den": 75,
+    "n": 27,
     "value": 1.0
    },
    "citation_b": {
-    "den": 61,
-    "n": 25,
-    "value": 0.9508196721311475
+    "den": 75,
+    "n": 27,
+    "value": 0.96
    },
    "completeness": {
     "den": 68,
     "n": 27,
-    "value": 0.6323529411764706
+    "value": 0.5735294117647058
    },
    "faithfulness": {
     "den": 27,
     "n": 27,
-    "value": 4.703703703703703
+    "value": 4.666666666666667
    },
    "gold_all": {
     "den": 27,
     "n": 27,
-    "value": 0.8518518518518519
+    "value": 0.8148148148148148
    },
    "gold_frac": {
     "den": 27,
     "n": 27,
-    "value": 0.9259259259259259
+    "value": 0.9074074074074074
    },
    "no_diagnosis": {
     "den": 27,
@@ -340,83 +340,83 @@
     "value": 0.0
    },
    "per_run": {
-    "completion_tokens": 2560.037037037037,
-    "cost_usd": 0.0034940500000000003,
-    "llm_calls": 8.962962962962964,
+    "completion_tokens": 3331.5925925925926,
+    "cost_usd": 0.003870944444444444,
+    "llm_calls": 8.814814814814815,
     "n": 27,
-    "prompt_tokens": 15893.222222222223,
-    "query_logs": 1.0740740740740742,
-    "reads_ok": 1.4814814814814814,
-    "runs_with_query_logs": 27,
-    "tool_calls": 7.037037037037037
+    "prompt_tokens": 15453.296296296296,
+    "query_logs": 0.07407407407407407,
+    "reads_ok": 1.6666666666666667,
+    "runs_with_query_logs": 1,
+    "tool_calls": 5.407407407407407
    },
    "premise_corrected": {
     "den": 5,
     "n": 5,
-    "value": 0.6
+    "value": 0.2
    },
    "tool_success": {
-    "den": 190,
+    "den": 146,
     "n": 27,
-    "value": 0.868421052631579
+    "value": 0.8767123287671232
    },
    "unrecorded_respected": {
     "den": 5,
     "n": 5,
-    "value": 0.4
+    "value": 0.8
    },
    "verify_loop": {
     "den": 27,
     "n": 27,
-    "value": 0.6666666666666666
+    "value": 0.3333333333333333
    }
   },
   "false_premise=False": {
    "citation_a": {
-    "den": 226,
-    "n": 85,
+    "den": 271,
+    "n": 92,
     "value": 1.0
    },
    "citation_b": {
-    "den": 226,
-    "n": 85,
-    "value": 0.9557522123893806
+    "den": 271,
+    "n": 92,
+    "value": 0.974169741697417
    },
    "completeness": {
     "den": 232,
     "n": 93,
-    "value": 0.6681034482758621
+    "value": 0.6982758620689655
    },
    "faithfulness": {
     "den": 93,
     "n": 93,
-    "value": 4.602150537634409
+    "value": 4.774193548387097
    },
    "gold_all": {
     "den": 93,
     "n": 93,
-    "value": 0.6559139784946236
+    "value": 0.7096774193548387
    },
    "gold_frac": {
     "den": 93,
     "n": 93,
-    "value": 0.8132616487455196
+    "value": 0.8512544802867382
    },
    "no_diagnosis": {
     "den": 93,
     "n": 93,
-    "value": 0.0
+    "value": 0.010752688172043012
    },
    "per_run": {
-    "completion_tokens": 2933.94623655914,
-    "cost_usd": 0.0037227370967741914,
-    "llm_calls": 8.881720430107526,
+    "completion_tokens": 4092.6666666666665,
+    "cost_usd": 0.004409035483870967,
+    "llm_calls": 9.268817204301076,
     "n": 93,
-    "prompt_tokens": 15898.741935483871,
-    "query_logs": 1.3978494623655915,
-    "reads_ok": 1.3763440860215055,
-    "runs_with_query_logs": 93,
-    "tool_calls": 6.903225806451613
+    "prompt_tokens": 16538.74193548387,
+    "query_logs": 0.24731182795698925,
+    "reads_ok": 1.6344086021505377,
+    "runs_with_query_logs": 13,
+    "tool_calls": 5.67741935483871
    },
    "premise_corrected": {
     "den": 0,
@@ -424,41 +424,41 @@
     "value": null
    },
    "tool_success": {
-    "den": 642,
+    "den": 528,
     "n": 93,
-    "value": 0.9034267912772586
+    "value": 0.8636363636363636
    },
    "unrecorded_respected": {
     "den": 3,
     "n": 3,
-    "value": 0.3333333333333333
+    "value": 0.6666666666666666
    },
    "verify_loop": {
     "den": 93,
     "n": 93,
-    "value": 0.6559139784946236
+    "value": 0.3978494623655914
    }
   },
   "false_premise=True": {
    "citation_a": {
-    "den": 12,
-    "n": 6,
+    "den": 14,
+    "n": 7,
     "value": 1.0
    },
    "citation_b": {
-    "den": 12,
-    "n": 6,
-    "value": 0.9166666666666666
+    "den": 14,
+    "n": 7,
+    "value": 0.9285714285714286
    },
    "completeness": {
     "den": 22,
     "n": 7,
-    "value": 0.5454545454545454
+    "value": 0.3181818181818182
    },
    "faithfulness": {
     "den": 7,
     "n": 7,
-    "value": 4.428571428571429
+    "value": 4.285714285714286
    },
    "gold_all": {
     "den": 7,
@@ -476,30 +476,30 @@
     "value": 0.0
    },
    "per_run": {
-    "completion_tokens": 2319.714285714286,
-    "cost_usd": 0.0031972499999999996,
-    "llm_calls": 8.428571428571429,
+    "completion_tokens": 3676.8571428571427,
+    "cost_usd": 0.004297242857142858,
+    "llm_calls": 10.285714285714286,
     "n": 7,
-    "prompt_tokens": 14705.857142857143,
-    "query_logs": 1.1428571428571428,
-    "reads_ok": 1.5714285714285714,
-    "runs_with_query_logs": 7,
-    "tool_calls": 7.428571428571429
+    "prompt_tokens": 18223.285714285714,
+    "query_logs": 0.0,
+    "reads_ok": 1.7142857142857142,
+    "runs_with_query_logs": 0,
+    "tool_calls": 7.0
    },
    "premise_corrected": {
     "den": 7,
     "n": 7,
-    "value": 0.7142857142857143
+    "value": 0.42857142857142855
    },
    "tool_success": {
-    "den": 52,
+    "den": 49,
     "n": 7,
-    "value": 0.8461538461538461
+    "value": 0.7346938775510204
    },
    "unrecorded_respected": {
     "den": 3,
     "n": 3,
-    "value": 0.6666666666666666
+    "value": 1.0
    },
    "verify_loop": {
     "den": 7,
@@ -509,70 +509,70 @@
   },
   "overall": {
    "citation_a": {
-    "den": 238,
-    "n": 91,
+    "den": 285,
+    "n": 99,
     "value": 1.0
    },
    "citation_b": {
-    "den": 238,
-    "n": 91,
-    "value": 0.9537815126050421
+    "den": 285,
+    "n": 99,
+    "value": 0.9719298245614035
    },
    "completeness": {
     "den": 254,
     "n": 100,
-    "value": 0.65748031496063
+    "value": 0.6653543307086615
    },
    "faithfulness": {
     "den": 100,
     "n": 100,
-    "value": 4.59
+    "value": 4.74
    },
    "gold_all": {
     "den": 100,
     "n": 100,
-    "value": 0.67
+    "value": 0.72
    },
    "gold_frac": {
     "den": 100,
     "n": 100,
-    "value": 0.8213333333333332
+    "value": 0.8566666666666666
    },
    "no_diagnosis": {
     "den": 100,
     "n": 100,
-    "value": 0.0
+    "value": 0.01
    },
    "per_run": {
-    "completion_tokens": 2890.95,
-    "cost_usd": 0.0036859529999999983,
-    "llm_calls": 8.85,
+    "completion_tokens": 4063.56,
+    "cost_usd": 0.004401209999999999,
+    "llm_calls": 9.34,
     "n": 100,
-    "prompt_tokens": 15815.24,
-    "query_logs": 1.38,
-    "reads_ok": 1.39,
-    "runs_with_query_logs": 100,
-    "tool_calls": 6.94
+    "prompt_tokens": 16656.66,
+    "query_logs": 0.23,
+    "reads_ok": 1.64,
+    "runs_with_query_logs": 13,
+    "tool_calls": 5.77
    },
    "premise_corrected": {
     "den": 7,
     "n": 7,
-    "value": 0.7142857142857143
+    "value": 0.42857142857142855
    },
    "tool_success": {
-    "den": 694,
+    "den": 577,
     "n": 100,
-    "value": 0.899135446685879
+    "value": 0.8526863084922011
    },
    "unrecorded_respected": {
     "den": 6,
     "n": 6,
-    "value": 0.5
+    "value": 0.8333333333333334
    },
    "verify_loop": {
     "den": 100,
     "n": 100,
-    "value": 0.65
+    "value": 0.41
    }
   }
  },
@@ -583,8 +583,8 @@
  "questions": [
   {
    "claims": 1,
-   "completion_tokens": 859,
-   "cost_usd": 0.00115215,
+   "completion_tokens": 1394,
+   "cost_usd": 0.0017229,
    "dropped_claims": 0,
    "id": "Q001",
    "judge": {
@@ -608,9 +608,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 4,
+   "llm_calls": 5,
    "loops": 0,
-   "prompt_tokens": 4757,
+   "prompt_tokens": 5910,
    "scores": {
     "citation_a": [
      1,
@@ -642,8 +642,8 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     3,
-     3
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -651,13 +651,13 @@
      1
     ]
    },
-   "tool_calls": 3
+   "tool_calls": 2
   },
   {
    "claims": 1,
-   "completion_tokens": 4321,
-   "cost_usd": 0.0042162,
-   "dropped_claims": 1,
+   "completion_tokens": 3081,
+   "cost_usd": 0.00351585,
+   "dropped_claims": 0,
    "id": "Q003",
    "judge": {
     "claims": [
@@ -680,9 +680,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 12744,
+   "llm_calls": 10,
+   "loops": 0,
+   "prompt_tokens": 12651,
    "scores": {
     "citation_a": [
      1,
@@ -714,12 +714,12 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     7,
+     6,
      8
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
@@ -727,8 +727,8 @@
   },
   {
    "claims": 1,
-   "completion_tokens": 2060,
-   "cost_usd": 0.0038925,
+   "completion_tokens": 5177,
+   "cost_usd": 0.0068595,
    "dropped_claims": 0,
    "id": "Q006",
    "judge": {
@@ -738,7 +738,7 @@
       "supported": false
      }
     ],
-    "faithfulness": 2,
+    "faithfulness": 3,
     "key_facts": [
      {
       "fact": 1,
@@ -752,9 +752,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 19630,
+   "llm_calls": 14,
+   "loops": 2,
+   "prompt_tokens": 27582,
    "scores": {
     "citation_a": [
      1,
@@ -769,7 +769,7 @@
      2
     ],
     "faithfulness": [
-     2,
+     3,
      1
     ],
     "gold_all": [
@@ -786,7 +786,7 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     7,
+     8,
      8
     ],
     "unrecorded_respected": null,
@@ -799,8 +799,8 @@
   },
   {
    "claims": 4,
-   "completion_tokens": 1724,
-   "cost_usd": 0.00200685,
+   "completion_tokens": 2680,
+   "cost_usd": 0.0024624,
    "dropped_claims": 0,
    "id": "Q007",
    "judge": {
@@ -842,7 +842,7 @@
    },
    "llm_calls": 5,
    "loops": 0,
-   "prompt_tokens": 6995,
+   "prompt_tokens": 6720,
    "scores": {
     "citation_a": [
      4,
@@ -874,8 +874,8 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     4,
-     4
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -883,90 +883,14 @@
      1
     ]
    },
-   "tool_calls": 4
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 2020,
-   "cost_usd": 0.00188745,
-   "dropped_claims": 0,
-   "id": "Q009",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 2,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": false
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 4,
-   "loops": 0,
-   "prompt_tokens": 4887,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     0,
-     2
-    ],
-    "faithfulness": [
-     2,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.5,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     3,
-     3
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 3
+   "tool_calls": 2
   },
   {
    "claims": 3,
-   "completion_tokens": 3651,
-   "cost_usd": 0.0039057,
+   "completion_tokens": 2977,
+   "cost_usd": 0.00374295,
    "dropped_claims": 0,
-   "id": "Q011",
+   "id": "Q009",
    "judge": {
     "claims": [
      {
@@ -986,7 +910,7 @@
     "key_facts": [
      {
       "fact": 1,
-      "present": true
+      "present": false
      },
      {
       "fact": 2,
@@ -996,9 +920,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 17668,
+   "llm_calls": 8,
+   "loops": 0,
+   "prompt_tokens": 14709,
    "scores": {
     "citation_a": [
      3,
@@ -1009,7 +933,7 @@
      3
     ],
     "completeness": [
-     2,
+     1,
      2
     ],
     "faithfulness": [
@@ -1030,23 +954,23 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     7,
-     8
+     5,
+     5
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
-   "tool_calls": 8
+   "tool_calls": 5
   },
   {
-   "claims": 3,
-   "completion_tokens": 2865,
-   "cost_usd": 0.0047331,
+   "claims": 4,
+   "completion_tokens": 4949,
+   "cost_usd": 0.0052587,
    "dropped_claims": 0,
-   "id": "Q012",
+   "id": "Q011",
    "judge": {
     "claims": [
      {
@@ -1059,6 +983,10 @@
      },
      {
       "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
       "supported": true
      }
     ],
@@ -1076,17 +1004,17 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 22654,
+   "llm_calls": 10,
+   "loops": 0,
+   "prompt_tokens": 18206,
    "scores": {
     "citation_a": [
-     3,
-     3
+     4,
+     4
     ],
     "citation_b": [
-     3,
-     3
+     4,
+     4
     ],
     "completeness": [
      2,
@@ -1111,58 +1039,73 @@
     "premise_corrected": null,
     "tool_success": [
      6,
-     8
+     7
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
-   "tool_calls": 8
+   "tool_calls": 7
   },
   {
-   "claims": 0,
-   "completion_tokens": 4052,
-   "cost_usd": 0.004635,
-   "dropped_claims": 1,
-   "id": "Q013",
+   "claims": 2,
+   "completion_tokens": 3866,
+   "cost_usd": 0.00513825,
+   "dropped_claims": 0,
+   "id": "Q012",
    "judge": {
-    "claims": [],
-    "faithfulness": 1,
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
     "key_facts": [
      {
       "fact": 1,
-      "present": false
+      "present": true
      },
      {
       "fact": 2,
-      "present": false
+      "present": true
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 17252,
+   "llm_calls": 12,
+   "loops": 1,
+   "prompt_tokens": 22631,
    "scores": {
-    "citation_a": null,
-    "citation_b": null,
+    "citation_a": [
+     2,
+     2
+    ],
+    "citation_b": [
+     2,
+     2
+    ],
     "completeness": [
-     0,
+     2,
      2
     ],
     "faithfulness": [
-     1,
+     5,
      1
     ],
     "gold_all": [
-     0,
+     1,
      1
     ],
     "gold_frac": [
-     0.5,
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -1183,18 +1126,107 @@
    "tool_calls": 8
   },
   {
-   "claims": 0,
-   "completion_tokens": 3717,
-   "cost_usd": 0.0046536,
-   "dropped_claims": 2,
-   "id": "Q014",
+   "claims": 3,
+   "completion_tokens": 2184,
+   "cost_usd": 0.00256455,
+   "dropped_claims": 0,
+   "id": "Q013",
    "judge": {
-    "claims": [],
-    "faithfulness": 3,
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 4,
     "key_facts": [
      {
       "fact": 1,
       "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 6,
+   "loops": 0,
+   "prompt_tokens": 9897,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     0,
+     2
+    ],
+    "faithfulness": [
+     4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     3,
+     3
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 3
+  },
+  {
+   "claims": 2,
+   "completion_tokens": 6879,
+   "cost_usd": 0.0068142,
+   "dropped_claims": 2,
+   "id": "Q014",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
      },
      {
       "fact": 2,
@@ -1208,26 +1240,32 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
+   "llm_calls": 13,
    "loops": 2,
-   "prompt_tokens": 18844,
+   "prompt_tokens": 27357,
    "scores": {
-    "citation_a": null,
-    "citation_b": null,
+    "citation_a": [
+     2,
+     2
+    ],
+    "citation_b": [
+     2,
+     2
+    ],
     "completeness": [
-     0,
+     1,
      3
     ],
     "faithfulness": [
-     3,
+     4,
      1
     ],
     "gold_all": [
-     0,
+     1,
      1
     ],
     "gold_frac": [
-     0.3333333333333333,
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -1236,7 +1274,7 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     7,
+     8,
      8
     ],
     "unrecorded_respected": null,
@@ -1249,8 +1287,8 @@
   },
   {
    "claims": 4,
-   "completion_tokens": 2099,
-   "cost_usd": 0.0027168,
+   "completion_tokens": 4425,
+   "cost_usd": 0.004452,
    "dropped_claims": 0,
    "id": "Q015",
    "judge": {
@@ -1290,9 +1328,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 8,
+   "llm_calls": 10,
    "loops": 0,
-   "prompt_tokens": 12148,
+   "prompt_tokens": 14668,
    "scores": {
     "citation_a": [
      4,
@@ -1336,10 +1374,10 @@
    "tool_calls": 8
   },
   {
-   "claims": 2,
-   "completion_tokens": 3949,
-   "cost_usd": 0.0047325,
-   "dropped_claims": 1,
+   "claims": 3,
+   "completion_tokens": 4912,
+   "cost_usd": 0.00517605,
+   "dropped_claims": 0,
    "id": "Q017",
    "judge": {
     "claims": [
@@ -1350,9 +1388,13 @@
      {
       "claim": 2,
       "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
      }
     ],
-    "faithfulness": 5,
+    "faithfulness": 4,
     "key_facts": [
      {
       "fact": 1,
@@ -1360,30 +1402,30 @@
      },
      {
       "fact": 2,
-      "present": true
+      "present": false
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 18826,
+   "llm_calls": 11,
+   "loops": 1,
+   "prompt_tokens": 17291,
    "scores": {
     "citation_a": [
-     2,
-     2
+     3,
+     3
     ],
     "citation_b": [
-     2,
-     2
+     3,
+     3
     ],
     "completeness": [
-     2,
+     1,
      2
     ],
     "faithfulness": [
-     5,
+     4,
      1
     ],
     "gold_all": [
@@ -1400,7 +1442,7 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     7,
+     4,
      8
     ],
     "unrecorded_respected": null,
@@ -1410,458 +1452,13 @@
     ]
    },
    "tool_calls": 8
-  },
-  {
-   "claims": 1,
-   "completion_tokens": 2279,
-   "cost_usd": 0.00355215,
-   "dropped_claims": 0,
-   "id": "Q022",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 18021,
-   "scores": {
-    "citation_a": [
-     1,
-     1
-    ],
-    "citation_b": [
-     1,
-     1
-    ],
-    "completeness": [
-     2,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     7,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 1,
-   "completion_tokens": 2074,
-   "cost_usd": 0.00234555,
-   "dropped_claims": 0,
-   "id": "Q024",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": false
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 8,
-   "loops": 0,
-   "prompt_tokens": 9389,
-   "scores": {
-    "citation_a": [
-     1,
-     1
-    ],
-    "citation_b": [
-     1,
-     1
-    ],
-    "completeness": [
-     0,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     8,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 2951,
-   "cost_usd": 0.0041673,
-   "dropped_claims": 0,
-   "id": "Q025",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 18922,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     3,
-     3
-    ],
-    "completeness": [
-     1,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 0,
-   "completion_tokens": 4066,
-   "cost_usd": 0.0051162,
-   "dropped_claims": 4,
-   "id": "Q026",
-   "judge": {
-    "claims": [],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 21556,
-   "scores": {
-    "citation_a": null,
-    "citation_b": null,
-    "completeness": [
-     2,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     8,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 4221,
-   "cost_usd": 0.005574,
-   "dropped_claims": 1,
-   "id": "Q027",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 23476,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     3,
-     3
-    ],
-    "completeness": [
-     1,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.5,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     7,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 1317,
-   "cost_usd": 0.0018801,
-   "dropped_claims": 0,
-   "id": "Q028",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 6,
-   "loops": 0,
-   "prompt_tokens": 8802,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     3,
-     3
-    ],
-    "completeness": [
-     1,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     5,
-     5
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 5
   },
   {
    "claims": 2,
-   "completion_tokens": 1686,
-   "cost_usd": 0.0019362,
+   "completion_tokens": 2016,
+   "cost_usd": 0.0020673,
    "dropped_claims": 0,
-   "id": "Q034",
+   "id": "Q022",
    "judge": {
     "claims": [
      {
@@ -1889,7 +1486,7 @@
    },
    "llm_calls": 5,
    "loops": 0,
-   "prompt_tokens": 7572,
+   "prompt_tokens": 6870,
    "scores": {
     "citation_a": [
      2,
@@ -1908,11 +1505,331 @@
      1
     ],
     "gold_all": [
-     0,
+     1,
      1
     ],
     "gold_frac": [
-     0.5,
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     2,
+     2
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 2
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 4374,
+   "cost_usd": 0.0053856,
+   "dropped_claims": 0,
+   "id": "Q024",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 12,
+   "loops": 1,
+   "prompt_tokens": 22504,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     1,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     7,
+     7
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 7
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 3003,
+   "cost_usd": 0.0037701,
+   "dropped_claims": 0,
+   "id": "Q025",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 9,
+   "loops": 0,
+   "prompt_tokens": 15810,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     0,
+     2
+    ],
+    "faithfulness": [
+     4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     6,
+     6
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 6
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 8796,
+   "cost_usd": 0.00868965,
+   "dropped_claims": 0,
+   "id": "Q026",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 14,
+   "loops": 2,
+   "prompt_tokens": 27099,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     6,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 2768,
+   "cost_usd": 0.00298575,
+   "dropped_claims": 0,
+   "id": "Q027",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 7,
+   "loops": 0,
+   "prompt_tokens": 10753,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -1934,26 +1851,26 @@
   },
   {
    "claims": 2,
-   "completion_tokens": 2961,
-   "cost_usd": 0.0045471,
-   "dropped_claims": 1,
-   "id": "Q035",
+   "completion_tokens": 1819,
+   "cost_usd": 0.00188445,
+   "dropped_claims": 0,
+   "id": "Q028",
    "judge": {
     "claims": [
      {
       "claim": 1,
-      "supported": false
+      "supported": true
      },
      {
       "claim": 2,
-      "supported": false
+      "supported": true
      }
     ],
-    "faithfulness": 1,
+    "faithfulness": 5,
     "key_facts": [
      {
       "fact": 1,
-      "present": false
+      "present": true
      },
      {
       "fact": 2,
@@ -1963,24 +1880,24 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 21286,
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 6823,
    "scores": {
     "citation_a": [
      2,
      2
     ],
     "citation_b": [
-     0,
+     2,
      2
     ],
     "completeness": [
-     0,
+     1,
      2
     ],
     "faithfulness": [
-     1,
+     5,
      1
     ],
     "gold_all": [
@@ -1997,8 +1914,84 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     8,
-     8
+     2,
+     2
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 2
+  },
+  {
+   "claims": 2,
+   "completion_tokens": 3528,
+   "cost_usd": 0.003882,
+   "dropped_claims": 0,
+   "id": "Q034",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 9,
+   "loops": 1,
+   "prompt_tokens": 14712,
+   "scores": {
+    "citation_a": [
+     2,
+     2
+    ],
+    "citation_b": [
+     2,
+     2
+    ],
+    "completeness": [
+     1,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     4,
+     4
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -2006,12 +1999,92 @@
      1
     ]
    },
-   "tool_calls": 8
+   "tool_calls": 4
   },
   {
    "claims": 3,
-   "completion_tokens": 3275,
-   "cost_usd": 0.00468525,
+   "completion_tokens": 1846,
+   "cost_usd": 0.0020484,
+   "dropped_claims": 0,
+   "id": "Q035",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 7424,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     2,
+     2
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 2
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 1781,
+   "cost_usd": 0.00185505,
    "dropped_claims": 0,
    "id": "Q037",
    "judge": {
@@ -2043,9 +2116,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 21591,
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 6779,
    "scores": {
     "citation_a": [
      3,
@@ -2057,6 +2130,82 @@
     ],
     "completeness": [
      2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     2,
+     2
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 2
+  },
+  {
+   "claims": 2,
+   "completion_tokens": 3245,
+   "cost_usd": 0.0048396,
+   "dropped_claims": 0,
+   "id": "Q038",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 11,
+   "loops": 1,
+   "prompt_tokens": 22612,
+   "scores": {
+    "citation_a": [
+     2,
+     2
+    ],
+    "citation_b": [
+     2,
+     2
+    ],
+    "completeness": [
+     0,
      2
     ],
     "faithfulness": [
@@ -2090,10 +2239,10 @@
   },
   {
    "claims": 2,
-   "completion_tokens": 2485,
-   "cost_usd": 0.00393675,
+   "completion_tokens": 1953,
+   "cost_usd": 0.00257265,
    "dropped_claims": 0,
-   "id": "Q038",
+   "id": "Q039",
    "judge": {
     "claims": [
      {
@@ -2113,15 +2262,15 @@
      },
      {
       "fact": 2,
-      "present": true
+      "present": false
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 19505,
+   "llm_calls": 7,
+   "loops": 0,
+   "prompt_tokens": 11259,
    "scores": {
     "citation_a": [
      2,
@@ -2130,6 +2279,330 @@
     "citation_b": [
      2,
      2
+    ],
+    "completeness": [
+     1,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     4,
+     4
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 4
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 2188,
+   "cost_usd": 0.00238725,
+   "dropped_claims": 0,
+   "id": "Q040",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 6,
+   "loops": 0,
+   "prompt_tokens": 8955,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     3,
+     3
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 3
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 2741,
+   "cost_usd": 0.00370095,
+   "dropped_claims": 0,
+   "id": "Q043",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": false
+     },
+     {
+      "claim": 3,
+      "supported": false
+     }
+    ],
+    "faithfulness": 2,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 9,
+   "loops": 0,
+   "prompt_tokens": 16781,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     1,
+     3
+    ],
+    "completeness": [
+     1,
+     2
+    ],
+    "faithfulness": [
+     2,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     6,
+     6
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 6
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 4818,
+   "cost_usd": 0.0059784,
+   "dropped_claims": 0,
+   "id": "Q044",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 12,
+   "loops": 1,
+   "prompt_tokens": 24680,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     1,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     7,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 4,
+   "completion_tokens": 6011,
+   "cost_usd": 0.0066387,
+   "dropped_claims": 0,
+   "id": "Q047",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 13,
+   "loops": 2,
+   "prompt_tokens": 24054,
+   "scores": {
+    "citation_a": [
+     4,
+     4
+    ],
+    "citation_b": [
+     4,
+     4
     ],
     "completeness": [
      2,
@@ -2165,401 +2638,9 @@
    "tool_calls": 8
   },
   {
-   "claims": 1,
-   "completion_tokens": 2107,
-   "cost_usd": 0.00348975,
-   "dropped_claims": 0,
-   "id": "Q039",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 9,
-   "loops": 1,
-   "prompt_tokens": 17653,
-   "scores": {
-    "citation_a": [
-     1,
-     1
-    ],
-    "citation_b": [
-     1,
-     1
-    ],
-    "completeness": [
-     1,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     6
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 6
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 2391,
-   "cost_usd": 0.00355185,
-   "dropped_claims": 0,
-   "id": "Q040",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 9,
-   "loops": 1,
-   "prompt_tokens": 16931,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     2,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     6
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 6
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 2925,
-   "cost_usd": 0.0037893,
-   "dropped_claims": 0,
-   "id": "Q043",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": false
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 2,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": false
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 9,
-   "loops": 1,
-   "prompt_tokens": 16506,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     1,
-     2
-    ],
-    "completeness": [
-     1,
-     2
-    ],
-    "faithfulness": [
-     2,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
    "claims": 4,
-   "completion_tokens": 2576,
-   "cost_usd": 0.00339825,
-   "dropped_claims": 0,
-   "id": "Q044",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     },
-     {
-      "claim": 4,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 8,
-   "loops": 1,
-   "prompt_tokens": 14783,
-   "scores": {
-    "citation_a": [
-     4,
-     4
-    ],
-    "citation_b": [
-     4,
-     4
-    ],
-    "completeness": [
-     1,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     5,
-     5
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 5
-  },
-  {
-   "claims": 4,
-   "completion_tokens": 3073,
-   "cost_usd": 0.0042,
-   "dropped_claims": 0,
-   "id": "Q047",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     },
-     {
-      "claim": 4,
-      "supported": true
-     }
-    ],
-    "faithfulness": 4,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": false
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 18652,
-   "scores": {
-    "citation_a": [
-     4,
-     4
-    ],
-    "citation_b": [
-     4,
-     4
-    ],
-    "completeness": [
-     1,
-     2
-    ],
-    "faithfulness": [
-     4,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 3429,
-   "cost_usd": 0.00375855,
+   "completion_tokens": 6451,
+   "cost_usd": 0.0061941,
    "dropped_claims": 0,
    "id": "Q050",
    "judge": {
@@ -2575,13 +2656,17 @@
      {
       "claim": 3,
       "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": false
      }
     ],
-    "faithfulness": 5,
+    "faithfulness": 3,
     "key_facts": [
      {
       "fact": 1,
-      "present": false
+      "present": true
      },
      {
       "fact": 2,
@@ -2591,24 +2676,24 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 9,
-   "loops": 1,
-   "prompt_tokens": 14285,
+   "llm_calls": 12,
+   "loops": 2,
+   "prompt_tokens": 18818,
    "scores": {
     "citation_a": [
-     3,
-     3
+     4,
+     4
     ],
     "citation_b": [
      3,
-     3
+     4
     ],
     "completeness": [
-     0,
+     1,
      2
     ],
     "faithfulness": [
-     5,
+     3,
      1
     ],
     "gold_all": [
@@ -2625,7 +2710,7 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     6,
+     5,
      8
     ],
     "unrecorded_respected": null,
@@ -2637,15 +2722,23 @@
    "tool_calls": 8
   },
   {
-   "claims": 1,
-   "completion_tokens": 3519,
-   "cost_usd": 0.00532185,
+   "claims": 3,
+   "completion_tokens": 6546,
+   "cost_usd": 0.00706815,
    "dropped_claims": 1,
    "id": "Q053",
    "judge": {
     "claims": [
      {
       "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
       "supported": true
      }
     ],
@@ -2657,26 +2750,26 @@
      },
      {
       "fact": 2,
-      "present": false
+      "present": true
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 12,
+   "llm_calls": 13,
    "loops": 2,
-   "prompt_tokens": 24091,
+   "prompt_tokens": 25161,
    "scores": {
     "citation_a": [
-     1,
-     1
+     3,
+     3
     ],
     "citation_b": [
-     1,
-     1
+     3,
+     3
     ],
     "completeness": [
-     1,
+     2,
      2
     ],
     "faithfulness": [
@@ -2710,22 +2803,22 @@
   },
   {
    "claims": 1,
-   "completion_tokens": 3491,
-   "cost_usd": 0.00394695,
-   "dropped_claims": 1,
+   "completion_tokens": 1460,
+   "cost_usd": 0.00167955,
+   "dropped_claims": 0,
    "id": "Q055",
    "judge": {
     "claims": [
      {
       "claim": 1,
-      "supported": true
+      "supported": false
      }
     ],
-    "faithfulness": 5,
+    "faithfulness": 3,
     "key_facts": [
      {
       "fact": 1,
-      "present": false
+      "present": true
      },
      {
       "fact": 2,
@@ -2735,24 +2828,24 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 15165,
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 6381,
    "scores": {
     "citation_a": [
      1,
      1
     ],
     "citation_b": [
-     1,
+     0,
      1
     ],
     "completeness": [
-     1,
+     2,
      2
     ],
     "faithfulness": [
-     5,
+     3,
      1
     ],
     "gold_all": [
@@ -2769,22 +2862,22 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     5,
-     5
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
-   "tool_calls": 5
+   "tool_calls": 2
   },
   {
    "claims": 3,
-   "completion_tokens": 2322,
-   "cost_usd": 0.0024945,
-   "dropped_claims": 0,
+   "completion_tokens": 7167,
+   "cost_usd": 0.0073539,
+   "dropped_claims": 1,
    "id": "Q056",
    "judge": {
     "claims": [
@@ -2819,329 +2912,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 6,
-   "loops": 0,
-   "prompt_tokens": 9134,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     3,
-     3
-    ],
-    "completeness": [
-     3,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     5,
-     5
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 5
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 1289,
-   "cost_usd": 0.00155805,
-   "dropped_claims": 0,
-   "id": "Q058",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 5,
-   "loops": 0,
-   "prompt_tokens": 6767,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     3,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.5,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     4,
-     4
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 4
-  },
-  {
-   "claims": 1,
-   "completion_tokens": 2204,
-   "cost_usd": 0.00318315,
-   "dropped_claims": 0,
-   "id": "Q060",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 9,
-   "loops": 1,
-   "prompt_tokens": 15093,
-   "scores": {
-    "citation_a": [
-     1,
-     1
-    ],
-    "citation_b": [
-     1,
-     1
-    ],
-    "completeness": [
-     2,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.5,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     5,
-     6
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 6
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 3897,
-   "cost_usd": 0.0050874,
-   "dropped_claims": 1,
-   "id": "Q063",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 4,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
+   "llm_calls": 15,
    "loops": 2,
-   "prompt_tokens": 21784,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     2,
-     3
-    ],
-    "faithfulness": [
-     4,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     7,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 3246,
-   "cost_usd": 0.003954,
-   "dropped_claims": 0,
-   "id": "Q064",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": false
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 16704,
+   "prompt_tokens": 30396,
    "scores": {
     "citation_a": [
      3,
@@ -3152,391 +2925,11 @@
      3
     ],
     "completeness": [
-     2,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     7,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 1,
-   "completion_tokens": 3685,
-   "cost_usd": 0.004965,
-   "dropped_claims": 2,
-   "id": "Q070",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 22072,
-   "scores": {
-    "citation_a": [
-     1,
-     1
-    ],
-    "citation_b": [
-     1,
-     1
-    ],
-    "completeness": [
-     1,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     6
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 6
-  },
-  {
-   "claims": 1,
-   "completion_tokens": 4577,
-   "cost_usd": 0.00568965,
-   "dropped_claims": 2,
-   "id": "Q073",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": false
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 23207,
-   "scores": {
-    "citation_a": [
-     1,
-     1
-    ],
-    "citation_b": [
-     1,
-     1
-    ],
-    "completeness": [
-     1,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 3014,
-   "cost_usd": 0.0040671,
-   "dropped_claims": 0,
-   "id": "Q074",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 18258,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     2,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     7
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 7
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 1915,
-   "cost_usd": 0.00218925,
-   "dropped_claims": 0,
-   "id": "Q079",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 7,
-   "loops": 1,
-   "prompt_tokens": 9111,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     2,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     4,
-     4
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 4
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 4333,
-   "cost_usd": 0.0053535,
-   "dropped_claims": 2,
-   "id": "Q082",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 4,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": false
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 21174,
-   "scores": {
-    "citation_a": [
      3,
      3
     ],
-    "citation_b": [
-     3,
-     3
-    ],
-    "completeness": [
-     0,
-     2
-    ],
     "faithfulness": [
-     4,
+     5,
      1
     ],
     "gold_all": [
@@ -3565,11 +2958,251 @@
    "tool_calls": 8
   },
   {
-   "claims": 5,
-   "completion_tokens": 1932,
-   "cost_usd": 0.0030003,
+   "claims": 1,
+   "completion_tokens": 1505,
+   "cost_usd": 0.0016851,
    "dropped_claims": 0,
-   "id": "Q083",
+   "id": "Q058",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 6622,
+   "scores": {
+    "citation_a": [
+     1,
+     1
+    ],
+    "citation_b": [
+     1,
+     1
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     2,
+     2
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 2
+  },
+  {
+   "claims": 2,
+   "completion_tokens": 2194,
+   "cost_usd": 0.00215925,
+   "dropped_claims": 0,
+   "id": "Q060",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 7027,
+   "scores": {
+    "citation_a": [
+     2,
+     2
+    ],
+    "citation_b": [
+     2,
+     2
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     2,
+     2
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 2
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 7051,
+   "cost_usd": 0.0075069,
+   "dropped_claims": 1,
+   "id": "Q063",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 14,
+   "loops": 2,
+   "prompt_tokens": 26194,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     7,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 4,
+   "completion_tokens": 2669,
+   "cost_usd": 0.00289575,
+   "dropped_claims": 0,
+   "id": "Q064",
    "judge": {
     "claims": [
      {
@@ -3587,9 +3220,234 @@
      {
       "claim": 4,
       "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
      },
      {
-      "claim": 5,
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 7,
+   "loops": 0,
+   "prompt_tokens": 10421,
+   "scores": {
+    "citation_a": [
+     4,
+     4
+    ],
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     4,
+     4
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 4
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 2768,
+   "cost_usd": 0.0042276,
+   "dropped_claims": 0,
+   "id": "Q070",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 10,
+   "loops": 0,
+   "prompt_tokens": 18776,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     1,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     7,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 0,
+   "completion_tokens": 8580,
+   "cost_usd": 0.00637785,
+   "dropped_claims": 0,
+   "id": "Q073",
+   "judge": {
+    "claims": [],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 13,
+   "loops": 1,
+   "prompt_tokens": 24571,
+   "scores": {
+    "citation_a": null,
+    "citation_b": null,
+    "completeness": [
+     0,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     1,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     6,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 9206,
+   "cost_usd": 0.0084066,
+   "dropped_claims": 0,
+   "id": "Q074",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
       "supported": true
      }
     ],
@@ -3607,17 +3465,93 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 8,
-   "loops": 0,
-   "prompt_tokens": 14962,
+   "llm_calls": 13,
+   "loops": 2,
+   "prompt_tokens": 22804,
    "scores": {
     "citation_a": [
-     5,
-     5
+     3,
+     3
     ],
     "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
      5,
-     5
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     5,
+     6
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 6
+  },
+  {
+   "claims": 2,
+   "completion_tokens": 1723,
+   "cost_usd": 0.00173925,
+   "dropped_claims": 0,
+   "id": "Q079",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 5855,
+   "scores": {
+    "citation_a": [
+     2,
+     2
+    ],
+    "citation_b": [
+     2,
+     2
     ],
     "completeness": [
      2,
@@ -3641,8 +3575,8 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     7,
-     7
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -3650,14 +3584,14 @@
      1
     ]
    },
-   "tool_calls": 7
+   "tool_calls": 2
   },
   {
-   "claims": 5,
-   "completion_tokens": 2282,
-   "cost_usd": 0.0026016,
+   "claims": 4,
+   "completion_tokens": 2810,
+   "cost_usd": 0.0044664,
    "dropped_claims": 0,
-   "id": "Q084",
+   "id": "Q082",
    "judge": {
     "claims": [
      {
@@ -3675,9 +3609,249 @@
      {
       "claim": 4,
       "supported": true
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
      },
      {
-      "claim": 5,
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 10,
+   "loops": 0,
+   "prompt_tokens": 21736,
+   "scores": {
+    "citation_a": [
+     4,
+     4
+    ],
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     0,
+     2
+    ],
+    "faithfulness": [
+     4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     8,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 4,
+   "completion_tokens": 7277,
+   "cost_usd": 0.0076713,
+   "dropped_claims": 1,
+   "id": "Q083",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 13,
+   "loops": 2,
+   "prompt_tokens": 26130,
+   "scores": {
+    "citation_a": [
+     4,
+     4
+    ],
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     5,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 1,
+   "completion_tokens": 3372,
+   "cost_usd": 0.0041856,
+   "dropped_claims": 0,
+   "id": "Q084",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": false
+     }
+    ],
+    "faithfulness": 2,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 10,
+   "loops": 0,
+   "prompt_tokens": 17488,
+   "scores": {
+    "citation_a": [
+     1,
+     1
+    ],
+    "citation_b": [
+     0,
+     1
+    ],
+    "completeness": [
+     0,
+     3
+    ],
+    "faithfulness": [
+     2,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.6666666666666666,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     5,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 4,
+   "completion_tokens": 2865,
+   "cost_usd": 0.00383325,
+   "dropped_claims": 0,
+   "id": "Q087",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
       "supported": true
      }
     ],
@@ -3693,26 +3867,26 @@
      },
      {
       "fact": 3,
-      "present": true
+      "present": false
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 6,
+   "llm_calls": 8,
    "loops": 0,
-   "prompt_tokens": 10008,
+   "prompt_tokens": 16399,
    "scores": {
     "citation_a": [
-     5,
-     5
+     4,
+     4
     ],
     "citation_b": [
-     5,
-     5
+     4,
+     4
     ],
     "completeness": [
-     3,
+     2,
      3
     ],
     "faithfulness": [
@@ -3746,92 +3920,8 @@
   },
   {
    "claims": 3,
-   "completion_tokens": 3651,
-   "cost_usd": 0.00418605,
-   "dropped_claims": 3,
-   "id": "Q087",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": false
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 4,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": false
-     },
-     {
-      "fact": 2,
-      "present": false
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 16503,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     2,
-     3
-    ],
-    "completeness": [
-     0,
-     3
-    ],
-    "faithfulness": [
-     4,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.5,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     7,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 2931,
-   "cost_usd": 0.00293175,
+   "completion_tokens": 4785,
+   "cost_usd": 0.00530115,
    "dropped_claims": 0,
    "id": "Q088",
    "judge": {
@@ -3857,7 +3947,7 @@
      },
      {
       "fact": 2,
-      "present": false
+      "present": true
      },
      {
       "fact": 3,
@@ -3867,9 +3957,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 9,
-   "loops": 0,
-   "prompt_tokens": 14541,
+   "llm_calls": 11,
+   "loops": 1,
+   "prompt_tokens": 19657,
    "scores": {
     "citation_a": [
      3,
@@ -3880,7 +3970,7 @@
      3
     ],
     "completeness": [
-     1,
+     2,
      3
     ],
     "faithfulness": [
@@ -3906,102 +3996,18 @@
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     0,
+     1,
      1
     ]
    },
    "tool_calls": 8
   },
   {
-   "claims": 3,
-   "completion_tokens": 1715,
-   "cost_usd": 0.00196665,
+   "claims": 4,
+   "completion_tokens": 2085,
+   "cost_usd": 0.00209655,
    "dropped_claims": 0,
    "id": "Q089",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 5,
-   "loops": 0,
-   "prompt_tokens": 7787,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     3,
-     3
-    ],
-    "completeness": [
-     3,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.5,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     4,
-     4
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 4
-  },
-  {
-   "claims": 5,
-   "completion_tokens": 2168,
-   "cost_usd": 0.00221865,
-   "dropped_claims": 0,
-   "id": "Q092",
    "judge": {
     "claims": [
      {
@@ -4019,21 +4025,17 @@
      {
       "claim": 4,
       "supported": true
-     },
-     {
-      "claim": 5,
-      "supported": true
      }
     ],
     "faithfulness": 5,
     "key_facts": [
      {
       "fact": 1,
-      "present": true
+      "present": false
      },
      {
       "fact": 2,
-      "present": false
+      "present": true
      },
      {
       "fact": 3,
@@ -4045,15 +4047,15 @@
    },
    "llm_calls": 5,
    "loops": 0,
-   "prompt_tokens": 7655,
+   "prompt_tokens": 7173,
    "scores": {
     "citation_a": [
-     5,
-     5
+     4,
+     4
     ],
     "citation_b": [
-     5,
-     5
+     4,
+     4
     ],
     "completeness": [
      2,
@@ -4077,8 +4079,8 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     4,
-     4
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -4086,12 +4088,96 @@
      1
     ]
    },
-   "tool_calls": 4
+   "tool_calls": 2
   },
   {
-   "claims": 2,
-   "completion_tokens": 3271,
-   "cost_usd": 0.00418545,
+   "claims": 3,
+   "completion_tokens": 2292,
+   "cost_usd": 0.00220785,
+   "dropped_claims": 0,
+   "id": "Q092",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 7087,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     0,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     2,
+     2
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 2
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 2464,
+   "cost_usd": 0.00238995,
    "dropped_claims": 0,
    "id": "Q093",
    "judge": {
@@ -4102,6 +4188,10 @@
      },
      {
       "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
       "supported": true
      }
     ],
@@ -4119,17 +4209,17 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 18147,
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 7229,
    "scores": {
     "citation_a": [
-     2,
-     2
+     3,
+     3
     ],
     "citation_b": [
-     2,
-     2
+     3,
+     3
     ],
     "completeness": [
      0,
@@ -4153,21 +4243,21 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     7,
-     8
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
-   "tool_calls": 8
+   "tool_calls": 2
   },
   {
    "claims": 4,
-   "completion_tokens": 2172,
-   "cost_usd": 0.0026202,
+   "completion_tokens": 3342,
+   "cost_usd": 0.00409635,
    "dropped_claims": 0,
    "id": "Q095",
    "judge": {
@@ -4201,711 +4291,23 @@
      },
      {
       "fact": 3,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 7,
-   "loops": 0,
-   "prompt_tokens": 11084,
-   "scores": {
-    "citation_a": [
-     4,
-     4
-    ],
-    "citation_b": [
-     4,
-     4
-    ],
-    "completeness": [
-     3,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     6
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 6
-  },
-  {
-   "claims": 5,
-   "completion_tokens": 1860,
-   "cost_usd": 0.00247815,
-   "dropped_claims": 0,
-   "id": "Q097",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     },
-     {
-      "claim": 4,
-      "supported": true
-     },
-     {
-      "claim": 5,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 7,
-   "loops": 0,
-   "prompt_tokens": 11385,
-   "scores": {
-    "citation_a": [
-     5,
-     5
-    ],
-    "citation_b": [
-     5,
-     5
-    ],
-    "completeness": [
-     3,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     6
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 6
-  },
-  {
-   "claims": 4,
-   "completion_tokens": 5592,
-   "cost_usd": 0.0060243,
-   "dropped_claims": 0,
-   "id": "Q098",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     },
-     {
-      "claim": 4,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
       "present": false
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 21506,
-   "scores": {
-    "citation_a": [
-     4,
-     4
-    ],
-    "citation_b": [
-     4,
-     4
-    ],
-    "completeness": [
-     1,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     8,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 5,
-   "completion_tokens": 2677,
-   "cost_usd": 0.00318435,
-   "dropped_claims": 0,
-   "id": "Q103",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     },
-     {
-      "claim": 4,
-      "supported": true
-     },
-     {
-      "claim": 5,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 7,
-   "loops": 0,
-   "prompt_tokens": 12825,
-   "scores": {
-    "citation_a": [
-     5,
-     5
-    ],
-    "citation_b": [
-     5,
-     5
-    ],
-    "completeness": [
-     3,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     6
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 6
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 2498,
-   "cost_usd": 0.0036408,
-   "dropped_claims": 0,
-   "id": "Q104",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
    "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 17736,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     3,
-     3
-    ],
-    "completeness": [
-     2,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     8,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 1808,
-   "cost_usd": 0.0027441,
-   "dropped_claims": 0,
-   "id": "Q105",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": false
-     }
-    ],
-    "faithfulness": 3,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": false
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 8,
    "loops": 0,
-   "prompt_tokens": 14006,
+   "prompt_tokens": 17269,
    "scores": {
     "citation_a": [
-     3,
-     3
+     4,
+     4
     ],
     "citation_b": [
-     2,
-     3
-    ],
-    "completeness": [
-     0,
-     2
-    ],
-    "faithfulness": [
-     3,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.5,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     7,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 5,
-   "completion_tokens": 3865,
-   "cost_usd": 0.00484065,
-   "dropped_claims": 0,
-   "id": "Q107",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     },
-     {
-      "claim": 4,
-      "supported": true
-     },
-     {
-      "claim": 5,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 20139,
-   "scores": {
-    "citation_a": [
-     5,
-     5
-    ],
-    "citation_b": [
-     5,
-     5
-    ],
-    "completeness": [
-     2,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 1504,
-   "cost_usd": 0.00203805,
-   "dropped_claims": 0,
-   "id": "Q111",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 6,
-   "loops": 0,
-   "prompt_tokens": 9491,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     3,
-     3
-    ],
-    "completeness": [
-     2,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     5,
-     5
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 5
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 2601,
-   "cost_usd": 0.00353145,
-   "dropped_claims": 0,
-   "id": "Q112",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 8,
-   "loops": 0,
-   "prompt_tokens": 15699,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     3,
-     3
+     4,
+     4
     ],
     "completeness": [
      2,
@@ -4942,10 +4344,10 @@
   },
   {
    "claims": 6,
-   "completion_tokens": 2982,
-   "cost_usd": 0.00327585,
+   "completion_tokens": 2695,
+   "cost_usd": 0.00277215,
    "dropped_claims": 0,
-   "id": "Q113",
+   "id": "Q097",
    "judge": {
     "claims": [
      {
@@ -4991,9 +4393,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 7,
+   "llm_calls": 6,
    "loops": 0,
-   "prompt_tokens": 12215,
+   "prompt_tokens": 9237,
    "scores": {
     "citation_a": [
      6,
@@ -5025,8 +4427,8 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     6,
-     6
+     3,
+     3
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -5034,14 +4436,14 @@
      1
     ]
    },
-   "tool_calls": 6
+   "tool_calls": 3
   },
   {
    "claims": 3,
-   "completion_tokens": 2111,
-   "cost_usd": 0.0027039,
+   "completion_tokens": 3668,
+   "cost_usd": 0.0035085,
    "dropped_claims": 0,
-   "id": "Q116",
+   "id": "Q098",
    "judge": {
     "claims": [
      {
@@ -5065,158 +4467,7 @@
      },
      {
       "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 7,
-   "loops": 0,
-   "prompt_tokens": 11886,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     3,
-     3
-    ],
-    "completeness": [
-     3,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     6
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 6
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 3033,
-   "cost_usd": 0.00446415,
-   "dropped_claims": 0,
-   "id": "Q117",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 20957,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     3,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     8,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 0,
-   "completion_tokens": 3319,
-   "cost_usd": 0.0043296,
-   "dropped_claims": 3,
-   "id": "Q118",
-   "judge": {
-    "claims": [],
-    "faithfulness": 3,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
+      "present": false
      },
      {
       "fact": 3,
@@ -5226,163 +4477,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 18788,
-   "scores": {
-    "citation_a": null,
-    "citation_b": null,
-    "completeness": [
-     2,
-     3
-    ],
-    "faithfulness": [
-     3,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.8,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 2832,
-   "cost_usd": 0.00378435,
-   "dropped_claims": 0,
-   "id": "Q120",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 9,
-   "loops": 1,
-   "prompt_tokens": 16973,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     3,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     7,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 4376,
-   "cost_usd": 0.0051015,
-   "dropped_claims": 0,
-   "id": "Q124",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 1,
-   "prompt_tokens": 19578,
+   "llm_calls": 6,
+   "loops": 0,
+   "prompt_tokens": 10766,
    "scores": {
     "citation_a": [
      3,
@@ -5393,87 +4490,7 @@
      3
     ],
     "completeness": [
-     2,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
      1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     8,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 3785,
-   "cost_usd": 0.00505395,
-   "dropped_claims": 0,
-   "id": "Q125",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 21753,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     3,
      3
     ],
     "faithfulness": [
@@ -5481,11 +4498,11 @@
      1
     ],
     "gold_all": [
-     1,
+     0,
      1
     ],
     "gold_frac": [
-     1.0,
+     0.3333333333333333,
      1
     ],
     "no_diagnosis": [
@@ -5494,23 +4511,23 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     8,
-     8
+     3,
+     3
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
-   "tool_calls": 8
+   "tool_calls": 3
   },
   {
-   "claims": 4,
-   "completion_tokens": 3908,
-   "cost_usd": 0.00503925,
+   "claims": 5,
+   "completion_tokens": 3608,
+   "cost_usd": 0.00382605,
    "dropped_claims": 0,
-   "id": "Q126",
+   "id": "Q103",
    "judge": {
     "claims": [
      {
@@ -5527,10 +4544,14 @@
      },
      {
       "claim": 4,
-      "supported": false
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
      }
     ],
-    "faithfulness": 3,
+    "faithfulness": 5,
     "key_facts": [
      {
       "fact": 1,
@@ -5542,30 +4563,194 @@
      },
      {
       "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 8,
+   "loops": 0,
+   "prompt_tokens": 13635,
+   "scores": {
+    "citation_a": [
+     5,
+     5
+    ],
+    "citation_b": [
+     5,
+     5
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     5,
+     5
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 5
+  },
+  {
+   "claims": 5,
+   "completion_tokens": 2704,
+   "cost_usd": 0.00325935,
+   "dropped_claims": 0,
+   "id": "Q104",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 7,
+   "loops": 0,
+   "prompt_tokens": 13089,
+   "scores": {
+    "citation_a": [
+     5,
+     5
+    ],
+    "citation_b": [
+     5,
+     5
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     4,
+     4
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 4
+  },
+  {
+   "claims": 2,
+   "completion_tokens": 2263,
+   "cost_usd": 0.0035979,
+   "dropped_claims": 0,
+   "id": "Q105",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
       "present": false
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 21547,
+   "llm_calls": 10,
+   "loops": 0,
+   "prompt_tokens": 18390,
    "scores": {
     "citation_a": [
-     4,
-     4
+     2,
+     2
     ],
     "citation_b": [
-     3,
-     4
+     2,
+     2
     ],
     "completeness": [
-     1,
-     3
+     0,
+     2
     ],
     "faithfulness": [
-     3,
+     5,
      1
     ],
     "gold_all": [
@@ -5582,25 +4767,290 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     8,
+     6,
      8
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
    "tool_calls": 8
   },
   {
-   "claims": 0,
-   "completion_tokens": 5633,
-   "cost_usd": 0.0064776,
-   "dropped_claims": 4,
-   "id": "Q127",
+   "claims": 3,
+   "completion_tokens": 2932,
+   "cost_usd": 0.00386565,
+   "dropped_claims": 0,
+   "id": "Q107",
    "judge": {
-    "claims": [],
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 9,
+   "loops": 0,
+   "prompt_tokens": 17115,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     6,
+     6
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 6
+  },
+  {
+   "claims": 2,
+   "completion_tokens": 1646,
+   "cost_usd": 0.00208035,
+   "dropped_claims": 0,
+   "id": "Q111",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 6,
+   "loops": 0,
+   "prompt_tokens": 8821,
+   "scores": {
+    "citation_a": [
+     2,
+     2
+    ],
+    "citation_b": [
+     2,
+     2
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     3,
+     3
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 3
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 3045,
+   "cost_usd": 0.00327975,
+   "dropped_claims": 0,
+   "id": "Q112",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 7,
+   "loops": 0,
+   "prompt_tokens": 11733,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     4,
+     4
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 4
+  },
+  {
+   "claims": 5,
+   "completion_tokens": 6220,
+   "cost_usd": 0.00684705,
+   "dropped_claims": 0,
+   "id": "Q113",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     }
+    ],
     "faithfulness": 5,
     "key_facts": [
      {
@@ -5613,20 +5063,26 @@
      },
      {
       "fact": 3,
-      "present": true
+      "present": false
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
    "llm_calls": 12,
-   "loops": 2,
-   "prompt_tokens": 25132,
+   "loops": 1,
+   "prompt_tokens": 24607,
    "scores": {
-    "citation_a": null,
-    "citation_b": null,
+    "citation_a": [
+     5,
+     5
+    ],
+    "citation_b": [
+     5,
+     5
+    ],
     "completeness": [
-     2,
+     1,
      3
     ],
     "faithfulness": [
@@ -5659,9 +5115,685 @@
    "tool_calls": 8
   },
   {
+   "claims": 4,
+   "completion_tokens": 2842,
+   "cost_usd": 0.0027297,
+   "dropped_claims": 0,
+   "id": "Q116",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 6,
+   "loops": 0,
+   "prompt_tokens": 8750,
+   "scores": {
+    "citation_a": [
+     4,
+     4
+    ],
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     0,
+     3
+    ],
+    "faithfulness": [
+     4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     3,
+     3
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 3
+  },
+  {
    "claims": 3,
-   "completion_tokens": 1424,
-   "cost_usd": 0.00184845,
+   "completion_tokens": 5891,
+   "cost_usd": 0.0065652,
+   "dropped_claims": 0,
+   "id": "Q117",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 12,
+   "loops": 1,
+   "prompt_tokens": 23660,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     6,
+     7
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 7
+  },
+  {
+   "claims": 4,
+   "completion_tokens": 7583,
+   "cost_usd": 0.0081831,
+   "dropped_claims": 0,
+   "id": "Q118",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 14,
+   "loops": 2,
+   "prompt_tokens": 28446,
+   "scores": {
+    "citation_a": [
+     4,
+     4
+    ],
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     4,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     6,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 3101,
+   "cost_usd": 0.00330165,
+   "dropped_claims": 0,
+   "id": "Q120",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 8,
+   "loops": 0,
+   "prompt_tokens": 12551,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.6666666666666666,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     3,
+     5
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 5
+  },
+  {
+   "claims": 4,
+   "completion_tokens": 3976,
+   "cost_usd": 0.00431235,
+   "dropped_claims": 0,
+   "id": "Q124",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 9,
+   "loops": 0,
+   "prompt_tokens": 15789,
+   "scores": {
+    "citation_a": [
+     4,
+     4
+    ],
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     0,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     5,
+     6
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 6
+  },
+  {
+   "claims": 4,
+   "completion_tokens": 6377,
+   "cost_usd": 0.00679965,
+   "dropped_claims": 0,
+   "id": "Q125",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 11,
+   "loops": 1,
+   "prompt_tokens": 23535,
+   "scores": {
+    "citation_a": [
+     4,
+     4
+    ],
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     8,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 8208,
+   "cost_usd": 0.00835155,
+   "dropped_claims": 0,
+   "id": "Q126",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 13,
+   "loops": 2,
+   "prompt_tokens": 27325,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     7,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 1,
+   "completion_tokens": 10856,
+   "cost_usd": 0.0077208,
+   "dropped_claims": 1,
+   "id": "Q127",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 15,
+   "loops": 2,
+   "prompt_tokens": 34652,
+   "scores": {
+    "citation_a": [
+     1,
+     1
+    ],
+    "citation_b": [
+     1,
+     1
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     7,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 4,
+   "completion_tokens": 2488,
+   "cost_usd": 0.00237345,
    "dropped_claims": 0,
    "id": "Q129",
    "judge": {
@@ -5676,6 +5808,10 @@
      },
      {
       "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
       "supported": true
      }
     ],
@@ -5699,15 +5835,15 @@
    },
    "llm_calls": 5,
    "loops": 0,
-   "prompt_tokens": 8163,
+   "prompt_tokens": 7407,
    "scores": {
     "citation_a": [
-     3,
-     3
+     4,
+     4
     ],
     "citation_b": [
-     3,
-     3
+     4,
+     4
     ],
     "completeness": [
      3,
@@ -5731,8 +5867,8 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     4,
-     4
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -5740,12 +5876,12 @@
      1
     ]
    },
-   "tool_calls": 4
+   "tool_calls": 2
   },
   {
-   "claims": 4,
-   "completion_tokens": 5031,
-   "cost_usd": 0.0051339,
+   "claims": 2,
+   "completion_tokens": 4874,
+   "cost_usd": 0.0050835,
    "dropped_claims": 0,
    "id": "Q132",
    "judge": {
@@ -5757,14 +5893,6 @@
      {
       "claim": 2,
       "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
-     },
-     {
-      "claim": 4,
-      "supported": true
      }
     ],
     "faithfulness": 5,
@@ -5775,26 +5903,26 @@
      },
      {
       "fact": 2,
-      "present": true
+      "present": false
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 17302,
+   "llm_calls": 12,
+   "loops": 1,
+   "prompt_tokens": 18234,
    "scores": {
     "citation_a": [
-     4,
-     4
+     2,
+     2
     ],
     "citation_b": [
-     4,
-     4
+     2,
+     2
     ],
     "completeness": [
-     2,
+     1,
      2
     ],
     "faithfulness": [
@@ -5815,8 +5943,8 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     6,
-     6
+     5,
+     8
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -5824,12 +5952,12 @@
      1
     ]
    },
-   "tool_calls": 6
+   "tool_calls": 8
   },
   {
    "claims": 3,
-   "completion_tokens": 1558,
-   "cost_usd": 0.00174585,
+   "completion_tokens": 1928,
+   "cost_usd": 0.0019584,
    "dropped_claims": 0,
    "id": "Q135",
    "judge": {
@@ -5867,7 +5995,7 @@
    },
    "llm_calls": 5,
    "loops": 0,
-   "prompt_tokens": 6943,
+   "prompt_tokens": 6752,
    "scores": {
     "citation_a": [
      3,
@@ -5899,8 +6027,8 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     4,
-     4
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -5908,12 +6036,12 @@
      1
     ]
    },
-   "tool_calls": 4
+   "tool_calls": 2
   },
   {
-   "claims": 4,
-   "completion_tokens": 2038,
-   "cost_usd": 0.00277155,
+   "claims": 3,
+   "completion_tokens": 3132,
+   "cost_usd": 0.00409125,
    "dropped_claims": 0,
    "id": "Q137",
    "judge": {
@@ -5928,10 +6056,6 @@
      },
      {
       "claim": 3,
-      "supported": true
-     },
-     {
-      "claim": 4,
       "supported": true
      }
     ],
@@ -5953,17 +6077,17 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 8,
+   "llm_calls": 10,
    "loops": 0,
-   "prompt_tokens": 13013,
+   "prompt_tokens": 17307,
    "scores": {
     "citation_a": [
-     4,
-     4
+     3,
+     3
     ],
     "citation_b": [
-     4,
-     4
+     3,
+     3
     ],
     "completeness": [
      3,
@@ -5974,11 +6098,11 @@
      1
     ],
     "gold_all": [
-     0,
+     1,
      1
     ],
     "gold_frac": [
-     0.5,
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -5999,9 +6123,9 @@
    "tool_calls": 8
   },
   {
-   "claims": 3,
-   "completion_tokens": 5495,
-   "cost_usd": 0.00589305,
+   "claims": 4,
+   "completion_tokens": 5907,
+   "cost_usd": 0.0065835,
    "dropped_claims": 0,
    "id": "Q138",
    "judge": {
@@ -6016,81 +6140,18 @@
      },
      {
       "claim": 3,
+      "supported": false
+     },
+     {
+      "claim": 4,
       "supported": true
      }
     ],
-    "faithfulness": 5,
+    "faithfulness": 4,
     "key_facts": [
      {
       "fact": 1,
       "present": false
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 20763,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     3,
-     3
-    ],
-    "completeness": [
-     1,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     6,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 0,
-   "completion_tokens": 4104,
-   "cost_usd": 0.00429315,
-   "dropped_claims": 1,
-   "id": "Q140",
-   "judge": {
-    "claims": [],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
      },
      {
       "fact": 2,
@@ -6102,16 +6163,22 @@
    },
    "llm_calls": 12,
    "loops": 2,
-   "prompt_tokens": 16045,
+   "prompt_tokens": 24230,
    "scores": {
-    "citation_a": null,
-    "citation_b": null,
+    "citation_a": [
+     4,
+     4
+    ],
+    "citation_b": [
+     3,
+     4
+    ],
     "completeness": [
-     1,
+     0,
      2
     ],
     "faithfulness": [
-     5,
+     4,
      1
     ],
     "gold_all": [
@@ -6141,10 +6208,10 @@
   },
   {
    "claims": 2,
-   "completion_tokens": 3278,
-   "cost_usd": 0.0044316,
-   "dropped_claims": 1,
-   "id": "Q141",
+   "completion_tokens": 2691,
+   "cost_usd": 0.0028938,
+   "dropped_claims": 0,
+   "id": "Q140",
    "judge": {
     "claims": [
      {
@@ -6170,9 +6237,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 19888,
+   "llm_calls": 8,
+   "loops": 0,
+   "prompt_tokens": 11216,
    "scores": {
     "citation_a": [
      2,
@@ -6204,23 +6271,23 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     8,
-     8
+     5,
+     5
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
-   "tool_calls": 8
+   "tool_calls": 5
   },
   {
    "claims": 3,
-   "completion_tokens": 2239,
-   "cost_usd": 0.00278745,
+   "completion_tokens": 2012,
+   "cost_usd": 0.0020088,
    "dropped_claims": 0,
-   "id": "Q142",
+   "id": "Q141",
    "judge": {
     "claims": [
      {
@@ -6233,41 +6300,41 @@
      },
      {
       "claim": 3,
-      "supported": false
+      "supported": true
      }
     ],
-    "faithfulness": 4,
+    "faithfulness": 5,
     "key_facts": [
      {
       "fact": 1,
-      "present": false
+      "present": true
      },
      {
       "fact": 2,
-      "present": false
+      "present": true
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 8,
+   "llm_calls": 5,
    "loops": 0,
-   "prompt_tokens": 12187,
+   "prompt_tokens": 6624,
    "scores": {
     "citation_a": [
      3,
      3
     ],
     "citation_b": [
-     2,
+     3,
      3
     ],
     "completeness": [
-     0,
+     2,
      2
     ],
     "faithfulness": [
-     4,
+     5,
      1
     ],
     "gold_all": [
@@ -6284,7 +6351,87 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     7,
+     2,
+     2
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 2
+  },
+  {
+   "claims": 3,
+   "completion_tokens": 3580,
+   "cost_usd": 0.0037458,
+   "dropped_claims": 0,
+   "id": "Q142",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 10,
+   "loops": 0,
+   "prompt_tokens": 13852,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     1,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     3,
      8
     ],
     "unrecorded_respected": null,
@@ -6297,8 +6444,8 @@
   },
   {
    "claims": 4,
-   "completion_tokens": 2298,
-   "cost_usd": 0.0022956,
+   "completion_tokens": 3361,
+   "cost_usd": 0.00417945,
    "dropped_claims": 0,
    "id": "Q144",
    "judge": {
@@ -6338,9 +6485,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 5,
+   "llm_calls": 10,
    "loops": 0,
-   "prompt_tokens": 7648,
+   "prompt_tokens": 17491,
    "scores": {
     "citation_a": [
      4,
@@ -6356,90 +6503,6 @@
     ],
     "faithfulness": [
      5,
-     1
-    ],
-    "gold_all": [
-     0,
-     1
-    ],
-    "gold_frac": [
-     0.5,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     4,
-     4
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 4
-  },
-  {
-   "claims": 3,
-   "completion_tokens": 2401,
-   "cost_usd": 0.00333795,
-   "dropped_claims": 0,
-   "id": "Q146",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": false
-     }
-    ],
-    "faithfulness": 3,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": false
-     },
-     {
-      "fact": 2,
-      "present": false
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 8,
-   "loops": 0,
-   "prompt_tokens": 15337,
-   "scores": {
-    "citation_a": [
-     3,
-     3
-    ],
-    "citation_b": [
-     2,
-     3
-    ],
-    "completeness": [
-     0,
-     3
-    ],
-    "faithfulness": [
-     3,
      1
     ],
     "gold_all": [
@@ -6468,87 +6531,11 @@
    "tool_calls": 8
   },
   {
-   "claims": 1,
-   "completion_tokens": 3913,
-   "cost_usd": 0.00494475,
-   "dropped_claims": 2,
-   "id": "Q147",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     }
-    ],
-    "faithfulness": 4,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 21025,
-   "scores": {
-    "citation_a": [
-     1,
-     1
-    ],
-    "citation_b": [
-     1,
-     1
-    ],
-    "completeness": [
-     2,
-     3
-    ],
-    "faithfulness": [
-     4,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     8,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
    "claims": 3,
-   "completion_tokens": 3240,
-   "cost_usd": 0.00414585,
+   "completion_tokens": 9258,
+   "cost_usd": 0.00720885,
    "dropped_claims": 0,
-   "id": "Q148",
+   "id": "Q146",
    "judge": {
     "claims": [
      {
@@ -6582,9 +6569,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 9,
-   "loops": 1,
-   "prompt_tokens": 17623,
+   "llm_calls": 13,
+   "loops": 2,
+   "prompt_tokens": 26082,
    "scores": {
     "citation_a": [
      3,
@@ -6628,15 +6615,23 @@
    "tool_calls": 8
   },
   {
-   "claims": 1,
-   "completion_tokens": 2275,
-   "cost_usd": 0.00268425,
+   "claims": 3,
+   "completion_tokens": 4891,
+   "cost_usd": 0.00522105,
    "dropped_claims": 0,
-   "id": "Q153",
+   "id": "Q147",
    "judge": {
     "claims": [
      {
       "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
       "supported": true
      }
     ],
@@ -6648,7 +6643,95 @@
      },
      {
       "fact": 2,
-      "present": false
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 10,
+   "loops": 1,
+   "prompt_tokens": 18571,
+   "scores": {
+    "citation_a": [
+     3,
+     3
+    ],
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     5,
+     5
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 5
+  },
+  {
+   "claims": 4,
+   "completion_tokens": 3993,
+   "cost_usd": 0.0041775,
+   "dropped_claims": 0,
+   "id": "Q148",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
      },
      {
       "fact": 3,
@@ -6658,20 +6741,100 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 7,
-   "loops": 1,
-   "prompt_tokens": 10971,
+   "llm_calls": 8,
+   "loops": 0,
+   "prompt_tokens": 14566,
    "scores": {
     "citation_a": [
-     1,
-     1
+     4,
+     4
     ],
     "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
      1,
      1
     ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     5,
+     5
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 5
+  },
+  {
+   "claims": 2,
+   "completion_tokens": 2033,
+   "cost_usd": 0.00202905,
+   "dropped_claims": 0,
+   "id": "Q153",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 6931,
+   "scores": {
+    "citation_a": [
+     2,
+     2
+    ],
+    "citation_b": [
+     2,
+     2
+    ],
     "completeness": [
-     1,
+     2,
      3
     ],
     "faithfulness": [
@@ -6692,21 +6855,21 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     4,
-     4
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
-   "tool_calls": 4
+   "tool_calls": 2
   },
   {
    "claims": 4,
-   "completion_tokens": 3404,
-   "cost_usd": 0.00421725,
+   "completion_tokens": 6283,
+   "cost_usd": 0.0072297,
    "dropped_claims": 0,
    "id": "Q156",
    "judge": {
@@ -6746,9 +6909,9 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 9,
+   "llm_calls": 12,
    "loops": 1,
-   "prompt_tokens": 17443,
+   "prompt_tokens": 27162,
    "scores": {
     "citation_a": [
      4,
@@ -6781,7 +6944,7 @@
     "premise_corrected": null,
     "tool_success": [
      6,
-     6
+     7
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -6789,12 +6952,12 @@
      1
     ]
    },
-   "tool_calls": 6
+   "tool_calls": 7
   },
   {
-   "claims": 3,
-   "completion_tokens": 5397,
-   "cost_usd": 0.00573645,
+   "claims": 4,
+   "completion_tokens": 5756,
+   "cost_usd": 0.0062265,
    "dropped_claims": 0,
    "id": "Q158",
    "judge": {
@@ -6810,6 +6973,10 @@
      {
       "claim": 3,
       "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
      }
     ],
     "faithfulness": 5,
@@ -6826,17 +6993,17 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 20367,
+   "llm_calls": 12,
+   "loops": 1,
+   "prompt_tokens": 22838,
    "scores": {
     "citation_a": [
-     3,
-     3
+     4,
+     4
     ],
     "citation_b": [
-     3,
-     3
+     4,
+     4
     ],
     "completeness": [
      2,
@@ -6847,11 +7014,159 @@
      1
     ],
     "gold_all": [
-     0,
+     1,
      1
     ],
     "gold_frac": [
-     0.5,
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     5,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 1,
+   "completion_tokens": 4708,
+   "cost_usd": 0.00542835,
+   "dropped_claims": 0,
+   "id": "Q159",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 13,
+   "loops": 2,
+   "prompt_tokens": 21965,
+   "scores": {
+    "citation_a": [
+     1,
+     1
+    ],
+    "citation_b": [
+     1,
+     1
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     5,
+     8
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 1,
+   "completion_tokens": 8518,
+   "cost_usd": 0.0085857,
+   "dropped_claims": 2,
+   "id": "H001",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 14,
+   "loops": 2,
+   "prompt_tokens": 27902,
+   "scores": {
+    "citation_a": [
+     1,
+     1
+    ],
+    "citation_b": [
+     1,
+     1
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
      1
     ],
     "no_diagnosis": [
@@ -6872,151 +7187,10 @@
    "tool_calls": 8
   },
   {
-   "claims": 0,
-   "completion_tokens": 2919,
-   "cost_usd": 0.00417975,
-   "dropped_claims": 1,
-   "id": "Q159",
-   "judge": {
-    "claims": [],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": false
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 19389,
-   "scores": {
-    "citation_a": null,
-    "citation_b": null,
-    "completeness": [
-     1,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     5,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
    "claims": 2,
-   "completion_tokens": 3529,
-   "cost_usd": 0.0048135,
-   "dropped_claims": 2,
-   "id": "H001",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 21558,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     2,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     7,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     1,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 2,
-   "completion_tokens": 3455,
-   "cost_usd": 0.00441825,
-   "dropped_claims": 2,
+   "completion_tokens": 5490,
+   "cost_usd": 0.0058545,
+   "dropped_claims": 0,
    "id": "H002",
    "judge": {
     "claims": [
@@ -7029,7 +7203,7 @@
       "supported": true
      }
     ],
-    "faithfulness": 4,
+    "faithfulness": 5,
     "key_facts": [
      {
       "fact": 1,
@@ -7041,7 +7215,7 @@
      },
      {
       "fact": 3,
-      "present": false
+      "present": true
      },
      {
       "fact": 4,
@@ -7051,9 +7225,9 @@
     "premise_corrected": true,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 18835,
+   "llm_calls": 11,
+   "loops": 1,
+   "prompt_tokens": 20782,
    "scores": {
     "citation_a": [
      2,
@@ -7064,11 +7238,11 @@
      2
     ],
     "completeness": [
-     3,
+     4,
      4
     ],
     "faithfulness": [
-     4,
+     5,
      1
     ],
     "gold_all": [
@@ -7088,7 +7262,7 @@
      1
     ],
     "tool_success": [
-     8,
+     5,
      8
     ],
     "unrecorded_respected": null,
@@ -7100,10 +7274,10 @@
    "tool_calls": 8
   },
   {
-   "claims": 3,
-   "completion_tokens": 4540,
-   "cost_usd": 0.00523515,
-   "dropped_claims": 4,
+   "claims": 7,
+   "completion_tokens": 9947,
+   "cost_usd": 0.00769455,
+   "dropped_claims": 3,
    "id": "H007",
    "judge": {
     "claims": [
@@ -7113,18 +7287,34 @@
      },
      {
       "claim": 2,
-      "supported": false
+      "supported": true
      },
      {
       "claim": 3,
       "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     },
+     {
+      "claim": 6,
+      "supported": true
+     },
+     {
+      "claim": 7,
+      "supported": true
      }
     ],
-    "faithfulness": 3,
+    "faithfulness": 5,
     "key_facts": [
      {
       "fact": 1,
-      "present": false
+      "present": true
      },
      {
       "fact": 2,
@@ -7132,30 +7322,30 @@
      },
      {
       "fact": 3,
-      "present": false
+      "present": true
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
+   "llm_calls": 13,
    "loops": 2,
-   "prompt_tokens": 19941,
+   "prompt_tokens": 26472,
    "scores": {
     "citation_a": [
-     3,
-     3
+     7,
+     7
     ],
     "citation_b": [
-     2,
-     3
+     7,
+     7
     ],
     "completeness": [
-     1,
+     3,
      3
     ],
     "faithfulness": [
-     3,
+     5,
      1
     ],
     "gold_all": [
@@ -7172,7 +7362,7 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     7,
+     6,
      8
     ],
     "unrecorded_respected": null,
@@ -7184,15 +7374,31 @@
    "tool_calls": 8
   },
   {
-   "claims": 1,
-   "completion_tokens": 3275,
-   "cost_usd": 0.0045768,
-   "dropped_claims": 3,
+   "claims": 5,
+   "completion_tokens": 5003,
+   "cost_usd": 0.00580035,
+   "dropped_claims": 0,
    "id": "H008",
    "judge": {
     "claims": [
      {
       "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
       "supported": true
      }
     ],
@@ -7208,26 +7414,26 @@
      },
      {
       "fact": 3,
-      "present": false
+      "present": true
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 20612,
+   "llm_calls": 11,
+   "loops": 1,
+   "prompt_tokens": 22369,
    "scores": {
     "citation_a": [
-     1,
-     1
+     5,
+     5
     ],
     "citation_b": [
-     1,
-     1
+     5,
+     5
     ],
     "completeness": [
-     2,
+     3,
      3
     ],
     "faithfulness": [
@@ -7261,8 +7467,8 @@
   },
   {
    "claims": 2,
-   "completion_tokens": 3031,
-   "cost_usd": 0.00411495,
+   "completion_tokens": 5890,
+   "cost_usd": 0.00690015,
    "dropped_claims": 0,
    "id": "H009",
    "judge": {
@@ -7284,7 +7490,7 @@
      },
      {
       "fact": 2,
-      "present": false
+      "present": true
      },
      {
       "fact": 3,
@@ -7298,9 +7504,9 @@
     "premise_corrected": null,
     "unrecorded_respected": true
    },
-   "llm_calls": 10,
+   "llm_calls": 13,
    "loops": 2,
-   "prompt_tokens": 18509,
+   "prompt_tokens": 26665,
    "scores": {
     "citation_a": [
      2,
@@ -7311,7 +7517,7 @@
      2
     ],
     "completeness": [
-     3,
+     4,
      4
     ],
     "faithfulness": [
@@ -7332,7 +7538,7 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     6,
+     5,
      8
     ],
     "unrecorded_respected": [
@@ -7347,19 +7553,15 @@
    "tool_calls": 8
   },
   {
-   "claims": 2,
-   "completion_tokens": 2772,
-   "cost_usd": 0.0042144,
+   "claims": 1,
+   "completion_tokens": 1840,
+   "cost_usd": 0.0021918,
    "dropped_claims": 0,
    "id": "H014",
    "judge": {
     "claims": [
      {
       "claim": 1,
-      "supported": true
-     },
-     {
-      "claim": 2,
       "supported": true
      }
     ],
@@ -7377,17 +7579,17 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 20592,
+   "llm_calls": 6,
+   "loops": 0,
+   "prompt_tokens": 9044,
    "scores": {
     "citation_a": [
-     2,
-     2
+     1,
+     1
     ],
     "citation_b": [
-     2,
-     2
+     1,
+     1
     ],
     "completeness": [
      2,
@@ -7398,11 +7600,11 @@
      1
     ],
     "gold_all": [
-     1,
+     0,
      1
     ],
     "gold_frac": [
-     1.0,
+     0.5,
      1
     ],
     "no_diagnosis": [
@@ -7411,21 +7613,21 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     7,
-     8
+     3,
+     3
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
-   "tool_calls": 8
+   "tool_calls": 3
   },
   {
-   "claims": 2,
-   "completion_tokens": 2469,
-   "cost_usd": 0.0032022,
+   "claims": 3,
+   "completion_tokens": 2862,
+   "cost_usd": 0.00329685,
    "dropped_claims": 0,
    "id": "H015",
    "judge": {
@@ -7437,6 +7639,10 @@
      {
       "claim": 2,
       "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
      }
     ],
     "faithfulness": 5,
@@ -7453,17 +7659,17 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 9,
-   "loops": 1,
-   "prompt_tokens": 14416,
+   "llm_calls": 10,
+   "loops": 0,
+   "prompt_tokens": 13987,
    "scores": {
     "citation_a": [
-     2,
-     2
+     3,
+     3
     ],
     "citation_b": [
-     2,
-     2
+     3,
+     3
     ],
     "completeness": [
      2,
@@ -7487,12 +7693,12 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     6,
+     5,
      8
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
@@ -7500,8 +7706,8 @@
   },
   {
    "claims": 2,
-   "completion_tokens": 2988,
-   "cost_usd": 0.00364395,
+   "completion_tokens": 4408,
+   "cost_usd": 0.00429855,
    "dropped_claims": 0,
    "id": "H018",
    "judge": {
@@ -7519,7 +7725,7 @@
     "key_facts": [
      {
       "fact": 1,
-      "present": true
+      "present": false
      },
      {
       "fact": 2,
@@ -7533,9 +7739,9 @@
     "premise_corrected": false,
     "unrecorded_respected": true
    },
-   "llm_calls": 9,
+   "llm_calls": 12,
    "loops": 1,
-   "prompt_tokens": 15285,
+   "prompt_tokens": 20539,
    "scores": {
     "citation_a": [
      2,
@@ -7546,7 +7752,7 @@
      2
     ],
     "completeness": [
-     2,
+     1,
      3
     ],
     "faithfulness": [
@@ -7570,7 +7776,7 @@
      1
     ],
     "tool_success": [
-     6,
+     5,
      8
     ],
     "unrecorded_respected": [
@@ -7586,8 +7792,8 @@
   },
   {
    "claims": 1,
-   "completion_tokens": 1324,
-   "cost_usd": 0.0014964,
+   "completion_tokens": 1575,
+   "cost_usd": 0.00161535,
    "dropped_claims": 0,
    "id": "H020",
    "judge": {
@@ -7597,7 +7803,7 @@
       "supported": true
      }
     ],
-    "faithfulness": 5,
+    "faithfulness": 4,
     "key_facts": [
      {
       "fact": 1,
@@ -7617,7 +7823,7 @@
    },
    "llm_calls": 5,
    "loops": 0,
-   "prompt_tokens": 6216,
+   "prompt_tokens": 6005,
    "scores": {
     "citation_a": [
      1,
@@ -7632,7 +7838,7 @@
      3
     ],
     "faithfulness": [
-     5,
+     4,
      1
     ],
     "gold_all": [
@@ -7652,8 +7858,8 @@
      1
     ],
     "tool_success": [
-     4,
-     4
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
@@ -7661,12 +7867,12 @@
      1
     ]
    },
-   "tool_calls": 4
+   "tool_calls": 2
   },
   {
-   "claims": 2,
-   "completion_tokens": 1719,
-   "cost_usd": 0.00278715,
+   "claims": 3,
+   "completion_tokens": 2736,
+   "cost_usd": 0.00409875,
    "dropped_claims": 0,
    "id": "H021",
    "judge": {
@@ -7678,40 +7884,44 @@
      {
       "claim": 2,
       "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
      }
     ],
-    "faithfulness": 4,
+    "faithfulness": 5,
     "key_facts": [
      {
       "fact": 1,
-      "present": false
+      "present": true
      },
      {
       "fact": 2,
-      "present": false
+      "present": true
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 8,
+   "llm_calls": 10,
    "loops": 0,
-   "prompt_tokens": 14393,
+   "prompt_tokens": 19581,
    "scores": {
     "citation_a": [
-     2,
-     2
+     3,
+     3
     ],
     "citation_b": [
-     2,
-     2
+     3,
+     3
     ],
     "completeness": [
-     0,
+     2,
      2
     ],
     "faithfulness": [
-     4,
+     5,
      1
     ],
     "gold_all": [
@@ -7740,13 +7950,30 @@
    "tool_calls": 8
   },
   {
-   "claims": 0,
-   "completion_tokens": 1956,
-   "cost_usd": 0.00307725,
+   "claims": 4,
+   "completion_tokens": 2643,
+   "cost_usd": 0.0037212,
    "dropped_claims": 0,
    "id": "H023",
    "judge": {
-    "claims": [],
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
     "faithfulness": 5,
     "key_facts": [
      {
@@ -7759,20 +7986,112 @@
      },
      {
       "fact": 3,
-      "present": true
+      "present": false
      }
     ],
     "premise_corrected": false,
     "unrecorded_respected": true
    },
-   "llm_calls": 9,
-   "loops": 1,
-   "prompt_tokens": 15507,
+   "llm_calls": 11,
+   "loops": 0,
+   "prompt_tokens": 18827,
    "scores": {
-    "citation_a": null,
-    "citation_b": null,
+    "citation_a": [
+     4,
+     4
+    ],
+    "citation_b": [
+     4,
+     4
+    ],
     "completeness": [
+     0,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
      1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": [
+     0,
+     1
+    ],
+    "tool_success": [
+     6,
+     8
+    ],
+    "unrecorded_respected": [
+     1,
+     1
+    ],
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 8
+  },
+  {
+   "claims": 2,
+   "completion_tokens": 3963,
+   "cost_usd": 0.00503805,
+   "dropped_claims": 0,
+   "id": "H026",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": false,
+    "unrecorded_respected": true
+   },
+   "llm_calls": 11,
+   "loops": 1,
+   "prompt_tokens": 20935,
+   "scores": {
+    "citation_a": [
+     2,
+     2
+    ],
+    "citation_b": [
+     2,
+     2
+    ],
+    "completeness": [
+     0,
      3
     ],
     "faithfulness": [
@@ -7812,10 +8131,10 @@
   },
   {
    "claims": 2,
-   "completion_tokens": 1562,
-   "cost_usd": 0.00237405,
+   "completion_tokens": 3074,
+   "cost_usd": 0.0037155,
    "dropped_claims": 0,
-   "id": "H026",
+   "id": "H027",
    "judge": {
     "claims": [
      {
@@ -7827,88 +8146,6 @@
       "supported": true
      }
     ],
-    "faithfulness": 4,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": true
-     },
-     {
-      "fact": 3,
-      "present": false
-     }
-    ],
-    "premise_corrected": true,
-    "unrecorded_respected": false
-   },
-   "llm_calls": 8,
-   "loops": 0,
-   "prompt_tokens": 12267,
-   "scores": {
-    "citation_a": [
-     2,
-     2
-    ],
-    "citation_b": [
-     2,
-     2
-    ],
-    "completeness": [
-     2,
-     3
-    ],
-    "faithfulness": [
-     4,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": [
-     1,
-     1
-    ],
-    "tool_success": [
-     6,
-     8
-    ],
-    "unrecorded_respected": [
-     0,
-     1
-    ],
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 1,
-   "completion_tokens": 1773,
-   "cost_usd": 0.00249585,
-   "dropped_claims": 0,
-   "id": "H027",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     }
-    ],
     "faithfulness": 5,
     "key_facts": [
      {
@@ -7917,7 +8154,7 @@
      },
      {
       "fact": 2,
-      "present": true
+      "present": false
      },
      {
       "fact": 3,
@@ -7925,22 +8162,22 @@
      }
     ],
     "premise_corrected": null,
-    "unrecorded_respected": false
+    "unrecorded_respected": true
    },
-   "llm_calls": 8,
+   "llm_calls": 10,
    "loops": 0,
-   "prompt_tokens": 12235,
+   "prompt_tokens": 15930,
    "scores": {
     "citation_a": [
-     1,
-     1
+     2,
+     2
     ],
     "citation_b": [
-     1,
-     1
+     2,
+     2
     ],
     "completeness": [
-     2,
+     1,
      3
     ],
     "faithfulness": [
@@ -7965,7 +8202,7 @@
      8
     ],
     "unrecorded_respected": [
-     0,
+     1,
      1
     ],
     "verify_loop": [
@@ -7976,9 +8213,9 @@
    "tool_calls": 8
   },
   {
-   "claims": 3,
-   "completion_tokens": 3201,
-   "cost_usd": 0.00404355,
+   "claims": 4,
+   "completion_tokens": 4570,
+   "cost_usd": 0.0054342,
    "dropped_claims": 0,
    "id": "H029",
    "judge": {
@@ -7994,6 +8231,10 @@
      {
       "claim": 3,
       "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
      }
     ],
     "faithfulness": 5,
@@ -8014,17 +8255,17 @@
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 10,
+   "llm_calls": 12,
    "loops": 1,
-   "prompt_tokens": 17609,
+   "prompt_tokens": 22172,
    "scores": {
     "citation_a": [
-     3,
-     3
+     4,
+     4
     ],
     "citation_b": [
-     3,
-     3
+     4,
+     4
     ],
     "completeness": [
      3,
@@ -8048,7 +8289,83 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     6,
+     7,
+     7
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     1,
+     1
+    ]
+   },
+   "tool_calls": 7
+  },
+  {
+   "claims": 1,
+   "completion_tokens": 4587,
+   "cost_usd": 0.00552615,
+   "dropped_claims": 0,
+   "id": "H030",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 12,
+   "loops": 1,
+   "prompt_tokens": 22589,
+   "scores": {
+    "citation_a": [
+     1,
+     1
+    ],
+    "citation_b": [
+     1,
+     1
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     0,
+     1
+    ],
+    "gold_frac": [
+     0.5,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     7,
      8
     ],
     "unrecorded_respected": null,
@@ -8060,11 +8377,11 @@
    "tool_calls": 8
   },
   {
-   "claims": 3,
-   "completion_tokens": 1518,
-   "cost_usd": 0.0021036,
+   "claims": 2,
+   "completion_tokens": 1780,
+   "cost_usd": 0.00182805,
    "dropped_claims": 0,
-   "id": "H030",
+   "id": "H034",
    "judge": {
     "claims": [
      {
@@ -8074,10 +8391,6 @@
      {
       "claim": 2,
       "supported": true
-     },
-     {
-      "claim": 3,
-      "supported": true
      }
     ],
     "faithfulness": 5,
@@ -8089,90 +8402,25 @@
      {
       "fact": 2,
       "present": true
-     },
-     {
-      "fact": 3,
-      "present": true
      }
     ],
     "premise_corrected": null,
     "unrecorded_respected": null
    },
-   "llm_calls": 6,
+   "llm_calls": 5,
    "loops": 0,
-   "prompt_tokens": 9872,
+   "prompt_tokens": 6603,
    "scores": {
     "citation_a": [
-     3,
-     3
+     2,
+     2
     ],
     "citation_b": [
-     3,
-     3
+     2,
+     2
     ],
     "completeness": [
-     3,
-     3
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
-     0,
-     1
-    ],
-    "premise_corrected": null,
-    "tool_success": [
-     5,
-     5
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 5
-  },
-  {
-   "claims": 0,
-   "completion_tokens": 2850,
-   "cost_usd": 0.00386235,
-   "dropped_claims": 1,
-   "id": "H034",
-   "judge": {
-    "claims": [],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 18061,
-   "scores": {
-    "citation_a": null,
-    "citation_b": null,
-    "completeness": [
-     1,
+     2,
      2
     ],
     "faithfulness": [
@@ -8193,21 +8441,21 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     5,
-     6
+     2,
+     2
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
-   "tool_calls": 6
+   "tool_calls": 2
   },
   {
    "claims": 1,
-   "completion_tokens": 1399,
-   "cost_usd": 0.00159525,
+   "completion_tokens": 1630,
+   "cost_usd": 0.00170115,
    "dropped_claims": 0,
    "id": "H037",
    "judge": {
@@ -8237,7 +8485,7 @@
    },
    "llm_calls": 5,
    "loops": 0,
-   "prompt_tokens": 6575,
+   "prompt_tokens": 6357,
    "scores": {
     "citation_a": [
      1,
@@ -8269,8 +8517,8 @@
     ],
     "premise_corrected": null,
     "tool_success": [
-     4,
-     4
+     2,
+     2
     ],
     "unrecorded_respected": [
      0,
@@ -8281,34 +8529,26 @@
      1
     ]
    },
-   "tool_calls": 4
+   "tool_calls": 2
   },
   {
-   "claims": 3,
-   "completion_tokens": 1862,
-   "cost_usd": 0.0029679,
-   "dropped_claims": 0,
+   "claims": 1,
+   "completion_tokens": 4306,
+   "cost_usd": 0.005112,
+   "dropped_claims": 1,
    "id": "H038",
    "judge": {
     "claims": [
      {
       "claim": 1,
       "supported": true
-     },
-     {
-      "claim": 2,
-      "supported": false
-     },
-     {
-      "claim": 3,
-      "supported": true
      }
     ],
-    "faithfulness": 4,
+    "faithfulness": 3,
     "key_facts": [
      {
       "fact": 1,
-      "present": true
+      "present": false
      },
      {
       "fact": 2,
@@ -8319,27 +8559,27 @@
       "present": false
      }
     ],
-    "premise_corrected": true,
+    "premise_corrected": false,
     "unrecorded_respected": null
    },
-   "llm_calls": 8,
-   "loops": 0,
-   "prompt_tokens": 14642,
+   "llm_calls": 12,
+   "loops": 2,
+   "prompt_tokens": 20824,
    "scores": {
     "citation_a": [
-     3,
-     3
+     1,
+     1
     ],
     "citation_b": [
-     2,
-     3
+     1,
+     1
     ],
     "completeness": [
-     1,
+     0,
      3
     ],
     "faithfulness": [
-     4,
+     3,
      1
     ],
     "gold_all": [
@@ -8355,81 +8595,9 @@
      1
     ],
     "premise_corrected": [
-     1,
-     1
-    ],
-    "tool_success": [
-     6,
-     8
-    ],
-    "unrecorded_respected": null,
-    "verify_loop": [
-     0,
-     1
-    ]
-   },
-   "tool_calls": 8
-  },
-  {
-   "claims": 1,
-   "completion_tokens": 2636,
-   "cost_usd": 0.00402975,
-   "dropped_claims": 1,
-   "id": "H039",
-   "judge": {
-    "claims": [
-     {
-      "claim": 1,
-      "supported": true
-     }
-    ],
-    "faithfulness": 5,
-    "key_facts": [
-     {
-      "fact": 1,
-      "present": true
-     },
-     {
-      "fact": 2,
-      "present": false
-     }
-    ],
-    "premise_corrected": null,
-    "unrecorded_respected": null
-   },
-   "llm_calls": 11,
-   "loops": 2,
-   "prompt_tokens": 19905,
-   "scores": {
-    "citation_a": [
-     1,
-     1
-    ],
-    "citation_b": [
-     1,
-     1
-    ],
-    "completeness": [
-     1,
-     2
-    ],
-    "faithfulness": [
-     5,
-     1
-    ],
-    "gold_all": [
-     1,
-     1
-    ],
-    "gold_frac": [
-     1.0,
-     1
-    ],
-    "no_diagnosis": [
      0,
      1
     ],
-    "premise_corrected": null,
     "tool_success": [
      7,
      8
@@ -8444,10 +8612,10 @@
   },
   {
    "claims": 2,
-   "completion_tokens": 3091,
-   "cost_usd": 0.00440295,
+   "completion_tokens": 1648,
+   "cost_usd": 0.0018918,
    "dropped_claims": 0,
-   "id": "H040",
+   "id": "H039",
    "judge": {
     "claims": [
      {
@@ -8467,6 +8635,82 @@
      },
      {
       "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
+   "llm_calls": 5,
+   "loops": 0,
+   "prompt_tokens": 7172,
+   "scores": {
+    "citation_a": [
+     2,
+     2
+    ],
+    "citation_b": [
+     2,
+     2
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
+    "gold_all": [
+     1,
+     1
+    ],
+    "gold_frac": [
+     1.0,
+     1
+    ],
+    "no_diagnosis": [
+     0,
+     1
+    ],
+    "premise_corrected": null,
+    "tool_success": [
+     2,
+     2
+    ],
+    "unrecorded_respected": null,
+    "verify_loop": [
+     0,
+     1
+    ]
+   },
+   "tool_calls": 2
+  },
+  {
+   "claims": 2,
+   "completion_tokens": 3353,
+   "cost_usd": 0.00444105,
+   "dropped_claims": 0,
+   "id": "H040",
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": false
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 4,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
       "present": false
      },
      {
@@ -8478,23 +8722,23 @@
     "unrecorded_respected": null
    },
    "llm_calls": 10,
-   "loops": 2,
-   "prompt_tokens": 20189,
+   "loops": 0,
+   "prompt_tokens": 19651,
    "scores": {
     "citation_a": [
      2,
      2
     ],
     "citation_b": [
-     2,
+     1,
      2
     ],
     "completeness": [
-     1,
+     0,
      3
     ],
     "faithfulness": [
-     5,
+     4,
      1
     ],
     "gold_all": [
@@ -8514,23 +8758,23 @@
      1
     ],
     "tool_success": [
-     8,
-     8
+     5,
+     7
     ],
     "unrecorded_respected": null,
     "verify_loop": [
-     1,
+     0,
      1
     ]
    },
-   "tool_calls": 8
+   "tool_calls": 7
   }
  ],
  "questions_run": 100,
  "questions_total": 100,
- "spend_usd": 0.328981,
+ "spend_usd": 0.041184,
  "split": "dev",
  "uncommitted_changes": [],
  "unjudged": [],
- "wall_s_total": 821.7
+ "wall_s_total": 148.6
 }
