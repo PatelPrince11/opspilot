@@ -810,6 +810,32 @@ def placeholder_section(measured: set[str] = frozenset()) -> list[str]:
     return out
 
 
+def empty_final_notes(on: dict, off: dict) -> list[str]:
+    """One line per question whose final answer has no claims, from the committed rows: the
+    first draft (the verify-off row of the same trajectory) and what verify left."""
+    first = {q["id"]: q for q in off["questions"]}
+    out = []
+    for q in sorted(on["questions"], key=lambda q: q["id"]):
+        if q["claims"]:
+            continue
+        f = first[q["id"]]
+        ok, n = f["scores"]["citation_a"] or [0, 0]
+        fell_back = q["scores"]["no_diagnosis"][0] == 1
+        out.append(
+            f"  - {q['id']}: first draft {n} claims ({ok} passed the check); verify sent it back"
+            f" {q['loops']} times and each pass redrafted; the last draft had"
+            f" {q['claims'] + q['dropped_claims']} claim(s), {q['dropped_claims']} failed and"
+            f" {'was' if q['dropped_claims'] == 1 else 'were'} dropped, so the final answer has"
+            " an empty claims list"
+            + (
+                " (the no-diagnosis fallback)."
+                if fell_back
+                else " (not the no-diagnosis fallback)."
+            )
+        )
+    return out
+
+
 def bullets_section() -> list[str]:
     """The resume bullets, filled from the test-split rows of this ledger (and the held-out
     injection and judge-agreement files), each with its source row and CI."""
@@ -869,9 +895,10 @@ def bullets_section() -> list[str]:
         " construction; the claim is the first-draft failure rate.",
         f"  - Note: first-draft failure rate is over {len(off['questions'])} questions;"
         f" {len(pids)} had claims in the final answer; verify drops failing claims, it does not"
-        " repair them (no final claims: "
-        + ", ".join(sorted(q["id"] for q in on["questions"] if not qa[q["id"]]))
-        + ").",
+        " repair them.",
+        *empty_final_notes(on, off),
+        "  - Disclose: verify checks claims, not the summary or likely-cause text, so a dropped"
+        " claim can still be asserted in the summary (seen in Q030).",
         "  - Disclose: tool-call success counts repeated calls as failures (the same tool with"
         " the same arguments, or re-reading a document part already in the evidence: refused,"
         " not run), so it is not the share of calls that hit an error.",

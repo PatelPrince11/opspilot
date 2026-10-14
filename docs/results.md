@@ -495,7 +495,10 @@ Every number comes from the files named under each bullet; nothing is typed by h
 - Built a LangGraph incident-investigation agent with 5 read-only tools and a citation-verification loop: 25.6% of first-draft claims failed a deterministic evidence check and the loop removed all of them (98 held-out questions), at 85.2% tool-call success and about $0.0048 per investigation.
   - Source: section (f) generation, test column: first-draft citation (a) failure 0.256 [0.195, 0.319]; final citation (a) 1.000; verify on - off +0.254 [+0.192, +0.320] (n 98); tool-call success 0.852 [0.826, 0.879]; $ per investigation 0.0048 [0.0044, 0.0052].
   - Disclose: final citation (a) is what the verify node enforces, so it is 1.0 by construction; the claim is the first-draft failure rate.
-  - Note: first-draft failure rate is over 100 questions; 98 had claims in the final answer; verify drops failing claims, it does not repair them (no final claims: Q030, Q080).
+  - Note: first-draft failure rate is over 100 questions; 98 had claims in the final answer; verify drops failing claims, it does not repair them.
+  - Q030: first draft 3 claims (2 passed the check); verify sent it back 2 times and each pass redrafted; the last draft had 1 claim(s), 1 failed and was dropped, so the final answer has an empty claims list (not the no-diagnosis fallback).
+  - Q080: first draft 3 claims (2 passed the check); verify sent it back 2 times and each pass redrafted; the last draft had 1 claim(s), 1 failed and was dropped, so the final answer has an empty claims list (not the no-diagnosis fallback).
+  - Disclose: verify checks claims, not the summary or likely-cause text, so a dropped claim can still be asserted in the summary (seen in Q030).
   - Disclose: tool-call success counts repeated calls as failures (the same tool with the same arguments, or re-reading a document part already in the evidence: refused, not run), so it is not the share of calls that hit an error.
 - Measured prompt-injection attack success on 45 held-out cases: 11/45 undefended vs 2/45 with layered defenses (0 strict hits; McNemar p = 0.012).
   - Source: section (c3), heldout_pooled row; before [0.142, 0.387], after [0.012, 0.148] (Wilson 95%).
