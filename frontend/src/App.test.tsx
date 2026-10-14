@@ -144,16 +144,16 @@ describe("App", () => {
     render(<App />);
     const root = document.documentElement;
     const group = screen.getByRole("group", { name: "Theme" });
-    expect(within(group).getByRole("button", { name: "dark" })).toHaveAttribute("aria-pressed", "true");
-    expect(root.dataset.theme).toBe("dark"); // dark by default
-
-    await user.click(within(group).getByRole("button", { name: "light" }));
-    expect(root.dataset.theme).toBe("light");
     expect(within(group).getByRole("button", { name: "light" })).toHaveAttribute("aria-pressed", "true");
-    await user.click(within(group).getByRole("button", { name: "system" }));
-    expect(root.dataset.theme).toBeUndefined(); // follows prefers-color-scheme
+    expect(root.dataset.theme).toBe("light"); // light by default
+
     await user.click(within(group).getByRole("button", { name: "dark" }));
     expect(root.dataset.theme).toBe("dark");
+    expect(within(group).getByRole("button", { name: "dark" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(within(group).getByRole("button", { name: "system" }));
+    expect(root.dataset.theme).toBeUndefined(); // follows prefers-color-scheme
+    await user.click(within(group).getByRole("button", { name: "light" }));
+    expect(root.dataset.theme).toBe("light");
     expect(localStorage.length + sessionStorage.length).toBe(0);
   });
 

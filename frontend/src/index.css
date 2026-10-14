@@ -1,29 +1,43 @@
 @import "tailwindcss";
 
-/* Design tokens. Components use only these (bg-surface, text-muted, …), never raw palette
+/* Inter (variable, Latin subset), self-hosted: Vite bundles the file, no CDN. SIL OFL 1.1, see
+   fonts/Inter-LICENSE.txt. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("./fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+}
+
+/* "Paper" design tokens. Components use only these (bg-surface, text-muted, …), never raw palette
    classes, so the two themes are one list of light-dark() pairs. color-scheme picks the side:
-   <html data-theme> (dark by default, set by the header toggle), or the OS preference when the
-   toggle is on "system". It also themes native controls (the date picker, scrollbars). */
+   <html data-theme> (light by default, set by the header toggle), or the OS preference when the
+   toggle is on "system". It also themes native controls (the date picker, scrollbars).
+   Contrast rules the tokens are built around:
+   - muted (#6d6f75) passes on white (5.02:1) but not on the #f2f2f2 canvas (4.49:1), so text on
+     canvas or raised blocks uses ink;
+   - ok / warn / bad are fills, always with on-status (navy) text: coral as text on the light
+     canvas would be 2.76:1. */
 :root {
   color-scheme: light dark;
-  --canvas: light-dark(#f3f5f7, #0b0e12);
-  --surface: light-dark(#ffffff, #13181e);
-  --raised: light-dark(#edf0f3, #1b222a);
-  --line: light-dark(#d8dee5, #29323d);
-  --field-line: light-dark(#7d8896, #6c7988);
-  --ink: light-dark(#111820, #e7ecf1);
-  --muted: light-dark(#4b5664, #a3aebb);
-  --accent: light-dark(#0b6a80, #52c3d8);
-  --accent-hover: light-dark(#08566a, #7dd3e3);
-  --accent-ink: light-dark(#ffffff, #04232b);
-  --accent-soft: light-dark(#e0f0f4, #10303a);
-  --ok: light-dark(#17703a, #5fd38c);
-  --ok-soft: light-dark(#e2f3e7, #10281a);
-  --warn: light-dark(#8a4f00, #f0b44a);
-  --warn-soft: light-dark(#fbefd8, #2d220c);
-  --bad: light-dark(#b42318, #ff8b80);
-  --bad-soft: light-dark(#fdecea, #301615);
-  --mark: light-dark(#fde68a, #6a5513);
+  --canvas: light-dark(#f2f2f2, #0f1426);
+  --surface: light-dark(#ffffff, #171e36);
+  --raised: light-dark(#f2f2f2, #1f2744);
+  --line: light-dark(#e4e3df, #2b3452);
+  --field-line: light-dark(#8a8d95, #6e7697);
+  --ink: light-dark(#151b31, #f2f2f2);
+  --muted: light-dark(#6d6f75, #a9adb9);
+  --accent: light-dark(#151b31, #f2f2f2);
+  --accent-hover: light-dark(#2a3354, #ffffff);
+  --accent-ink: light-dark(#ffffff, #151b31);
+  --accent-soft: light-dark(#e8eaf2, #232c4d);
+  --ok: #a6f4c5;
+  --warn: #fedf89;
+  --bad: #ff5858;
+  --on-status: #151b31;
+  --mark: #fedf89;
+  --shadow-color: light-dark(rgba(138, 133, 125, 0.2), rgba(0, 0, 0, 0.45));
 }
 :root[data-theme="light"] {
   color-scheme: light;
@@ -45,17 +59,20 @@
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
   --color-ok: var(--ok);
-  --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
-  --color-warn-soft: var(--warn-soft);
   --color-bad: var(--bad);
-  --color-bad-soft: var(--bad-soft);
+  --color-on-status: var(--on-status);
   --color-mark: var(--mark);
+  --shadow-paper: 0 1px 4px var(--shadow-color);
 }
 
-/* Motion: short and small, only where something new arrives. Used through motion-safe:, so
-   prefers-reduced-motion gets the content with no travel. */
 @theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Two radii only: rounded-lg (8px) inside panels, rounded-2xl (16px) for panels. */
+  --radius-lg: 8px;
+  --radius-2xl: 16px;
+  /* Motion: short and small, only where something new arrives. Used through motion-safe:, so
+     prefers-reduced-motion gets the content with no travel. */
   --animate-rise: rise 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   --animate-breathe: breathe 1.8s ease-in-out infinite;
 }
@@ -74,4 +91,5 @@
 body {
   background: var(--canvas);
   color: var(--ink);
+  letter-spacing: -0.01em;
 }
