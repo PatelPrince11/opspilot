@@ -3668,6 +3668,49 @@ the test split or on what the bullet names (EC2 latency: not deployed yet); or i
 judge with kappa below 0.6 (judge agreement). Citation (a) is enforced by the verify node, so
 the agent bullet must say so and lean on first-draft failure vs final.
 
+## 2026-10-14: Phase 5 test run (the one pre-registered run)
+
+- Freeze: tag `v0.1-frozen` = commit f978565842195b6fbc1101b0b734044b57af3edd (the
+  pre-registration commit). `make gate` and `make results-check` clean before tagging.
+- Ran, with `--final-test`: retrieval locked and dense on test; generation `shipped` (judged)
+  then `shipped_off`; injection held-out with `defended`. Results: eval/results/test_*.json,
+  ledger section (f), bullets in (e).
+- **Invalid run 1, documented.** Both generation result files recorded `scripts/results.py` as
+  an uncommitted file: I edited the ledger renderer (the resume-bullet filler) while the agent
+  stage ran, and provenance is taken when a result file is written. Root cause: working on the
+  report in the same tree as the frozen run. The renderer is not on the eval's execution path
+  (it imports the eval, not the reverse), but the pre-registered rule says a result file with
+  uncommitted files is invalid, so the whole run was repeated. Run 1's files and progress are
+  kept in scratchpad/invalid_run1/ (not committed).
+- **Run 2 (the reported run):** the edit stashed, tree clean at the tag, all four steps rerun
+  with spend caps of $0.05. Every LLM call (agent and judge) was a response-cache hit, new
+  spend $0: the frozen code sent byte-identical prompts, which is itself the check that it is
+  the code that made run 1's calls. Every metric is identical to run 1; only the provenance
+  changed (commit f978565, no uncommitted files). Latency and spend are run 1's measured
+  values (generation_eval keeps them on a pure cache replay).
+- Spend: $0.4763 agent (incl. Prompt Guard) for run 1; $0 run 2; $0 judge (Gemini free tier);
+  $0 injection replay; retrieval free. Total $0.48 of the $1.50 cap.
+- Injection: deleting the 45 held-out rows from the `defended` progress files and rerunning made
+  2,024 LLM calls, all cache hits, so the frozen code reproduces Phase 4's held-out result
+  exactly (11/45 -> 2/45, McNemar p 0.0117). This is a replay, not a fresh sample: the Phase 4
+  numbers stand, now confirmed on the final code. (The first attempt replayed nothing at all:
+  the progress files already held every case, so it only rebuilt the result.)
+- Test vs dev (dev was tuned on; a drop was expected): hybrid Recall@5 0.853 -> 0.790; dense
+  0.804 -> 0.755; hybrid - dense Recall@5 +0.049 [+0.006, +0.095] on dev but +0.035 [-0.019,
+  +0.092] on test, so **the Recall@5 gain does not replicate** at n = 100. MRR (+0.082 [+0.037,
+  +0.129]) and Recall@10 (+0.039 [+0.006, +0.076]) gains do. The gemini-authored test
+  questions are hardest (Recall@5 0.600, MRR 0.520, n 20), and paraphrase Recall@5 0.696 (n 28).
+- Generation held up: first-draft citation (a) failure 0.256 [0.195, 0.319] (dev 0.267),
+  final 1.000 (verify enforces it), on - off +0.254 [+0.192, +0.320]; gold_all 0.750, tool-call
+  success 0.852, loop rate 0.460, completeness 0.687 [0.614, 0.755] (judged, kappa 0.47).
+- End-to-end latency is not measured: the writer only times runs with no cached call, and every
+  test run had at least one cache hit (calls shared with earlier runs). LLM call latency p50
+  626 ms, p95 3,736 ms (n 1,463 live calls).
+- Bullets by the pre-registered rules: retrieval **drop** (CI includes 0); agent keep (framed as
+  first-draft failure to final); injection keep; judge **drop** (kappa < 0.6); EC2 **drop** (not
+  deployed). Not done: rewriting the retrieval bullet around MRR. That would be choosing the
+  metric after seeing the results; it is Prince's call, and it would have to say so.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
