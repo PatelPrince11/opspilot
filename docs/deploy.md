@@ -33,7 +33,7 @@ region on the AWS pricing pages before you launch.
   only by a password; the app port would bypass Nginx (and its X-Forwarded-For rewrite, which
   the per-IP rate limit depends on). Compose does not publish them either, so they are closed
   twice. If your home IP changes, edit the SSH rule back to "My IP".
-- **Storage:** 20 GiB, **gp3**.
+- **Storage:** 30 GiB, **gp3**.
 - Launch.
 
 **Optional, Elastic IP** (a fixed address that survives Stop/Start; otherwise the public IP
@@ -61,6 +61,20 @@ sudo usermod -aG docker ubuntu && exit
 
 Log in again (the group change needs a new session) and check `docker compose version`.
 
+**Swap (2 GiB).** 4 GiB is tight while the embedder, Postgres and an image pull run at once;
+swap turns a memory spike into slowness instead of the kernel killing a container:
+
+```bash
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+free -m
+```
+
+`free -m` should show `Swap: 2047`. The fstab line turns it back on after a Stop/Start.
+
 ## 3. Get the compose file and pull the images
 
 The GHCR packages are private by default. Either make them public (GitHub -> your profile ->
@@ -82,7 +96,14 @@ docker compose -f docker-compose.prod.yml pull
 chmod 600 .env && nano .env
 ```
 
-Fill in every `replace-me` (see the comments in the file). For passwords and the API key, make
+Fill in every `replace-me` (see the comments in the file).
+
+**The site is HTTP only, so the API key travels in cleartext** (the dashboard and the smoke test
+send it in the `X-API-Key` header), and anyone on the network path can read it. Use a throwaway
+key made for the demo, keep `DAILY_SPEND_LIMIT_USD` low (e.g. 0.50) so a leaked key can cost
+little, and rotate it afterwards: put the new key in `API_KEYS`, run `docker compose -f
+docker-compose.prod.yml up -d`, and drop the old one.
+ For passwords and the API key, make
 random values on the instance with `openssl rand -hex 32`. `POSTGRES_PASSWORD` must also appear
 inside `DATABASE_URL`. Keep the API key in your password manager; you need it for the dashboard
 and the smoke test. Never commit or paste this file.
@@ -128,6 +149,21 @@ not up (`logs app`); 401 -> the key differs from `API_KEYS`; an error event abou
 a provider key in `.env`; no sources -> step 6 not run. After editing `.env`, run `docker compose
 -f docker-compose.prod.yml up -d` again (it recreates the containers that use it).
 
+## 7b. Memory during the Part B latency run
+
+The latency run goes over HTTP from your Mac, so it cannot see the instance's memory. In a
+second SSH session, start this right before the run and stop it (Ctrl-C) right after:
+
+```bash
+free -m > ~/free_before.txt; free -m -s 5 | tee ~/free_during.txt
+```
+
+Then copy the files to the repo for the record (they hold memory figures only, nothing secret):
+
+```bash
+scp -i ~/.ssh/opspilot.pem 'ubuntu@<PUBLIC_IP>:free_*.txt' scratchpad/deploy/
+```
+
 ## 8. Updating
 
 ```bash
@@ -137,6 +173,6 @@ cd ~/opspilot && docker compose -f docker-compose.prod.yml pull && docker compos
 ## 9. When you are done: Stop, do not Terminate
 
 EC2 -> Instances -> select -> Instance state -> **Stop**. A stopped instance does not bill compute,
-but its 20 GiB gp3 volume (and an allocated Elastic IP) still bill. Terminate deletes the disk and
+but its 30 GiB gp3 volume (and an allocated Elastic IP) still bill. Terminate deletes the disk and
 the database with it; do that only when the project is finished. Check Billing -> Bills a day
 later to see what was charged.

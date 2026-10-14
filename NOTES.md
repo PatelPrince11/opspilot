@@ -3848,6 +3848,16 @@ change would be a cache miss.
   the proxy's IP bucket.
 - Measure memory and live latency (end to end, retrieval, LLM) on the EC2 instance. The locked
   config does not rerank, so the cross-encoder must not be loaded there.
+- Memory in the latency run: `free -m` on the instance before and every 5 s during the run
+  (docs/deploy.md step 7b, Prince runs it over SSH; the run itself is HTTP only). The latency
+  script reads `scratchpad/deploy/free_{before,during}.txt` and writes total/used/available and
+  swap used (before, peak during) into eval/results/deploy_latency.json; missing files are
+  recorded as "not captured", never estimated.
+- Prompt Guard fails open (checked 2026-10-14 with stubs, no model calls): if the Groq call
+  raises, the tool node catches it and marks the call failed, but the items it already fetched
+  stay in the evidence unscreened (no withhold, no flag; D1 wrap still applies), reach the
+  draft prompt and can be cited. Not changed: agent code is frozen at v0.1-frozen; a fix
+  (drop the items, or withhold them, when screening fails) is Prince's call.
 - Retake the README dashboard screenshots after the dashboard redesign (the current ones predate
   the API key field).
 
