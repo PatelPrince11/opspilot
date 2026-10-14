@@ -35,7 +35,13 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr | None = None
     ollama_host: str = "http://host.docker.internal:11434"
 
-    api_key: SecretStr | None = None
+    # POST /investigate guard (api/main.py). API_KEYS: comma-separated; unset or empty means
+    # every request is refused (fail closed). Limits apply per key and per client IP, each.
+    api_keys: SecretStr | None = None
+    rate_per_minute: int = Field(default=5, ge=1)
+    rate_per_day: int = Field(default=100, ge=1)
+    # Hard ceiling: /investigate answers 503 once today's (UTC) recorded LLM spend reaches this.
+    daily_spend_limit_usd: float = Field(default=1.0, ge=0.0)
 
     # LLMs as "provider:model" (llm/client.py). Config only: switching models is an env change.
     # Agent: gpt-oss-120b via OpenRouter, pinned to Groq (Groq's paid tier was unavailable).
