@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from agent import graph as graph_mod
 from agent.defenses import FINAL_DEFENSES
 from agent.run import SHIPPED
-from api.main import agent_config, agent_llm, app
+from api.main import agent_config, agent_llm, app, guard, spent_today
 from config import get_settings
 from tests.stub_llm import TRIAGE, StubLLM, calls, draft, say
 from tests.test_graph import fake_tool
@@ -49,6 +49,7 @@ def client(db_url, monkeypatch):
     monkeypatch.setattr(graph_mod, "run_tool", fake_tool())
     # The shipped config minus Prompt Guard, which needs Groq (tests/test_defenses.py stubs it).
     app.dependency_overrides[agent_config] = lambda: SHIPPED | {"guard": "off"}
+    app.dependency_overrides[guard] = lambda: None  # tests/test_api_guard.py covers the guard
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -146,3 +147,20 @@ def test_unknown_investigation_is_404(client):
 
 def test_request_validation(client):
     assert client.post("/investigate", json={"question": "hi"}).status_code == 422
+
+
+def test_spent_today_sums_todays_costs_only(client, db_url):
+    with psycopg.connect(db_url, autocommit=True) as conn:
+        conn.execute("DELETE FROM investigations")
+        for cost, created in [
+            (0.25, "now()"),
+            (0.5, "now()"),
+            (None, "now()"),
+            (9.0, "now() - interval '2 days'"),
+        ]:
+            conn.execute(
+                "INSERT INTO investigations (id, question, as_of, llm, verify_enabled, cost_usd,"
+                f" created_at) VALUES (%s, 'q', now(), 'x:y', true, %s, {created})",
+                (uuid.uuid4(), cost),
+            )
+    assert spent_today() == pytest.approx(0.75)

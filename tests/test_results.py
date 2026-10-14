@@ -84,3 +84,12 @@ def test_named_result_files_have_no_run_ids_or_timestamps(name):
         "uncommitted_changes",
     }
     assert len(d["questions"]) == 100 and all("latency_ms" not in q for q in d["questions"])
+
+
+def test_level_ci_pools_and_brackets_the_ratio():
+    pairs = [[1, 2], [3, 4], [0, 1], [2, 2], None]
+    v, lo, hi = results.level_ci(pairs)
+    assert v == 6 / 9  # pooled over denominators, not a mean of per-question rates
+    assert lo <= v <= hi
+    assert results.level_ci([None]) is None
+    assert results.cell([[1, 1]] * 3, invert=True) == "0.000 [0.000, 0.000] (n 3)"

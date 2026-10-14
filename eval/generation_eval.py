@@ -69,6 +69,8 @@ CONFIGS = {"verify_on": (True, {}), "verify_off": (False, {})} | {
 CONFIGS |= {"defended_on": (True, FINAL_DEFENSES), "defended_off": (False, FINAL_DEFENSES)}
 # The agent the API runs (agent/run.py SHIPPED): locked + defenses + live-only first look.
 CONFIGS["shipped"] = (True, SHIPPED)
+# Its verify-off twin: the same trajectory's first draft (cached), for verify on vs off.
+CONFIGS["shipped_off"] = (False, SHIPPED)
 DEFENSE_COST = RESULTS / "dev_generation_defense_cost.json"
 SHIPPED_VS_LOCKED = RESULTS / "dev_generation_shipped_vs_locked.json"
 COST = RESULTS / "dev_generation_cost.json"

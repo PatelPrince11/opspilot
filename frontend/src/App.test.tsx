@@ -70,6 +70,7 @@ describe("App", () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/investigate");
     expect(JSON.parse(init.body)).toEqual({ question: DEMO.question, as_of: "2026-10-06T14:52:00Z" });
+    expect(init.headers["X-API-Key"]).toBeUndefined(); // no key typed: no header
 
     s.push(EVENTS[0] + EVENTS[1]);
     const stream = screen.getByRole("region", { name: /Live tool calls/ });
@@ -113,6 +114,21 @@ describe("App", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ detail }, { status: 422 })));
     await start();
     expect(await screen.findByRole("alert")).toHaveTextContent("422: String should have at least 5 characters");
+  });
+
+  it("sends the typed API key as X-API-Key, keeps it out of storage, and shows a 401", async () => {
+    const detail = "missing or invalid X-API-Key";
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ detail }, { status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<App />);
+    await user.type(screen.getByLabelText("API key"), " k-123 ");
+    await user.click(screen.getByRole("button", { name: "Load demo incident" }));
+    await user.click(screen.getByRole("button", { name: "Investigate" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(`401: ${detail}`);
+    expect(fetchMock.mock.calls[0][1].headers["X-API-Key"]).toBe("k-123");
+    expect(localStorage.length + sessionStorage.length).toBe(0);
+    await user.clear(screen.getByLabelText("API key")); // module memory: reset for later tests
   });
 
   it("reports a run that ended without a diagnosis", async () => {

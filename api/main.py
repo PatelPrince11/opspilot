@@ -1,17 +1,24 @@
+import hmac
 import itertools
 import json
+import math
+import threading
+import time
 import uuid
+from collections import defaultdict, deque
 from collections.abc import Iterator
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
+import psycopg
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from agent.run import SHIPPED, investigate, load
+from config import get_settings
 from llm.client import Client
 
 app = FastAPI(title="OpsPilot")
@@ -36,6 +43,81 @@ def agent_config() -> dict:
     return SHIPPED
 
 
+class RateLimiter:
+    """Sliding-window hit counts per bucket ("key:..." or "ip:..."), in process memory.
+    ponytail: one process only; a second worker or replica keeps its own counts, and buckets of
+    IPs seen once stay in the dict. Move the counts to Postgres or Redis if the app scales out."""
+
+    def __init__(self) -> None:
+        self.hits: dict[str, deque[float]] = defaultdict(deque)
+        self.lock = threading.Lock()
+
+    def hit(self, buckets: list[str], limits: list[tuple[int, float]], now: float) -> float:
+        """Records one hit in every bucket and returns 0, or, if any bucket is at a limit,
+        records nothing and returns the seconds until that bucket has room again."""
+        longest = max(w for _, w in limits)
+        with self.lock:
+            wait = 0.0
+            for b in buckets:
+                q = self.hits[b]
+                while q and q[0] <= now - longest:
+                    q.popleft()
+                for n, window in limits:
+                    inside = [t for t in q if t > now - window]
+                    if len(inside) >= n:  # room again once the n-th most recent hit leaves
+                        wait = max(wait, inside[-n] + window - now)
+            if wait == 0:
+                for b in buckets:
+                    self.hits[b].append(now)
+            return wait
+
+
+limiter = RateLimiter()
+
+
+def spent_today() -> float:
+    """Recorded LLM spend of investigations started today (UTC). ponytail: a running
+    investigation records its cost when it finishes, so concurrent runs can overshoot the
+    ceiling by about one investigation's cost each."""
+    with psycopg.connect(get_settings().database_url) as conn:
+        return conn.execute(
+            "SELECT coalesce(sum(cost_usd), 0) FROM investigations"
+            " WHERE created_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'"
+        ).fetchone()[0]
+
+
+def guard(request: Request, x_api_key: Annotated[str | None, Header()] = None) -> None:
+    """POST /investigate only: API key (401), per-key and per-IP rate limits (429), then the
+    daily spend ceiling (503). Behind a proxy, run uvicorn with --proxy-headers so
+    request.client is the caller, not the proxy."""
+    s = get_settings()
+    keys = [k.strip() for k in (s.api_keys.get_secret_value() if s.api_keys else "").split(",")]
+    given = (x_api_key or "").encode()
+    ok = False
+    for k in filter(None, keys):  # compare against every key: no early exit, constant time each
+        ok |= hmac.compare_digest(k.encode(), given)
+    if not ok:
+        raise HTTPException(401, "missing or invalid X-API-Key")
+    ip = request.client.host if request.client else "unknown"
+    wait = limiter.hit(
+        [f"key:{x_api_key}", f"ip:{ip}"],
+        [(s.rate_per_minute, 60.0), (s.rate_per_day, 86400.0)],
+        time.monotonic(),
+    )
+    if wait:
+        raise HTTPException(
+            429, "rate limit exceeded", headers={"Retry-After": str(math.ceil(wait))}
+        )
+    if spent_today() >= s.daily_spend_limit_usd:
+        now = datetime.now(UTC)
+        midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        raise HTTPException(
+            503,
+            "daily spend ceiling reached; try again tomorrow (UTC)",
+            headers={"Retry-After": str(math.ceil((midnight - now).total_seconds()))},
+        )
+
+
 def sse(events: Iterator[dict]) -> Iterator[str]:
     for e in events:
         data = {k: v for k, v in e.items() if k != "event"}
@@ -48,7 +130,7 @@ def health() -> dict[str, str]:
     return {"status": "ok", "service": "opspilot"}
 
 
-@app.post("/investigate")
+@app.post("/investigate", dependencies=[Depends(guard)])
 def post_investigate(
     req: InvestigateRequest,
     llm: Annotated[Client, Depends(agent_llm)],

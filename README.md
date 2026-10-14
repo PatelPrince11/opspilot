@@ -21,6 +21,8 @@ Migrations are Alembic, in `db/migrations/`. `make migrate` / `make migrate-down
 
 The dashboard is served by the app at <http://127.0.0.1:8001/> (built into the image from `frontend/`; `cd frontend && npm run dev` for a hot-reloading copy on :5173). `make web-check` lints, typechecks, tests and builds it; `make e2e` runs the Playwright smoke test against the stub LLM.
 
+`POST /investigate` needs an `X-API-Key` header holding one of the comma-separated keys in `API_KEYS` (401 otherwise; with `API_KEYS` empty every request is refused). Each key and each client IP gets `RATE_PER_MINUTE` / `RATE_PER_DAY` investigations (429 with `Retry-After`), and once today's recorded LLM spend (UTC) reaches `DAILY_SPEND_LIMIT_USD` the endpoint answers 503 until midnight UTC. `/health` stays open. The dashboard has an API key field; the key lives in page memory only.
+
 ## Dashboard
 
 One real run of the demo question with the shipped agent (gpt-oss-120b via OpenRouter, defenses on; 8 tool calls, 2 verify loops, 46 s, $0.0072):

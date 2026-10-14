@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("a full investigation streams, finishes and opens a cited quote", async ({ page }) => {
   await page.goto("/");
+  await page.getByLabel("API key").fill("e2e-key"); // tests/e2e_server.py sets API_KEYS
   await page.getByRole("button", { name: "Load demo incident" }).click();
   await page.getByRole("button", { name: "Investigate" }).click();
 

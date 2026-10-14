@@ -124,10 +124,15 @@ export async function* readEvents(body: ReadableStream<Uint8Array>): AsyncGenera
   if (buf.trim()) yield* parseBlocks(buf);
 }
 
-// Auth hook: the API has no key auth yet. If Phase 5 adds it, send the header here, with a key
-// the user types in at runtime. Never build a key or secret into this bundle.
+// The API key the user typed into the dashboard. Held in this module's memory only: never
+// localStorage or a cookie, never built into the bundle; a reload forgets it.
+let apiKey = "";
+export function setApiKey(key: string): void {
+  apiKey = key.trim();
+}
+
 export function authHeaders(): Record<string, string> {
-  return {};
+  return apiKey ? { "X-API-Key": apiKey } : {};
 }
 
 export async function investigate(

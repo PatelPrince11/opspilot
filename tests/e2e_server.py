@@ -23,6 +23,7 @@ from tests.test_graph import fake_tool
 from tests.test_schema import ALEMBIC_INI, with_db
 
 DB = "opspilot_e2e"
+E2E_KEY = "e2e-key"
 DELAY_S = 0.4  # per LLM call, so the stream is visibly incremental
 
 
@@ -60,6 +61,7 @@ def main() -> None:
     cfg.attributes["configure_logger"] = False
     command.upgrade(cfg, "head")
     os.environ["DATABASE_URL"] = with_db(base, DB)
+    os.environ["API_KEYS"] = E2E_KEY  # the smoke test types it into the dashboard
     get_settings.cache_clear()
     app.dependency_overrides[agent_llm] = fresh_llm
     # Shipped minus Prompt Guard, which needs Groq.

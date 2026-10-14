@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { findQuote } from "./highlight";
-import { type Call, type Claim, type Config, type RunState, type Source, idle, investigate, reduce } from "./stream";
+import { type Call, type Claim, type Config, type RunState, type Source, idle, investigate, reduce, setApiKey } from "./stream";
 
 export const DEMO = {
   question:
@@ -72,6 +72,23 @@ export default function App() {
             />
           </div>
           <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <label htmlFor="api-key" className="mb-1 block text-sm font-medium">
+                API key
+              </label>
+              <input
+                id="api-key"
+                type="password"
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(e) => setApiKey(e.target.value)}
+                aria-describedby="api-key-help"
+                className={`rounded-md border border-slate-300 bg-white p-2 dark:border-slate-600 dark:bg-slate-800 ${focus}`}
+              />
+              <p id="api-key-help" className="mt-1 text-xs text-slate-500">
+                Sent as X-API-Key. Kept in memory only.
+              </p>
+            </div>
             <div>
               <label htmlFor="as-of" className="mb-1 block text-sm font-medium">
                 As of (UTC, optional)

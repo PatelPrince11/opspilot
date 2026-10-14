@@ -87,7 +87,38 @@ Locked config: `hybrid`, bge prefix on, 30 candidates, chunks 256/32. Baseline: 
 | all-gold Recall@10 (2+ gold docs, all in top 10): locked - dense | difference of the levels above | dev | hybrid (bge prefix on) vs dense | 73 | +0.055 | [+0.000, +0.123] | no | both files above | 1735a76588b5 / 1735a76588b5 |
 | token-doc Recall@5 (diagnostic): locked - dense | difference of the levels above | dev | hybrid (bge prefix on) vs dense | 45 | +0.089 | [+0.033, +0.156] | yes | both files above | 1735a76588b5 / 1735a76588b5 |
 | agent-view Recall@10 (diagnostic, mean fraction of gold docs found): locked - dense | difference of the levels above | dev | hybrid (bge prefix on) vs dense | 100 | +0.032 | [+0.002, +0.069] | yes | both files above | 1735a76588b5 / 1735a76588b5 |
-| all | - | test | - | - | not measured yet (Phase 5) | - | - | - | - |
+| Recall@5 (mean fraction of gold docs found) | per question, gold docs in the top 5 / gold docs, averaged | test | hybrid (bge prefix on) | 100 | 0.790 | - | n/a | test_locked.json | f97856584219 |
+| Recall@10 (mean fraction of gold docs found) | per question, gold docs in the top 10 / gold docs, averaged | test | hybrid (bge prefix on) | 100 | 0.916 | - | n/a | test_locked.json | f97856584219 |
+| Hit@5 (at least one gold doc in top 5) | share of questions with at least one gold doc in the top 5 | test | hybrid (bge prefix on) | 100 | 0.960 | - | n/a | test_locked.json | f97856584219 |
+| Hit@10 (at least one gold doc in top 10) | share of questions with at least one gold doc in the top 10 | test | hybrid (bge prefix on) | 100 | 0.980 | - | n/a | test_locked.json | f97856584219 |
+| MRR | mean of 1 / rank of the first gold doc (0 if none in the 30-chunk ranking) | test | hybrid (bge prefix on) | 100 | 0.839 | - | n/a | test_locked.json | f97856584219 |
+| all-gold Recall@10 (2+ gold docs, all in top 10) | questions with 2+ gold docs: share with every gold doc in the top 10 | test | hybrid (bge prefix on) | 73 | 0.795 | - | n/a | test_locked.json | f97856584219 |
+| token-doc Recall@5 (diagnostic) | exact-token questions: share of the gold docs holding the question's code or hostname that are in the top 5 (diagnostic; equals Recall@5 on most questions) | test | hybrid (bge prefix on) | 45 | 0.904 | - | n/a | test_locked.json | f97856584219 |
+| agent-view Recall@10 (diagnostic, mean fraction of gold docs found) | top 5 runbooks + top 5 incidents retrieved separately; mean fraction of gold docs found in the union (diagnostic) | test | hybrid (bge prefix on) | 100 | 0.926 | - | n/a | test_locked.json | f97856584219 |
+| agent-view all-gold Recall@10 (diagnostic) | same union; questions with 2+ gold docs, share with every gold doc (diagnostic) | test | hybrid (bge prefix on) | 73 | 0.877 | - | n/a | test_locked.json | f97856584219 |
+| retrieval latency p50 | median retrieve() wall time per question, models warm, Mac CPU, from the run that produced these scores | test | hybrid (bge prefix on) | 100 | 78.0 ms | - | n/a | test_locked.json | f97856584219 |
+| retrieval latency p95 | 95th percentile retrieve() wall time per question, models warm, Mac CPU, from the run that produced these scores | test | hybrid (bge prefix on) | 100 | 380.1 ms | - | n/a | test_locked.json | f97856584219 |
+| Recall@5 (mean fraction of gold docs found) | per question, gold docs in the top 5 / gold docs, averaged | test | dense (bge prefix on) | 100 | 0.755 | - | n/a | test_dense_baseline.json | f97856584219 |
+| Recall@10 (mean fraction of gold docs found) | per question, gold docs in the top 10 / gold docs, averaged | test | dense (bge prefix on) | 100 | 0.877 | - | n/a | test_dense_baseline.json | f97856584219 |
+| Hit@5 (at least one gold doc in top 5) | share of questions with at least one gold doc in the top 5 | test | dense (bge prefix on) | 100 | 0.920 | - | n/a | test_dense_baseline.json | f97856584219 |
+| Hit@10 (at least one gold doc in top 10) | share of questions with at least one gold doc in the top 10 | test | dense (bge prefix on) | 100 | 0.970 | - | n/a | test_dense_baseline.json | f97856584219 |
+| MRR | mean of 1 / rank of the first gold doc (0 if none in the 30-chunk ranking) | test | dense (bge prefix on) | 100 | 0.757 | - | n/a | test_dense_baseline.json | f97856584219 |
+| all-gold Recall@10 (2+ gold docs, all in top 10) | questions with 2+ gold docs: share with every gold doc in the top 10 | test | dense (bge prefix on) | 73 | 0.712 | - | n/a | test_dense_baseline.json | f97856584219 |
+| token-doc Recall@5 (diagnostic) | exact-token questions: share of the gold docs holding the question's code or hostname that are in the top 5 (diagnostic; equals Recall@5 on most questions) | test | dense (bge prefix on) | 45 | 0.896 | - | n/a | test_dense_baseline.json | f97856584219 |
+| agent-view Recall@10 (diagnostic, mean fraction of gold docs found) | top 5 runbooks + top 5 incidents retrieved separately; mean fraction of gold docs found in the union (diagnostic) | test | dense (bge prefix on) | 100 | 0.885 | - | n/a | test_dense_baseline.json | f97856584219 |
+| agent-view all-gold Recall@10 (diagnostic) | same union; questions with 2+ gold docs, share with every gold doc (diagnostic) | test | dense (bge prefix on) | 73 | 0.795 | - | n/a | test_dense_baseline.json | f97856584219 |
+| retrieval latency p50 | median retrieve() wall time per question, models warm, Mac CPU, from the run that produced these scores | test | dense (bge prefix on) | 100 | 16.0 ms | - | n/a | test_dense_baseline.json | f97856584219 |
+| retrieval latency p95 | 95th percentile retrieve() wall time per question, models warm, Mac CPU, from the run that produced these scores | test | dense (bge prefix on) | 100 | 18.0 ms | - | n/a | test_dense_baseline.json | f97856584219 |
+| Recall@5 (mean fraction of gold docs found): locked - dense | difference of the levels above | test | hybrid (bge prefix on) vs dense | 100 | +0.035 | [-0.019, +0.092] | no | both files above | f97856584219 / f97856584219 |
+| Recall@5 (mean fraction of gold docs found): locked - dense, exact-token only | difference of the levels above | test | hybrid (bge prefix on) vs dense | 45 | +0.007 | [-0.056, +0.074] | no | both files above | f97856584219 / f97856584219 |
+| Recall@5 (mean fraction of gold docs found): locked - dense, paraphrase only | difference of the levels above | test | hybrid (bge prefix on) vs dense | 28 | +0.089 | [-0.054, +0.232] | no | both files above | f97856584219 / f97856584219 |
+| Recall@10 (mean fraction of gold docs found): locked - dense | difference of the levels above | test | hybrid (bge prefix on) vs dense | 100 | +0.039 | [+0.007, +0.074] | yes | both files above | f97856584219 / f97856584219 |
+| Hit@5 (at least one gold doc in top 5): locked - dense | difference of the levels above | test | hybrid (bge prefix on) vs dense | 100 | +0.040 | [+0.000, +0.090] | no | both files above | f97856584219 / f97856584219 |
+| Hit@10 (at least one gold doc in top 10): locked - dense | difference of the levels above | test | hybrid (bge prefix on) vs dense | 100 | +0.010 | [+0.000, +0.030] | no | both files above | f97856584219 / f97856584219 |
+| MRR: locked - dense | difference of the levels above | test | hybrid (bge prefix on) vs dense | 100 | +0.082 | [+0.035, +0.128] | yes | both files above | f97856584219 / f97856584219 |
+| all-gold Recall@10 (2+ gold docs, all in top 10): locked - dense | difference of the levels above | test | hybrid (bge prefix on) vs dense | 73 | +0.082 | [+0.000, +0.164] | no | both files above | f97856584219 / f97856584219 |
+| token-doc Recall@5 (diagnostic): locked - dense | difference of the levels above | test | hybrid (bge prefix on) vs dense | 45 | +0.007 | [-0.056, +0.074] | no | both files above | f97856584219 / f97856584219 |
+| agent-view Recall@10 (diagnostic, mean fraction of gold docs found): locked - dense | difference of the levels above | test | hybrid (bge prefix on) vs dense | 100 | +0.041 | [-0.004, +0.089] | no | both files above | f97856584219 / f97856584219 |
 
 token-doc Recall@5 is not independent of Recall@5: on dev, 42 of 45 exact-token questions have every gold doc holding one of their tokens.
 
@@ -357,6 +388,95 @@ The API's agent `{'wrap': True, 'flag': True, 'guard': 'withhold', 'first_look':
 | cost per run, USD (incl. Prompt Guard) | 100 | 0.0044 | 0.0048 | +0.0004 [-0.0000, +0.0008] | 0.0049 | -0.0001 [-0.0002, +0.0000] |
 
 
+## (f) Test split: the one pre-registered run (Phase 5)
+
+Pre-registered in NOTES.md ("Phase 5 pre-registration") before any test question ran; code frozen at tag `v0.1-frozen`; run once with `--final-test`. Every cell is value [95% CI] (n questions); CI: percentile bootstrap resampling questions, 10,000 resamples, seed 20261003; rates pool claims, calls or key facts over the questions resampled. **Dev was used for every tuning decision, so dev numbers are optimistic and a drop from dev to test is expected; only the test column is a result.**
+
+### Retrieval (locked: hybrid BM25 + dense, RRF; baseline: dense)
+
+| metric | config | dev | test |
+|---|---|---|---|
+| Recall@5 | hybrid (locked) | 0.853 [0.800, 0.902] (n 100) | 0.790 [0.731, 0.846] (n 100) |
+| Recall@10 | hybrid (locked) | 0.932 [0.893, 0.965] (n 100) | 0.916 [0.873, 0.953] (n 100) |
+| MRR | hybrid (locked) | 0.868 [0.814, 0.916] (n 100) | 0.839 [0.781, 0.894] (n 100) |
+| all-gold Recall@10 (2+ gold docs) | hybrid (locked) | 0.808 [0.712, 0.890] (n 73) | 0.795 [0.699, 0.890] (n 73) |
+| Hit@5 | hybrid (locked) | 0.970 [0.930, 1.000] (n 100) | 0.960 [0.920, 0.990] (n 100) |
+| Recall@5 | dense | 0.804 [0.741, 0.863] (n 100) | 0.755 [0.689, 0.817] (n 100) |
+| Recall@10 | dense | 0.910 [0.865, 0.948] (n 100) | 0.877 [0.827, 0.922] (n 100) |
+| MRR | dense | 0.746 [0.684, 0.807] (n 100) | 0.757 [0.691, 0.820] (n 100) |
+| all-gold Recall@10 (2+ gold docs) | dense | 0.753 [0.658, 0.849] (n 73) | 0.712 [0.603, 0.808] (n 73) |
+| Hit@5 | dense | 0.930 [0.880, 0.980] (n 100) | 0.920 [0.860, 0.970] (n 100) |
+
+| hybrid - dense, paired | dev | test |
+|---|---|---|
+| Recall@5 | +0.049 [+0.006, +0.095] (n 100) | +0.035 [-0.019, +0.092] (n 100) |
+| Recall@10 | +0.022 [-0.003, +0.052] (n 100) | +0.039 [+0.006, +0.076] (n 100) |
+| MRR | +0.122 [+0.073, +0.172] (n 100) | +0.082 [+0.037, +0.129] (n 100) |
+
+Per slice, hybrid (locked):
+
+| slice | metric | dev | test |
+|---|---|---|---|
+| difficulty=exact-token | Recall@5 | 0.889 [0.822, 0.944] (n 45) | 0.859 [0.793, 0.922] (n 45) |
+| difficulty=exact-token | Recall@10 | 0.933 [0.878, 0.978] (n 45) | 0.941 [0.893, 0.981] (n 45) |
+| difficulty=exact-token | MRR | 0.902 [0.835, 0.961] (n 45) | 0.904 [0.841, 0.963] (n 45) |
+| difficulty=multi-doc | Recall@5 | 0.814 [0.729, 0.893] (n 28) | 0.772 [0.670, 0.870] (n 27) |
+| difficulty=multi-doc | Recall@10 | 0.952 [0.905, 0.994] (n 28) | 0.936 [0.880, 0.983] (n 27) |
+| difficulty=multi-doc | MRR | 0.894 [0.799, 0.976] (n 28) | 0.898 [0.794, 0.981] (n 27) |
+| difficulty=paraphrase | Recall@5 | 0.833 [0.704, 0.944] (n 27) | 0.696 [0.554, 0.821] (n 28) |
+| difficulty=paraphrase | Recall@10 | 0.907 [0.815, 0.981] (n 27) | 0.857 [0.732, 0.946] (n 28) |
+| difficulty=paraphrase | MRR | 0.783 [0.654, 0.895] (n 27) | 0.680 [0.542, 0.811] (n 28) |
+| author=claude | Recall@5 | 0.860 [0.807, 0.910] (n 80) | 0.838 [0.784, 0.891] (n 80) |
+| author=claude | Recall@10 | 0.940 [0.902, 0.973] (n 80) | 0.933 [0.896, 0.966] (n 80) |
+| author=claude | MRR | 0.892 [0.841, 0.940] (n 80) | 0.919 [0.873, 0.959] (n 80) |
+| author=gemini | Recall@5 | 0.825 [0.675, 0.950] (n 20) | 0.600 [0.425, 0.775] (n 20) |
+| author=gemini | Recall@10 | 0.900 [0.775, 1.000] (n 20) | 0.850 [0.700, 0.975] (n 20) |
+| author=gemini | MRR | 0.769 [0.615, 0.906] (n 20) | 0.520 [0.361, 0.684] (n 20) |
+
+### Generation (the shipped agent: locked + defenses on + live-only first look)
+
+Verify off is the same trajectory's first draft (cached replay), so on vs off is paired. Completeness is judged by the Gemini judge, whose key-fact agreement with Prince's hand labels is kappa 0.47 [0.28, 0.67] (n 77 facts): moderate, so completeness is context, not a headline. Judged citation (b) is not reported (judge kappa -0.05). Dev shipped was not judged (its completeness cell is empty).
+
+| metric | dev | test |
+|---|---|---|
+| citation accuracy (a) | 1.000 [1.000, 1.000] (n 96) | 1.000 [1.000, 1.000] (n 98) |
+| first-draft citation (a) failure (verify off) | 0.267 [0.207, 0.331] (n 99) | 0.256 [0.195, 0.319] (n 100) |
+| gold_all: gathered every gold doc | 0.730 [0.640, 0.820] (n 100) | 0.750 [0.660, 0.830] (n 100) |
+| gold_frac: share of gold docs gathered | 0.850 [0.795, 0.901] (n 100) | 0.875 [0.828, 0.919] (n 100) |
+| tool-call success | 0.843 [0.811, 0.874] (n 100) | 0.852 [0.826, 0.879] (n 100) |
+| verify-loop rate | 0.440 [0.340, 0.540] (n 100) | 0.460 [0.360, 0.560] (n 100) |
+| no diagnosis (fallback returned) | 0.000 [0.000, 0.000] (n 100) | 0.000 [0.000, 0.000] (n 100) |
+| completeness (judged; see kappa note) | - (n 0) | 0.687 [0.614, 0.755] (n 100) |
+| $ per investigation (as made) | 0.0048 [0.0044, 0.0052] (n 100) | 0.0048 [0.0044, 0.0052] (n 100) |
+| latency end_to_end_s (live calls only) | not measured (cache hits) | not measured (cache hits) |
+| latency llm_call_ms (live calls only) | p50 573.9 ms, p95 3675.2 ms (n 95) | p50 625.8 ms, p95 3735.7 ms (n 1463) |
+
+| verify on - off, citation (a), paired | dev | test |
+|---|---|---|
+| overall | +0.256 [+0.194, +0.322] (n 96) | +0.254 [+0.192, +0.320] (n 98) |
+
+Per slice, shipped, test:
+
+| slice | citation_a | gold_all | gold_frac | tool_success | completeness |
+|---|---|---|---|---|---|
+| difficulty=exact-token | 1.000 [1.000, 1.000] (n 44) | 0.800 [0.667, 0.911] (n 45) | 0.874 [0.789, 0.944] (n 45) | 0.902 [0.861, 0.942] (n 45) | 0.716 [0.615, 0.806] (n 45) |
+| difficulty=multi-doc | 1.000 [1.000, 1.000] (n 26) | 0.630 [0.444, 0.815] (n 27) | 0.859 [0.779, 0.932] (n 27) | 0.798 [0.752, 0.847] (n 27) | 0.714 [0.575, 0.841] (n 27) |
+| difficulty=paraphrase | 1.000 [1.000, 1.000] (n 28) | 0.786 [0.643, 0.929] (n 28) | 0.893 [0.821, 0.964] (n 28) | 0.844 [0.804, 0.887] (n 28) | 0.614 [0.466, 0.758] (n 28) |
+| author=claude | 1.000 [1.000, 1.000] (n 78) | 0.713 [0.613, 0.812] (n 80) | 0.857 [0.799, 0.909] (n 80) | 0.857 [0.827, 0.887] (n 80) | 0.733 [0.663, 0.800] (n 80) |
+| author=gemini | 1.000 [1.000, 1.000] (n 20) | 0.900 [0.750, 1.000] (n 20) | 0.950 [0.875, 1.000] (n 20) | 0.835 [0.784, 0.890] (n 20) | 0.534 [0.351, 0.722] (n 20) |
+
+Per slice, shipped, dev:
+
+| slice | citation_a | gold_all | gold_frac | tool_success | completeness |
+|---|---|---|---|---|---|
+| difficulty=exact-token | 1.000 [1.000, 1.000] (n 43) | 0.733 [0.600, 0.867] (n 45) | 0.833 [0.744, 0.911] (n 45) | 0.860 [0.818, 0.904] (n 45) | - (n 0) |
+| difficulty=multi-doc | 1.000 [1.000, 1.000] (n 27) | 0.643 [0.464, 0.821] (n 28) | 0.820 [0.713, 0.917] (n 28) | 0.802 [0.744, 0.859] (n 28) | - (n 0) |
+| difficulty=paraphrase | 1.000 [1.000, 1.000] (n 26) | 0.815 [0.667, 0.963] (n 27) | 0.907 [0.833, 0.981] (n 27) | 0.868 [0.806, 0.927] (n 27) | - (n 0) |
+| author=claude | 1.000 [1.000, 1.000] (n 77) | 0.700 [0.600, 0.800] (n 80) | 0.831 [0.766, 0.890] (n 80) | 0.864 [0.830, 0.897] (n 80) | - (n 0) |
+| author=gemini | 1.000 [1.000, 1.000] (n 19) | 0.850 [0.700, 1.000] (n 20) | 0.925 [0.850, 1.000] (n 20) | 0.764 [0.704, 0.827] (n 20) | - (n 0) |
+
+Test-run agent spend (new, uncached LLM calls): $0.4763.
+
 ## (d) Not measured yet
 
 | metric | status |
@@ -370,11 +490,21 @@ Only test-split rows fill the brackets. A bullet whose number comes out weak is 
 
 - Built hybrid BM25 + dense retrieval over \[N\] incident and runbook documents with PostgreSQL/pgvector (BM25 keyword ranking in SQL, RRF fusion), raising Recall@5 (mean fraction of gold docs found) from \[X\]% for a dense baseline to \[Y\]% on a \[N\]-question held-out set.
   - Filled by: Section (b), test split: hybrid BM25 + dense vs dense, Recall@5 (mean fraction of gold docs found) levels for [X] (dense) and [Y] (locked hybrid), with the comparison row's CI; [N] documents from section (a); [N] questions = test n.
+  - Test fill: Built hybrid BM25 + dense retrieval over 147 incident and runbook documents with PostgreSQL/pgvector (BM25 keyword ranking in SQL, RRF fusion), raising Recall@5 (mean fraction of gold docs found) from 75% for a dense baseline to 79% on a 100-question held-out set.
+  - Verdict: drop: the CI includes 0; paired difference +0.035 [-0.019, +0.092], n 100
 - Developed a LangGraph incident-investigation agent with 4 read-only tools and a citation-verification loop, reaching \[X\]% citation accuracy and \[Y\]% tool-call success.
   - Filled by: Section (c): citation accuracy (a)/(b) for [X], tool-call success for [Y] (Phase 3, then test in Phase 5).
+  - Test fill: Developed a LangGraph incident-investigation agent with 4 read-only tools and a citation-verification loop that cut citation failures from 26% in first drafts to 0% in final answers (deterministic check, 98 held-out questions), with 85% tool-call success.
+  - Verdict: keep: verify on - off, citation (a), +0.254 [+0.192, +0.320], n 98; citation (a) is what verify enforces, so the claim is the first-draft-to-final drop, not the final rate
 - Cut prompt-injection attack success from \[X\]% to \[Y\]% on \[N\] adversarial cases by isolating untrusted log and runbook content and keeping tools read-only.
-  - Filled by: Section (d): attack success before/after, held-out half (Phase 4); [N] = 30 cases (15 tune, 15 held-out, both reported).
+  - Filled by: Section (c3): attack success no_defense vs defended on the 45 pooled held-out cases (Phase 4; replayed on the frozen code in Phase 5), McNemar p.
+  - Test fill: Cut prompt-injection attack success from 24% to 4% on 45 held-out adversarial cases by isolating untrusted log and runbook content and keeping tools read-only.
+  - Verdict: keep: 11/45 -> 2/45, exact McNemar p 0.0117; held-out injection set (Phase 4), not the question test split
 - Built an automated eval pipeline (retrieval, faithfulness, citation accuracy, latency) with an LLM judge validated at \[X\]% agreement against hand labels.
   - Filled by: Section (d): judge agreement for [X] (Phase 3); the retrieval section shows the retrieval half of the pipeline.
+  - Test fill: Judge agreement: kappa 0.49 overall (n 164), -0.05 on claim support, 0.47 on key facts.
+  - Verdict: drop: judge kappa below 0.6 (pre-registered rule); the pipeline can be described without an agreement number
 - Deployed FastAPI, Postgres and a React/TypeScript dashboard to AWS EC2 via Docker Compose and GitHub Actions, with Langfuse tracing, token/cost tracking and \[X\] ms p95 latency.
   - Filled by: Section (d): p95 end-to-end latency on EC2 (Phase 5).
+  - Test fill: -
+  - Verdict: drop: not deployed to EC2 yet, so there is no EC2 p95 latency to report
