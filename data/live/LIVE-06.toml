@@ -1,0 +1,70 @@
+# LIVE-06: fraud-scorer-02 is OOMKilled while redis-features is slow: its in-process feature
+# cache grows during slow fetches. SYNTHETIC, corpus 'live', own case only.
+# Facts: fraud-scorer memory limit 3 GiB per pod; WEB_CONCURRENCY 16 since 2026-05-29 (must not
+# be described as unset); the in-process feature cache grows when redis-features is slow;
+# redis-features latency spikes come from big key scans and BGSAVE; payments-api logs
+# PAYAPI-W0310 and falls back to static rules when no fraud score arrives in time.
+date = 2026-10-11
+
+[[line]]
+at = "20:20:00"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "redis: Background saving started by pid {int:20000-40000}"
+
+[[line]]
+at = "20:24:50"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "redis: DB saved on disk"
+
+[[burst]]
+gold = true
+from = "20:20:00"
+to = "21:10:00"
+count = 18
+service = "fraud-scorer"
+level = "WARN"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "FRD-W118 redis-features fetch exceeded budget ms={int:130-470} keys={int:4-12}"
+
+[[line]]
+gold = true
+at = "20:38:22"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "ERROR"
+message = "kubelet: container fraud-scorer terminated reason=OOMKilled exitCode=137"
+
+[[line]]
+at = "20:38:50"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "INFO"
+message = "gunicorn: starting 16 workers (WEB_CONCURRENCY=16)"
+
+[[line]]
+gold = true
+at = "20:57:05"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "ERROR"
+message = "kubelet: container fraud-scorer terminated reason=OOMKilled exitCode=137"
+
+[[line]]
+at = "20:57:33"
+service = "fraud-scorer"
+host = "fraud-scorer-02.prod.internal"
+level = "INFO"
+message = "gunicorn: starting 16 workers (WEB_CONCURRENCY=16)"
+
+[[burst]]
+from = "20:38:00"
+to = "21:10:00"
+count = 10
+service = "payments-api"
+level = "WARN"
+hosts = ["payments-api-01.prod.internal", "payments-api-02.prod.internal", "payments-api-03.prod.internal", "payments-api-04.prod.internal"]
+message = "PAYAPI-W0310 fraud score not returned in time; static rules applied"

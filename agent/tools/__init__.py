@@ -14,8 +14,9 @@ Every item the agent sees is Evidence with a stable id, the only thing a diagnos
   to about PAGE_TOKENS per call. Search finds documents; this reads them.
 Snippets are capped so that a full gather (8 calls) fits the draft's token budget.
 No injection defenses yet: Phase 4 measures attack success before adding them. Injection
-payloads (corpus = 'injection') are visible only to a connection that set
-opspilot.injection_case to their case (rag/retrieval.py), which only eval/injection_eval.py does.
+payloads (corpus = 'injection') and live-incident eval logs (corpus = 'live') are visible only to
+a connection that set opspilot.injection_case to their case (rag/retrieval.py), which only
+eval/injection_eval.py and eval/live_eval.py do.
 """
 
 from dataclasses import replace
@@ -145,7 +146,7 @@ def query_logs(conn, args: QueryLogsInput) -> ToolOutput:
     sql = (
         "SELECT id, ts, service, level, message, count(*) OVER () FROM log_events"
         " WHERE service = %s AND ts >= %s AND ts <= %s"
-        f" AND (corpus = 'main' OR source = 'injection:' || {CASE})"
+        f" AND (corpus = 'main' OR source IN ('injection:' || {CASE}, 'live:' || {CASE}))"
     )
     params: list = [args.service, args.start, args.end]
     if args.level:

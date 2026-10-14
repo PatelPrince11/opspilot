@@ -1,0 +1,73 @@
+# LIVE-03: connections leaked on ledger-service-01's request threads fill its HikariCP pool.
+# Distractor: orders-api-01 logs a similar-sounding pool warning while checkout works.
+# SYNTHETIC, corpus 'live', visible only to its own case.
+# Facts: ledger-service HikariCP 5.x, pool HikariPool-1, maximumPoolSize 20, connectionTimeout
+# 30 s (the timeout message ends "ms." with no pool-state suffix), leakDetectionThreshold 60000,
+# request threads http-nio-*; not month end, so no reconciliation. orders-api pg Pool max 25.
+date = 2026-10-09
+
+[[burst]]
+from = "14:20:00"
+to = "14:55:00"
+count = 5
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal"]
+message = "posted ledger entry took_ms={int:6-40}"
+
+[[burst]]
+from = "14:20:00"
+to = "15:20:00"
+count = 12
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-02.prod.internal"]
+message = "posted ledger entry took_ms={int:6-40}"
+
+[[burst]]
+gold = true
+from = "14:24:00"
+to = "15:08:00"
+count = 7
+service = "ledger-service"
+level = "WARN"
+hosts = ["ledger-service-01.prod.internal"]
+message = "HikariPool-1 - Connection leak detection triggered for org.postgresql.jdbc.PgConnection@{hex8} on thread http-nio-8080-exec-{int:1-40}, stack trace follows"
+
+[[burst]]
+gold = true
+from = "14:40:00"
+to = "15:20:00"
+count = 9
+service = "ledger-service"
+level = "WARN"
+hosts = ["ledger-service-01.prod.internal"]
+message = "LEDGER-W210 HikariPool-1 near capacity active={ramp:18-20}/20 pending={ramp:2-17}"
+
+[[burst]]
+gold = true
+from = "14:58:00"
+to = "15:20:00"
+count = 10
+service = "ledger-service"
+level = "ERROR"
+hosts = ["ledger-service-01.prod.internal"]
+message = "HikariPool-1 - Connection is not available, request timed out after 30000ms."
+
+[[burst]]
+from = "14:30:00"
+to = "15:15:00"
+count = 6
+service = "orders-api"
+level = "WARN"
+hosts = ["orders-api-01.prod.internal"]
+message = "pg pool: {int:21-23} of 25 clients checked out, {int:0-2} waiting"
+
+[[burst]]
+from = "14:20:00"
+to = "15:20:00"
+count = 10
+service = "orders-api"
+level = "INFO"
+hosts = ["orders-api-01.prod.internal", "orders-api-02.prod.internal", "orders-api-03.prod.internal"]
+message = "POST /checkout 200 took_ms={int:120-400}"

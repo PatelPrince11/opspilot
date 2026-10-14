@@ -3411,6 +3411,60 @@ Restricted to the cases whose payload was seen in both runs:
 - Line coverage says a line ran, not that a test checked its result. A 98% number is not a
   correctness claim.
 
+## 2026-10-14: Phase 4 finish step 3, live-incident questions (answer keys fixed before any run)
+
+- Coverage note for step 2: CI measures 90.0% on rag/ and agent/ (637 passed, 12 skipped),
+  not 98.2%. The 12 tests that need the local-only LogHub lines skip in CI, which leaves
+  rag/ingestion.py at 27% there. Both runs clear the 85% bar.
+- `eval/live_questions.jsonl`: 10 questions asked the way an on-call engineer asks during an
+  incident (current symptoms, "right now", no date, no past incident). Each has an answer key
+  committed here, before any agent run: cause, cause_type, hosts, key facts (each a list of
+  exact tokens, any of which counts), forbidden claims (regexes), and the distractor if any.
+  The gold evidence is marked in each spec (`gold = true` on the entries that carry the answer).
+- Logs: `data/live/LIVE-01..10.toml`, the demo's format and generator, through the same
+  `live_events()` checks (every host, ip:port and code from services.toml, the unverified-string
+  blocklist). Every fact used is a NOTES Fictional fact; each spec's header names the ones it
+  rests on. Dates 2026-10-08..13: after the demo, and no main-corpus log exists after
+  2026-10-06 15:00, so a case's window holds only its own logs.
+- The grid (corpus failure-type labels; 7 types, 2 distractors):
+
+  | case | cause type | where | distractor |
+  |---|---|---|---|
+  | LIVE-01 | disk_full | kafka-02 /data/kafka ENOSPC, broker 2 shut down | - |
+  | LIVE-02 | memory_leak | notification-worker-02 OOMKilled every 21 min | - |
+  | LIVE-03 | conn_pool_exhaustion | ledger-service-01 HikariCP leak on http-nio threads | orders-api-01 pg pool warnings |
+  | LIVE-04 | redis_down | redis-features-01 at maxmemory, OOM command not allowed | - |
+  | LIVE-05 | rate_limiting | edge /search local limit 250/pod, EDGE-RL01 | card-processor-proxy-02 CPX-W429 |
+  | LIVE-06 | memory_leak | fraud-scorer-02 OOMKilled while FRD-W118 | - |
+  | LIVE-07 | high_cpu | auth-service bcrypt, 64 logins in flight, 503 | - |
+  | LIVE-08 | disk_full | redis-features-01 root disk ENOSPC, BGSAVE fails, MISCONF | - |
+  | LIVE-09 | rate_limiting | email provider 429, both workers back off | - |
+  | LIVE-10 | bad_deploy | inventory-service release max_conns=60, inventory-db-01 53300 | - |
+
+  Pairs with the same symptom and different causes, on purpose: LIVE-02 / LIVE-09 (lag alert:
+  OOM vs provider 429), LIVE-04 / LIVE-08 (velocity counters: maxmemory vs full disk). No case
+  touches payments-pgbouncer, and none holds the demo's leak combination (tested).
+  Stayed clear of skeleton rules: no retry spin, no reconciliation pool exhaustion, no overcommit
+  fork failure, WEB_CONCURRENCY described as set (16), edge limit 250 not 100.
+- Isolation, like the injection payloads: rows go into log_events as corpus 'live' (migration
+  0008 widens the CHECK), source 'live:<id>', fixed ids 950,000 + 1000 x case number. query_logs
+  shows them only to a connection that set opspilot.injection_case to that id. They are never
+  documents, so no retrieval eval sees them, and the generation and injection evals never set a
+  live id. Tested: no case, another live case or an injection case sees none; its own case sees
+  only its rows; the corpus build's live file holds only the demo's logs.
+- Scoring, fixed now with the keys (eval/live_eval.py): the answer is the summary, likely_cause
+  and kept claims. A key fact is found when any of its tokens appears, case-insensitively and
+  not inside a longer word. A forbidden claim is made when its regex matches a sentence with no
+  negation cue ("it is not MISCONF" rules MISCONF out). Bare "no" is not a cue, because "no
+  space left" is an assertion. Gold coverage = gold entries with a row among the gathered evidence.
+  Tool calls and failures counted. Every forbidden hit is kept with its sentence for audit.
+- Test of the keys themselves: every key fact has a token in the case's own logs (the answer is
+  in the logs) and in the key's cause text, and the cause text trips no forbidden claim.
+- Errors on the way: (1) LIVE-02's first OOM kill was 64 min before its as_of, outside the hour
+  I required; the case's events moved 10 min later (no run had used it). (2) "http-nio" could
+  never match: the boundary rejected a following hyphen ("http-nio-8080"). The trailing boundary
+  is now "no word character", so "kafka-02" still is not found in "kafka-021".
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
