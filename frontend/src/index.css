@@ -2,8 +2,8 @@
 
 /* Design tokens. Components use only these (bg-surface, text-muted, …), never raw palette
    classes, so the two themes are one list of light-dark() pairs. color-scheme picks the side:
-   the OS preference by default, or the header toggle's choice on <html data-theme>. It also
-   themes native controls (the date picker, scrollbars). */
+   <html data-theme> (dark by default, set by the header toggle), or the OS preference when the
+   toggle is on "system". It also themes native controls (the date picker, scrollbars). */
 :root {
   color-scheme: light dark;
   --canvas: light-dark(#f3f5f7, #0b0e12);

@@ -46,9 +46,10 @@ function Spinner({ label }: { label: string }) {
 
 type Theme = "system" | "light" | "dark";
 
-// The choice lives in React state only (no storage): a reload goes back to the OS preference.
+// Dark by default (also set on <html> in index.html, so the first paint is dark). The choice
+// lives in React state only (no storage): a reload goes back to dark. "system" follows the OS.
 function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("system");
+  const [theme, setTheme] = useState<Theme>("dark");
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "system") delete root.dataset.theme;

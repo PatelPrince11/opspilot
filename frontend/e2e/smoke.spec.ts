@@ -20,8 +20,10 @@ test("a full investigation streams, finishes and opens a cited quote", async ({ 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
 
-  // Theme toggle: pins the tokens' dark side whatever the OS preference.
-  await page.getByRole("group", { name: "Theme" }).getByRole("button", { name: "dark" }).click();
+  // Dark by default whatever the OS preference; the toggle switches the tokens to light.
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(11, 14, 18)"); // --canvas, dark
+  await page.getByRole("group", { name: "Theme" }).getByRole("button", { name: "light" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(243, 245, 247)"); // --canvas, light
 });
