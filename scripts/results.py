@@ -105,6 +105,21 @@ def load_named(split: str, name: str) -> dict | None:
     return json.loads(path.read_text()) if path.exists() else None
 
 
+def paired_diff(a: dict, b: dict, key: str, keep=lambda i: True) -> tuple:
+    """a minus b per question (retrieval result files), over questions where both have the
+    metric, in sorted id order. The one method the ledger uses for hybrid - dense: the bootstrap
+    is seeded, so the order of the pairs fixes which resamples are drawn, and sorting makes the
+    CI independent of a result file's row order. Returns (diff, lo, hi, n)."""
+    ra = {x["id"]: x for x in a["questions"]}
+    rb = {x["id"]: x for x in b["questions"]}
+    ids = sorted(
+        i for i in ra if i in rb and ra[i].get(key) is not None and rb[i].get(key) is not None
+    )
+    ids = [i for i in ids if keep(i)]
+    d, lo, hi = bootstrap([ra[i][key] for i in ids], [rb[i][key] for i in ids])
+    return d, lo, hi, len(ids)
+
+
 def provenance(r: dict) -> str:
     n = len(r["uncommitted_changes"])
     return r["commit"][:12] + (f" + {n} uncommitted file(s)" if n else "")
@@ -180,7 +195,9 @@ def retrieval_section(questions: list[dict]) -> list[str]:
         "",
         "- **Levels** are measured values, not claims (claimable: n/a).",
         "- **Comparisons** are locked minus baseline, paired by question, percentile bootstrap"
-        f" 95% CI, 10,000 resamples, seed {SEED}. Claimable = yes only when the CI excludes 0.",
+        f" 95% CI, 10,000 resamples, seed {SEED}, pairs in sorted question-id order (the one"
+        " method this ledger uses for hybrid - dense, here and in (e) and (f)). Claimable = yes"
+        " only when the CI excludes 0.",
         "- Resume numbers come from **test** rows only (Phase 5). Dev rows are for development.",
         "- Source: eval/results/<split>_locked.json and <split>_dense_baseline.json, written by"
         " `make eval`; commit = the code that produced the scores.",
@@ -217,22 +234,15 @@ def retrieval_section(questions: list[dict]) -> list[str]:
                     f" | {provenance(r)} |"
                 )
         by_id = {q["id"]: q for q in questions}
-        ra = {x["id"]: x for x in a["questions"]}
-        rb = {x["id"]: x for x in b["questions"]}
         for metric, key, sl in COMPARISONS:
-            ids = sorted(
-                i
-                for i in ra
-                if ra[i].get(key) is not None
-                and rb[i].get(key) is not None
-                and sl in (None, by_id[i]["difficulty"])
+            diff, lo, hi, n = paired_diff(
+                a, b, key, lambda i, sl=sl, by_id=by_id: sl in (None, by_id[i]["difficulty"])
             )
-            diff, lo, hi = bootstrap([ra[i][key] for i in ids], [rb[i][key] for i in ids])
             claim = "yes" if lo > 0 or hi < 0 else "no"
             where = "" if sl is None else f", {sl} only"
             out.append(
                 f"| {NAMES[metric]}: locked - dense{where} | difference of the levels above"
-                f" | {split} | {locked} vs dense | {len(ids)} | {diff:+.3f}"
+                f" | {split} | {locked} vs dense | {n} | {diff:+.3f}"
                 f" | [{lo:+.3f}, {hi:+.3f}] | {claim} | both files above"
                 f" | {provenance(a)} / {provenance(b)} |"
             )
@@ -783,10 +793,17 @@ def live_section() -> list[str]:
     return out
 
 
+STATUS = {
+    "p50 / p95 latency, end to end per investigation": "end-to-end latency per investigation:"
+    " not measured; the test run was fully cached. Phase 5B measures it on EC2 with the cache"
+    " disabled on 20 dev questions",
+}
+
+
 def placeholder_section(measured: set[str] = frozenset()) -> list[str]:
     out = ["## (d) Not measured yet", "", "| metric | status |", "|---|---|"]
     out += [
-        f"| {name} | not measured yet (Phase {p}) |"
+        f"| {name} | {STATUS.get(name, f'not measured yet (Phase {p})')} |"
         for name, p in PLACEHOLDERS
         if name not in measured
     ]
@@ -811,22 +828,20 @@ def bullets_section() -> list[str]:
     if not (a and b and on and off):
         return [*out, "Not filled: the test-split result files do not exist yet."]
 
-    qb = {x["id"]: x for x in b["questions"]}
-    ids = [x["id"] for x in a["questions"]]
-    paired = {
-        k: bootstrap([x[k] for x in a["questions"]], [qb[i][k] for i in ids])
-        for k in ("rr", "recall@5")
-    }
+    d, lo, hi, n = paired_diff(a, b, "rr")
+    r5, r5lo, r5hi, _ = paired_diff(a, b, "recall@5")
+    r10, r10lo, r10hi, _ = paired_diff(a, b, "recall@10")
     mh, md = a["metrics"]["overall"]["mrr"], b["metrics"]["overall"]["mrr"]
-    d, lo, hi = paired["rr"]
-    r5, r5lo, r5hi = paired["recall@5"]
+    h10, d10 = a["metrics"]["overall"]["recall@10"], b["metrics"]["overall"]["recall@10"]
     docs = sum(a["corpus"]["documents"].values())
     out += [
         f"- Built hybrid BM25 + dense retrieval over {docs} documents (pgvector + Postgres"
-        f" full-text); on a {len(ids)}-question held-out set it raised MRR from {md:.3f} to"
+        f" full-text); on a {n}-question held-out set it raised MRR from {md:.3f} to"
         f" {mh:.3f} ({d:+.3f}, 95% CI [{lo:+.3f}, {hi:+.3f}]).",
-        "  - Source: section (f) retrieval, MRR rows (test, hybrid and dense) and"
-        ' "hybrid - dense, paired" MRR; test_locked.json, test_dense_baseline.json.',
+        f"  - Optional second sentence: Recall@10 rose from {d10:.3f} to {h10:.3f} ({r10:+.3f},"
+        f" 95% CI [{r10lo:+.3f}, {r10hi:+.3f}]).",
+        "  - Source: section (f) retrieval, MRR and Recall@10 rows (test, hybrid and dense) and"
+        ' "hybrid - dense, paired"; test_locked.json, test_dense_baseline.json.',
         f"  - Disclose (README): the Recall@5 gain did not replicate on test, {r5:+.3f}"
         f" [{r5lo:+.3f}, {r5hi:+.3f}]. MRR was in the pre-registered metric list.",
     ]
@@ -852,6 +867,14 @@ def bullets_section() -> list[str]:
         f" investigation {cost[0]:.4f} [{cost[1]:.4f}, {cost[2]:.4f}].",
         "  - Disclose: final citation (a) is what the verify node enforces, so it is 1.0 by"
         " construction; the claim is the first-draft failure rate.",
+        f"  - Note: first-draft failure rate is over {len(off['questions'])} questions;"
+        f" {len(pids)} had claims in the final answer; verify drops failing claims, it does not"
+        " repair them (no final claims: "
+        + ", ".join(sorted(q["id"] for q in on["questions"] if not qa[q["id"]]))
+        + ").",
+        "  - Disclose: tool-call success counts repeated calls as failures (the same tool with"
+        " the same arguments, or re-reading a document part already in the evidence: refused,"
+        " not run), so it is not the share of calls that hit an error.",
     ]
 
     g = json.loads((RESULTS / "injection_comparison.json").read_text())["groups"]["heldout_pooled"]
@@ -868,6 +891,9 @@ def bullets_section() -> list[str]:
         f" {e['mcnemar']['p_exact']:.3f}, not significant. The Phase 5 figure is a cache"
         " replay of the Phase 4 run on the frozen code (every call a cache hit), not a fresh"
         " sample.",
+        "  - Disclose: these numbers are from the `defended` agent (locked config + the frozen"
+        " defenses, first look off), not exactly the shipped agent (which adds first look on"
+        " live incidents; the injection cases are past incidents).",
     ]
 
     k = json.loads((RESULTS / "judge_agreement.json").read_text())["overall"]
@@ -976,7 +1002,11 @@ def test_section(questions: list[dict]) -> list[str]:
                 for r in (src["dev"], src["test"])
             ]
             out.append(f"| {label} | {name} | {cells[0]} | {cells[1]} |")
-    out += ["", "| hybrid - dense, paired | dev | test |", "|---|---|---|"]
+    out += [
+        "",
+        "| hybrid - dense, paired (same method as (b): sorted ids) | dev | test |",
+        "|---|---|---|",
+    ]
     for label, key in RET_TEST[:3]:
         cells = []
         for sp in ("dev", "test"):
@@ -984,10 +1014,8 @@ def test_section(questions: list[dict]) -> list[str]:
             if not a or not b:
                 cells.append("not run")
                 continue
-            qb = {x["id"]: x for x in b["questions"]}
-            ids = [x["id"] for x in a["questions"]]
-            d, lo, hi = bootstrap([x[key] for x in a["questions"]], [qb[i][key] for i in ids])
-            cells.append(f"{d:+.3f} [{lo:+.3f}, {hi:+.3f}] (n {len(ids)})")
+            d, lo, hi, n = paired_diff(a, b, key)
+            cells.append(f"{d:+.3f} [{lo:+.3f}, {hi:+.3f}] (n {n})")
         out.append(f"| {label} | {cells[0]} | {cells[1]} |")
     out += [
         "",
@@ -1123,7 +1151,9 @@ def render() -> str:
         "",
         *bullets_section(),
     ]
-    return "\n".join(out) + "\n"
+    # A displayed zero carries no sign: -0.0 (stored Wilson bounds) and tiny negatives that
+    # round to zero would otherwise print as "-0.000". Claimable flags use the raw values.
+    return re.sub(r"(?<![\w.])-(0\.0+)(?![\d])", r"\1", "\n".join(out)) + "\n"
 
 
 def main() -> int:
