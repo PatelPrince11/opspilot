@@ -39,6 +39,7 @@ from pathlib import Path
 import psycopg
 
 from agent import tools
+from agent.defenses import FINAL_DEFENSES
 from agent.graph import build_graph, initial_state
 from config import get_settings
 from eval.generation_eval import AS_OF, append_jsonl, new_spend, read_jsonl
@@ -60,7 +61,10 @@ CONFIGS: dict[str, dict] = {
     "d1_d2": LAYERS | {"wrap": True, "flag": True},
     "d1_d2_d3_withhold": LAYERS | {"wrap": True, "flag": True, "guard": "withhold"},
     "d1_d2_d3_warn": LAYERS | {"wrap": True, "flag": True, "guard": "warn"},
+    # the frozen defenses: the final run (tune replayed, pooled held-out once, clean controls)
+    "defended": LAYERS | FINAL_DEFENSES,
 }
+COMPARISON = RESULTS / "injection_comparison.json"
 # Case groups. The first 30 cases split 15 tune / 15 held-out; INJ-31..60 are a second held-out
 # set written in Part B before any run. Defenses are tuned on "tune" only.
 GROUPS = {
@@ -372,7 +376,8 @@ def report(content: dict, attack: dict, clean: dict) -> None:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("command", choices=("load", "run"))
+    ap.add_argument("command", choices=("load", "run", "compare"))
+    ap.add_argument("--frozen-commit", help="compare: the commit that froze the defenses")
     ap.add_argument("--config", choices=CONFIGS, default="no_defense")
     ap.add_argument("--cases", choices=(*GROUPS, "all"), default="all")
     ap.add_argument("--no-clean", action="store_true", help="skip the clean controls")
@@ -380,6 +385,21 @@ def main(argv=None) -> int:
     ap.add_argument("--max-spend", type=float, default=0.30, help="USD of new spend")
     args = ap.parse_args(argv)
     cases = load_cases()
+    if args.command == "compare":
+        before, after = (
+            json.loads((RESULTS / f"injection_{c}.json").read_text())
+            for c in ("no_defense", "defended")
+        )
+        c = comparison(before, after) | {"frozen_commit": args.frozen_commit}
+        COMPARISON.write_text(json.dumps(c, indent=1) + "\n")
+        for g, x in c["groups"].items():
+            m = x["mcnemar"]
+            print(
+                f"{g}: n {x['n']} before {x['before']['k']}/{x['before']['n']} after"
+                f" {x['after']['k']}/{x['after']['n']} McNemar b={m['b_before_only']}"
+                f" c={m['c_after_only']} p={m['p_exact']:.4f}"
+            )
+        return 0
     with psycopg.connect(get_settings().database_url) as conn:
         load_corpus(conn, cases)
         conn.commit()

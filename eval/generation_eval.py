@@ -727,6 +727,7 @@ def ablation_report(questions: list[dict], split: str = "dev") -> str:
 
 # ---------------------------------------------------------------------- Phase 4 defense cost
 
+MIN_PAIRED = 80  # questions scored in both configs, or the row is reported as not measured
 DEFENSE_ROWS = [  # (label, metric, config suffix, sign); sign -1: 1 - citation (a) = failure
     ("gold_all", "gold_all", "on", 1),
     ("gold_frac", "gold_frac", "on", 1),
@@ -757,8 +758,8 @@ def defense_cost(questions: list[dict], split: str = "dev") -> dict:
         va = {i: per_q(r, metric) for i, r in a.items()}
         vb = {i: per_q(r, metric) for i, r in b.items()}
         ids = sorted(i for i in va if i in vb and va[i] is not None and vb[i] is not None)
-        if not ids:
-            out.append({"metric": label, "n": 0})
+        if len(ids) < MIN_PAIRED:  # e.g. a judged metric when the judge's daily quota ran out
+            out.append({"metric": label, "n": len(ids), "not_measured": True})
             continue
         d, lo, hi = paired_bootstrap(va, vb, ids)
         la, lb = ratio([va[i] for i in ids]), ratio([vb[i] for i in ids])
@@ -947,7 +948,7 @@ def main(argv=None) -> int:
         d = defense_cost(questions, args.split)
         DEFENSE_COST.write_text(json.dumps(d, indent=1) + "\n")
         for r in d["rows"]:
-            if r["n"]:
+            if not r.get("not_measured"):
                 print(
                     f"{r['metric']:<40} n={r['n']:<3} locked {r['locked']:.4f} defended"
                     f" {r['defended']:.4f} diff {r['diff']:+.4f} [{r['lo']:+.4f}, {r['hi']:+.4f}]"

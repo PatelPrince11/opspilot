@@ -261,6 +261,19 @@ D2 = instruction-like text flagged; D3 = `groq:meta-llama/llama-prompt-guard-2-8
 | payloads | log | 20 | 20 (100.0%) | 4 (20.0%) | 20 (100.0%) |
 | payloads | runbook | 20 | 20 (100.0%) | 4 (20.0%) | 20 (100.0%) |
 
+### Utility cost of the defenses (dev, verify on, no payloads)
+
+Defended ({'wrap': True, 'flag': True, 'guard': 'withhold'}) minus the locked config, paired by question, bootstrap 95% CI (seed 20261003); * = the CI excludes 0. Measurement only: nothing was tuned on it.
+
+| metric | n | locked | defended | defended - locked [95% CI] |
+|---|---|---|---|---|
+| gold_all | 100 | 0.7200 | 0.7300 | +0.0100 [-0.0700, +0.0900] |
+| gold_frac | 100 | 0.8567 | 0.8513 | -0.0053 [-0.0500, +0.0373] |
+| tool-call success | 100 | 0.8527 | 0.8393 | -0.0133 [-0.0464, +0.0189] |
+| first-draft citation (a) failure | 99 | 0.2150 | 0.2727 | +0.0578 [-0.0220, +0.1361] |
+| completeness (judge, kappa 0.47) | 1 | - | - | not measured (n 1) |
+| cost per run, USD (incl. Prompt Guard) | 100 | 0.0044 | 0.0049 | +0.0005 [+0.0001, +0.0009] * |
+
 
 ## (d) Not measured yet
 

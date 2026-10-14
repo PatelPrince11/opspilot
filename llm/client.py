@@ -61,6 +61,10 @@ MAX_ATTEMPTS = 5
 BACKOFF_BASE_S = 1.0
 BACKOFF_CAP_S = 30.0
 MAX_RETRY_AFTER_S = 60.0
+# httpx's timeout is per read, so a server that keeps a slow request open by trickling bytes
+# never trips it: Phase 4's defended dev run hung for hours in reads to OpenRouter. Each request
+# therefore also has a total deadline, after which it counts as a transport error (retried).
+REQUEST_DEADLINE_S = 240.0
 
 
 class LLMError(RuntimeError):
@@ -292,7 +296,7 @@ class Client:
         for attempt in range(MAX_ATTEMPTS):
             last = attempt == MAX_ATTEMPTS - 1
             try:
-                resp = self.http.post(url, json=body, headers=headers)
+                resp = self.post_once(url, body, headers)
             except httpx.TransportError as exc:
                 if last:
                     raise LLMError(
@@ -318,6 +322,23 @@ class Client:
                 raise LLMError(f"{self.provider} {resp.status_code}: {resp.text[:500]}")
             return resp.json()
         raise AssertionError("unreachable")
+
+    def post_once(self, url: str, body: dict, headers: dict) -> httpx.Response:
+        """One POST whose whole body must arrive within REQUEST_DEADLINE_S."""
+        t0 = time.monotonic()
+        with self.http.stream("POST", url, json=body, headers=headers) as resp:
+            chunks = []
+            for chunk in resp.iter_bytes():
+                chunks.append(chunk)
+                if time.monotonic() - t0 > REQUEST_DEADLINE_S:
+                    raise httpx.ReadTimeout(f"no complete reply in {REQUEST_DEADLINE_S:.0f} s")
+        # iter_bytes() already decoded the body: drop the headers that describe the raw bytes
+        keep = {
+            k: v
+            for k, v in resp.headers.items()
+            if k.lower() not in ("content-encoding", "content-length", "transfer-encoding")
+        }
+        return httpx.Response(resp.status_code, headers=keep, content=b"".join(chunks))
 
     @staticmethod
     def backoff(attempt: int) -> float:

@@ -3214,6 +3214,45 @@ carriers were scored the same way.
 - **Final D3 mode, by the rule fixed before this step:** D3 flagged 0% of clean chunks
   (<= 2%), so **withhold**. FINAL_DEFENSES = wrap + flag + withhold (agent/defenses.py).
 
+## 2026-10-14: Phase 4 Part B step 4, utility cost of the defenses (dev, no payloads)
+
+The 100 dev questions, verify on, with FINAL_DEFENSES (wrap + flag + withhold). defended_off
+replays each run's first draft from the cache for first-draft citation (a). Compared with the
+locked config, paired by question (bootstrap 95% CI, seed 20261003); measurement only, nothing
+tuned on it (`uv run python -m eval.generation_eval defense-cost`,
+eval/results/dev_generation_defense_cost.json).
+
+| metric | n | locked | defended | defended - locked [95% CI] |
+|---|---|---|---|---|
+| gold_all | 100 | 0.720 | 0.730 | +0.010 [-0.070, +0.090] |
+| gold_frac | 100 | 0.857 | 0.851 | -0.005 [-0.050, +0.037] |
+| tool-call success | 100 | 0.853 | 0.839 | -0.013 [-0.046, +0.019] |
+| first-draft citation (a) failure | 99 | 0.215 | 0.273 | +0.058 [-0.022, +0.136] |
+| completeness (judge) | - | - | - | not measured: Gemini's daily quota (500) was spent |
+| cost per run (agent + Prompt Guard) | 100 | $0.0044 | $0.0049 | +$0.0005 [+0.0001, +0.0009] * |
+
+- **No claimable loss** on coverage, tool success or first-draft citation. First-draft failure
+  rose 5.8 points with a CI from -2.2 to +13.6. That is a possible cost (the wrapped prompt is
+  longer and the rule more restrictive), not shown. Cost per run rose about 11%: Prompt Guard
+  averages 12.8 calls per run but costs almost nothing; the rest is longer prompts.
+- **Completeness was not measured.** The local judge limiter refused at 500 requests for
+  2026-10-13 (Pacific). One answer was judged, too few: rows with fewer than 80 paired
+  questions are reported as not measured.
+- **A hang, root cause, and a fix in llm/client.py.**
+  - The first defended run stalled for hours: three worker threads sat in SSL reads to
+    OpenRouter (Cloudflare addresses) with httpx's 180 s timeout never firing. httpx's
+    timeout is per read; the likely cause (not confirmed) is a slow reply kept open by
+    trickled bytes, which resets it.
+  - Fix: every request now has a total deadline, REQUEST_DEADLINE_S = 240. The body is read
+    as a stream and abandoned after 240 s, which counts as a transport error and is retried.
+    Tests cover a trickled reply and a gzip reply.
+  - The 15 runs written before the fix were stall-affected (one triage call took 183 s, then
+    the 300 s run cap cut gathering to 0-2 calls), so they were deleted and rerun. The old
+    rows are kept in scratchpad/phase4/*.before_rerun.jsonl.
+  - After the rerun, defended_off replays 100% from the cache.
+- **Spend:** about $0.45 new: the defended runs $0.42 including the 15 stall-affected ones,
+  plus $0.03 for the off replays of those rows.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

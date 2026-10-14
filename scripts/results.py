@@ -617,8 +617,8 @@ def defense_sections() -> list[str]:
             "|---|---|---|---|---|",
         ]
         for r in d["rows"]:
-            if not r["n"]:
-                out.append(f"| {r['metric']} | 0 | - | - | not measured |")
+            if r.get("not_measured"):
+                out.append(f"| {r['metric']} | {r['n']} | - | - | not measured (n {r['n']}) |")
                 continue
             star = " *" if r["lo"] > 0 or r["hi"] < 0 else ""
             out.append(
