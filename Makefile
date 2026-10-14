@@ -1,4 +1,4 @@
-.PHONY: injection-eval gen-eval judge-sheet judge-agreement demo up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
+.PHONY: web-check e2e injection-eval gen-eval judge-sheet judge-agreement demo up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -47,6 +47,7 @@ gate:
 		$(MAKE) -s corpus-check; \
 		$(MAKE) -s test; \
 		$(MAKE) -s lint; \
+		$(MAKE) -s web-check; \
 		uv run python eval/validate_questions.py --final; \
 		$(MAKE) -s results-check; \
 		if [ -n "$$(git status --porcelain)" ]; then \
@@ -56,6 +57,14 @@ gate:
 fmt:
 	uv run ruff format .
 	uv run ruff check --fix .
+
+# Dashboard (frontend/): lint, typecheck, component tests and build; e2e is the Playwright smoke
+# test against the real API with the stub LLM (tests/e2e_server.py; needs `make up` for Postgres).
+web-check:
+	cd frontend && npm run lint && npm run typecheck && npm test && npm run build
+
+e2e:
+	cd frontend && npm run build && DATABASE_URL=$(HOST_DATABASE_URL) npm run e2e
 
 migrate:
 	@DATABASE_URL=$(HOST_DATABASE_URL) uv run alembic upgrade head

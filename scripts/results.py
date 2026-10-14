@@ -648,6 +648,36 @@ def defense_sections() -> list[str]:
     return out
 
 
+def shipped_section() -> list[str]:
+    """Shipped vs locked (eval/results/dev_generation_shipped_vs_locked.json)."""
+    path = RESULTS / "dev_generation_shipped_vs_locked.json"
+    if not path.exists():
+        return []
+    d = json.loads(path.read_text())
+    out = [
+        "## (c6) The shipped agent (dev, verify on, no payloads)",
+        "",
+        f"The API's agent `{d['shipped']}` (verify on, live-only first look; agent/run.py"
+        " SHIPPED) minus the locked config and minus the defended config (which differs only in"
+        f" first look), paired by question, bootstrap 95% CI (seed {d['seed']}); * = the CI"
+        " excludes 0. Deterministic metrics only, measurement only. First look fired on the"
+        f" {len(d['live_triaged'])} questions triaged live: {', '.join(d['live_triaged'])}.",
+        "",
+        "| metric | n | locked | shipped | shipped - locked [95% CI] | defended |"
+        " shipped - defended [95% CI] |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for r, q in zip(d["vs"]["verify_on"], d["vs"]["defended_on"], strict=True):
+        star = lambda x: " *" if x["lo"] > 0 or x["hi"] < 0 else ""  # noqa: E731
+        out.append(
+            f"| {r['metric']} | {r['n']} | {r['b']:.4f} | {r['a']:.4f} |"
+            f" {r['diff']:+.4f} [{r['lo']:+.4f}, {r['hi']:+.4f}]{star(r)} | {q['b']:.4f} |"
+            f" {q['diff']:+.4f} [{q['lo']:+.4f}, {q['hi']:+.4f}]{star(q)} |"
+        )
+    out.append("")
+    return out
+
+
 def cost_section() -> list[str]:
     """Cost, tokens and cache hits per generation run (eval/results/dev_generation_cost.json)."""
     path = RESULTS / "dev_generation_cost.json"
@@ -803,6 +833,7 @@ def render() -> str:
     c3 = injection_section()
     c4 = cost_section()
     c5 = live_section()
+    c6 = shipped_section()
     out = [
         "# OpsPilot results ledger",
         "",
@@ -819,6 +850,7 @@ def render() -> str:
         *([*c3, ""] if c3 else []),
         *([*c4, ""] if c4 else []),
         *([*c5, ""] if c5 else []),
+        *([*c6, ""] if c6 else []),
         *placeholder_section(
             (GEN_MEASURED if c else frozenset())
             | ({"Judge agreement with Prince's 30 hand labels"} if c2 else frozenset())

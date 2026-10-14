@@ -3509,6 +3509,72 @@ Restricted to the cases whose payload was seen in both runs:
 - Decision: no change to the agent from this set. Whether the locked config should turn first
   look on is a decision for Prince; this set does not settle it.
 
+## 2026-10-14: Config decision, the shipped agent
+
+- Decision (Prince's): the API runs the **shipped** agent: the locked dev config (verify on),
+  plus the frozen defenses (FINAL_DEFENSES: wrap, flag, Prompt Guard withhold), plus first look
+  live-only (AGENT_FIRST_LOOK on; the graph only fires it when triage says `incident_time:
+  live`). `agent/run.py SHIPPED`, passed by `api/main.py agent_config()` (a FastAPI dependency,
+  so tests can swap Prompt Guard out). Settings defaults are unchanged; eval scripts keep naming
+  their configs explicitly, and this one is `shipped` in eval/generation_eval.py.
+- Why first look on, honestly: the live set pointed toward it (key facts 14/30 vs 7/30, gold
+  entries 19/25 vs 11/25), but n = 10 cannot separate the configs (sign test p = 0.29). The
+  reason is the mechanism, not the statistic: with first look off the agent often never reads
+  the logs that hold a live incident's answer (LIVE-01, LIVE-02 made no query_logs call), and
+  first look guarantees one status call and one WARN+ log query on the named service.
+- The dev lock (first look off) stays the dev-measured config: every dev number in the ledger
+  (c) is for it. Phase 5's one test run uses `shipped` and must say so.
+- Known weakness, stated up front: on live incidents the agent recovers 14/30 key facts at best,
+  and zero cases get every key fact under either config.
+- Ledger run: the 100 dev questions once with `shipped` (verify on, no payloads, no judge),
+  `make gen-eval ARGS="--config shipped --skip-judge --max-spend 0.30"`, then
+  `uv run python -m eval.generation_eval shipped`. New spend $0.0326 (cache hit rate 0.957: on
+  the 90 questions triaged past, shipped makes the same calls as `defended_on`). Measurement
+  only, nothing changed after it. First look fired on the 10 questions triaged live.
+  Shipped minus locked, paired bootstrap 95% CI (ledger c6): gold_all 0.72 -> 0.73, +0.010
+  [-0.07, +0.09]; gold_frac -0.007 [-0.052, +0.036]; tool-call success -0.010 [-0.044,
+  +0.024]; final citation (a) 1.000 both; runs that looped +0.03 [-0.07, +0.13]; cost per run
+  $0.0044 -> $0.0048, +$0.0004 [-0.0000, +0.0008]. No CI excludes 0. Against `defended_on`
+  (first look the only difference) every diff is within +-0.02.
+
+## 2026-10-14: Phase 4 dashboard
+
+- What: `frontend/`, React 18 + TypeScript + Vite 6 + Tailwind 4, one page. Built in a Node
+  stage of the Dockerfile; FastAPI mounts `frontend/dist` at `/` after the API routes (only if
+  the directory exists, so backend-only checkouts and the Python CI job are unaffected).
+  `npm run dev` proxies the API to the Compose app on 8001.
+- API changes for it: a first `start` SSE event (investigation id, as_of, the build_graph config,
+  so the dashboard can show the defenses badge); `sources` now carries each item's whole text
+  (it was cut at 200 chars, and a cited quote can sit past that); `diagnosis` carries `loops`.
+- SSE over POST: EventSource only does GET, and /investigate is a POST with a JSON body, so the
+  dashboard reads the response body with fetch's ReadableStream, decodes with TextDecoder
+  (stream mode, so a UTF-8 character split across chunks survives), and splits events on the
+  blank line. Partial events stay in the buffer until their terminator arrives.
+- UI state is one reducer over the event stream (`src/stream.ts reduce`), so the component tests
+  and the live UI go through the same transitions. A tool_result fills the oldest call still
+  waiting (the graph runs tools one at a time, in order). A run with no diagnosis event ends in
+  the error state with the stream's last error message.
+- Citation highlighting (`src/highlight.ts`) matches the quote the way verify does
+  (agent/graph.py normalize: case, whitespace, curly quotes, defense markers, quote marks
+  around it) and returns offsets into the original text, so the highlight lands on the real
+  characters even when the text carries ⟦flagged⟧ markers.
+- Evidence viewer is a native `<dialog>` (showModal: focus moves in, Escape closes, the page
+  behind is inert), not a modal library.
+- No secrets in the bundle. `authHeaders()` in src/stream.ts is the hook for Phase 5's API-key
+  header, filled from a value the user types at runtime if that is added.
+- Tests: 11 Vitest/Testing Library tests (SSE parser at every chunk cut, reducer, quote match,
+  App with a controlled ReadableStream released event by event: spinner while a call waits,
+  stats, sources, citation dialog, 422, stream error, network error). Playwright smoke test
+  (`make e2e`): the built dashboard against the real API with the stub LLM and fake tools
+  (tests/e2e_server.py, throwaway opspilot_e2e database, Prompt Guard off since it needs Groq).
+  `make gate` now runs `make web-check` (lint, typecheck, tests, build); CI has a `frontend` job
+  that also runs the e2e test.
+- Dependency snag: npm 10.9.9 crashes ("Cannot read properties of null (reading 'edgesOut')")
+  resolving vitest 4's optional peer set; the lockfile was written with npm 11.6.2 (`npx
+  npm@11.6.2 install`), and `npm ci` on npm 10 installs from it fine. Vitest is 4.1.11, not 3.x:
+  `npm audit` flagged vitest <= 4.1.10 (mocker path traversal, tinypool prototype pollution).
+  0 vulnerabilities at commit.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

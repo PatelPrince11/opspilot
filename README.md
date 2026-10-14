@@ -19,6 +19,24 @@ make test    # schema tests need the stack up; they skip with a reason otherwise
 
 Migrations are Alembic, in `db/migrations/`. `make migrate` / `make migrate-down` run them from the host (via `localhost:5433`); `make psql` opens a shell in the database.
 
+The dashboard is served by the app at <http://127.0.0.1:8001/> (built into the image from `frontend/`; `cd frontend && npm run dev` for a hot-reloading copy on :5173). `make web-check` lints, typechecks, tests and builds it; `make e2e` runs the Playwright smoke test against the stub LLM.
+
+## Dashboard
+
+One real run of the demo question with the shipped agent (gpt-oss-120b via OpenRouter, defenses on; 8 tool calls, 2 verify loops, 46 s, $0.0072):
+
+Mid-investigation: tool calls stream in as they happen; the last one is still running.
+
+![Dashboard mid-investigation](docs/img/dashboard-running.png)
+
+Finished: diagnosis with cited claims, sources with retrieval scores, run stats.
+
+![Dashboard after the investigation](docs/img/dashboard-done.png)
+
+A citation opened: the cited log line, with the claim's quote highlighted.
+
+![A citation opened with its quote highlighted](docs/img/dashboard-citation.png)
+
 ## Data
 
 `make corpus` builds the corpus files in the app container from the hand-written sources in `data/` (services, runbooks, incidents) and writes `data/processed/` plus a `MANIFEST.json` of hashes. `make corpus-check` verifies the committed outputs are up to date without writing anything. Everything except LogHub is synthetic.
