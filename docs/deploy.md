@@ -158,10 +158,10 @@ second SSH session, start this right before the run and stop it (Ctrl-C) right a
 free -m > ~/free_before.txt; free -m -s 5 | tee ~/free_during.txt
 ```
 
-Then copy the files to the repo for the record (they hold memory figures only, nothing secret):
+Then copy them into your local `scratchpad/` (git-ignored; memory figures only, nothing secret):
 
 ```bash
-scp -i ~/.ssh/opspilot.pem 'ubuntu@<PUBLIC_IP>:free_*.txt' scratchpad/deploy/
+mkdir -p scratchpad/deploy && scp -i ~/.ssh/opspilot.pem 'ubuntu@<PUBLIC_IP>:free_*.txt' scratchpad/deploy/
 ```
 
 ## 8. Updating
