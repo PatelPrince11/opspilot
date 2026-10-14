@@ -1,0 +1,1 @@
+{"content": "search-cluster-03  \ndone", "tool_calls": [], "prompt_tokens": 1460, "completion_tokens": 251, "estimated": false, "prompt_estimate": 1957, "provider": "openrouter", "model": "openai/gpt-oss-120b", "cached": false, "latency_ms": 955.7780000031926, "name": "gather", "wait_s": 0.0, "cost_usd": 0.0003696, "cost_source": "reported"}

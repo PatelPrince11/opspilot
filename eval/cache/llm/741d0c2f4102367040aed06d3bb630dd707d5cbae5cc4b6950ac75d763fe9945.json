@@ -1,0 +1,1 @@
+{"content": "done", "tool_calls": [], "prompt_tokens": 2064, "completion_tokens": 177, "estimated": false, "prompt_estimate": 2742, "provider": "openrouter", "model": "openai/gpt-oss-120b", "cached": false, "latency_ms": 662.6524580060504, "name": "gather", "wait_s": 0.0, "cost_usd": 0.0003582, "cost_source": "reported"}

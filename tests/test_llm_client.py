@@ -2,6 +2,8 @@
 
 import ast
 import json
+import re
+import shutil
 from pathlib import Path
 
 import httpx
@@ -192,6 +194,46 @@ def test_disk_cache_hit_skips_the_request(keys, tmp_path):
     assert (second.content, second.prompt_tokens) == ("cached answer", 11)
     c.chat(MSGS, temperature=0.5)  # different params, different key
     assert len(calls) == 2
+
+
+def test_cache_dir_moves_entries_without_changing_keys(keys, tmp_path, monkeypatch):
+    """LLM_CACHE_DIR (e.g. eval/cache/llm, the committed final-run cache) only says where entries
+    live: the key hashes provider, model, messages, tools and params, so a copied entry hits."""
+    calls = []
+    a = client(
+        "gemini",
+        lambda r: calls.append(1) or httpx.Response(200, json=openai_reply("from a")),
+        cache_dir=tmp_path / "a",
+    )
+    a.chat(MSGS)
+    shutil.copytree(tmp_path / "a", tmp_path / "committed")
+    monkeypatch.setenv("LLM_CACHE_DIR", str(tmp_path / "committed"))
+    get_settings.cache_clear()
+
+    def no_network(req):
+        raise AssertionError("a request was made")
+
+    b = Client("gemini", "m", transport=httpx.MockTransport(no_network))
+    assert b.cache_dir == tmp_path / "committed"
+    params = {"temperature": 0.0, "max_tokens": 1024, "json_schema": None}
+    assert a.cache_key(MSGS, None, params) == b.cache_key(MSGS, None, params)
+    r = b.chat(MSGS)
+    assert (r.cached, r.content, calls) == (True, "from a", [1])
+    get_settings.cache_clear()
+
+
+def test_committed_cache_entries_are_responses_without_keys():
+    root = Path(__file__).resolve().parents[1] / "eval" / "cache" / "llm"
+    files = list(root.glob("*"))
+    assert files, "eval/cache/llm is empty"
+    secret = re.compile(
+        r"sk-[A-Za-z0-9_-]{16,}|gsk_[A-Za-z0-9]{16,}|AIza[0-9A-Za-z_-]{20,}|Bearer "
+    )
+    for f in files:
+        assert re.fullmatch(r"[0-9a-f]{64}\.json", f.name), f.name
+        text = f.read_text()
+        assert not secret.search(text), f.name
+        assert {"content", "tool_calls", "provider", "model"} <= json.loads(text).keys()
 
 
 def test_stream_yields_deltas_and_usage(keys):

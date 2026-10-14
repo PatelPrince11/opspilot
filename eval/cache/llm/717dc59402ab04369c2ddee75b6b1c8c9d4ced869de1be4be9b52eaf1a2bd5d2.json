@@ -1,0 +1,1 @@
+{"content": "The incident was logged as **INC\u20110082**.", "tool_calls": [], "prompt_tokens": 1876, "completion_tokens": 261, "estimated": false, "prompt_estimate": 2637, "provider": "openrouter", "model": "openai/gpt-oss-120b", "cached": false, "latency_ms": 1569.055916974321, "name": "gather", "wait_s": 0.0, "cost_usd": 0.0003804, "cost_source": "reported"}
