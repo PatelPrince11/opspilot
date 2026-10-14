@@ -1,3 +1,11 @@
+# The dashboard (frontend/) is built here; only its static files reach the app image.
+FROM node:22-slim AS web
+WORKDIR /web
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
 FROM python:3.11-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /bin/uv
@@ -14,6 +22,7 @@ COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 COPY . .
+COPY --from=web /web/dist frontend/dist
 
 RUN useradd --create-home --uid 1000 app && chown -R app /app
 USER app

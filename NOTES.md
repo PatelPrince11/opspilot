@@ -3537,6 +3537,44 @@ Restricted to the cases whose payload was seen in both runs:
   $0.0044 -> $0.0048, +$0.0004 [-0.0000, +0.0008]. No CI excludes 0. Against `defended_on`
   (first look the only difference) every diff is within +-0.02.
 
+## 2026-10-14: Phase 4 dashboard
+
+- What: `frontend/`, React 18 + TypeScript + Vite 6 + Tailwind 4, one page. Built in a Node
+  stage of the Dockerfile; FastAPI mounts `frontend/dist` at `/` after the API routes (only if
+  the directory exists, so backend-only checkouts and the Python CI job are unaffected).
+  `npm run dev` proxies the API to the Compose app on 8001.
+- API changes for it: a first `start` SSE event (investigation id, as_of, the build_graph config,
+  so the dashboard can show the defenses badge); `sources` now carries each item's whole text
+  (it was cut at 200 chars, and a cited quote can sit past that); `diagnosis` carries `loops`.
+- SSE over POST: EventSource only does GET, and /investigate is a POST with a JSON body, so the
+  dashboard reads the response body with fetch's ReadableStream, decodes with TextDecoder
+  (stream mode, so a UTF-8 character split across chunks survives), and splits events on the
+  blank line. Partial events stay in the buffer until their terminator arrives.
+- UI state is one reducer over the event stream (`src/stream.ts reduce`), so the component tests
+  and the live UI go through the same transitions. A tool_result fills the oldest call still
+  waiting (the graph runs tools one at a time, in order). A run with no diagnosis event ends in
+  the error state with the stream's last error message.
+- Citation highlighting (`src/highlight.ts`) matches the quote the way verify does
+  (agent/graph.py normalize: case, whitespace, curly quotes, defense markers, quote marks
+  around it) and returns offsets into the original text, so the highlight lands on the real
+  characters even when the text carries ⟦flagged⟧ markers.
+- Evidence viewer is a native `<dialog>` (showModal: focus moves in, Escape closes, the page
+  behind is inert), not a modal library.
+- No secrets in the bundle. `authHeaders()` in src/stream.ts is the hook for Phase 5's API-key
+  header, filled from a value the user types at runtime if that is added.
+- Tests: 11 Vitest/Testing Library tests (SSE parser at every chunk cut, reducer, quote match,
+  App with a controlled ReadableStream released event by event: spinner while a call waits,
+  stats, sources, citation dialog, 422, stream error, network error). Playwright smoke test
+  (`make e2e`): the built dashboard against the real API with the stub LLM and fake tools
+  (tests/e2e_server.py, throwaway opspilot_e2e database, Prompt Guard off since it needs Groq).
+  `make gate` now runs `make web-check` (lint, typecheck, tests, build); CI has a `frontend` job
+  that also runs the e2e test.
+- Dependency snag: npm 10.9.9 crashes ("Cannot read properties of null (reading 'edgesOut')")
+  resolving vitest 4's optional peer set; the lockfile was written with npm 11.6.2 (`npx
+  npm@11.6.2 install`), and `npm ci` on npm 10 installs from it fine. Vitest is 4.1.11, not 3.x:
+  `npm audit` flagged vitest <= 4.1.10 (mocker path traversal, tinypool prototype pollution).
+  0 vulnerabilities at commit.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

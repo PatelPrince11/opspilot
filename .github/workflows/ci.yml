@@ -60,3 +60,57 @@ jobs:
 
       - name: Results ledger is current
         run: make results-check
+
+  # The dashboard: lint, typecheck, component tests (mocked SSE) and build, then the Playwright
+  # smoke test against the real API with the stub LLM (tests/e2e_server.py), which needs Postgres.
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: opspilot
+          POSTGRES_PASSWORD: change-me
+          POSTGRES_DB: opspilot
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U opspilot"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://opspilot:change-me@localhost:5432/opspilot
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Component tests
+        run: npm test
+      - name: Build
+        run: npm run build
+
+      - name: Python dependencies (for the e2e server)
+        run: uv sync --locked
+      - name: Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: E2E smoke (stub LLM)
+        run: npm run e2e
