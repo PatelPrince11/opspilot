@@ -3351,6 +3351,35 @@ Restricted to the cases whose payload was seen in both runs:
   n=4 had missed, so the old number overstated it. Verify on minus off: still no claimable
   difference on any judged metric (faithfulness -0.030 [-0.110, +0.040]).
 
+## 2026-10-14: Phase 4 finish step 1, cost and token tracking
+
+- One helper, `llm.client.usage(calls)`, totals a call log: LLM calls, cache hits, input and
+  output tokens, and actual cost (the sum over calls that were not cache hits; a cached
+  response keeps its original cost_usd, so summing every call would bill a replay again).
+  Every consumer uses it:
+  - the final SSE event (`diagnosis`) carries `usage` (finish makes no LLM call, so the totals
+    are final there);
+  - `investigations.cost_usd` (migration 0007; tokens already had columns), set on done and
+    on error, so GET /investigations/{id} returns it;
+  - Langfuse: each generation's metadata now has `cached`, and the investigation's trace gets
+    one `usage` event with the totals (`Client.trace_usage`).
+- Cache hit rate per eval run: `uv run python -m eval.generation_eval cost` writes
+  `eval/results/dev_generation_cost.json` from the same progress rows as each result file;
+  ledger section (c4). Decision: a separate file, not a new field in the 12 result files.
+  I first added the field and regenerated them; metrics were identical, but each file's
+  commit moved to today's, so the ledger would have credited e69bfe87's measurements to a
+  commit that measured nothing. Reverted.
+- Found on the way, left alone: arms a-c still carry end_to_end_s computed before 3f45b35
+  (which counts only runs with no cache hit); a rewrite under the current rule would give
+  n = 0 for them. Their end-to-end latency is not used in the ledger.
+- defended_off shows hit rate 1.000 and run spend $0.0307: its first pass had misses
+  (gather and guard calls); the questions rerun to fix the cache divergence replaced those
+  rows, and the pure-replay rule kept the first measured spend in the result file.
+- Numbers (dev, n = 100 each): the locked config with defenses (defended_on) uses about
+  20.9K input and 4.3K output tokens and $0.0049 per investigation as made (22.6 calls, Prompt
+  Guard calls included, free on Groq). Total run spend over the 12 generation runs: $1.90.
+  The judge is not in these numbers (Gemini free tier).
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

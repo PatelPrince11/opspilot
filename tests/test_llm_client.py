@@ -9,7 +9,7 @@ import pytest
 
 from config import get_settings
 from llm import client as client_module
-from llm.client import BudgetExceeded, Client, LLMError, estimate_tokens
+from llm.client import BudgetExceeded, Client, LLMError, estimate_tokens, usage
 
 ROOT = Path(__file__).resolve().parents[1]
 MSGS = [{"role": "user", "content": "hello"}]
@@ -225,6 +225,53 @@ def test_tracing_disabled_never_builds_langfuse(monkeypatch):
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "")
     get_settings.cache_clear()
     client("ollama", lambda req: httpx.Response(200, json=reply)).chat(MSGS)
+
+
+def test_usage_counts_cost_of_calls_made_only():
+    rows = [
+        {"prompt_tokens": 100, "completion_tokens": 10, "cost_usd": 0.002, "cached": False},
+        {"prompt_tokens": 50, "completion_tokens": 5, "cost_usd": 0.001, "cached": True},
+    ]
+    assert usage(rows) == {
+        "llm_calls": 2,
+        "cached_calls": 1,
+        "prompt_tokens": 150,
+        "completion_tokens": 15,
+        "cost_usd": 0.002,  # the cache hit cost nothing this time
+    }
+    assert usage([])["cost_usd"] == 0
+
+
+def test_usage_and_cache_flag_reach_langfuse(monkeypatch):
+    seen = []
+
+    class Obs:
+        def update(self, **k):
+            seen.append(("update", k))
+
+        def end(self):
+            pass
+
+    class FakeLangfuse:
+        def start_observation(self, **k):
+            seen.append(("generation", k))
+            return Obs()
+
+        def create_event(self, **k):
+            seen.append(("event", k))
+
+    c = client("ollama", lambda req: httpx.Response(200, json={"message": {"content": "hi"}}))
+    monkeypatch.setattr(c, "tracer", lambda: FakeLangfuse())
+    c.chat(MSGS, trace_id="ab" * 16)
+    c.trace_usage("ab" * 16, {"cost_usd": 0.5})
+    gen = next(k for kind, k in seen if kind == "generation")
+    assert gen["metadata"]["cached"] is False
+    ev = next(k for kind, k in seen if kind == "event")
+    assert ev == {
+        "trace_context": {"trace_id": "ab" * 16},
+        "name": "usage",
+        "metadata": {"cost_usd": 0.5},
+    }
 
 
 PROVIDER_SDKS = {

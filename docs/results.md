@@ -293,14 +293,33 @@ Defended ({'wrap': True, 'flag': True, 'guard': 'withhold'}) minus the locked co
 | cost per run, USD (incl. Prompt Guard) | 100 | 0.0044 | 0.0049 | +0.0005 [+0.0001, +0.0009] * |
 
 
+## (c4) Cost and tokens (generation runs)
+
+From `eval/results/dev_generation_cost.json` (`uv run python -m eval.generation_eval cost`), built from the same per-question rows as each config's result file. One row per run of the agent over the dev split; the judge's calls are not included (Gemini free tier). Tokens and $ per investigation are means over its LLM calls as made: a cache hit keeps the original call's tokens and cost, so they describe one investigation run fresh. Run spend is what the run actually paid (its calls that were not cache hits), from the result file. Cache hit rate is LLM response-cache hits / LLM calls, as recorded when each question ran; an _off config replays its _on run, so it is all hits by design.
+
+| config | n | input tokens / inv. | output tokens / inv. | LLM calls / inv. | $ / inv. (as made) | run spend $ | cache hits | cache hit rate | result file commit |
+|---|---|---|---|---|---|---|---|---|---|
+| verify_on | 100 | 16,657 | 4,064 | 9.3 | 0.0044 | 0.0412 | 851 | 0.911 | e69bfe87e354 |
+| verify_off | 100 | 12,547 | 2,745 | 7.5 | 0.0032 | 0.0000 | 754 | 1.000 | 8b9885522855 |
+| arm_a_on | 100 | 14,397 | 4,234 | 8.2 | 0.0043 | 0.2374 | 555 | 0.678 | 003dea092b09 |
+| arm_a_off | 100 | 10,867 | 2,713 | 6.6 | 0.0029 | 0.0000 | 658 | 1.000 | 003dea092b09 |
+| arm_b_on | 100 | 18,739 | 3,184 | 10.4 | 0.0042 | 0.3785 | 106 | 0.102 | 003dea092b09 |
+| arm_b_off | 100 | 12,354 | 2,102 | 7.6 | 0.0027 | 0.0000 | 764 | 1.000 | 003dea092b09 |
+| arm_c_on | 100 | 19,252 | 3,201 | 10.2 | 0.0043 | 0.3750 | 129 | 0.126 | 003dea092b09 |
+| arm_c_off | 100 | 12,650 | 2,098 | 7.3 | 0.0028 | 0.0000 | 735 | 1.000 | 003dea092b09 |
+| arm_d_on | 100 | 15,982 | 4,009 | 9.1 | 0.0043 | 0.4286 | 0 | 0.000 | 839d31b027bf |
+| arm_d_off | 100 | 12,067 | 2,728 | 7.4 | 0.0031 | 0.0000 | 736 | 1.000 | 839d31b027bf |
+| defended_on | 100 | 20,937 | 4,347 | 22.6 | 0.0049 | 0.4077 | 878 | 0.389 | d7e2ad2934d7 + 3 uncommitted file(s) |
+| defended_off | 100 | 15,638 | 2,835 | 18.6 | 0.0034 | 0.0307 | 1857 | 1.000 | d7e2ad2934d7 + 3 uncommitted file(s) |
+
+Total run spend over these 12 runs: $1.8991.
+
 ## (d) Not measured yet
 
 | metric | status |
 |---|---|
 | p50 / p95 latency, end to end per investigation | not measured yet (Phase 4) |
 | p50 / p95 latency, retrieval on EC2 | not measured yet (Phase 5) |
-| Tokens per investigation (input / output) | not measured yet (Phase 4) |
-| Estimated cost per investigation | not measured yet (Phase 4) |
 
 ## (e) Resume bullet templates (docs/BUILD_GUIDE.md) and the rows that fill them
 

@@ -92,6 +92,7 @@ INJECTION_MEASURED = {
     "Attack success before defenses, tune half (15)",
     "Attack success before defenses, held-out half (15)",
 }
+COST_MEASURED = {"Tokens per investigation (input / output)", "Estimated cost per investigation"}
 DEFENDED_MEASURED = {
     "Attack success after defenses, tune half (15)",
     "Attack success after defenses, held-out half (15)",
@@ -646,6 +647,44 @@ def defense_sections() -> list[str]:
     return out
 
 
+def cost_section() -> list[str]:
+    """Cost, tokens and cache hits per generation run (eval/results/dev_generation_cost.json)."""
+    path = RESULTS / "dev_generation_cost.json"
+    if not path.exists():
+        return []
+    d = json.loads(path.read_text())
+    out = [
+        "## (c4) Cost and tokens (generation runs)",
+        "",
+        f"From `eval/results/{path.name}` (`uv run python -m eval.generation_eval cost`), built"
+        " from the same per-question rows as each config's result file. One row per run of the"
+        f" agent over the {d['split']} split; the judge's calls are not included (Gemini free"
+        " tier). Tokens and $ per investigation are means over its LLM calls as made: a cache"
+        " hit keeps the original call's tokens and cost, so they describe one investigation run"
+        " fresh. Run spend is what the run actually paid (its calls that were not cache hits),"
+        " from the result file. Cache hit rate is LLM response-cache hits / LLM calls, as"
+        " recorded when each question ran; an _off config replays its _on run, so it is all"
+        " hits by design.",
+        "",
+        "| config | n | input tokens / inv. | output tokens / inv. | LLM calls / inv."
+        " | $ / inv. (as made) | run spend $ | cache hits | cache hit rate | result file commit |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for r in d["runs"]:
+        dirty = r["result_uncommitted"]
+        out.append(
+            f"| {r['config']} | {r['n']} | {r['prompt_tokens_mean']:,.0f} |"
+            f" {r['completion_tokens_mean']:,.0f} | {r['llm_calls_mean']:.1f} |"
+            f" {r['cost_usd_mean']:.4f} | {r['spend_usd']:.4f} | {r['cache_hits']} |"
+            f" {r['cache_hit_rate']:.3f} | {r['result_commit'][:12]}"
+            + (f" + {dirty} uncommitted file(s)" if dirty else "")
+            + " |"
+        )
+    total = sum(r["spend_usd"] for r in d["runs"])
+    out += ["", f"Total run spend over these {len(d['runs'])} runs: ${total:.4f}."]
+    return out
+
+
 def placeholder_section(measured: set[str] = frozenset()) -> list[str]:
     out = ["## (d) Not measured yet", "", "| metric | status |", "|---|---|"]
     out += [
@@ -681,6 +720,7 @@ def render() -> str:
     c = generation_section(questions)
     c2 = agreement_section()
     c3 = injection_section()
+    c4 = cost_section()
     out = [
         "# OpsPilot results ledger",
         "",
@@ -695,10 +735,12 @@ def render() -> str:
         *([*c, ""] if c else []),
         *([*c2, ""] if c2 else []),
         *([*c3, ""] if c3 else []),
+        *([*c4, ""] if c4 else []),
         *placeholder_section(
             (GEN_MEASURED if c else frozenset())
             | ({"Judge agreement with Prince's 30 hand labels"} if c2 else frozenset())
             | (INJECTION_MEASURED if c3 else frozenset())
+            | (COST_MEASURED if c4 else frozenset())
             | (
                 DEFENDED_MEASURED
                 if (RESULTS / "injection_comparison.json").exists()
