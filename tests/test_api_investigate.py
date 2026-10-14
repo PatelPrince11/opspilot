@@ -80,6 +80,7 @@ def test_sse_event_order_and_persistence(client, db_url):
     )
     r = client.post("/investigate", json=BODY)
     assert r.status_code == 200 and r.headers["content-type"].startswith("text/event-stream")
+    assert r.headers["x-accel-buffering"] == "no"
     events = parse_sse(r.text)
     assert [e for e, _ in events] == [
         "start",

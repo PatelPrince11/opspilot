@@ -1,0 +1,75 @@
+# Production stack on one EC2 instance (docs/deploy.md). Images come from GHCR, built by CI;
+# secrets come only from .env next to this file, created on the server by hand.
+# Only the proxy publishes a port (80). Postgres (5432) and the app (8000) stay on the compose
+# network, unreachable from outside the instance.
+x-app: &app
+  image: ghcr.io/patelprince11/opspilot:${IMAGE_TAG:-latest}
+  env_file: .env
+  environment:
+    HF_HOME: /app/.cache/hf  # embedding model download, kept on the cache volume
+  volumes:
+    - cache:/app/.cache  # LLM response cache (LLM_CACHE_DIR) and Hugging Face models
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    env_file: .env  # POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  migrate:
+    <<: *app
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    <<: *app
+    # Exactly one worker: the rate limiter keeps its counts in process memory, so a second
+    # worker would keep its own counts and let every caller through twice the limit.
+    # --proxy-headers: the client IP comes from Nginx's X-Forwarded-For (which Nginx overwrites
+    # with the real peer), or every caller would share Nginx's IP bucket. Only Nginx can reach
+    # this port, hence forwarded-allow-ips '*'.
+    command:
+      - uvicorn
+      - api.main:app
+      - --host=0.0.0.0
+      - --port=8000
+      - --workers=1
+      - --proxy-headers
+      - --forwarded-allow-ips=*
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  proxy:
+    image: ghcr.io/patelprince11/opspilot-proxy:${IMAGE_TAG:-latest}
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  # One-shot, `docker compose -f docker-compose.prod.yml run --rm ingest`: downloads LogHub,
+  # builds data/processed, then loads and embeds it into Postgres. Profile keeps it out of `up`.
+  ingest:
+    <<: *app
+    command: ["sh", "-c", "python -m scripts.build_corpus && python -m rag.ingestion"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    profiles: ["tools"]
+    restart: "no"
+
+volumes:
+  pgdata:
+  cache:

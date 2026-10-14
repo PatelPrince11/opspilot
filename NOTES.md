@@ -3810,6 +3810,37 @@ change would be a cache miss.
 - README screenshots are not updated: they are retaken on the deployed app (Phase 5B note
   below). Redesign screenshots are in `docs/img/redesign/`.
 
+## 2026-10-14: Phase 5B Part A, production build (no AWS yet)
+
+- `docker-compose.prod.yml`: db (pgvector), migrate, app, proxy, plus a one-shot `ingest`
+  (profile tools: LogHub download, corpus build, load and embed). Only the proxy publishes a
+  port (80); Postgres and the app have none. Images from GHCR, secrets only from the server's
+  `.env` (`.env.prod.example` lists the names, placeholders only). One `cache` volume holds the
+  LLM response cache and the Hugging Face models.
+- uvicorn `--workers 1` (the rate limiter's counts are in process memory) with
+  `--proxy-headers --forwarded-allow-ips=*` (only Nginx can reach the app).
+- Nginx (`deploy/nginx.conf`, the Dockerfile's `proxy` stage with the built dashboard): SSE
+  settings on the API paths (proxy_buffering off, proxy_cache off, HTTP/1.1, `Connection ''`,
+  read timeout 300 s = agent_max_seconds, X-Accel-Buffering passed through; the app now sends
+  `X-Accel-Buffering: no`). `X-Forwarded-For` is set to `$remote_addr`, not appended to, so a
+  caller cannot choose its rate-limit bucket: checked, a spoofed `X-Forwarded-For: 1.2.3.4`
+  logged as the real peer.
+- Image size: the old `chown -R app /app` copied the 1.4 GB venv into a second layer; now only
+  `.cache` and `data/` are chowned (the only paths the app writes). `.cache`, `scratchpad` and
+  `.env.*` are now in `.dockerignore`: `.cache` (the local 71 MB LLM cache) was being copied into
+  the image before.
+- CI `image` job (after `ci` and `frontend`): builds linux/amd64, fails if a `.env*` (other than
+  the examples) or anything under `/app/.cache` is in the image, and pushes
+  `ghcr.io/patelprince11/opspilot{,-proxy}:{latest,<sha>}` only on a push to main.
+- Checked locally with the prod compose (arm64 build, placeholder provider keys, no spend):
+  `/health` and the dashboard through Nginx; SPA fallback 200; 401 without a key; 5432 and 8000
+  closed on the host; the SSE response comes through with `x-accel-buffering: no` and its
+  `start` and `error` events; `ingest` built the corpus and embedded 547 chunks (the locked
+  count) in 73 s; idle memory app 89 MiB, db 78 MiB, proxy 10 MiB.
+  `scripts/smoke_remote.sh` failed correctly on a provider error and on a wrong key.
+- Not checked yet (Part B, on EC2): a full investigation through Nginx, incremental arrival of
+  the events, memory under load, amd64 image on the instance.
+
 ## Phase 5B notes (deploy)
 
 - Run uvicorn with one worker: the rate limiter and its counts live in process memory, so two
