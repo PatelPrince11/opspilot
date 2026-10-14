@@ -148,7 +148,12 @@ def post_investigate(
     return StreamingResponse(
         sse(events),
         media_type="text/event-stream",
-        headers={"X-Investigation-Id": str(iid), "Cache-Control": "no-cache"},
+        # X-Accel-Buffering: Nginx must not buffer the stream (deploy/nginx.conf turns it off too).
+        headers={
+            "X-Investigation-Id": str(iid),
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 

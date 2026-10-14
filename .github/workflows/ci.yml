@@ -114,3 +114,68 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: E2E smoke (stub LLM)
         run: npm run e2e
+
+  # Production images (docs/deploy.md): the app and the Nginx proxy with the dashboard, built for
+  # the EC2 instance's linux/amd64. Every run builds and checks them; only a push to main, after
+  # both test jobs pass, pushes them to GHCR. No secrets are baked in: .env, .env.* and .cache
+  # are in .dockerignore, a CI checkout has none of them, and the check below fails the job if
+  # one reaches the image.
+  image:
+    needs: [ci, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build app image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: opspilot:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: No secrets or caches in the image
+        run: |
+          docker run --rm --entrypoint sh opspilot:ci -c \
+            'ls -A /app; ! ls -A /app | grep -E "^\.env($|\.)" | grep -v example; [ -z "$(ls -A /app/.cache)" ]'
+
+      - name: Log in to GHCR
+        if: env.PUSH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push app image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: ${{ env.PUSH == 'true' }}
+          tags: |
+            ghcr.io/patelprince11/opspilot:latest
+            ghcr.io/patelprince11/opspilot:${{ github.sha }}
+          cache-from: type=gha
+
+      - name: Build and push proxy image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: proxy
+          platforms: linux/amd64
+          push: ${{ env.PUSH == 'true' }}
+          tags: |
+            ghcr.io/patelprince11/opspilot-proxy:latest
+            ghcr.io/patelprince11/opspilot-proxy:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max,scope=proxy
