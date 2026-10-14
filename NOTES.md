@@ -3339,6 +3339,18 @@ Restricted to the cases whose payload was seen in both runs:
 - **Phase 5's test run uses the defended agent** (FINAL_DEFENSES at the frozen commit), and
   the test split's generation numbers carry this layer's utility cost.
 
+## 2026-10-14: Phase 4 finish step 0, PR #7 merged, the 11 unjudged verify-off answers
+
+- PR #7 (defenses and injection results) merged with CI green on both runs.
+- `make gen-eval ARGS="--config verify_off"`: agent stage fully cached ($0), judge stage graded
+  all 11 answers the Gemini daily limit had blocked (Q156, Q159, H001, H007, H008, H009, H018,
+  H026, H029, H030, H038). No 429 (new Pacific day).
+- Verify-off is now judged on all 100. citation_b 0.968 (283 claims) -> 0.972 (322),
+  faithfulness 4.742 -> 4.770, completeness 0.674 -> 0.673. premise_corrected moved from
+  0.750 (n=4) to 0.429 (n=7): the three answers added were false-premise questions the earlier
+  n=4 had missed, so the old number overstated it. Verify on minus off: still no claimable
+  difference on any judged metric (faithfulness -0.030 [-0.110, +0.040]).
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
