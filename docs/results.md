@@ -49,7 +49,7 @@ Gemini label audit (eval/label_audit.md, pasted by hand; the Claude-drafted ques
 Locked config: `hybrid`, bge prefix on, 30 candidates, chunks 256/32. Baseline: `dense`, same settings. Doc-level: 30 chunks retrieved, deduped to docs by best rank.
 
 - **Levels** are measured values, not claims (claimable: n/a).
-- **Comparisons** are locked minus baseline, paired by question, percentile bootstrap 95% CI, 10,000 resamples, seed 20261003. Claimable = yes only when the CI excludes 0.
+- **Comparisons** are locked minus baseline, paired by question, percentile bootstrap 95% CI, 10,000 resamples, seed 20261003, pairs in sorted question-id order (the one method this ledger uses for hybrid - dense, here and in (e) and (f)). Claimable = yes only when the CI excludes 0.
 - Resume numbers come from **test** rows only (Phase 5). Dev rows are for development.
 - Source: eval/results/<split>_locked.json and <split>_dense_baseline.json, written by `make eval`; commit = the code that produced the scores.
 
@@ -260,7 +260,7 @@ Agent: the locked config, verify on. Attack success: the case's canary or forbid
 | no_defense | heldout_2 | 8/30 = 0.267 [0.142, 0.444] | 8/30 | 30/30 | 8/30 | 0/30 |
 | no_defense | heldout_pooled | 11/45 = 0.244 [0.142, 0.387] | 11/45 | 45/45 | 11/45 | 0/45 |
 | d1 | tune | 2/15 = 0.133 [0.037, 0.379] | 2/15 | 11/15 | 2/11 | not run |
-| d1_d2 | tune | 0/15 = 0.000 [-0.000, 0.204] | 0/15 | 11/15 | 0/11 | not run |
+| d1_d2 | tune | 0/15 = 0.000 [0.000, 0.204] | 0/15 | 11/15 | 0/11 | not run |
 | d1_d2_d3_withhold | tune | 0/15 = 0.000 [0.000, 0.204] | 0/15 | 11/15 | 0/11 | not run |
 | d1_d2_d3_warn | tune | 0/15 = 0.000 [0.000, 0.204] | 0/15 | 11/15 | 0/11 | not run |
 
@@ -385,7 +385,7 @@ The API's agent `{'wrap': True, 'flag': True, 'guard': 'withhold', 'first_look':
 | citation (a), final answer | 95 | 1.0000 | 1.0000 | +0.0000 [+0.0000, +0.0000] | 1.0000 | +0.0000 [+0.0000, +0.0000] |
 | runs that looped | 100 | 0.4100 | 0.4400 | +0.0300 [-0.0700, +0.1300] | 0.4600 | -0.0200 [-0.0600, +0.0200] |
 | no diagnosis | 100 | 0.0100 | 0.0000 | -0.0100 [-0.0300, +0.0000] | 0.0000 | +0.0000 [+0.0000, +0.0000] |
-| cost per run, USD (incl. Prompt Guard) | 100 | 0.0044 | 0.0048 | +0.0004 [-0.0000, +0.0008] | 0.0049 | -0.0001 [-0.0002, +0.0000] |
+| cost per run, USD (incl. Prompt Guard) | 100 | 0.0044 | 0.0048 | +0.0004 [0.0000, +0.0008] | 0.0049 | -0.0001 [-0.0002, +0.0000] |
 
 
 ## (f) Test split: the one pre-registered run (Phase 5)
@@ -407,11 +407,11 @@ Pre-registered in NOTES.md ("Phase 5 pre-registration") before any test question
 | all-gold Recall@10 (2+ gold docs) | dense | 0.753 [0.658, 0.849] (n 73) | 0.712 [0.603, 0.808] (n 73) |
 | Hit@5 | dense | 0.930 [0.880, 0.980] (n 100) | 0.920 [0.860, 0.970] (n 100) |
 
-| hybrid - dense, paired | dev | test |
+| hybrid - dense, paired (same method as (b): sorted ids) | dev | test |
 |---|---|---|
 | Recall@5 | +0.049 [+0.006, +0.095] (n 100) | +0.035 [-0.019, +0.092] (n 100) |
-| Recall@10 | +0.022 [-0.003, +0.052] (n 100) | +0.039 [+0.006, +0.076] (n 100) |
-| MRR | +0.122 [+0.073, +0.172] (n 100) | +0.082 [+0.037, +0.129] (n 100) |
+| Recall@10 | +0.022 [-0.003, +0.052] (n 100) | +0.039 [+0.007, +0.074] (n 100) |
+| MRR | +0.122 [+0.073, +0.170] (n 100) | +0.082 [+0.035, +0.128] (n 100) |
 
 Per slice, hybrid (locked):
 
@@ -481,22 +481,29 @@ Test-run agent spend (new, uncached LLM calls): $0.4763.
 
 | metric | status |
 |---|---|
-| p50 / p95 latency, end to end per investigation | not measured yet (Phase 4) |
+| p50 / p95 latency, end to end per investigation | end-to-end latency per investigation: not measured; the test run was fully cached. Phase 5B measures it on EC2 with the cache disabled on 20 dev questions |
 | p50 / p95 latency, retrieval on EC2 | not measured yet (Phase 5) |
 
 ## (e) Resume bullets (test split only)
 
 Every number comes from the files named under each bullet; nothing is typed by hand. Wording was set after the test run (Phase 5A), so each bullet says which pre-registered row it uses; disclosures below a bullet must go wherever it is used.
 
-- Built hybrid BM25 + dense retrieval over 147 documents (pgvector + Postgres full-text); on a 100-question held-out set it raised MRR from 0.757 to 0.839 (+0.082, 95% CI [+0.037, +0.129]).
-  - Source: section (f) retrieval, MRR rows (test, hybrid and dense) and "hybrid - dense, paired" MRR; test_locked.json, test_dense_baseline.json.
+- Built hybrid BM25 + dense retrieval over 147 documents (pgvector + Postgres full-text); on a 100-question held-out set it raised MRR from 0.757 to 0.839 (+0.082, 95% CI [+0.035, +0.128]).
+  - Optional second sentence: Recall@10 rose from 0.877 to 0.916 (+0.039, 95% CI [+0.007, +0.074]).
+  - Source: section (f) retrieval, MRR and Recall@10 rows (test, hybrid and dense) and "hybrid - dense, paired"; test_locked.json, test_dense_baseline.json.
   - Disclose (README): the Recall@5 gain did not replicate on test, +0.035 [-0.019, +0.092]. MRR was in the pre-registered metric list.
 - Built a LangGraph incident-investigation agent with 5 read-only tools and a citation-verification loop: 25.6% of first-draft claims failed a deterministic evidence check and the loop removed all of them (98 held-out questions), at 85.2% tool-call success and about $0.0048 per investigation.
   - Source: section (f) generation, test column: first-draft citation (a) failure 0.256 [0.195, 0.319]; final citation (a) 1.000; verify on - off +0.254 [+0.192, +0.320] (n 98); tool-call success 0.852 [0.826, 0.879]; $ per investigation 0.0048 [0.0044, 0.0052].
   - Disclose: final citation (a) is what the verify node enforces, so it is 1.0 by construction; the claim is the first-draft failure rate.
+  - Note: first-draft failure rate is over 100 questions; 98 had claims in the final answer; verify drops failing claims, it does not repair them.
+  - Q030: first draft 3 claims (2 passed the check); verify sent it back 2 times and each pass redrafted; the last draft had 1 claim(s), 1 failed and was dropped, so the final answer has an empty claims list (not the no-diagnosis fallback).
+  - Q080: first draft 3 claims (2 passed the check); verify sent it back 2 times and each pass redrafted; the last draft had 1 claim(s), 1 failed and was dropped, so the final answer has an empty claims list (not the no-diagnosis fallback).
+  - Disclose: verify checks claims, not the summary or likely-cause text, so a dropped claim can still be asserted in the summary (seen in Q030).
+  - Disclose: tool-call success counts repeated calls as failures (the same tool with the same arguments, or re-reading a document part already in the evidence: refused, not run), so it is not the share of calls that hit an error.
 - Measured prompt-injection attack success on 45 held-out cases: 11/45 undefended vs 2/45 with layered defenses (0 strict hits; McNemar p = 0.012).
   - Source: section (c3), heldout_pooled row; before [0.142, 0.387], after [0.012, 0.148] (Wilson 95%).
   - Disclose: exposure-matched (payload read in both runs, n 33): 5/33 -> 2/33, McNemar p = 0.375, not significant. The Phase 5 figure is a cache replay of the Phase 4 run on the frozen code (every call a cache hit), not a fresh sample.
+  - Disclose: these numbers are from the `defended` agent (locked config + the frozen defenses, first look off), not exactly the shipped agent (which adds first look on live incidents; the injection cases are past incidents).
 - Validated an LLM judge against 30 hand-labelled answers (Cohen's kappa 0.47 on key facts, -0.05 on claim support) and based decisions on deterministic metrics.
   - Source: section (c2); key facts kappa 0.471 [0.283, 0.667] (n 77); claims -0.053 [-0.103, 0.000] (n 87).
 - Deploy (FastAPI, Postgres and the dashboard on AWS EC2, p95 latency): pending Phase 5B (not measured).
