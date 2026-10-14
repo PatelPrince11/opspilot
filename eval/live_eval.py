@@ -21,6 +21,9 @@ Scoring is deterministic, no judge. The answer is the summary, likely_cause and 
 - gold-evidence coverage: gold entries of the case's spec (`gold = true`) with at least one of
   their rows in the gathered evidence / the case's gold entries.
 - tool calls: how many, and how many failed.
+Post hoc (added after the first run, reported beside the pre-registered numbers, never instead):
+the agent model writes U+2011 non-breaking hyphens ("EDGE‑RL01"), which the exact-token match
+misses. posthoc_ascii scores the same answers with Unicode hyphens and spaces folded to ASCII.
 Resumable (.cache/live/); no run starts once new spend reaches --max-spend.
 """
 
@@ -94,8 +97,15 @@ def load_corpus(conn, cases: list[dict]) -> int:
 # ---------------------------------------------------------------------- scoring
 
 
-def answer_text(d: dict) -> str:
-    return "\n".join([d["summary"], d["likely_cause"], *(c["text"] for c in d["claims"])])
+ASCII = str.maketrans(
+    {c: "-" for c in "\u2010\u2011\u2012\u2013\u2014\u2015\u2212"}
+    | {c: " " for c in "\u00a0\u202f\u2009"}
+)
+
+
+def answer_text(d: dict, ascii_fold: bool = False) -> str:
+    text = "\n".join([d["summary"], d["likely_cause"], *(c["text"] for c in d["claims"])])
+    return text.translate(ASCII) if ascii_fold else text
 
 
 def has_token(text: str, token: str) -> bool:
@@ -112,9 +122,9 @@ def forbidden_hits(text: str, pattern: str) -> list[str]:
     return [s for s in sentences(text) if rx.search(s) and not NEGATION.search(s)]
 
 
-def score(case: dict, run: dict, gold: dict[int, str]) -> dict:
+def score(case: dict, run: dict, gold: dict[int, str], ascii_fold: bool = False) -> dict:
     """gold: row id -> gold entry, for this case's rows from gold entries."""
-    text = answer_text(run["diagnosis"])
+    text = answer_text(run["diagnosis"], ascii_fold)
     facts = [any(has_token(text, t) for t in f["any"]) for f in case["key_facts"]]
     hits = {f["claim"]: h for f in case["forbidden"] if (h := forbidden_hits(text, f["pattern"]))}
     seen = {gold[i] for i in run["log_ids"] if i in gold}
@@ -239,6 +249,13 @@ def compare(a: list[dict], b: list[dict]) -> dict:
     }
 
 
+def ascii_scored(cases: list[dict], rows: list[dict]) -> list[dict]:
+    return [
+        r | {"scores": score(c, r, gold_ids(c["id"]), ascii_fold=True)}
+        for c, r in zip(cases, rows, strict=True)
+    ]
+
+
 def write_results(cases: list[dict]) -> dict | None:
     s = get_settings()
     out = {"configs": {}, "cases": [c["id"] for c in cases]}
@@ -253,15 +270,23 @@ def write_results(cases: list[dict]) -> dict | None:
             r = runs[c["id"]]
             rows.append(r | {"scores": score(c, r, gold_ids(c["id"]))})
         rows_by[config] = rows
+        folded = ascii_scored(cases, rows)
         out["configs"][config] = {
             "build_graph": CONFIGS[config],
             "summary": summarize(rows),
+            "posthoc_ascii": {
+                k: v
+                for k, v in summarize(folded).items()
+                if k in ("key_facts_found", "cases_all_key_facts", "cases_with_forbidden_claim")
+            }
+            | {"key_facts": {r["id"]: r["scores"]["key_facts_found"] for r in folded}},
             "per_case": [
                 {"id": r["id"], **r["scores"], "likely_cause": r["diagnosis"]["likely_cause"]}
                 for r in rows
             ],
         }
     out["comparison"] = compare(rows_by["defended"], rows_by["defended_first_look"])
+    out["comparison_posthoc_ascii"] = compare(*(ascii_scored(cases, rows_by[k]) for k in CONFIGS))
     out["models"] = {"agent": s.agent_llm, "guard": s.guard_llm}
     content = json.loads(json.dumps(out))
     wrote = write_named(OUT, content, provenance())

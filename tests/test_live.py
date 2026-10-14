@@ -127,3 +127,10 @@ def test_live_logs_are_visible_only_to_their_own_case(url):  # noqa: F811
         assert (
             conn.execute("SELECT count(*) FROM log_events WHERE corpus = 'live'").fetchone()[0] == n
         )
+
+
+def test_posthoc_ascii_fold_only_changes_unicode_hyphens_and_spaces():
+    d = {"summary": "EDGE‑RL01 at 250 tokens", "likely_cause": "x", "claims": []}
+    assert not le.has_token(le.answer_text(d), "EDGE-RL01")
+    assert le.has_token(le.answer_text(d, ascii_fold=True), "EDGE-RL01")
+    assert le.answer_text(d, ascii_fold=True) == "EDGE-RL01 at 250 tokens\nx"

@@ -3465,6 +3465,50 @@ Restricted to the cases whose payload was seen in both runs:
   never match: the boundary rejected a following hyphen ("http-nio-8080"). The trailing boundary
   is now "no word character", so "kafka-02" still is not found in "kafka-021".
 
+## 2026-10-14: Phase 4 finish step 4, live-incident results
+
+- Run: `uv run python -m eval.live_eval run`, keys and scoring as committed in 25cc064 (pushed
+  before the run). The locked defended agent (verify on, FINAL_DEFENSES) on the 10, first look
+  off (locked) and on. New spend $0.1042 (OpenRouter; Prompt Guard on Groq is free). No judge.
+  Nothing was tuned on these.
+- Results (n = 10, `eval/results/live_incidents.json`, ledger section c5):
+
+  | | first look off (locked) | first look on |
+  |---|---|---|
+  | key facts, pre-registered | 7/30 | 14/30 |
+  | key facts, post hoc ASCII fold | 10/30 | 17/30 |
+  | cases with every key fact | 0 (post hoc 1) | 0 |
+  | cases with a forbidden claim | 0 | 1 (audited: false positive) |
+  | gold entries covered | 11/25 | 19/25 |
+  | tool calls (failed) | 72 (1) | 75 (2) |
+
+  First look on minus off, paired: key facts better in 6 cases, worse in 2, tied in 2; exact
+  sign test p = 0.29. McNemar on "every key fact": p = 1.0. **n = 10 cannot separate the two
+  configs.** The direction and the gold coverage (+8 entries) point the same way as Phase 3's
+  reason for first look, but this set does not show it at any usual level.
+- What happened (read from the run rows, not tuned on):
+  - With first look off, the agent often never read the logs that hold the answer. LIVE-01 and
+    LIVE-02 made no query_logs call (runbooks and incidents only). LIVE-09 asked for ERROR, but
+    the 429 lines are WARN. LIVE-03 filtered on a string ("SQLTransientConnectionException")
+    that is not in the logs. LIVE-05 queried search-api and search-cluster, never edge-gateway.
+  - With first look on, gold coverage rose, but the reading was still wrong in places. LIVE-02
+    saw one of the three OOM kills, because triage picked a 30-minute window, and blamed the
+    email provider. LIVE-03 saw the leak warnings and called it high CPU. LIVE-05 never queried
+    edge-gateway in either config: triage named search-api.
+  - No case got every key fact under the pre-registered scorer. 0 of 10 with the locked config
+    is the headline: on live incidents the locked agent mostly answers from runbooks.
+- Scorer findings, reported rather than fixed:
+  - The agent model writes U+2011 non-breaking hyphens ("EDGE‑RL01", "Redis‑features‑01",
+    "FRD‑W118"), and the pre-registered exact-token match misses them: LIVE-05 (off) names
+    EDGE‑RL01 and scores 0 for it. A post-hoc variant folds Unicode hyphens and spaces to ASCII
+    and is reported beside the pre-registered numbers, never instead. It moves both configs by
+    +3 key facts and leaves the comparison unchanged (p = 0.29).
+  - The one forbidden hit is a false positive: LIVE-04 (on) describes the config
+    `stop-writes-on-bgsave-error`, and the pattern `bgsave[^.]*(fail|error)` matched "bgsave-error".
+    The answer does not claim BGSAVE failed. The pre-registered count stays 1; audited, 0.
+- Decision: no change to the agent from this set. Whether the locked config should turn first
+  look on is a decision for Prince; this set does not settle it.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -3748,7 +3792,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Phase 3a (LLM wrapper, read-only tools, LangGraph graph, SSE API) is complete; Phase 3a.6 (OpenRouter agent, read_document) and Phase 3b (generation eval on dev, verify on vs off) are complete. Judge validation is done (claim support failed, completeness moderate). Phase 4 injection set, defenses and results are done (frozen at b7ef1ad); dashboard, cost tracking and the tests step remain. Phase 5 uses the defended agent.
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Phase 3a (LLM wrapper, read-only tools, LangGraph graph, SSE API) is complete; Phase 3a.6 (OpenRouter agent, read_document) and Phase 3b (generation eval on dev, verify on vs off) are complete. Judge validation is done (claim support failed, completeness moderate). Phase 4 injection set, defenses and results are done (frozen at b7ef1ad); cost tracking, test coverage and the live-incident set are done; the dashboard remains (design: Prince). Phase 5 uses the defended agent.
 - Phase 0 accounts: Groq, Gemini and Langfuse Cloud keys are in .env and checked by live calls (2026-10-12). AWS, Anthropic credits and GitHub: not checked here.
 
 ## Unverified claims (check in Phase 0, record results here)

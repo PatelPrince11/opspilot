@@ -314,6 +314,33 @@ From `eval/results/dev_generation_cost.json` (`uv run python -m eval.generation_
 
 Total run spend over these 12 runs: $1.8991.
 
+## (c5) Live incidents (eval/live_questions.jsonl, n = 10)
+
+`eval/results/live_incidents.json` (25cc06482092 + 1 uncommitted file(s)). Ten on-call questions whose answers exist only in each case's own logs (data/live/), answer keys committed before any run. The locked defended agent (verify on, frozen defenses) with first look off, then on. Deterministic metrics, no judge. Key facts: exact-token match of the key's tokens in the summary, likely cause and kept claims. Forbidden claims: the key's regex matches a sentence with no negation cue. Gold coverage: gold log entries with a row among the gathered evidence. Post hoc (after the first run, not pre-registered): the same answers with Unicode hyphens and spaces folded to ASCII, because the model writes U+2011 in codes and host names.
+
+| config | key facts (pre-registered) | key facts (post hoc, ASCII) | cases with every key fact | cases with a forbidden claim | gold entries covered | tool calls (failed) | triaged live | run spend $ |
+|---|---|---|---|---|---|---|---|---|
+| first look off (locked) | 7/30 | 10/30 | 0/10 (post hoc 1) | 0/10 | 11/25 | 72 (1) | 10/10 | 0.0561 |
+| first look on | 14/30 | 17/30 | 0/10 (post hoc 0) | 1/10 | 19/25 | 75 (2) | 10/10 | 0.0481 |
+
+| case | cause type | key facts off / on | post hoc off / on | gold off / on | tool calls off / on |
+|---|---|---|---|---|---|
+| LIVE-01 | disk_full | 0 / 2 (of 3) | 0 / 2 | 0 / 3 (of 3) | 6 / 4 |
+| LIVE-02 | memory_leak | 0 / 1 (of 3) | 1 / 1 | 0 / 1 (of 3) | 3 / 8 |
+| LIVE-03 | conn_pool_exhaustion | 0 / 1 (of 3) | 0 / 1 | 0 / 3 (of 3) | 8 / 8 |
+| LIVE-04 | redis_down | 1 / 1 (of 3) | 1 / 2 | 1 / 1 (of 1) | 8 / 8 |
+| LIVE-05 | rate_limiting | 1 / 0 (of 3) | 2 / 1 | 0 / 0 (of 1) | 8 / 8 |
+| LIVE-06 | memory_leak | 2 / 1 (of 3) | 2 / 2 | 3 / 3 (of 3) | 8 / 8 |
+| LIVE-07 | high_cpu | 1 / 2 (of 3) | 1 / 2 | 1 / 2 (of 2) | 8 / 8 |
+| LIVE-08 | disk_full | 2 / 2 (of 3) | 3 / 2 | 4 / 4 (of 4) | 8 / 8 |
+| LIVE-09 | rate_limiting | 0 / 2 (of 3) | 0 / 2 | 0 / 1 (of 1) | 8 / 8 |
+| LIVE-10 | bad_deploy | 0 / 2 (of 3) | 0 / 2 | 2 / 1 (of 4) | 7 / 7 |
+
+Forbidden-claim hits, for audit: first look on, LIVE-04: MISCONF, a failed BGSAVE or fork, or overcommit: "Redis‑features is configured with maxmemory 24 GB, no‑eviction, and stop‑writes‑on‑bgsave‑error enabled".
+First look on minus off (pre-registered), paired by case, n = 10: key facts better in 6, worse in 2, tied in 2 (exact sign test p = 0.2891); every key fact in 0 case(s) only with first look off and 0 only with it on (exact McNemar p = 1.0); gold entries covered +8; tool calls +3.
+First look on minus off (post hoc), paired by case, n = 10: key facts better in 6, worse in 2, tied in 2 (exact sign test p = 0.2891); every key fact in 1 case(s) only with first look off and 0 only with it on (exact McNemar p = 1.0); gold entries covered +8; tool calls +3.
+With n = 10 the two configs cannot be separated (sign test p = 0.2891 > 0.05). These are descriptive numbers, not a claim that first look helps or hurts.
+
 ## (d) Not measured yet
 
 | metric | status |

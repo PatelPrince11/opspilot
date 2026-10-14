@@ -25,6 +25,7 @@ from eval.validate_questions import QUESTIONS, SPLIT_DIMS, Corpus, load
 from scripts.corpus.common import PROCESSED, ROOT, SEED
 
 OUT = ROOT / "docs" / "results.md"
+LIVE_CASES = ROOT / "eval" / "live_questions.jsonl"
 AUDIT = ROOT / "eval" / "label_audit.md"
 GUIDE = ROOT / "docs" / "BUILD_GUIDE.md"
 
@@ -685,6 +686,86 @@ def cost_section() -> list[str]:
     return out
 
 
+def live_section() -> list[str]:
+    """Phase 4 live-incident set (eval/results/live_incidents.json), deterministic metrics only."""
+    path = RESULTS / "live_incidents.json"
+    if not path.exists():
+        return []
+    d = json.loads(path.read_text())
+    cases = {json.loads(x)["id"]: json.loads(x) for x in LIVE_CASES.read_text().splitlines()}
+    names = {"defended": "first look off (locked)", "defended_first_look": "first look on"}
+    out = [
+        "## (c5) Live incidents (eval/live_questions.jsonl, n = 10)",
+        "",
+        f"`eval/results/{path.name}` ({provenance(d)}). Ten on-call questions whose answers exist"
+        " only in each case's own logs (data/live/), answer keys committed before any run. The"
+        " locked defended agent (verify on, frozen defenses) with first look off, then on."
+        " Deterministic metrics, no judge. Key facts: exact-token match of the key's tokens"
+        " in the summary, likely cause and kept claims. Forbidden claims: the key's regex"
+        " matches a sentence with no negation cue. Gold coverage: gold log entries with a row"
+        " among the gathered evidence. Post hoc (after the first run, not pre-registered): the"
+        " same answers with Unicode hyphens and spaces folded to ASCII, because the model writes"
+        " U+2011 in codes and host names.",
+        "",
+        "| config | key facts (pre-registered) | key facts (post hoc, ASCII) | cases with every"
+        " key fact | cases with a forbidden claim | gold entries covered | tool calls (failed)"
+        " | triaged live | run spend $ |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for name, c in d["configs"].items():
+        s, p = c["summary"], c["posthoc_ascii"]
+        out.append(
+            f"| {names[name]} | {s['key_facts_found']}/{s['key_facts_total']} |"
+            f" {p['key_facts_found']}/{s['key_facts_total']} | {s['cases_all_key_facts']}/{s['n']}"
+            f" (post hoc {p['cases_all_key_facts']}) | {s['cases_with_forbidden_claim']}/{s['n']} |"
+            f" {s['gold_covered']}/{s['gold_total']} | {s['tool_calls']} ({s['tool_failures']}) |"
+            f" {s['triaged_live']}/{s['n']} | {s['spend_usd']:.4f} |"
+        )
+    out += [
+        "",
+        "| case | cause type | key facts off / on | post hoc off / on | gold off / on"
+        " | tool calls off / on |",
+        "|---|---|---|---|---|---|",
+    ]
+    off, on = (d["configs"][k] for k in ("defended", "defended_first_look"))
+    for a, b in zip(off["per_case"], on["per_case"], strict=True):
+        i = a["id"]
+        pa, pb = off["posthoc_ascii"]["key_facts"][i], on["posthoc_ascii"]["key_facts"][i]
+        out.append(
+            f"| {i} | {cases[i]['cause_type']} | {a['key_facts_found']} / {b['key_facts_found']}"
+            f" (of {a['key_facts_total']}) | {pa} / {pb} |"
+            f" {a['gold_covered']} / {b['gold_covered']} (of {a['gold_total']}) |"
+            f" {a['tool_calls']} / {b['tool_calls']} |"
+        )
+    hits = [
+        f'{names[n]}, {r["id"]}: {claim}: "{sent}"'
+        for n, c in d["configs"].items()
+        for r in c["per_case"]
+        for claim, sents in r["forbidden_hits"].items()
+        for sent in sents
+    ]
+    out += ["", "Forbidden-claim hits, for audit: " + ("; ".join(hits) if hits else "none") + "."]
+    for label, key in (("pre-registered", "comparison"), ("post hoc", "comparison_posthoc_ascii")):
+        m = d[key]
+        out.append(
+            f"First look on minus off ({label}), paired by case, n = {m['n']}: key facts better in"
+            f" {m['key_facts_better']}, worse in {m['key_facts_worse']}, tied in"
+            f" {m['key_facts_tied']} (exact sign test p = {m['key_facts_sign_p']}); every key fact"
+            f" in {m['all_key_facts_only_first']} case(s) only with first look off and"
+            f" {m['all_key_facts_only_second']} only with it on (exact McNemar p ="
+            f" {m['all_key_facts_mcnemar_p']}); gold entries covered {m['gold_covered_diff']:+d};"
+            f" tool calls {m['tool_calls_diff']:+d}."
+        )
+    p = d["comparison"]["key_facts_sign_p"]
+    out.append(
+        ""
+        if p < 0.05
+        else f"With n = 10 the two configs cannot be separated (sign test p = {p} > 0.05)."
+        " These are descriptive numbers, not a claim that first look helps or hurts."
+    )
+    return out
+
+
 def placeholder_section(measured: set[str] = frozenset()) -> list[str]:
     out = ["## (d) Not measured yet", "", "| metric | status |", "|---|---|"]
     out += [
@@ -721,6 +802,7 @@ def render() -> str:
     c2 = agreement_section()
     c3 = injection_section()
     c4 = cost_section()
+    c5 = live_section()
     out = [
         "# OpsPilot results ledger",
         "",
@@ -736,6 +818,7 @@ def render() -> str:
         *([*c2, ""] if c2 else []),
         *([*c3, ""] if c3 else []),
         *([*c4, ""] if c4 else []),
+        *([*c5, ""] if c5 else []),
         *placeholder_section(
             (GEN_MEASURED if c else frozenset())
             | ({"Judge agreement with Prince's 30 hand labels"} if c2 else frozenset())
