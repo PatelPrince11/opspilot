@@ -54,8 +54,9 @@ jobs:
       - name: Migrations
         run: uv run alembic upgrade head
 
-      - name: Tests
-        run: uv run pytest -rs
+      # Line coverage of rag/ and agent/ (pyproject [tool.coverage]); under 85% fails the job.
+      - name: Tests and coverage
+        run: uv run pytest -rs --cov --cov-report=term-missing
 
       - name: Results ledger is current
         run: make results-check

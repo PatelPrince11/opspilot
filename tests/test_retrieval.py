@@ -10,7 +10,7 @@ from alembic.config import Config
 
 from config import get_settings
 from rag.embeddings import as_pgvector, embed
-from rag.retrieval import Hit, RetrievalConfig, retrieve, rrf
+from rag.retrieval import Hit, RetrievalConfig, rerank, retrieve, rrf
 from tests.test_schema import ALEMBIC_INI, with_db
 
 pytestmark = pytest.mark.db
@@ -191,6 +191,19 @@ def test_rrf_sums_reciprocal_ranks():
     assert fused[0].score == pytest.approx(1 / 61 + 1 / 62)
     assert fused[1].score == pytest.approx(1 / 63 + 1 / 61)
     assert fused[2].score == pytest.approx(1 / 62)
+
+
+def test_rrf_breaks_ties_by_chunk_id_and_keeps_the_first_lists_hit():
+    dense_hit = Hit(5, "D5", 0, "from dense", {}, 0.9)
+    fused = rrf([dense_hit], [Hit(2, "D2", 0, "", {}, 0.1)], k=60)
+    assert [h.chunk_id for h in fused] == [2, 5]  # equal scores: lower chunk id first
+    both = rrf([dense_hit], [Hit(5, "D5", 0, "from keyword", {}, 3.0)])
+    assert len(both) == 1 and both[0].content == "from dense"  # scores replaced, fields kept
+    assert rrf() == [] and rrf([], []) == []
+
+
+def test_rerank_of_no_hits_loads_no_model():
+    assert rerank("anything", []) == []
 
 
 def test_hybrid_rerank_rescores_and_sorts(conn):

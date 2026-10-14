@@ -34,3 +34,19 @@ def test_long_prose_overlaps_and_respects_size():
 def test_numbered_list_marker_is_not_a_sentence():
     out = chunk("**3. Look at it.** Then go.", words, size=400, overlap=0, by_heading=False)
     assert out[0]["content"] == "**3. Look at it.** Then go."
+
+
+def test_no_sentence_is_lost_and_no_chunk_ends_on_a_heading():
+    sections = [
+        f"## S{i}\n\n" + " ".join(f"Part {i} line {j} is here." for j in range(12))
+        for i in range(4)
+    ]
+    out = chunk("# T\n\n" + "\n\n".join(sections), words, size=40, overlap=8, by_heading=False)
+    joined = " ".join(c["content"] for c in out)
+    assert all(f"Part {i} line {j} is here." in joined for i in range(4) for j in range(12))
+    assert all(not c["content"].rstrip().splitlines()[-1].startswith("#") for c in out)
+    assert all(c["token_count"] <= 40 for c in out)
+
+
+def test_an_empty_body_has_no_chunks():
+    assert chunk("", words, size=100, overlap=10, by_heading=True) == []

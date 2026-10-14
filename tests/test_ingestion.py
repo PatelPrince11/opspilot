@@ -14,7 +14,7 @@ from alembic.config import Config
 
 from config import get_settings
 from rag.embeddings import embed
-from rag.ingestion import LOG_FILES, ingest
+from rag.ingestion import LOG_FILES, check_inputs, ingest
 from scripts.corpus.checks import label_errors, leaks_demo, load_sidecar, sidecar_labels
 from scripts.corpus.common import PROCESSED, SIDECAR
 from scripts.corpus.incidents import LABEL_RE
@@ -196,3 +196,8 @@ def test_changed_document_is_replaced(db):
     new_ids = {c[0] for c in after["chunks"] if c[1] == "RB-001"}
     assert new_ids and not new_ids & {c[0] for c in db["before"]["chunks"]}
     assert after["docs"] == db["before"]["docs"]
+
+
+def test_ingest_refuses_to_start_without_the_downloaded_loghub_lines(tmp_path):
+    with pytest.raises(SystemExit, match="run `make corpus` first"):
+        check_inputs(tmp_path)

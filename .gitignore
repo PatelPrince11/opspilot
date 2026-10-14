@@ -11,3 +11,4 @@ data/processed/log_events.loghub.jsonl
 scratchpad/
 .cache/
 .hf-cache/
+.coverage

@@ -3380,6 +3380,37 @@ Restricted to the cases whose payload was seen in both runs:
   Guard calls included, free on Groq). Total run spend over the 12 generation runs: $1.90.
   The judge is not in these numbers (Gemini free tier).
 
+## 2026-10-14: Phase 4 finish step 2, test coverage
+
+- pytest-cov added (dev group); `[tool.coverage]` in pyproject: source rag/ and agent/,
+  fail_under 85. CI runs `pytest --cov` in place of plain pytest, so a drop under 85% fails
+  the job. `make test` is unchanged (no coverage, faster).
+- Line coverage on rag/ and agent/, local run with Postgres and the LogHub lines: 96.4%
+  before (35 of 969 statements missed), 98.2% after (17 missed), 649 tests. Lowest-covered:
+  rag/ingestion.py 86% (its CLI main and the dry-run printout, run by hand through
+  `make ingest`), rag/retrieval.py 99% (closing a connection retrieve() opened itself; every
+  test passes one in). Every other file 100%. Out of the target: api/main.py 100%,
+  llm/client.py 92%.
+- Coverage was already above target, so the new tests went after behaviour, not lines:
+  - Prompt Guard pacing on Groq (the next call waits a full interval; a cache hit gives its
+    slot back), a long item scored alone by its worst window, no items, and guard calls
+    landing in the run's llm_calls (they are what step 1's cost counts).
+  - an unknown guard mode is refused; malformed read_document arguments fail the call, not
+    the run; search stops at TOP_DOCS documents.
+  - RRF ties broken by chunk id, the first list's hit kept when both lists return a chunk,
+    empty inputs; rerank of nothing loads no model.
+  - chunking keeps every sentence and never ends a chunk on a heading; an empty body has no
+    chunks. A quote must sit inside one cited item (not straddle two); three words is enough.
+  - ingest refuses to start without the downloaded LogHub lines.
+  - Integration: one full investigation through agent.run.investigate (what POST /investigate
+    calls) with the real read-only tools on the fixture DB and the stub LLM, verify on:
+    events end with sources then diagnosis, the claim verifies, usage is in the final event,
+    and the investigation row, its two tool_calls rows and cost_usd are persisted.
+- First failure of the integration test: my query_logs call left out `end`, a required field.
+  The tool was right to fail the call; the test was fixed.
+- Line coverage says a line ran, not that a test checked its result. A 98% number is not a
+  correctness claim.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

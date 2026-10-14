@@ -314,3 +314,63 @@ def test_the_read_list_survives_a_verify_loop(ro):
     assert [t["success"] for t in final["tool_calls"]] == [True, False]
     assert final["tool_calls"][1]["error"].startswith("already read: INC-9002 part 1 of 1")
     assert final["diagnosis"]["citations_verified"] is True
+
+
+def test_search_returns_at_most_top_docs_documents(ro, monkeypatch):
+    monkeypatch.setattr(tools, "TOP_DOCS", 1)
+    assert len(run_tool("search_incidents", {"query": "logs-01 disk pool"}, ro).items) == 1
+
+
+def test_malformed_read_document_arguments_fail_the_call_not_the_run(ro):
+    llm = StubLLM([TRIAGE, calls(("read_document", {})), say("done"), draft()])
+    final = build_graph(llm, ro, first_look=False).invoke(
+        initial_state("logs-01 disk full?", "2026-10-06T14:52Z")
+    )
+    assert [(t["name"], t["success"]) for t in final["tool_calls"]] == [("read_document", False)]
+    assert final["diagnosis"] is not None
+
+
+def test_one_full_investigation_end_to_end(url, monkeypatch):
+    """agent.run.investigate as POST /investigate runs it: the real read-only tools on the fixture
+    DB, the stub LLM, verify on, and every row persisted."""
+    import uuid
+
+    from agent.run import investigate, load
+
+    for k, v in {"AGENT_FIRST_LOOK": "false", "DEFENSE_GUARD": "off"}.items():
+        monkeypatch.setenv(k, v)
+    get_settings.cache_clear()
+    logs = {
+        "service": "payments-api",
+        "start": "2026-10-06T14:00:00Z",
+        "end": "2026-10-06T14:52:00Z",
+    }
+    claim = ("raise maxmemory", ["RB-901#0"], "raise maxmemory and check the eviction policy")
+    llm = StubLLM(
+        [
+            TRIAGE,
+            calls(("search_runbooks", {"query": "redis eviction"}), ("query_logs", logs)),
+            say("done"),
+            draft(claim),
+        ]
+    )
+    iid = uuid.uuid4()
+    events = list(
+        investigate(
+            "redis evicting?", "2026-10-06T14:52:00Z", llm, investigation_id=iid, db_url=url
+        )
+    )
+    kinds = [e["event"] for e in events]
+    assert kinds[-2:] == ["sources", "diagnosis"] and "error" not in kinds
+    final = events[-1]
+    assert final["diagnosis"]["citations_verified"] is True
+    assert [c["text"] for c in final["diagnosis"]["claims"]] == ["raise maxmemory"]
+    assert final["usage"]["llm_calls"] == 4 and final["usage"]["cost_usd"] == 0
+    inv = load(iid, url)
+    assert inv["status"] == "done" and inv["diagnosis"] == final["diagnosis"]
+    assert [(t["tool"], t["success"]) for t in inv["tool_calls"]] == [
+        ("search_runbooks", True),
+        ("query_logs", True),
+    ]
+    assert inv["prompt_tokens"] == final["usage"]["prompt_tokens"] and inv["cost_usd"] == 0
+    get_settings.cache_clear()
