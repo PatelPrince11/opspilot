@@ -97,13 +97,13 @@ export default function App() {
       <main className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6">
         <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 text-accent" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round">
+            <h1 className="flex items-center gap-2.5 text-3xl font-semibold tracking-tight sm:text-4xl">
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-8 w-8 text-accent sm:h-9 sm:w-9" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 12h4l2.5-6 5 12L17 12h4" />
               </svg>
               OpsPilot
             </h1>
-            <p className="mt-1 max-w-[68ch] text-sm text-pretty text-ink">
+            <p className="mt-2 max-w-[68ch] text-base text-pretty text-ink">
               Describe an incident. The agent searches runbooks, past incidents, logs and service status, then
               answers with claims you can check against the evidence they cite.
             </p>
