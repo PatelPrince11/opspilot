@@ -1,4 +1,4 @@
-.PHONY: web-check e2e injection-eval gen-eval judge-sheet judge-agreement demo up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
+.PHONY: reproduce web-check e2e injection-eval gen-eval judge-sheet judge-agreement demo up down logs test lint fmt gate results results-check migrate migrate-down psql corpus corpus-check selfcheck packet ingest eval import-human audit-pack import-audit
 
 -include .env
 APP_HOST_PORT ?= 8001
@@ -133,6 +133,16 @@ demo:
 #   make gen-eval ARGS="--config verify_on --concurrency 3 --max-spend 4.5"
 gen-eval:
 	@DATABASE_URL=$(HOST_DATABASE_URL) PYTHONUNBUFFERED=1 uv run python -m eval.generation_eval run $(ARGS)
+
+# The reported test-split generation results (shipped, verify on and off) from the committed
+# final-run response cache (eval/cache/llm): no API keys, no requests, no spend. Run it in a fresh
+# clone (with `make up` and `make ingest` done): an existing .cache/gen_eval would be reused instead
+# of replayed. The result files must come out unchanged.
+reproduce:
+	@LLM_CACHE_DIR=eval/cache/llm $(MAKE) -s gen-eval \
+		ARGS="--split test --final-test --config shipped --max-spend 0.001"
+	@LLM_CACHE_DIR=eval/cache/llm $(MAKE) -s gen-eval \
+		ARGS="--split test --final-test --config shipped_off --skip-judge --max-spend 0.001"
 
 # Injection eval (eval/injection_eval.py): loads the 30 payloads, runs the locked agent per case
 # with its payload, then the clean control; writes eval/results/injection_no_defense.json.

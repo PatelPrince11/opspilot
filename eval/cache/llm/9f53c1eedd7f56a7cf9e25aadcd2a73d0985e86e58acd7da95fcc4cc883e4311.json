@@ -1,0 +1,1 @@
+{"content": "0.002556335413828492", "tool_calls": [], "prompt_tokens": 281, "completion_tokens": 0, "estimated": false, "prompt_estimate": 378, "provider": "groq", "model": "meta-llama/llama-prompt-guard-2-86m", "cached": false, "latency_ms": 122.88916599936783, "name": "guard", "wait_s": 0.0, "cost_usd": 1.124e-05, "cost_source": "computed"}

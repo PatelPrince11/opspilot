@@ -484,27 +484,19 @@ Test-run agent spend (new, uncached LLM calls): $0.4763.
 | p50 / p95 latency, end to end per investigation | not measured yet (Phase 4) |
 | p50 / p95 latency, retrieval on EC2 | not measured yet (Phase 5) |
 
-## (e) Resume bullet templates (docs/BUILD_GUIDE.md) and the rows that fill them
+## (e) Resume bullets (test split only)
 
-Only test-split rows fill the brackets. A bullet whose number comes out weak is dropped.
+Every number comes from the files named under each bullet; nothing is typed by hand. Wording was set after the test run (Phase 5A), so each bullet says which pre-registered row it uses; disclosures below a bullet must go wherever it is used.
 
-- Built hybrid BM25 + dense retrieval over \[N\] incident and runbook documents with PostgreSQL/pgvector (BM25 keyword ranking in SQL, RRF fusion), raising Recall@5 (mean fraction of gold docs found) from \[X\]% for a dense baseline to \[Y\]% on a \[N\]-question held-out set.
-  - Filled by: Section (b), test split: hybrid BM25 + dense vs dense, Recall@5 (mean fraction of gold docs found) levels for [X] (dense) and [Y] (locked hybrid), with the comparison row's CI; [N] documents from section (a); [N] questions = test n.
-  - Test fill: Built hybrid BM25 + dense retrieval over 147 incident and runbook documents with PostgreSQL/pgvector (BM25 keyword ranking in SQL, RRF fusion), raising Recall@5 (mean fraction of gold docs found) from 75% for a dense baseline to 79% on a 100-question held-out set.
-  - Verdict: drop: the CI includes 0; paired difference +0.035 [-0.019, +0.092], n 100
-- Developed a LangGraph incident-investigation agent with 4 read-only tools and a citation-verification loop, reaching \[X\]% citation accuracy and \[Y\]% tool-call success.
-  - Filled by: Section (c): citation accuracy (a)/(b) for [X], tool-call success for [Y] (Phase 3, then test in Phase 5).
-  - Test fill: Developed a LangGraph incident-investigation agent with 4 read-only tools and a citation-verification loop that cut citation failures from 26% in first drafts to 0% in final answers (deterministic check, 98 held-out questions), with 85% tool-call success.
-  - Verdict: keep: verify on - off, citation (a), +0.254 [+0.192, +0.320], n 98; citation (a) is what verify enforces, so the claim is the first-draft-to-final drop, not the final rate
-- Cut prompt-injection attack success from \[X\]% to \[Y\]% on \[N\] adversarial cases by isolating untrusted log and runbook content and keeping tools read-only.
-  - Filled by: Section (c3): attack success no_defense vs defended on the 45 pooled held-out cases (Phase 4; replayed on the frozen code in Phase 5), McNemar p.
-  - Test fill: Cut prompt-injection attack success from 24% to 4% on 45 held-out adversarial cases by isolating untrusted log and runbook content and keeping tools read-only.
-  - Verdict: keep: 11/45 -> 2/45, exact McNemar p 0.0117; held-out injection set (Phase 4), not the question test split
-- Built an automated eval pipeline (retrieval, faithfulness, citation accuracy, latency) with an LLM judge validated at \[X\]% agreement against hand labels.
-  - Filled by: Section (d): judge agreement for [X] (Phase 3); the retrieval section shows the retrieval half of the pipeline.
-  - Test fill: Judge agreement: kappa 0.49 overall (n 164), -0.05 on claim support, 0.47 on key facts.
-  - Verdict: drop: judge kappa below 0.6 (pre-registered rule); the pipeline can be described without an agreement number
-- Deployed FastAPI, Postgres and a React/TypeScript dashboard to AWS EC2 via Docker Compose and GitHub Actions, with Langfuse tracing, token/cost tracking and \[X\] ms p95 latency.
-  - Filled by: Section (d): p95 end-to-end latency on EC2 (Phase 5).
-  - Test fill: -
-  - Verdict: drop: not deployed to EC2 yet, so there is no EC2 p95 latency to report
+- Built hybrid BM25 + dense retrieval over 147 documents (pgvector + Postgres full-text); on a 100-question held-out set it raised MRR from 0.757 to 0.839 (+0.082, 95% CI [+0.037, +0.129]).
+  - Source: section (f) retrieval, MRR rows (test, hybrid and dense) and "hybrid - dense, paired" MRR; test_locked.json, test_dense_baseline.json.
+  - Disclose (README): the Recall@5 gain did not replicate on test, +0.035 [-0.019, +0.092]. MRR was in the pre-registered metric list.
+- Built a LangGraph incident-investigation agent with 5 read-only tools and a citation-verification loop: 25.6% of first-draft claims failed a deterministic evidence check and the loop removed all of them (98 held-out questions), at 85.2% tool-call success and about $0.0048 per investigation.
+  - Source: section (f) generation, test column: first-draft citation (a) failure 0.256 [0.195, 0.319]; final citation (a) 1.000; verify on - off +0.254 [+0.192, +0.320] (n 98); tool-call success 0.852 [0.826, 0.879]; $ per investigation 0.0048 [0.0044, 0.0052].
+  - Disclose: final citation (a) is what the verify node enforces, so it is 1.0 by construction; the claim is the first-draft failure rate.
+- Measured prompt-injection attack success on 45 held-out cases: 11/45 undefended vs 2/45 with layered defenses (0 strict hits; McNemar p = 0.012).
+  - Source: section (c3), heldout_pooled row; before [0.142, 0.387], after [0.012, 0.148] (Wilson 95%).
+  - Disclose: exposure-matched (payload read in both runs, n 33): 5/33 -> 2/33, McNemar p = 0.375, not significant. The Phase 5 figure is a cache replay of the Phase 4 run on the frozen code (every call a cache hit), not a fresh sample.
+- Validated an LLM judge against 30 hand-labelled answers (Cohen's kappa 0.47 on key facts, -0.05 on claim support) and based decisions on deterministic metrics.
+  - Source: section (c2); key facts kappa 0.471 [0.283, 0.667] (n 77); claims -0.053 [-0.103, 0.000] (n 87).
+- Deploy (FastAPI, Postgres and the dashboard on AWS EC2, p95 latency): pending Phase 5B (not measured).

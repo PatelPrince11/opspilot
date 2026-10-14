@@ -3711,6 +3711,79 @@ the agent bullet must say so and lean on first-draft failure vs final.
   deployed). Not done: rewriting the retrieval bullet around MRR. That would be choosing the
   metric after seeing the results; it is Prince's call, and it would have to say so.
 
+## 2026-10-14: Phase 5A results, limitations and the final-run cache
+
+**What the test run showed** (ledger (f); dev was tuned on, so dev is optimistic):
+- Retrieval: hybrid Recall@5 0.790 [0.731, 0.846] on test (dev 0.853). The hybrid - dense
+  Recall@5 gain did **not** replicate: +0.035 [-0.019, +0.092] (dev +0.049 [+0.006, +0.095]).
+  MRR's did: 0.757 -> 0.839, +0.082 [+0.037, +0.129], n 100. The retrieval bullet uses MRR.
+  Justification: MRR was in the pre-registered list of test metrics (with Recall@5/@10,
+  all-gold Recall@10, Hit@5), so the number was fixed in advance; what changed after the run
+  is only which pre-registered row the bullet quotes. The Recall@5 non-replication must be
+  disclosed beside it wherever the bullet appears (README too).
+- The Gemini-written test questions are the weak slice: Recall@5 0.600 [0.425, 0.775], MRR
+  0.520 (n 20) vs 0.838 / 0.919 for Claude-written ones (n 80). Completeness on them is 0.534
+  [0.351, 0.722] vs 0.733. Plausible cause, not tested: the Claude-written questions were drafted
+  from the same documents by the same model family that wrote the corpus, so they share its
+  wording (synthetic circularity); the Gemini ones do not.
+- Generation held up: first-draft citation (a) failure 0.256 [0.195, 0.319] (dev 0.267),
+  removed by the verify loop (final 1.000 by construction), tool-call success 0.852, $0.0048
+  per investigation, completeness 0.687 (judge kappa 0.47 on key facts).
+- Run 1 was invalid (a ledger file edited during the run made the result files dirty) and was
+  repeated in full from the clean tag as a cache replay with identical numbers (entry above).
+
+**Limitations to carry into the README:**
+- Recall@5 gain over dense not significant on test; only MRR and Recall@10 gains are.
+- n = 100 test questions, all synthetic, on a synthetic corpus; slices of 20-45 questions have
+  wide CIs.
+- Final citation (a) is enforced by the verify node; it is not an independent accuracy measure.
+- The judge is weak: kappa 0.47 on key facts (completeness is context only), -0.05 on claim
+  support (citation (b) and faithfulness are not reported).
+- Injection: 11/45 -> 2/45 (p 0.012) overall, but exposure-matched only 5/33 -> 2/33 (p 0.375):
+  part of the drop is the defenses changing what the agent reads, not resisting what it read.
+  The Phase 5 injection figure is a cache replay of the Phase 4 run, not a new sample.
+- End-to-end latency on test is not measured (every run had at least one cache hit); EC2
+  latency and memory are Phase 5B.
+- Live incidents: at best 14/30 key facts on the 10-case live set (Phase 4).
+
+**Freeze scope:** results-affecting code stays at tag `v0.1-frozen`. Ledger rendering, the
+final-run cache and frontend-only changes (e.g. the dashboard redesign) may land after the tag;
+none of them change what the agent sends to a model, which the cache replay checks: any prompt
+change would be a cache miss.
+
+**Final-run response cache (eval/cache/llm):**
+- Scan first (scratchpad/scan_cache.py): all 11,736 files under .cache/ (71 MB) for sk-, gsk_,
+  AIza, Bearer, Langfuse key prefixes and the literal secret values in .env, and for LogHub text
+  (openstack-nova names, /servers/detail, [instance:, and each of the LogHub messages, raw and
+  JSON-escaped). Nothing found. A planted positive control caught every kind; the first version
+  missed a planted LogHub line because cache files are JSON and escape its quotes, so the
+  JSON-escaped form was added and both scans rerun.
+- Subset: replaying the reported runs with a harness that copied every cache entry hit and made
+  any real request raise. Test shipped (judged) and shipped_off; dev shipped, shipped_off,
+  verify_on and verify_off (judged), defended_on, defended_off; the 45 held-out injection cases
+  with `defended` (attack and clean). 5,163 entries, 20 MB, 0 requests. Every replayed result
+  equals the committed file (provenance, latency and spend excepted). Snag: the harness first
+  asked the judge for all 100 dev `defended_on` answers, but Phase 4's judge quota ran out after
+  1 (99 unjudged in the committed file), so the 99 had no cache entry and the harness stopped on
+  the first real request; it now judges only the one answer judged then.
+- Loader: the existing `LLM_CACHE_DIR` setting. The key is sha256(provider, model, messages,
+  tools, params), so the directory never enters it; tests/test_llm_client.py proves an entry
+  copied to another directory hits with no request, and that committed entries are well-formed
+  and key-free. `make reproduce` runs the test generation eval with LLM_CACHE_DIR=eval/cache/llm.
+- Fresh clone check (no .env, no API keys, no .cache): `make reproduce` made 4,335 LLM calls
+  (2,288 agent, 1,947 verify off, 100 judge), 0 requests, $0; both test result files
+  "unchanged", `git diff` empty.
+
+## Phase 5B notes (deploy)
+
+- Run uvicorn with one worker: the rate limiter and its counts live in process memory, so two
+  workers would each allow the full limit. `--proxy-headers` behind Nginx, or every caller shares
+  the proxy's IP bucket.
+- Measure memory and live latency (end to end, retrieval, LLM) on the EC2 instance. The locked
+  config does not rerank, so the cross-encoder must not be loaded there.
+- Retake the README dashboard screenshots after the dashboard redesign (the current ones predate
+  the API key field).
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

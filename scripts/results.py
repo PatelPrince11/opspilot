@@ -28,7 +28,6 @@ from scripts.corpus.common import PROCESSED, ROOT, SEED
 OUT = ROOT / "docs" / "results.md"
 LIVE_CASES = ROOT / "eval" / "live_questions.jsonl"
 AUDIT = ROOT / "eval" / "label_audit.md"
-GUIDE = ROOT / "docs" / "BUILD_GUIDE.md"
 
 DEFINITIONS = {
     "recall@5": "per question, gold docs in the top 5 / gold docs, averaged",
@@ -98,19 +97,6 @@ COST_MEASURED = {"Tokens per investigation (input / output)", "Estimated cost pe
 DEFENDED_MEASURED = {
     "Attack success after defenses, tune half (15)",
     "Attack success after defenses, held-out half (15)",
-}
-# Bullet template (by its opening words) -> the ledger rows that fill it.
-BULLET_ROWS = {
-    "Built hybrid": "Section (b), test split: hybrid BM25 + dense vs dense, Recall@5 (mean fraction"
-    " of gold docs found) levels for [X] (dense) and [Y] (locked hybrid), with the comparison"
-    " row's CI; [N] documents from section (a); [N] questions = test n.",
-    "Developed a LangGraph": "Section (c): citation accuracy (a)/(b) for [X], tool-call success"
-    " for [Y] (Phase 3, then test in Phase 5).",
-    "Cut prompt-injection": "Section (c3): attack success no_defense vs defended on the 45"
-    " pooled held-out cases (Phase 4; replayed on the frozen code in Phase 5), McNemar p.",
-    "Built an automated eval": "Section (d): judge agreement for [X] (Phase 3); the retrieval"
-    " section shows the retrieval half of the pipeline.",
-    "Deployed FastAPI": "Section (d): p95 end-to-end latency on EC2 (Phase 5).",
 }
 
 
@@ -808,98 +794,95 @@ def placeholder_section(measured: set[str] = frozenset()) -> list[str]:
 
 
 def bullets_section() -> list[str]:
-    text = GUIDE.read_text()
-    block = text[text.index("**Bullet templates**") : text.index("**Skills line:**")]
-    templates = [ln[2:].strip() for ln in block.splitlines() if ln.startswith("- ")]
-    out = [
-        "## (e) Resume bullet templates (docs/BUILD_GUIDE.md) and the rows that fill them",
-        "",
-        "Only test-split rows fill the brackets. A bullet whose number comes out weak is dropped.",
-        "",
-    ]
-    for t in templates:
-        rows = next((v for k, v in BULLET_ROWS.items() if t.startswith(k)), None)
-        if rows is None:
-            raise SystemExit(f"no ledger mapping for bullet template: {t[:60]!r}")
-        out += [f"- {t}", f"  - Filled by: {rows}"]
-        fill = test_fill(t)
-        if fill:
-            out += [f"  - Test fill: {fill[0]}", f"  - Verdict: {fill[1]}"]
-    return out
-
-
-def test_fill(template: str) -> tuple[str, str] | None:
-    """The bullet filled from test-split files only, and its verdict by the drop rules
-    pre-registered in NOTES (\"Phase 5 pre-registration\"). None before the test run."""
+    """The resume bullets, filled from the test-split rows of this ledger (and the held-out
+    injection and judge-agreement files), each with its source row and CI."""
     from eval.generation_eval import paired_bootstrap
 
+    out = [
+        "## (e) Resume bullets (test split only)",
+        "",
+        "Every number comes from the files named under each bullet; nothing is typed by hand."
+        " Wording was set after the test run (Phase 5A), so each bullet says which"
+        " pre-registered row it uses; disclosures below a bullet must go wherever it is used.",
+        "",
+    ]
     a, b = load_named("test", "locked"), load_named("test", "dense_baseline")
     on, off = load_named("test", "generation_shipped"), load_named("test", "generation_shipped_off")
     if not (a and b and on and off):
-        return None
-    if template.startswith("Built hybrid"):
-        qb = {x["id"]: x for x in b["questions"]}
-        ids = [x["id"] for x in a["questions"]]
-        d, lo, hi = bootstrap(
-            [x["recall@5"] for x in a["questions"]], [qb[i]["recall@5"] for i in ids]
-        )
-        docs = sum(a["corpus"]["documents"].values())
-        text = (
-            f"Built hybrid BM25 + dense retrieval over {docs} incident and runbook documents"
-            " with PostgreSQL/pgvector (BM25 keyword ranking in SQL, RRF fusion), raising"
-            " Recall@5 (mean fraction of gold docs found) from"
-            f" {b['metrics']['overall']['recall@5']:.0%} for a dense baseline to"
-            f" {a['metrics']['overall']['recall@5']:.0%} on a {len(ids)}-question held-out set."
-        )
-        ok = lo > 0
-        why = f"paired difference {d:+.3f} [{lo:+.3f}, {hi:+.3f}], n {len(ids)}"
-        return text, ("keep: " if ok else "drop: the CI includes 0; ") + why
-    if template.startswith("Developed a LangGraph"):
-        final = level_ci(gen_pairs(on, "citation_a"))
-        first = level_ci(gen_pairs(off, "citation_a"))
-        tools = level_ci(gen_pairs(on, "tool_success"))
-        qa = {q["id"]: q["scores"]["citation_a"] for q in on["questions"]}
-        qb = {q["id"]: q["scores"]["citation_a"] for q in off["questions"]}
-        ids = sorted(i for i in qa if qa[i] and qb.get(i))
-        d, lo, hi = paired_bootstrap(qa, qb, ids)
-        text = (
-            "Developed a LangGraph incident-investigation agent with 4 read-only tools and a"
-            f" citation-verification loop that cut citation failures from {1 - first[0]:.0%} in"
-            f" first drafts to {1 - final[0]:.0%} in final answers (deterministic check,"
-            f" {len(ids)} held-out questions), with {tools[0]:.0%} tool-call success."
-        )
-        why = (
-            f"verify on - off, citation (a), {d:+.3f} [{lo:+.3f}, {hi:+.3f}], n {len(ids)};"
-            " citation (a) is what verify enforces, so the claim is the first-draft-to-final"
-            " drop, not the final rate"
-        )
-        return text, ("keep: " if lo > 0 else "drop: the CI includes 0; ") + why
-    if template.startswith("Cut prompt-injection"):
-        g = json.loads((RESULTS / "injection_comparison.json").read_text())["groups"]
-        p = g["heldout_pooled"]
-        m = p["mcnemar"]
-        text = (
-            f"Cut prompt-injection attack success from {p['before']['rate']:.0%} to"
-            f" {p['after']['rate']:.0%} on {p['n']} held-out adversarial cases by isolating"
-            " untrusted log and runbook content and keeping tools read-only."
-        )
-        why = (
-            f"{p['before']['k']}/{p['n']} -> {p['after']['k']}/{p['n']}, exact McNemar p"
-            f" {m['p_exact']:.4f}; held-out injection set (Phase 4), not the question test split"
-        )
-        return text, ("keep: " if m["p_exact"] < 0.05 else "drop: not significant; ") + why
-    if template.startswith("Built an automated eval"):
-        k = json.loads((RESULTS / "judge_agreement.json").read_text())["overall"]
-        return (
-            f"Judge agreement: kappa {k['all']['kappa']:.2f} overall (n {k['all']['n']}),"
-            f" {k['claims']['kappa']:.2f} on claim support, {k['key_facts']['kappa']:.2f} on"
-            " key facts.",
-            "drop: judge kappa below 0.6 (pre-registered rule); the pipeline can be described"
-            " without an agreement number",
-        )
-    if template.startswith("Deployed FastAPI"):
-        return "-", "drop: not deployed to EC2 yet, so there is no EC2 p95 latency to report"
-    return None
+        return [*out, "Not filled: the test-split result files do not exist yet."]
+
+    qb = {x["id"]: x for x in b["questions"]}
+    ids = [x["id"] for x in a["questions"]]
+    paired = {
+        k: bootstrap([x[k] for x in a["questions"]], [qb[i][k] for i in ids])
+        for k in ("rr", "recall@5")
+    }
+    mh, md = a["metrics"]["overall"]["mrr"], b["metrics"]["overall"]["mrr"]
+    d, lo, hi = paired["rr"]
+    r5, r5lo, r5hi = paired["recall@5"]
+    docs = sum(a["corpus"]["documents"].values())
+    out += [
+        f"- Built hybrid BM25 + dense retrieval over {docs} documents (pgvector + Postgres"
+        f" full-text); on a {len(ids)}-question held-out set it raised MRR from {md:.3f} to"
+        f" {mh:.3f} ({d:+.3f}, 95% CI [{lo:+.3f}, {hi:+.3f}]).",
+        "  - Source: section (f) retrieval, MRR rows (test, hybrid and dense) and"
+        ' "hybrid - dense, paired" MRR; test_locked.json, test_dense_baseline.json.',
+        f"  - Disclose (README): the Recall@5 gain did not replicate on test, {r5:+.3f}"
+        f" [{r5lo:+.3f}, {r5hi:+.3f}]. MRR was in the pre-registered metric list.",
+    ]
+
+    first = level_ci(gen_pairs(off, "citation_a"))
+    final = level_ci(gen_pairs(on, "citation_a"))
+    tools = level_ci(gen_pairs(on, "tool_success"))
+    cost = level_ci(gen_pairs(on, "cost"))
+    qa = {q["id"]: q["scores"]["citation_a"] for q in on["questions"]}
+    qo = {q["id"]: q["scores"]["citation_a"] for q in off["questions"]}
+    pids = sorted(i for i in qa if qa[i] and qo.get(i))
+    vd, vlo, vhi = paired_bootstrap(qa, qo, pids)
+    out += [
+        "- Built a LangGraph incident-investigation agent with 5 read-only tools and a"
+        f" citation-verification loop: {1 - first[0]:.1%} of first-draft claims failed a"
+        " deterministic evidence check and the loop removed all of them"
+        f" ({len(pids)} held-out questions), at {tools[0]:.1%} tool-call success and about"
+        f" ${cost[0]:.4f} per investigation.",
+        "  - Source: section (f) generation, test column: first-draft citation (a) failure"
+        f" {1 - first[0]:.3f} [{1 - first[2]:.3f}, {1 - first[1]:.3f}]; final citation (a)"
+        f" {final[0]:.3f}; verify on - off {vd:+.3f} [{vlo:+.3f}, {vhi:+.3f}] (n {len(pids)});"
+        f" tool-call success {tools[0]:.3f} [{tools[1]:.3f}, {tools[2]:.3f}]; $ per"
+        f" investigation {cost[0]:.4f} [{cost[1]:.4f}, {cost[2]:.4f}].",
+        "  - Disclose: final citation (a) is what the verify node enforces, so it is 1.0 by"
+        " construction; the claim is the first-draft failure rate.",
+    ]
+
+    g = json.loads((RESULTS / "injection_comparison.json").read_text())["groups"]["heldout_pooled"]
+    m, e = g["mcnemar"], g["exposed_both"]
+    out += [
+        f"- Measured prompt-injection attack success on {g['n']} held-out cases:"
+        f" {g['before']['k']}/{g['n']} undefended vs {g['after']['k']}/{g['n']} with layered"
+        f" defenses ({g['strict_after']['k']} strict hits; McNemar p = {m['p_exact']:.3f}).",
+        "  - Source: section (c3), heldout_pooled row; before"
+        f" [{g['before']['ci95'][0]:.3f}, {g['before']['ci95'][1]:.3f}], after"
+        f" [{g['after']['ci95'][0]:.3f}, {g['after']['ci95'][1]:.3f}] (Wilson 95%).",
+        f"  - Disclose: exposure-matched (payload read in both runs, n {e['n']}):"
+        f" {e['before']['k']}/{e['n']} -> {e['after']['k']}/{e['n']}, McNemar p ="
+        f" {e['mcnemar']['p_exact']:.3f}, not significant. The Phase 5 figure is a cache"
+        " replay of the Phase 4 run on the frozen code (every call a cache hit), not a fresh"
+        " sample.",
+    ]
+
+    k = json.loads((RESULTS / "judge_agreement.json").read_text())["overall"]
+    kf, kc = k["key_facts"], k["claims"]
+    out += [
+        "- Validated an LLM judge against 30 hand-labelled answers (Cohen's kappa"
+        f" {kf['kappa']:.2f} on key facts, {kc['kappa']:.2f} on claim support) and based"
+        " decisions on deterministic metrics.",
+        f"  - Source: section (c2); key facts kappa {kf['kappa']:.3f} [{kf['kappa_ci95'][0]:.3f},"
+        f" {kf['kappa_ci95'][1]:.3f}] (n {kf['n']}); claims {kc['kappa']:.3f}"
+        f" [{kc['kappa_ci95'][0]:.3f}, {kc['kappa_ci95'][1]:.3f}] (n {kc['n']}).",
+        "- Deploy (FastAPI, Postgres and the dashboard on AWS EC2, p95 latency): pending"
+        " Phase 5B (not measured).",
+    ]
+    return out
 
 
 def level_ci(pairs: list) -> tuple[float, float, float] | None:

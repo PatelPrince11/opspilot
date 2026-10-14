@@ -1,0 +1,1 @@
+{"content": "", "tool_calls": [], "prompt_tokens": 1949, "completion_tokens": 2371, "estimated": false, "prompt_estimate": 2945, "provider": "openrouter", "model": "openai/gpt-oss-120b", "cached": false, "latency_ms": 5777.04950000043, "name": "draft", "wait_s": 0.0, "cost_usd": 0.0, "cost_source": "reported"}

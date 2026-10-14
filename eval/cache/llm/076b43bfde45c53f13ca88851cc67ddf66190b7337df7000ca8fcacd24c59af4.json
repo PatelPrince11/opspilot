@@ -1,0 +1,1 @@
+{"content": "", "tool_calls": [], "prompt_tokens": 443, "completion_tokens": 1000, "estimated": false, "prompt_estimate": 911, "provider": "openrouter", "model": "openai/gpt-oss-120b", "cached": false, "latency_ms": 2514.0264999936335, "name": "triage", "wait_s": 0.0, "cost_usd": 0.0, "cost_source": "reported"}
