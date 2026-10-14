@@ -61,6 +61,12 @@ class Settings(BaseSettings):
     # live-only version did not recover it (NOTES). The code stays for live-incident work.
     agent_first_look: bool = False
     agent_max_seconds: float = 300.0
+    # Prompt-injection defenses (agent/defenses.py), each a switch so each layer is measurable.
+    defense_wrap: bool = False  # D1: tool output in <untrusted_data> blocks + a system rule
+    defense_flag: bool = False  # D2: instruction-like sentences in logs and documents marked
+    defense_guard: str = "off"  # D3: Prompt Guard on logs and documents: off, withhold or warn
+    guard_llm: str = "groq:meta-llama/llama-prompt-guard-2-86m"
+    guard_threshold: float = Field(default=0.5, ge=0.0, le=1.0)
     # Password of the read-only role opspilot_ro (migration 0004) that the agent's tools use.
     readonly_db_password: SecretStr = SecretStr("readonly-change-me")
 

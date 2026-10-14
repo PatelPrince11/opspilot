@@ -8,6 +8,7 @@ import httpx
 import pytest
 
 from config import get_settings
+from llm import client as client_module
 from llm.client import BudgetExceeded, Client, LLMError, estimate_tokens
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -413,3 +414,28 @@ def test_reasoning_effort_is_part_of_the_cache_key_only_when_set(keys, tmp_path)
     c.chat(MSGS, reasoning_effort=None)  # same key as before: earlier caches stay valid
     c.chat(MSGS, reasoning_effort="low")
     assert len(n) == 2
+
+
+def test_a_reply_that_trickles_past_the_deadline_is_retried_then_fails(keys, monkeypatch):
+    """httpx's timeout is per read: a server sending a byte at a time never trips it. The
+    total deadline does, and counts as a transport error (retried, then raised)."""
+    monkeypatch.setattr(client_module, "REQUEST_DEADLINE_S", 0.0)
+    calls = []
+
+    def handler(req):
+        calls.append(1)
+        return httpx.Response(200, content=iter([b" ", b" ", json.dumps(openai_reply()).encode()]))
+
+    with pytest.raises(LLMError, match="no complete reply"):
+        client("groq", handler).chat(MSGS)
+    assert len(calls) == 5
+
+
+def test_a_gzipped_reply_still_parses(keys):
+    import gzip
+
+    def handler(req):
+        body = gzip.compress(json.dumps(openai_reply("zipped")).encode())
+        return httpx.Response(200, content=body, headers={"content-encoding": "gzip"})
+
+    assert client("groq", handler).chat(MSGS).content == "zipped"

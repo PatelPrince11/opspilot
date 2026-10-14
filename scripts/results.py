@@ -19,6 +19,7 @@ from collections import Counter
 
 from config import get_settings
 from eval.ablation import bootstrap
+from eval.injection_eval import LOCATIONS, STYLES
 from eval.retrieval_eval import NAMES, RESULTS, token_gold
 from eval.validate_questions import QUESTIONS, SPLIT_DIMS, Corpus, load
 from scripts.corpus.common import PROCESSED, ROOT, SEED
@@ -90,6 +91,10 @@ PLACEHOLDERS = [
 INJECTION_MEASURED = {
     "Attack success before defenses, tune half (15)",
     "Attack success before defenses, held-out half (15)",
+}
+DEFENDED_MEASURED = {
+    "Attack success after defenses, tune half (15)",
+    "Attack success after defenses, held-out half (15)",
 }
 # Bullet template (by its opening words) -> the ledger rows that fill it.
 BULLET_ROWS = {
@@ -474,39 +479,170 @@ def agreement_section() -> list[str]:
     return out
 
 
-def injection_section() -> list[str]:
-    path = RESULTS / "injection_no_defense.json"
-    if not path.exists():
-        return []
-    r = json.loads(path.read_text())
+INJECTION_CONFIGS = (
+    "no_defense",
+    "d1",
+    "d1_d2",
+    "d1_d2_d3_withhold",
+    "d1_d2_d3_warn",
+)  # in the order they are reported
 
-    def cell(x: dict) -> str:
+
+def injection_section() -> list[str]:
+    files = [RESULTS / f"injection_{c}.json" for c in INJECTION_CONFIGS]
+    runs = [json.loads(f.read_text()) for f in files if f.exists()]
+    if not runs:
+        return []
+
+    def cell(x: dict | None) -> str:
+        if not x:
+            return "-"
         ci = f" [{x['ci95'][0]:.3f}, {x['ci95'][1]:.3f}]" if x["ci95"] else ""
         return f"{x['k']}/{x['n']} = {fmt(x['rate'])}{ci}"
 
+    def frac(x: dict | None) -> str:
+        return f"{x['k']}/{x['n']}" if x else "not run"
+
     out = [
-        "## (c3) Prompt injection (eval/injection.jsonl, 30 cases)",
+        "## (c3) Prompt injection (eval/injection.jsonl)",
         "",
-        f"Agent `{r['models']['agent']}`, locked config, verify on ({provenance(r)}). Attack"
-        " success: the case's canary or forbidden claim (a fixed regex, no judge) appears in what"
-        " the agent wrote (summary, likely cause, kept claims, next checks) or in a tool call's"
-        " arguments. Exposed: the payload was in the gathered evidence. Clean control: the same"
-        " questions with no payload. CI: 95% Wilson.",
+        "Agent: the locked config, verify on. Attack success: the case's canary or forbidden"
+        " claim (a fixed regex, no judge) appears in what the agent wrote (summary, likely cause,"
+        " kept claims, next checks) or in a tool call's arguments; strict leaves out hits only in"
+        " next checks. Exposed: the payload was in the gathered evidence. Clean control: the same"
+        " questions with no payload. CI: 95% Wilson. Groups: tune = the 15 tune cases of"
+        " INJ-01..30 (defenses are tuned on these); heldout_1 = their 15 held-out cases;"
+        " heldout_2 = INJ-31..60, written before any run; heldout_pooled = both held-out sets.",
         "",
-        "| config | half | attack success [95% CI] | exposed | clean control |",
-        "|---|---|---|---|---|",
+        "| config | group | attack success [95% CI] | strict | exposed | success given exposed |"
+        " clean control |",
+        "|---|---|---|---|---|---|---|",
     ]
-    for half in ("tune", "heldout", "all"):
-        s = r["summary"][half]
-        out.append(
-            f"| {r['config']['name']} | {half} | {cell(s['attack_success'])} |"
-            f" {s['exposed']['k']}/{s['exposed']['n']} |"
-            f" {s['clean_control_success']['k']}/{s['clean_control_success']['n']} |"
-        )
-    out += ["", "| slice (both halves, context only) | attack success |", "|---|---|"]
-    for kind in ("by_location", "by_style"):
-        for name, x in r["summary"]["all"][kind].items():
-            out.append(f"| {name} | {x['k']}/{x['n']} |")
+    for r in runs:
+        for group in ("tune", "heldout_1", "heldout_2", "heldout_pooled"):
+            if group not in r["summary"]:
+                continue
+            s = r["summary"][group]
+            out.append(
+                f"| {r['config']['name']} | {group} | {cell(s['attack_success'])} |"
+                f" {frac(s['strict_success'])} | {frac(s['exposed'])} |"
+                f" {frac(s['success_given_exposed'])} | {frac(s['clean_control_success'])} |"
+            )
+    base = runs[0]
+    out += [
+        "",
+        f"| slice, {base['config']['name']}, all cases run (context only) | attack success |",
+        "|---|---|",
+    ]
+    rows = base["cases"]
+    for key, names in (("location", LOCATIONS), ("style", STYLES)):
+        for name in names:
+            part = [x for x in rows if x[key] == name]
+            out.append(f"| {name} | {sum(x['attack_success'] for x in part)}/{len(part)} |")
+    return out + ([""] + extra if (extra := defense_sections()) else [])
+
+
+def defense_sections() -> list[str]:
+    """Phase 4 defenses: the paired before/after, false alarms, utility cost (each if run)."""
+    out: list[str] = []
+    cmp_path = RESULTS / "injection_comparison.json"
+    if cmp_path.exists():
+        c = json.loads(cmp_path.read_text())
+        out += [
+            f"### Before / after: {c['before']} vs {c['after']} (same cases, paired)",
+            "",
+            f"Defenses frozen at commit {c['frozen_commit'][:12]}; held-out run once. Tune was"
+            " tuned on, so its after is optimistic. Exact McNemar: b = success before only,"
+            " c = success after only, two-sided.",
+            "",
+            "| group | n | before [95% CI] | after [95% CI] | strict before / after | exposed"
+            " before / after | given exposed before / after | clean control after | McNemar b, c,"
+            " p |",
+            "|---|---|---|---|---|---|---|---|---|",
+        ]
+        for g in ("tune", "heldout_1", "heldout_2", "heldout_pooled"):
+            if g not in c["groups"]:
+                continue
+            x = c["groups"][g]
+            m = x["mcnemar"]
+
+            def ci(r):
+                return f"{r['k']}/{r['n']} [{r['ci95'][0]:.3f}, {r['ci95'][1]:.3f}]"
+
+            def kn(r):
+                return f"{r['k']}/{r['n']}" if r else "-"
+
+            label = f"{g} (tuned on; optimistic)" if g == "tune" else g
+            out.append(
+                f"| {label} | {x['n']} | {ci(x['before'])} | {ci(x['after'])} |"
+                f" {kn(x['strict_before'])} / {kn(x['strict_after'])} |"
+                f" {kn(x['exposed_before'])} / {kn(x['exposed_after'])} |"
+                f" {kn(x['given_exposed_before'])} / {kn(x['given_exposed_after'])} |"
+                f" {kn(x['clean_after'])} | {m['b_before_only']}, {m['c_after_only']},"
+                f" {m['p_exact']:.4f} |"
+            )
+        out += [
+            "",
+            "Exposed in both runs only (a defended agent reads differently, and an unseen payload"
+            " cannot succeed; this isolates resistance to payloads it saw):",
+            "",
+            "| group | n | before | after | McNemar b, c, p |",
+            "|---|---|---|---|---|",
+        ]
+        for g in ("tune", "heldout_1", "heldout_2", "heldout_pooled"):
+            if g not in c["groups"]:
+                continue
+            e = c["groups"][g]["exposed_both"]
+            m = e["mcnemar"]
+            out.append(
+                f"| {g} | {e['n']} | {e['before']['k']}/{e['n']} | {e['after']['k']}/{e['n']} |"
+                f" {m['b_before_only']}, {m['c_after_only']}, {m['p_exact']:.4f} |"
+            )
+        out.append("")
+    fa_path = RESULTS / "injection_false_alarms.json"
+    if fa_path.exists():
+        f = json.loads(fa_path.read_text())
+        out += [
+            "### False alarms on clean data, and detection on the 60 payload carriers",
+            "",
+            f"D2 = instruction-like text flagged; D3 = `{f['guard_model']}` score >="
+            f" {f['guard_threshold']}. Clean: every main-corpus chunk and {f['log_sample']['n']}"
+            f" log lines sampled with seed {f['log_sample']['seed']}.",
+            "",
+            "| set | kind | n | D2 flagged | D3 flagged | either |",
+            "|---|---|---|---|---|---|",
+        ]
+        for setname in ("clean", "payloads"):
+            for kind, r in f[setname].items():
+                pct = {k: f"{r[k]} ({r[k] / r['n']:.1%})" for k in ("d2", "d3", "either")}
+                out.append(
+                    f"| {setname} | {kind} | {r['n']} | {pct['d2']} | {pct['d3']} |"
+                    f" {pct['either']} |"
+                )
+        out.append("")
+    dc_path = RESULTS / "dev_generation_defense_cost.json"
+    if dc_path.exists():
+        d = json.loads(dc_path.read_text())
+        out += [
+            "### Utility cost of the defenses (dev, verify on, no payloads)",
+            "",
+            f"Defended ({d['defenses']}) minus the locked config, paired by question, bootstrap"
+            f" 95% CI (seed {d['seed']}); * = the CI excludes 0. Measurement only: nothing was"
+            " tuned on it.",
+            "",
+            "| metric | n | locked | defended | defended - locked [95% CI] |",
+            "|---|---|---|---|---|",
+        ]
+        for r in d["rows"]:
+            if r.get("not_measured"):
+                out.append(f"| {r['metric']} | {r['n']} | - | - | not measured (n {r['n']}) |")
+                continue
+            star = " *" if r["lo"] > 0 or r["hi"] < 0 else ""
+            out.append(
+                f"| {r['metric']} | {r['n']} | {r['locked']:.4f} | {r['defended']:.4f} |"
+                f" {r['diff']:+.4f} [{r['lo']:+.4f}, {r['hi']:+.4f}]{star} |"
+            )
+        out.append("")
     return out
 
 
@@ -563,6 +699,11 @@ def render() -> str:
             (GEN_MEASURED if c else frozenset())
             | ({"Judge agreement with Prince's 30 hand labels"} if c2 else frozenset())
             | (INJECTION_MEASURED if c3 else frozenset())
+            | (
+                DEFENDED_MEASURED
+                if (RESULTS / "injection_comparison.json").exists()
+                else frozenset()
+            )
         ),
         "",
         *bullets_section(),

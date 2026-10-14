@@ -34,6 +34,7 @@ from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field, ValidationError
 
+from agent import defenses
 from agent.tools import ReadDocumentInput, run_tool, tool_schemas
 from config import get_settings
 from llm.client import Client, LLMError, ToolCall, estimate_tokens
@@ -263,7 +264,9 @@ def evidence_lines(
 
 
 def normalize(text: str) -> str:
-    """Case, whitespace, curly quotes and the quote marks or ellipses around a quote ignored."""
+    """Case, whitespace, curly quotes, defense markers (⟦...⟧) and the quote marks or ellipses
+    around a quote ignored."""
+    text = defenses.strip_markers(text)
     text = text.translate(str.maketrans("\u201c\u201d\u2018\u2019", "\"\"''"))
     return " ".join(text.casefold().split()).strip(" \"'.\u2026")
 
@@ -300,9 +303,22 @@ def build_graph(
     max_seconds: float | None = None,
     first_look: bool | None = None,
     draft_effort: str | None = DRAFT_EFFORT,
+    wrap: bool | None = None,
+    flag: bool | None = None,
+    guard: str | None = None,
 ):
-    """draft_effort None leaves the provider's default reasoning effort for the draft."""
+    """draft_effort None leaves the provider's default reasoning effort for the draft. wrap, flag
+    and guard are the injection defenses (agent/defenses.py); None takes the setting."""
     s = get_settings()
+    wrap = s.defense_wrap if wrap is None else wrap
+    flag = s.defense_flag if flag is None else flag
+    guard = s.defense_guard if guard is None else guard
+    if guard not in ("off", "withhold", "warn"):
+        raise ValueError(f"guard must be off, withhold or warn, not {guard!r}")
+    guard_client = (
+        defenses.Guard(Client.from_spec(s.guard_llm), s.guard_threshold) if guard != "off" else None
+    )
+    block = defenses.wrap if wrap else (lambda text: text)
     look_first = s.agent_first_look if first_look is None else first_look
     verify_enabled = s.verify_enabled if verify_enabled is None else verify_enabled
     verify_quotes = s.verify_quotes if verify_quotes is None else verify_quotes
@@ -318,6 +334,8 @@ def build_graph(
 
     def system(state, instructions: str = "") -> dict:
         text = SYSTEM.format(as_of=state["as_of"])
+        if wrap:
+            text = f"{text} {defenses.DATA_RULE}"
         return {"role": "system", "content": f"{text} {instructions}".strip()}
 
     def triage(state: State) -> dict:
@@ -388,8 +406,8 @@ def build_graph(
             index.append(f"({dropped} more items not shown)")
         msgs[1]["content"] = (
             f"{head}Evidence index (older results, one line each):\n"
-            f"{chr(10).join(index) or '(none)'}\n"
-            f"Latest result:\n{chr(10).join(latest_text) or '(none yet)'}"
+            f"{block(chr(10).join(index) or '(none)')}\n"
+            f"Latest result:\n{block(chr(10).join(latest_text) or '(none yet)')}"
         )
         return msgs
 
@@ -409,6 +427,7 @@ def build_graph(
         try:
             out = run_tool(call.name, call.arguments, conn)
             items = {e.id: e.model_dump() for e in out.items}
+            defenses.screen(items, flag, guard_client, guard)  # no-op with both off
             row |= {"ids": list(items), "note": out.note, "output_tokens": estimate_tokens(items)}
         except Exception as exc:  # ToolError or a DB error: reported, never fatal
             row |= {"success": False, "error": str(exc)[:500]}
@@ -531,6 +550,9 @@ def build_graph(
             latest = []
             for call in r.tool_calls:
                 execute(call)
+        if guard_client:  # Prompt Guard calls are LLM calls too (tokens, cost)
+            llm_calls += guard_client.calls
+            guard_client.calls.clear()
         return {"evidence": new, "tool_calls": done, "llm_calls": llm_calls, "reads": reads}
 
     def draft(state: State) -> dict:
@@ -552,7 +574,7 @@ def build_graph(
         # Room for one validation retry message (about 80 tokens) is kept free.
         allowance = llm.budget - DRAFT_MAX_TOKENS - fixed - 80
         lines, dropped = pack(evidence_lines(state["evidence"], read_chars=READ_CHARS), allowance)
-        base[1]["content"] = head + ("\n".join(lines) or "(none gathered)")
+        base[1]["content"] = head + block("\n".join(lines) or "(none gathered)")
         d = structured(llm, base, Draft, "draft", DRAFT_MAX_TOKENS, state, calls, draft_effort)
         if calls:
             calls[0]["evidence_lines"], calls[0]["evidence_dropped"] = len(lines), dropped
