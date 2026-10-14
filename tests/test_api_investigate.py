@@ -11,7 +11,9 @@ from alembic.config import Config
 from fastapi.testclient import TestClient
 
 from agent import graph as graph_mod
-from api.main import agent_llm, app
+from agent.defenses import FINAL_DEFENSES
+from agent.run import SHIPPED
+from api.main import agent_config, agent_llm, app
 from config import get_settings
 from tests.stub_llm import TRIAGE, StubLLM, calls, draft, say
 from tests.test_graph import fake_tool
@@ -43,9 +45,10 @@ def db_url():
 @pytest.fixture
 def client(db_url, monkeypatch):
     monkeypatch.setenv("DATABASE_URL", db_url)
-    monkeypatch.setenv("AGENT_FIRST_LOOK", "true")  # off in the locked config; tested end to end
     get_settings.cache_clear()
     monkeypatch.setattr(graph_mod, "run_tool", fake_tool())
+    # The shipped config minus Prompt Guard, which needs Groq (tests/test_defenses.py stubs it).
+    app.dependency_overrides[agent_config] = lambda: SHIPPED | {"guard": "off"}
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -108,6 +111,11 @@ def test_sse_event_order_and_persistence(client, db_url):
     assert [c["name"] for c in inv["llm_calls"]] == ["triage", "gather", "gather", "draft"]
     assert inv["prompt_tokens"] == 400 and inv["completion_tokens"] == 80 and inv["cost_usd"] == 0
     assert inv["llm"] == "ollama:stub" and inv["verify_enabled"] is True
+
+
+def test_the_api_runs_the_shipped_agent():
+    assert agent_config() == SHIPPED == FINAL_DEFENSES | {"first_look": True}
+    assert FINAL_DEFENSES == {"wrap": True, "flag": True, "guard": "withhold"}
 
 
 def test_tool_calls_have_a_foreign_key(db_url):

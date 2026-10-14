@@ -156,6 +156,19 @@
    "cache_hit_rate": 1.0,
    "result_commit": "d7e2ad2934d70b57d4943e7a65159002e89e1e05",
    "result_uncommitted": 3
+  },
+  {
+   "config": "shipped",
+   "n": 100,
+   "prompt_tokens_mean": 20441.93,
+   "completion_tokens_mean": 4258.58,
+   "llm_calls_mean": 22.18,
+   "cost_usd_mean": 0.004778301100000011,
+   "spend_usd": 0.032623,
+   "cache_hits": 2123,
+   "cache_hit_rate": 0.9571686203787195,
+   "result_commit": "78330257357592009bab2c2b829b3f1651e80956",
+   "result_uncommitted": 4
   }
  ]
 }

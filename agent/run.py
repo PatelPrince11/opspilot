@@ -14,9 +14,15 @@ import psycopg
 from psycopg.rows import dict_row
 
 from agent import tools
+from agent.defenses import FINAL_DEFENSES
 from agent.graph import build_graph, initial_state
 from config import get_settings
 from llm.client import Client, usage
+
+# The agent the API runs: the locked dev config (verify on) plus the frozen injection defenses
+# and the live-only first look (Prince's call after the live-incident set; NOTES, Phase 4).
+# Eval scripts name their configs explicitly; this one is "shipped" in eval/generation_eval.py.
+SHIPPED = FINAL_DEFENSES | {"first_look": True}
 
 
 def investigate(
@@ -27,7 +33,9 @@ def investigate(
     investigation_id: uuid.UUID | None = None,
     db_url: str | None = None,
     verify_enabled: bool | None = None,
+    config: dict | None = None,
 ) -> Iterator[dict]:
+    """config: build_graph overrides (e.g. SHIPPED); None takes the settings."""
     iid = investigation_id or uuid.uuid4()
     verify_enabled = get_settings().verify_enabled if verify_enabled is None else verify_enabled
     url = db_url or get_settings().database_url
@@ -39,7 +47,7 @@ def investigate(
         )
         final: dict = {}
         try:
-            graph = build_graph(llm, ro, verify_enabled=verify_enabled)
+            graph = build_graph(llm, ro, verify_enabled=verify_enabled, **(config or {}))
             state = initial_state(question, as_of, trace_id=iid.hex)
             for mode, ev in graph.stream(state, stream_mode=["custom", "values"]):
                 if mode == "values":

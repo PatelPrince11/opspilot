@@ -43,6 +43,7 @@ import psycopg
 from agent import tools
 from agent.defenses import FINAL_DEFENSES
 from agent.graph import DRAFT_EFFORT, MAX_LOOPS, build_graph, initial_state, quote_found
+from agent.run import SHIPPED
 from config import get_settings
 from eval.ablation import RESAMPLES
 from eval.judge import JUDGE_RPD, JUDGE_RPM, PROMPT_VERSION, JudgeClient, RateLimiter, judge
@@ -66,7 +67,10 @@ CONFIGS = {"verify_on": (True, {}), "verify_off": (False, {})} | {
 }
 # Phase 4: the locked config plus the frozen injection defenses, for their utility cost.
 CONFIGS |= {"defended_on": (True, FINAL_DEFENSES), "defended_off": (False, FINAL_DEFENSES)}
+# The agent the API runs (agent/run.py SHIPPED): locked + defenses + live-only first look.
+CONFIGS["shipped"] = (True, SHIPPED)
 DEFENSE_COST = RESULTS / "dev_generation_defense_cost.json"
+SHIPPED_VS_LOCKED = RESULTS / "dev_generation_shipped_vs_locked.json"
 COST = RESULTS / "dev_generation_cost.json"
 PROGRESS = ROOT / ".cache" / "gen_eval"
 SHEET = ROOT / "eval" / "judge_validation.md"
@@ -739,6 +743,26 @@ DEFENSE_ROWS = [  # (label, metric, config suffix, sign); sign -1: 1 - citation 
 ]
 
 
+def per_q(r: dict, metric: str):
+    if metric == "cost":
+        return [sum(c["cost_usd"] for c in r["llm_calls"]), 1]
+    return r["scores"][metric]
+
+
+def paired_row(a: dict, b: dict, label: str, metric: str, sign: int = 1) -> dict:
+    """a minus b over the questions scored in both (rows by id), bootstrap 95% CI."""
+    va = {i: per_q(r, metric) for i, r in a.items()}
+    vb = {i: per_q(r, metric) for i, r in b.items()}
+    ids = sorted(i for i in va if i in vb and va[i] is not None and vb[i] is not None)
+    if len(ids) < MIN_PAIRED:  # e.g. a judged metric when the judge's daily quota ran out
+        return {"metric": label, "n": len(ids), "not_measured": True}
+    d, lo, hi = paired_bootstrap(va, vb, ids)
+    la, lb = ratio([va[i] for i in ids]), ratio([vb[i] for i in ids])
+    if sign < 0:
+        la, lb, d, lo, hi = 1 - la, 1 - lb, -d, -hi, -lo
+    return {"metric": label, "n": len(ids), "a": la, "b": lb, "diff": d, "lo": lo, "hi": hi}
+
+
 def defense_cost(questions: list[dict], split: str = "dev") -> dict:
     """Defended minus locked, paired by question (bootstrap 95% CI, questions scored in both).
     The _off configs replay their _on run's first draft, so first-draft citation (a) comes
@@ -748,29 +772,43 @@ def defense_cost(questions: list[dict], split: str = "dev") -> dict:
         built, _, _ = build_rows(questions, name, split)
         rows[name] = {r["id"]: r for r in built}
 
-    def per_q(r: dict, metric: str):
-        if metric == "cost":
-            return [sum(c["cost_usd"] for c in r["llm_calls"]), 1]
-        return r["scores"][metric]
-
     out = []
     for label, metric, cfg, sign in DEFENSE_ROWS:
-        a, b = rows[f"defended_{cfg}"], rows[f"verify_{cfg}"]
-        va = {i: per_q(r, metric) for i, r in a.items()}
-        vb = {i: per_q(r, metric) for i, r in b.items()}
-        ids = sorted(i for i in va if i in vb and va[i] is not None and vb[i] is not None)
-        if len(ids) < MIN_PAIRED:  # e.g. a judged metric when the judge's daily quota ran out
-            out.append({"metric": label, "n": len(ids), "not_measured": True})
-            continue
-        d, lo, hi = paired_bootstrap(va, vb, ids)
-        la, lb = ratio([va[i] for i in ids]), ratio([vb[i] for i in ids])
-        if sign < 0:
-            la, lb, d, lo, hi = 1 - la, 1 - lb, -d, -hi, -lo
-        out.append(
-            {"metric": label, "n": len(ids), "locked": lb, "defended": la}
-            | {"diff": d, "lo": lo, "hi": hi}
-        )
+        r = paired_row(rows[f"defended_{cfg}"], rows[f"verify_{cfg}"], label, metric, sign)
+        out.append(r if r.get("not_measured") else r | {"locked": r["b"], "defended": r["a"]})
     return {"split": split, "defenses": FINAL_DEFENSES, "seed": SEED, "rows": out}
+
+
+SHIPPED_ROWS = [  # deterministic only: (label, metric, sign)
+    ("gold_all", "gold_all", 1),
+    ("gold_frac", "gold_frac", 1),
+    ("tool-call success", "tool_success", 1),
+    ("citation (a), final answer", "citation_a", 1),
+    ("runs that looped", "verify_loop", 1),
+    ("no diagnosis", "no_diagnosis", 1),
+    ("cost per run, USD (incl. Prompt Guard)", "cost", 1),
+]
+
+
+def shipped_vs_locked(questions: list[dict], split: str = "dev") -> dict:
+    """Shipped minus locked (verify_on) and minus defended_on, paired by question: the second
+    isolates the live-only first look, the only difference between those two."""
+    rows = {}
+    for name in ("shipped", "verify_on", "defended_on"):
+        built, _, _ = build_rows(questions, name, split)
+        rows[name] = {r["id"]: r for r in built}
+    runs = read_jsonl(runs_path(split, "shipped")).values()
+    live = sorted(r["id"] for r in runs if (r["triage"] or {}).get("incident_time") == "live")
+    return {
+        "split": split,
+        "shipped": SHIPPED,
+        "seed": SEED,
+        "live_triaged": live,
+        "vs": {
+            base: [paired_row(rows["shipped"], rows[base], *spec) for spec in SHIPPED_ROWS]
+            for base in ("verify_on", "defended_on")
+        },
+    }
 
 
 def run_costs(questions: list[dict], split: str = "dev") -> dict:
@@ -955,7 +993,7 @@ def main(argv=None) -> int:
         "action",
         nargs="?",
         default="run",
-        choices=("run", "sheet", "agreement", "ablation", "defense-cost", "cost"),
+        choices=("run", "sheet", "agreement", "ablation", "defense-cost", "cost", "shipped"),
     )
     ap.add_argument("--split", choices=("dev", "test"), default="dev")
     ap.add_argument("--final-test", action="store_true")
@@ -985,6 +1023,17 @@ def main(argv=None) -> int:
                 print(
                     f"{r['metric']:<40} n={r['n']:<3} locked {r['locked']:.4f} defended"
                     f" {r['defended']:.4f} diff {r['diff']:+.4f} [{r['lo']:+.4f}, {r['hi']:+.4f}]"
+                )
+        return 0
+    if args.action == "shipped":
+        d = shipped_vs_locked(questions, args.split)
+        SHIPPED_VS_LOCKED.write_text(json.dumps(d, indent=1) + "\n")
+        for base, rows in d["vs"].items():
+            print(f"shipped minus {base}:")
+            for r in rows:
+                print(
+                    f"  {r['metric']:<40} n={r['n']:<3} {r['b']:.4f} -> {r['a']:.4f}"
+                    f" diff {r['diff']:+.4f} [{r['lo']:+.4f}, {r['hi']:+.4f}]"
                 )
         return 0
     if args.action == "cost":

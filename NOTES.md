@@ -3509,6 +3509,34 @@ Restricted to the cases whose payload was seen in both runs:
 - Decision: no change to the agent from this set. Whether the locked config should turn first
   look on is a decision for Prince; this set does not settle it.
 
+## 2026-10-14: Config decision, the shipped agent
+
+- Decision (Prince's): the API runs the **shipped** agent: the locked dev config (verify on),
+  plus the frozen defenses (FINAL_DEFENSES: wrap, flag, Prompt Guard withhold), plus first look
+  live-only (AGENT_FIRST_LOOK on; the graph only fires it when triage says `incident_time:
+  live`). `agent/run.py SHIPPED`, passed by `api/main.py agent_config()` (a FastAPI dependency,
+  so tests can swap Prompt Guard out). Settings defaults are unchanged; eval scripts keep naming
+  their configs explicitly, and this one is `shipped` in eval/generation_eval.py.
+- Why first look on, honestly: the live set pointed toward it (key facts 14/30 vs 7/30, gold
+  entries 19/25 vs 11/25), but n = 10 cannot separate the configs (sign test p = 0.29). The
+  reason is the mechanism, not the statistic: with first look off the agent often never reads
+  the logs that hold a live incident's answer (LIVE-01, LIVE-02 made no query_logs call), and
+  first look guarantees one status call and one WARN+ log query on the named service.
+- The dev lock (first look off) stays the dev-measured config: every dev number in the ledger
+  (c) is for it. Phase 5's one test run uses `shipped` and must say so.
+- Known weakness, stated up front: on live incidents the agent recovers 14/30 key facts at best,
+  and zero cases get every key fact under either config.
+- Ledger run: the 100 dev questions once with `shipped` (verify on, no payloads, no judge),
+  `make gen-eval ARGS="--config shipped --skip-judge --max-spend 0.30"`, then
+  `uv run python -m eval.generation_eval shipped`. New spend $0.0326 (cache hit rate 0.957: on
+  the 90 questions triaged past, shipped makes the same calls as `defended_on`). Measurement
+  only, nothing changed after it. First look fired on the 10 questions triaged live.
+  Shipped minus locked, paired bootstrap 95% CI (ledger c6): gold_all 0.72 -> 0.73, +0.010
+  [-0.07, +0.09]; gold_frac -0.007 [-0.052, +0.036]; tool-call success -0.010 [-0.044,
+  +0.024]; final citation (a) 1.000 both; runs that looped +0.03 [-0.07, +0.13]; cost per run
+  $0.0044 -> $0.0048, +$0.0004 [-0.0000, +0.0008]. No CI excludes 0. Against `defended_on`
+  (first look the only difference) every diff is within +-0.02.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

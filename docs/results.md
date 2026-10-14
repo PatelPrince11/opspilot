@@ -311,8 +311,9 @@ From `eval/results/dev_generation_cost.json` (`uv run python -m eval.generation_
 | arm_d_off | 100 | 12,067 | 2,728 | 7.4 | 0.0031 | 0.0000 | 736 | 1.000 | 839d31b027bf |
 | defended_on | 100 | 20,937 | 4,347 | 22.6 | 0.0049 | 0.4077 | 878 | 0.389 | d7e2ad2934d7 + 3 uncommitted file(s) |
 | defended_off | 100 | 15,638 | 2,835 | 18.6 | 0.0034 | 0.0307 | 1857 | 1.000 | d7e2ad2934d7 + 3 uncommitted file(s) |
+| shipped | 100 | 20,442 | 4,259 | 22.2 | 0.0048 | 0.0326 | 2123 | 0.957 | 783302573575 + 4 uncommitted file(s) |
 
-Total run spend over these 12 runs: $1.8991.
+Total run spend over these 13 runs: $1.9317.
 
 ## (c5) Live incidents (eval/live_questions.jsonl, n = 10)
 
@@ -340,6 +341,21 @@ Forbidden-claim hits, for audit: first look on, LIVE-04: MISCONF, a failed BGSAV
 First look on minus off (pre-registered), paired by case, n = 10: key facts better in 6, worse in 2, tied in 2 (exact sign test p = 0.2891); every key fact in 0 case(s) only with first look off and 0 only with it on (exact McNemar p = 1.0); gold entries covered +8; tool calls +3.
 First look on minus off (post hoc), paired by case, n = 10: key facts better in 6, worse in 2, tied in 2 (exact sign test p = 0.2891); every key fact in 1 case(s) only with first look off and 0 only with it on (exact McNemar p = 1.0); gold entries covered +8; tool calls +3.
 With n = 10 the two configs cannot be separated (sign test p = 0.2891 > 0.05). These are descriptive numbers, not a claim that first look helps or hurts.
+
+## (c6) The shipped agent (dev, verify on, no payloads)
+
+The API's agent `{'wrap': True, 'flag': True, 'guard': 'withhold', 'first_look': True}` (verify on, live-only first look; agent/run.py SHIPPED) minus the locked config and minus the defended config (which differs only in first look), paired by question, bootstrap 95% CI (seed 20261003); * = the CI excludes 0. Deterministic metrics only, measurement only. First look fired on the 10 questions triaged live: Q025, Q056, Q070, Q082, Q087, Q098, Q103, Q104, Q118, Q132.
+
+| metric | n | locked | shipped | shipped - locked [95% CI] | defended | shipped - defended [95% CI] |
+|---|---|---|---|---|---|---|
+| gold_all | 100 | 0.7200 | 0.7300 | +0.0100 [-0.0700, +0.0900] | 0.7300 | +0.0000 [-0.0300, +0.0300] |
+| gold_frac | 100 | 0.8567 | 0.8497 | -0.0070 [-0.0520, +0.0363] | 0.8513 | -0.0017 [-0.0200, +0.0150] |
+| tool-call success | 100 | 0.8527 | 0.8431 | -0.0095 [-0.0438, +0.0244] | 0.8393 | +0.0038 [-0.0042, +0.0138] |
+| citation (a), final answer | 95 | 1.0000 | 1.0000 | +0.0000 [+0.0000, +0.0000] | 1.0000 | +0.0000 [+0.0000, +0.0000] |
+| runs that looped | 100 | 0.4100 | 0.4400 | +0.0300 [-0.0700, +0.1300] | 0.4600 | -0.0200 [-0.0600, +0.0200] |
+| no diagnosis | 100 | 0.0100 | 0.0000 | -0.0100 [-0.0300, +0.0000] | 0.0000 | +0.0000 [+0.0000, +0.0000] |
+| cost per run, USD (incl. Prompt Guard) | 100 | 0.0044 | 0.0048 | +0.0004 [-0.0000, +0.0008] | 0.0049 | -0.0001 [-0.0002, +0.0000] |
+
 
 ## (d) Not measured yet
 
