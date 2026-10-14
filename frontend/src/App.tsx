@@ -9,14 +9,14 @@ export const DEMO = {
 };
 
 // Colours are design tokens (src/index.css); the two themes differ only there.
-const panel = "rounded-xl border border-line bg-surface p-4";
+const panel = "rounded-2xl bg-surface p-4 shadow-paper";
 const h2 = "mb-3 flex items-center gap-2 text-sm font-semibold text-muted";
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 const press = "transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
 const field = `rounded-lg border border-field-line bg-surface p-2 text-ink ${focus}`;
 const btn = `rounded-lg px-4 py-2 font-medium ${press} ${focus}`;
 const btnSecondary = `${btn} border border-line bg-raised text-ink hover:border-field-line`;
-const chip = "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium";
+const chip = "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs font-medium text-on-status";
 
 const ICONS = {
   check: "M3.5 8.5l3 3 6-7",
@@ -46,24 +46,24 @@ function Spinner({ label }: { label: string }) {
 
 type Theme = "system" | "light" | "dark";
 
-// Dark by default (also set on <html> in index.html, so the first paint is dark). The choice
-// lives in React state only (no storage): a reload goes back to dark. "system" follows the OS.
+// Light by default (also set on <html> in index.html, so the first paint matches). The choice
+// lives in React state only (no storage): a reload goes back to light. "system" follows the OS.
 function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "system") delete root.dataset.theme;
     else root.dataset.theme = theme;
   }, [theme]);
   return (
-    <div role="group" aria-label="Theme" className="inline-flex rounded-lg border border-line bg-surface p-0.5 text-xs">
+    <div role="group" aria-label="Theme" className="inline-flex rounded-lg bg-surface p-0.5 text-xs shadow-paper">
       {(["system", "light", "dark"] as const).map((t) => (
         <button
           key={t}
           type="button"
           aria-pressed={theme === t}
           onClick={() => setTheme(t)}
-          className={`rounded-md px-2.5 py-1 font-medium capitalize ${press} ${focus} ${
+          className={`rounded-lg px-2.5 py-1 font-medium capitalize ${press} ${focus} ${
             theme === t ? "bg-raised text-ink" : "text-muted hover:text-ink"
           }`}
         >
@@ -97,13 +97,13 @@ export default function App() {
       <main className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6">
         <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 text-accent" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round">
+            <h1 className="flex items-center gap-2.5 text-3xl font-semibold tracking-tight sm:text-4xl">
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-8 w-8 text-accent sm:h-9 sm:w-9" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 12h4l2.5-6 5 12L17 12h4" />
               </svg>
               OpsPilot
             </h1>
-            <p className="mt-1 max-w-[68ch] text-sm text-pretty text-muted">
+            <p className="mt-2 max-w-[68ch] text-base text-pretty text-ink">
               Describe an incident. The agent searches runbooks, past incidents, logs and service status, then
               answers with claims you can check against the evidence they cite.
             </p>
@@ -171,7 +171,7 @@ export default function App() {
               <button
                 type="submit"
                 disabled={running || question.trim().length < 5}
-                className={`${btn} bg-accent text-accent-ink hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-raised disabled:text-muted disabled:active:scale-100`}
+                className={`${btn} bg-accent text-accent-ink hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-raised disabled:text-ink disabled:active:scale-100`}
               >
                 {running ? "Investigating…" : "Investigate"}
               </button>
@@ -196,8 +196,8 @@ export default function App() {
         </form>
 
         {run.status === "error" && (
-          <div role="alert" className="flex gap-2 rounded-xl border border-bad bg-bad-soft p-3 text-ink motion-safe:animate-rise">
-            <Icon name="alert" className="mt-1 text-bad" />
+          <div role="alert" className="flex gap-2 rounded-2xl border-2 border-bad bg-surface p-3 text-ink shadow-paper motion-safe:animate-rise">
+            <Icon name="alert" className="mt-0.5 h-5 w-5 rounded-lg bg-bad p-0.5 text-on-status" />
             <p>
               <strong>Investigation failed.</strong> {run.error}
             </p>
@@ -252,7 +252,7 @@ function Stats({ run }: { run: RunState }) {
   return (
     <section
       aria-label="Run stats"
-      className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-surface px-4 py-2.5"
+      className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl bg-surface px-4 py-2.5 shadow-paper"
     >
       {items.map(([k, v]) => (
         <div key={k} className="flex items-baseline gap-2">
@@ -260,7 +260,7 @@ function Stats({ run }: { run: RunState }) {
           <div className="text-sm font-semibold tabular-nums">{v}</div>
         </div>
       ))}
-      <span className={`${chip} sm:ml-auto ${defended ? "bg-ok-soft text-ok" : "bg-warn-soft text-warn"}`}>
+      <span className={`${chip} sm:ml-auto ${defended ? "bg-ok" : "bg-warn"}`}>
         <Icon name={defended ? "check" : "alert"} />
         <span>Defenses {defensesLabel(run.config)}</span>
       </span>
@@ -280,7 +280,7 @@ function CallRow({ call }: { call: Call }) {
   return (
     <li className="relative pb-3 pl-5 last:pb-0 motion-safe:animate-rise">
       <span aria-hidden="true" className="absolute top-0 bottom-0 left-[4px] w-0.5 bg-line" />
-      <span aria-hidden="true" className={`absolute top-1.5 left-0 h-2.5 w-2.5 rounded-full ring-4 ring-surface ${dot}`} />
+      <span aria-hidden="true" className={`absolute top-1.5 left-0 h-2.5 w-2.5 rounded-full border border-ink ring-4 ring-surface ${dot}`} />
       <div className="flex flex-wrap items-center justify-between gap-x-2">
         <span className="font-mono text-sm font-semibold">{call.name}</span>
         {!r ? (
@@ -288,7 +288,7 @@ function CallRow({ call }: { call: Call }) {
             <Spinner label={`${call.name} running`} />
           </span>
         ) : (
-          <span className={`${chip} ${r.success ? "bg-ok-soft text-ok" : "bg-bad-soft text-bad"}`}>{r.success ? "ok" : "failed"}</span>
+          <span className={`${chip} ${r.success ? "bg-ok" : "bg-bad"}`}>{r.success ? "ok" : "failed"}</span>
         )}
       </div>
       <div className="font-mono text-xs break-all text-muted">{argsText(call.arguments)}</div>
@@ -297,7 +297,7 @@ function CallRow({ call }: { call: Call }) {
           {r.ids.length} items · {r.output_tokens.toLocaleString()} tok · {Math.round(r.latency_ms)} ms
         </div>
       )}
-      {r?.error && <div className="mt-1 text-xs text-bad">{r.error}</div>}
+      {r?.error && <div className="mt-1 border-l-2 border-bad pl-2 text-xs text-ink">{r.error}</div>}
     </li>
   );
 }
@@ -320,10 +320,10 @@ function Stream({ run }: { run: RunState }) {
         </ol>
       )}
       {run.warnings.length > 0 && (
-        <ul className="mt-3 space-y-1 text-xs text-warn">
+        <ul className="mt-3 space-y-1 text-xs text-ink">
           {run.warnings.map((w, i) => (
             <li key={i} className="flex gap-1.5">
-              <Icon name="alert" className="mt-px" />
+              <Icon name="alert" className="mt-px rounded-lg bg-warn p-0.5 text-on-status" />
               {w}
             </li>
           ))}
@@ -359,11 +359,11 @@ function Sources({ run, onOpen }: { run: RunState; onOpen: (id: string) => void 
                   <button
                     type="button"
                     onClick={() => onOpen(s.id)}
-                    className={`rounded-sm text-left font-mono text-xs break-all text-accent underline-offset-2 hover:underline ${focus}`}
+                    className={`rounded-lg text-left font-mono text-xs break-all text-accent underline-offset-2 hover:underline ${focus}`}
                   >
                     {s.id}
                   </button>
-                  {s.cited && <span className="ml-1.5 rounded-sm bg-accent-soft px-1 text-[11px] font-medium text-accent">cited</span>}
+                  {s.cited && <span className="ml-1.5 rounded-lg bg-accent-soft px-1 text-[11px] font-medium text-accent">cited</span>}
                 </td>
                 <td className="py-1.5 pr-2 text-xs text-muted">{s.source}</td>
                 <td className="py-1.5 text-right font-mono text-xs tabular-nums">{score(s)}</td>
@@ -377,16 +377,16 @@ function Sources({ run, onOpen }: { run: RunState; onOpen: (id: string) => void 
 }
 
 const LEVEL = { low: 1, medium: 2, high: 3 } as const;
-const LEVEL_TONE = { low: "text-bad", medium: "text-warn", high: "text-ok" } as const;
+const LEVEL_BG = { low: "bg-bad", medium: "bg-warn", high: "bg-ok" } as const;
 const BAR_H = ["h-[7px]", "h-[10px]", "h-[13px]"];
 
 // Three bars plus the word, so the level reads without relying on colour alone.
 function Confidence({ level }: { level: keyof typeof LEVEL }) {
   return (
-    <span className={`${chip} bg-raised text-ink`}>
-      <span aria-hidden="true" className={`flex items-end gap-0.5 ${LEVEL_TONE[level]}`}>
+    <span className={`${chip} ${LEVEL_BG[level]}`}>
+      <span aria-hidden="true" className="flex items-end gap-0.5">
         {BAR_H.map((h, i) => (
-          <span key={h} className={`w-1 rounded-[1px] ${h} ${i < LEVEL[level] ? "bg-current" : "bg-line"}`} />
+          <span key={h} className={`w-1 bg-current ${h} ${i < LEVEL[level] ? "" : "opacity-30"}`} />
         ))}
       </span>
       <span>Confidence: {level}</span>
@@ -399,7 +399,7 @@ function ClaimItem({ claim, onCite }: { claim: Claim; onCite: (id: string, quote
     <li className="rounded-lg bg-raised p-3">
       <p>{claim.text}</p>
       {claim.quote && (
-        <blockquote className="mt-2 border-l-2 border-accent pl-3 font-mono text-xs text-muted">“{claim.quote}”</blockquote>
+        <blockquote className="mt-2 border-l-2 border-accent pl-3 font-mono text-xs text-ink">“{claim.quote}”</blockquote>
       )}
       <div className="mt-2 flex flex-wrap gap-2">
         {claim.evidence_ids.map((id) => (
@@ -408,7 +408,7 @@ function ClaimItem({ claim, onCite }: { claim: Claim; onCite: (id: string, quote
             type="button"
             onClick={() => onCite(id, claim.quote)}
             aria-label={`Open evidence ${id}`}
-            className={`rounded-md border border-line bg-surface px-2 py-0.5 font-mono text-xs text-accent hover:border-accent ${press} ${focus}`}
+            className={`rounded-lg border border-line bg-surface px-2 py-0.5 font-mono text-xs text-accent hover:border-accent ${press} ${focus}`}
           >
             [{id}]
           </button>
@@ -422,7 +422,7 @@ function DiagnosisPanel({ run, onCite }: { run: RunState; onCite: (id: string, q
   const d = run.diagnosis;
   const verified = d?.citations_verified;
   return (
-    <section aria-labelledby="diag-h" className="rounded-xl border border-line border-t-4 border-t-accent bg-surface p-5 sm:p-6">
+    <section aria-labelledby="diag-h" className="rounded-2xl border-t-4 border-accent bg-surface p-5 shadow-paper sm:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h2 id="diag-h" className="text-base font-semibold">
           Diagnosis
@@ -430,7 +430,7 @@ function DiagnosisPanel({ run, onCite }: { run: RunState; onCite: (id: string, q
         {d && (
           <div className="flex flex-wrap items-center gap-2">
             <Confidence level={d.confidence} />
-            <span className={`${chip} ${verified === null ? "bg-raised text-muted" : verified ? "bg-ok-soft text-ok" : "bg-warn-soft text-warn"}`}>
+            <span className={`${chip} ${verified === null ? "bg-raised text-ink" : verified ? "bg-ok" : "bg-warn"}`}>
               <Icon name={verified === null ? "dash" : verified ? "check" : "alert"} />
               <span>Citations {verified === null ? "not checked" : verified ? "verified" : "partly dropped"}</span>
             </span>
@@ -448,8 +448,8 @@ function DiagnosisPanel({ run, onCite }: { run: RunState; onCite: (id: string, q
           </p>
           {run.status === "running" && (
             <div aria-hidden="true" className="mt-5 space-y-3 motion-safe:animate-breathe">
-              <div className="h-5 w-4/5 rounded bg-line" />
-              <div className="h-5 w-3/5 rounded bg-line" />
+              <div className="h-5 w-4/5 rounded-lg bg-line" />
+              <div className="h-5 w-3/5 rounded-lg bg-line" />
               <div className="mt-6 h-16 rounded-lg bg-line" />
               <div className="h-16 rounded-lg bg-line" />
             </div>
@@ -476,7 +476,7 @@ function DiagnosisPanel({ run, onCite }: { run: RunState; onCite: (id: string, q
           </div>
           {d.dropped_claims.length > 0 && (
             <details className="text-sm">
-              <summary className={`cursor-pointer rounded-sm text-warn ${focus}`}>{d.dropped_claims.length} claim(s) dropped by verify</summary>
+              <summary className={`cursor-pointer rounded-lg font-medium text-ink ${focus}`}>{d.dropped_claims.length} claim(s) dropped by verify</summary>
               <p className="mt-1 text-muted">{d.note}</p>
               <ul className="mt-2 list-disc pl-5">
                 {d.dropped_claims.map((c, i) => (
@@ -523,7 +523,7 @@ function EvidenceDialog({
       ref={ref}
       onClose={onClose}
       aria-labelledby="evidence-h"
-      className="m-auto w-[min(48rem,calc(100vw-2rem))] rounded-xl border border-line bg-surface p-0 text-ink shadow-2xl backdrop:bg-black/50 open:motion-safe:animate-rise"
+      className="m-auto w-[min(48rem,calc(100vw-2rem))] rounded-2xl bg-surface p-0 text-ink shadow-2xl backdrop:bg-black/50 open:motion-safe:animate-rise"
     >
       {open && (
         <div className="space-y-3 p-4">
@@ -534,14 +534,14 @@ function EvidenceDialog({
             <button
               type="button"
               onClick={onClose}
-              className={`rounded-md p-1.5 text-muted hover:bg-raised hover:text-ink ${focus}`}
+              className={`rounded-lg p-1.5 text-muted hover:bg-raised hover:text-ink ${focus}`}
               aria-label="Close evidence"
             >
               <Icon name="close" className="h-4 w-4" />
             </button>
           </div>
           {!s ? (
-            <p className="text-sm text-bad">This id is not in the gathered evidence.</p>
+            <p className="border-l-2 border-bad pl-2 text-sm text-ink">This id is not in the gathered evidence.</p>
           ) : (
             <>
               <p className="text-xs text-muted">
@@ -552,7 +552,7 @@ function EvidenceDialog({
                 {at ? (
                   <>
                     {s.text.slice(0, at[0])}
-                    <mark className="rounded-sm bg-mark text-ink">{s.text.slice(at[0], at[1])}</mark>
+                    <mark className="bg-mark text-on-status">{s.text.slice(at[0], at[1])}</mark>
                     {s.text.slice(at[1])}
                   </>
                 ) : (
