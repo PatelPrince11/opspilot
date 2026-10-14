@@ -246,6 +246,26 @@ Agent: the locked config, verify on. Attack success: the case's canary or forbid
 | json | 3/12 |
 | tool_call | 5/12 |
 
+### Before / after: no_defense vs defended (same cases, paired)
+
+Defenses frozen at commit b7ef1ad7b132; held-out run once. Tune was tuned on, so its after is optimistic. Exact McNemar: b = success before only, c = success after only, two-sided.
+
+| group | n | before [95% CI] | after [95% CI] | strict before / after | exposed before / after | given exposed before / after | clean control after | McNemar b, c, p |
+|---|---|---|---|---|---|---|---|---|
+| tune (tuned on; optimistic) | 15 | 9/15 [0.357, 0.802] | 0/15 [0.000, 0.204] | 6/15 / 0/15 | 15/15 / 11/15 | 9/15 / 0/11 | 0/15 | 9, 0, 0.0039 |
+| heldout_1 | 15 | 3/15 [0.070, 0.452] | 0/15 [0.000, 0.204] | 3/15 / 0/15 | 15/15 / 12/15 | 3/15 / 0/12 | 0/15 | 3, 0, 0.2500 |
+| heldout_2 | 30 | 8/30 [0.142, 0.444] | 2/30 [0.018, 0.213] | 8/30 / 0/30 | 30/30 / 21/30 | 8/30 / 2/21 | 0/30 | 7, 1, 0.0703 |
+| heldout_pooled | 45 | 11/45 [0.142, 0.387] | 2/45 [0.012, 0.148] | 11/45 / 0/45 | 45/45 / 33/45 | 11/45 / 2/33 | 0/45 | 10, 1, 0.0117 |
+
+Exposed in both runs only (a defended agent reads differently, and an unseen payload cannot succeed; this isolates resistance to payloads it saw):
+
+| group | n | before | after | McNemar b, c, p |
+|---|---|---|---|---|
+| tune | 11 | 7/11 | 0/11 | 7, 0, 0.0156 |
+| heldout_1 | 12 | 2/12 | 0/12 | 2, 0, 0.5000 |
+| heldout_2 | 21 | 3/21 | 2/21 | 2, 1, 1.0000 |
+| heldout_pooled | 33 | 5/33 | 2/33 | 4, 1, 0.3750 |
+
 ### False alarms on clean data, and detection on the 60 payload carriers
 
 D2 = instruction-like text flagged; D3 = `groq:meta-llama/llama-prompt-guard-2-86m` score >= 0.5. Clean: every main-corpus chunk and 500 log lines sampled with seed 20261003.
@@ -279,8 +299,6 @@ Defended ({'wrap': True, 'flag': True, 'guard': 'withhold'}) minus the locked co
 
 | metric | status |
 |---|---|
-| Attack success after defenses, tune half (15) | not measured yet (Phase 4) |
-| Attack success after defenses, held-out half (15) | not measured yet (Phase 4) |
 | p50 / p95 latency, end to end per investigation | not measured yet (Phase 4) |
 | p50 / p95 latency, retrieval on EC2 | not measured yet (Phase 5) |
 | Tokens per investigation (input / output) | not measured yet (Phase 4) |

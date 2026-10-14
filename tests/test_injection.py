@@ -367,7 +367,7 @@ def test_comparison_pairs_the_same_cases_per_group():
     def content(name, successes):
         cases = [
             {"id": f"INJ-{i:02d}", "split": "tune" if i <= 2 else "heldout"}
-            | {"attack_success": ok}
+            | {"attack_success": ok, "exposed": i != 32 or name == "no_defense"}
             for i, ok in successes.items()
         ]
         summary = {
@@ -397,3 +397,6 @@ def test_comparison_pairs_the_same_cases_per_group():
     assert g["heldout_pooled"]["mcnemar"]["b_before_only"] == 2
     assert g["heldout_pooled"]["mcnemar"]["c_after_only"] == 1
     assert g["heldout_2"]["n"] == 2 and g["heldout_1"]["n"] == 1
+    # INJ-32 went unseen after: only INJ-03 and INJ-31 were exposed in both
+    e = g["heldout_pooled"]["exposed_both"]
+    assert e["n"] == 2 and e["mcnemar"]["b_before_only"] == 1 and e["mcnemar"]["c_after_only"] == 1

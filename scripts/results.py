@@ -581,6 +581,23 @@ def defense_sections() -> list[str]:
                 f" {kn(x['clean_after'])} | {m['b_before_only']}, {m['c_after_only']},"
                 f" {m['p_exact']:.4f} |"
             )
+        out += [
+            "",
+            "Exposed in both runs only (a defended agent reads differently, and an unseen payload"
+            " cannot succeed; this isolates resistance to payloads it saw):",
+            "",
+            "| group | n | before | after | McNemar b, c, p |",
+            "|---|---|---|---|---|",
+        ]
+        for g in ("tune", "heldout_1", "heldout_2", "heldout_pooled"):
+            if g not in c["groups"]:
+                continue
+            e = c["groups"][g]["exposed_both"]
+            m = e["mcnemar"]
+            out.append(
+                f"| {g} | {e['n']} | {e['before']['k']}/{e['n']} | {e['after']['k']}/{e['n']} |"
+                f" {m['b_before_only']}, {m['c_after_only']}, {m['p_exact']:.4f} |"
+            )
         out.append("")
     fa_path = RESULTS / "injection_false_alarms.json"
     if fa_path.exists():
