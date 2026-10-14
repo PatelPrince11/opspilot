@@ -41,12 +41,21 @@ for (const theme of ["dark", "light"] as const) {
   test.describe(() => {
     // Content at rest: the rise animation fades new rows in, and axe measures opacity mid-fade.
     test.use({ reducedMotion: "reduce" });
-    test(`WCAG AA contrast, ${theme} theme: running, done, citation open`, async ({ page }) => {
+    test(`WCAG AA contrast, ${theme} theme: idle, error, running, done, citation open`, async ({ page }) => {
       await page.goto("/");
       await page.getByRole("group", { name: "Theme" }).getByRole("button", { name: theme }).click();
       await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
-      await page.getByLabel("API key").fill("e2e-key");
+      await expect.poll(() => page.evaluate(() => document.fonts.check("16px Inter"))).toBe(true); // measured in Inter
+      await contrast(page, `${theme} idle`);
+
+      // Error: a wrong API key gets the real API's 401 (no model call).
+      await page.getByLabel("API key").fill("wrong-key");
       await page.getByRole("button", { name: "Load demo incident" }).click();
+      await page.getByRole("button", { name: "Investigate" }).click();
+      await expect(page.getByRole("alert")).toContainText("401");
+      await contrast(page, `${theme} error`);
+
+      await page.getByLabel("API key").fill("e2e-key");
       await page.getByRole("button", { name: "Investigate" }).click();
 
       await expect(page.getByRole("region", { name: /Live tool calls/ }).getByText("query_logs")).toBeVisible();
@@ -83,10 +92,11 @@ test("a full investigation streams, finishes and opens a cited quote", async ({ 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
 
-  // Dark by default whatever the OS preference; the toggle switches the tokens to light.
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(11, 14, 18)"); // --canvas, dark
-  await page.getByRole("group", { name: "Theme" }).getByRole("button", { name: "light" }).click();
+  // Light by default whatever the OS preference; the toggle switches the tokens to dark.
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(243, 245, 247)"); // --canvas, light
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(242, 242, 242)"); // --canvas, light
+  await expect(page.locator("body")).toHaveCSS("font-family", /^Inter/); // self-hosted face
+  await page.getByRole("group", { name: "Theme" }).getByRole("button", { name: "dark" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(15, 20, 38)"); // --canvas, dark
 });
