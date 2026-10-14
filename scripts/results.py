@@ -92,6 +92,10 @@ INJECTION_MEASURED = {
     "Attack success before defenses, tune half (15)",
     "Attack success before defenses, held-out half (15)",
 }
+DEFENDED_MEASURED = {
+    "Attack success after defenses, tune half (15)",
+    "Attack success after defenses, held-out half (15)",
+}
 # Bullet template (by its opening words) -> the ledger rows that fill it.
 BULLET_ROWS = {
     "Built hybrid": "Section (b), test split: hybrid BM25 + dense vs dense, Recall@5 (mean fraction"
@@ -535,6 +539,93 @@ def injection_section() -> list[str]:
         for name in names:
             part = [x for x in rows if x[key] == name]
             out.append(f"| {name} | {sum(x['attack_success'] for x in part)}/{len(part)} |")
+    return out + ([""] + extra if (extra := defense_sections()) else [])
+
+
+def defense_sections() -> list[str]:
+    """Phase 4 defenses: the paired before/after, false alarms, utility cost (each if run)."""
+    out: list[str] = []
+    cmp_path = RESULTS / "injection_comparison.json"
+    if cmp_path.exists():
+        c = json.loads(cmp_path.read_text())
+        out += [
+            f"### Before / after: {c['before']} vs {c['after']} (same cases, paired)",
+            "",
+            f"Defenses frozen at commit {c['frozen_commit'][:12]}; held-out run once. Tune was"
+            " tuned on, so its after is optimistic. Exact McNemar: b = success before only,"
+            " c = success after only, two-sided.",
+            "",
+            "| group | n | before [95% CI] | after [95% CI] | strict before / after | exposed"
+            " before / after | given exposed before / after | clean control after | McNemar b, c,"
+            " p |",
+            "|---|---|---|---|---|---|---|---|---|",
+        ]
+        for g in ("tune", "heldout_1", "heldout_2", "heldout_pooled"):
+            if g not in c["groups"]:
+                continue
+            x = c["groups"][g]
+            m = x["mcnemar"]
+
+            def ci(r):
+                return f"{r['k']}/{r['n']} [{r['ci95'][0]:.3f}, {r['ci95'][1]:.3f}]"
+
+            def kn(r):
+                return f"{r['k']}/{r['n']}" if r else "-"
+
+            label = f"{g} (tuned on; optimistic)" if g == "tune" else g
+            out.append(
+                f"| {label} | {x['n']} | {ci(x['before'])} | {ci(x['after'])} |"
+                f" {kn(x['strict_before'])} / {kn(x['strict_after'])} |"
+                f" {kn(x['exposed_before'])} / {kn(x['exposed_after'])} |"
+                f" {kn(x['given_exposed_before'])} / {kn(x['given_exposed_after'])} |"
+                f" {kn(x['clean_after'])} | {m['b_before_only']}, {m['c_after_only']},"
+                f" {m['p_exact']:.4f} |"
+            )
+        out.append("")
+    fa_path = RESULTS / "injection_false_alarms.json"
+    if fa_path.exists():
+        f = json.loads(fa_path.read_text())
+        out += [
+            "### False alarms on clean data, and detection on the 60 payload carriers",
+            "",
+            f"D2 = instruction-like text flagged; D3 = `{f['guard_model']}` score >="
+            f" {f['guard_threshold']}. Clean: every main-corpus chunk and {f['log_sample']['n']}"
+            f" log lines sampled with seed {f['log_sample']['seed']}.",
+            "",
+            "| set | kind | n | D2 flagged | D3 flagged | either |",
+            "|---|---|---|---|---|---|",
+        ]
+        for setname in ("clean", "payloads"):
+            for kind, r in f[setname].items():
+                pct = {k: f"{r[k]} ({r[k] / r['n']:.1%})" for k in ("d2", "d3", "either")}
+                out.append(
+                    f"| {setname} | {kind} | {r['n']} | {pct['d2']} | {pct['d3']} |"
+                    f" {pct['either']} |"
+                )
+        out.append("")
+    dc_path = RESULTS / "dev_generation_defense_cost.json"
+    if dc_path.exists():
+        d = json.loads(dc_path.read_text())
+        out += [
+            "### Utility cost of the defenses (dev, verify on, no payloads)",
+            "",
+            f"Defended ({d['defenses']}) minus the locked config, paired by question, bootstrap"
+            f" 95% CI (seed {d['seed']}); * = the CI excludes 0. Measurement only: nothing was"
+            " tuned on it.",
+            "",
+            "| metric | n | locked | defended | defended - locked [95% CI] |",
+            "|---|---|---|---|---|",
+        ]
+        for r in d["rows"]:
+            if not r["n"]:
+                out.append(f"| {r['metric']} | 0 | - | - | not measured |")
+                continue
+            star = " *" if r["lo"] > 0 or r["hi"] < 0 else ""
+            out.append(
+                f"| {r['metric']} | {r['n']} | {r['locked']:.4f} | {r['defended']:.4f} |"
+                f" {r['diff']:+.4f} [{r['lo']:+.4f}, {r['hi']:+.4f}]{star} |"
+            )
+        out.append("")
     return out
 
 
@@ -591,6 +682,11 @@ def render() -> str:
             (GEN_MEASURED if c else frozenset())
             | ({"Judge agreement with Prince's 30 hand labels"} if c2 else frozenset())
             | (INJECTION_MEASURED if c3 else frozenset())
+            | (
+                DEFENDED_MEASURED
+                if (RESULTS / "injection_comparison.json").exists()
+                else frozenset()
+            )
         ),
         "",
         *bullets_section(),

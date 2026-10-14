@@ -15,8 +15,10 @@ from eval import retrieval_eval
 from eval.injection_eval import (
     LOCATIONS,
     STYLES,
+    comparison,
     load_cases,
     load_corpus,
+    mcnemar_exact,
     payload_ids,
     run_case,
     where_found,
@@ -351,3 +353,47 @@ def test_a_stub_agent_that_obeys_its_payload_succeeds_and_its_clean_run_does_not
     clean = run_case(case, "q", None, StubLLM([TRIAGE, search, say("done"), honest]), db["url"])
     assert not clean["exposed"] and not clean["attack_success"]
     assert [t["name"] for t in clean["tool_calls"]] == ["search_runbooks"]
+
+
+def test_mcnemar_exact():
+    assert mcnemar_exact(0, 0) == 1.0
+    assert mcnemar_exact(5, 0) == 2 / 32  # all 5 discordant pairs one way
+    assert mcnemar_exact(10, 0) == 2 / 1024
+    assert mcnemar_exact(3, 3) == 1.0
+    assert mcnemar_exact(1, 6) == mcnemar_exact(6, 1) == 2 * (1 + 7) / 128
+
+
+def test_comparison_pairs_the_same_cases_per_group():
+    def content(name, successes):
+        cases = [
+            {"id": f"INJ-{i:02d}", "split": "tune" if i <= 2 else "heldout"}
+            | {"attack_success": ok}
+            for i, ok in successes.items()
+        ]
+        summary = {
+            g: {
+                k: {"k": 0, "n": 0}
+                for k in (
+                    "attack_success",
+                    "strict_success",
+                    "exposed",
+                    "success_given_exposed",
+                    "clean_control_success",
+                )
+            }
+            for g in ("tune", "heldout_1", "heldout_2", "heldout_pooled")
+        }
+        return {"config": {"name": name}, "cases": cases, "summary": summary}
+
+    before = content("no_defense", {1: True, 2: True, 3: True, 31: False, 32: True})
+    after = content("d", {1: False, 2: True, 3: False, 31: True, 32: False})
+    g = comparison(before, after)["groups"]
+    assert g["tune"]["n"] == 2 and g["tune"]["mcnemar"] == {
+        "b_before_only": 1,
+        "c_after_only": 0,
+        "p_exact": 1.0,
+    }
+    assert g["heldout_pooled"]["n"] == 3
+    assert g["heldout_pooled"]["mcnemar"]["b_before_only"] == 2
+    assert g["heldout_pooled"]["mcnemar"]["c_after_only"] == 1
+    assert g["heldout_2"]["n"] == 2 and g["heldout_1"]["n"] == 1

@@ -312,6 +312,49 @@ def result_content(config: str, cases: list[dict], attack: dict, clean: dict) ->
     )
 
 
+def mcnemar_exact(b: int, c: int) -> float:
+    """Two-sided exact McNemar p: the b + c discordant pairs as Binomial(b + c, 1/2)."""
+    n = b + c
+    if n == 0:
+        return 1.0
+    tail = sum(math.comb(n, i) for i in range(min(b, c) + 1)) / 2**n
+    return min(1.0, 2 * tail)
+
+
+def comparison(before: dict, after: dict) -> dict:
+    """Paired, per group: the same cases under two configs (result_content dicts)."""
+    rb = {r["id"]: r for r in before["cases"]}
+    ra = {r["id"]: r for r in after["cases"]}
+    out = {"before": before["config"]["name"], "after": after["config"]["name"], "groups": {}}
+    for group, sb in before["summary"].items():
+        ids = [r["id"] for r in after["cases"] if r["id"] in rb and group_of(r, group)]
+        if not ids or group not in after["summary"]:
+            continue
+        pairs = [(rb[i]["attack_success"], ra[i]["attack_success"]) for i in ids]
+        b = sum(x and not y for x, y in pairs)  # success before, not after
+        c = sum(y and not x for x, y in pairs)  # success after, not before
+        sa = after["summary"][group]
+        out["groups"][group] = {
+            "n": len(ids),
+            "before": sb["attack_success"],
+            "after": sa["attack_success"],
+            "strict_before": sb["strict_success"],
+            "strict_after": sa["strict_success"],
+            "exposed_before": sb["exposed"],
+            "exposed_after": sa["exposed"],
+            "given_exposed_before": sb["success_given_exposed"],
+            "given_exposed_after": sa["success_given_exposed"],
+            "clean_before": sb["clean_control_success"],
+            "clean_after": sa["clean_control_success"],
+            "mcnemar": {"b_before_only": b, "c_after_only": c, "p_exact": mcnemar_exact(b, c)},
+        }
+    return out
+
+
+def group_of(row: dict, group: str) -> bool:
+    return GROUPS[group]({"id": row["id"], "split": row["split"]})
+
+
 def report(content: dict, attack: dict, clean: dict) -> None:
     for split, s in content["summary"].items():
         a, t, e, c = (

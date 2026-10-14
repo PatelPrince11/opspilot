@@ -18,6 +18,8 @@ Tools stay read-only (the opspilot_ro role, migration 0004); that is not a switc
 """
 
 import re
+import threading
+import time
 
 from llm.client import Client, Response
 
@@ -67,6 +69,12 @@ SENTENCE_END = re.compile(r"[.!?](?=\s)|\n")
 GUARD_WINDOW = 1200  # characters; about 330 tokens of log or runbook text, under the 512 limit
 GUARD_OVERLAP = 200
 GUARD_MAX_TOKENS = 8  # counts toward the 512-token window; the reply is one number
+# Groq's free tier allows 30 requests per minute for this model, and rejected retries seem to
+# count too: retrying on 429 alone let only about 5 calls a minute through. So uncached calls
+# are paced process-wide (every Guard, every thread) to stay under the limit.
+GUARD_MIN_INTERVAL_S = 60 / 28
+_pace_lock = threading.Lock()
+_next_call = [0.0]
 
 
 def defuse(text: str) -> str:
@@ -124,9 +132,18 @@ class Guard:
     def score_one(self, text: str) -> float:
         best = 0.0
         for w in windows(text):
+            if self.llm.provider == "groq":  # the rate-limited host
+                with _pace_lock:  # reserve the next slot
+                    wait = _next_call[0] - time.monotonic()
+                    if wait > 0:
+                        time.sleep(wait)
+                    _next_call[0] = time.monotonic() + GUARD_MIN_INTERVAL_S
             r: Response = self.llm.chat(
                 [{"role": "user", "content": w}], max_tokens=GUARD_MAX_TOKENS, name="guard"
             )
+            if r.cached:  # a cache hit used no request: give the slot back
+                with _pace_lock:
+                    _next_call[0] = time.monotonic()
             self.calls.append(r.log_row())
             best = max(best, float(r.content.strip()))
         return best
@@ -187,3 +204,9 @@ def screen(items: dict, flag_on: bool, guard: Guard | None, mode: str | None) ->
         for k in keys:
             if not items[k]["text"].startswith("⟦withheld"):
                 items[k]["text"] = flag(items[k]["text"])
+
+
+# The defenses as frozen for the final held-out run and the utility-cost run (Phase 4 step 5).
+# D3's mode follows the rule recorded in NOTES before the false-alarm measurement: withhold,
+# unless Prompt Guard flags more than 2% of the 547 clean chunks (then warn).
+FINAL_DEFENSES = {"wrap": True, "flag": True, "guard": "withhold"}

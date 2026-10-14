@@ -41,6 +41,7 @@ from statistics import quantiles
 import psycopg
 
 from agent import tools
+from agent.defenses import FINAL_DEFENSES
 from agent.graph import DRAFT_EFFORT, MAX_LOOPS, build_graph, initial_state, quote_found
 from config import get_settings
 from eval.ablation import RESAMPLES
@@ -63,6 +64,9 @@ ARMS = {  # every setting explicit: the defaults changed when the config was loc
 CONFIGS = {"verify_on": (True, {}), "verify_off": (False, {})} | {
     f"{arm}_{v}": (v == "on", over) for arm, over in ARMS.items() for v in ("on", "off")
 }
+# Phase 4: the locked config plus the frozen injection defenses, for their utility cost.
+CONFIGS |= {"defended_on": (True, FINAL_DEFENSES), "defended_off": (False, FINAL_DEFENSES)}
+DEFENSE_COST = RESULTS / "dev_generation_defense_cost.json"
 PROGRESS = ROOT / ".cache" / "gen_eval"
 SHEET = ROOT / "eval" / "judge_validation.md"
 SHEET_N = 30
@@ -380,7 +384,12 @@ def result_content(split, config, rows, questions, unjudged) -> dict:
             "llm_token_budget": s.llm_token_budget,
             "retrieval_mode": s.retrieval_mode,
             "judge_prompt_version": PROMPT_VERSION,
-        },
+        }
+        | (
+            {"defenses": {k: CONFIGS[config][1][k] for k in ("wrap", "flag", "guard")}}
+            if "wrap" in CONFIGS[config][1]
+            else {}
+        ),
         "models": {"agent": s.agent_llm, "judge": s.judge_llm},
         "questions_total": len(questions),
         "questions_run": len(rows),
@@ -716,6 +725,52 @@ def ablation_report(questions: list[dict], split: str = "dev") -> str:
     return "\n".join(out) + "\n"
 
 
+# ---------------------------------------------------------------------- Phase 4 defense cost
+
+DEFENSE_ROWS = [  # (label, metric, config suffix, sign); sign -1: 1 - citation (a) = failure
+    ("gold_all", "gold_all", "on", 1),
+    ("gold_frac", "gold_frac", "on", 1),
+    ("tool-call success", "tool_success", "on", 1),
+    ("first-draft citation (a) failure", "citation_a", "off", -1),
+    ("completeness (judge, kappa 0.47)", "completeness", "on", 1),
+    ("cost per run, USD (incl. Prompt Guard)", "cost", "on", 1),
+]
+
+
+def defense_cost(questions: list[dict], split: str = "dev") -> dict:
+    """Defended minus locked, paired by question (bootstrap 95% CI, questions scored in both).
+    The _off configs replay their _on run's first draft, so first-draft citation (a) comes
+    from them."""
+    rows = {}
+    for name in ("verify_on", "verify_off", "defended_on", "defended_off"):
+        built, _, _ = build_rows(questions, name, split)
+        rows[name] = {r["id"]: r for r in built}
+
+    def per_q(r: dict, metric: str):
+        if metric == "cost":
+            return [sum(c["cost_usd"] for c in r["llm_calls"]), 1]
+        return r["scores"][metric]
+
+    out = []
+    for label, metric, cfg, sign in DEFENSE_ROWS:
+        a, b = rows[f"defended_{cfg}"], rows[f"verify_{cfg}"]
+        va = {i: per_q(r, metric) for i, r in a.items()}
+        vb = {i: per_q(r, metric) for i, r in b.items()}
+        ids = sorted(i for i in va if i in vb and va[i] is not None and vb[i] is not None)
+        if not ids:
+            out.append({"metric": label, "n": 0})
+            continue
+        d, lo, hi = paired_bootstrap(va, vb, ids)
+        la, lb = ratio([va[i] for i in ids]), ratio([vb[i] for i in ids])
+        if sign < 0:
+            la, lb, d, lo, hi = 1 - la, 1 - lb, -d, -hi, -lo
+        out.append(
+            {"metric": label, "n": len(ids), "locked": lb, "defended": la}
+            | {"diff": d, "lo": lo, "hi": hi}
+        )
+    return {"split": split, "defenses": FINAL_DEFENSES, "seed": SEED, "rows": out}
+
+
 def table2x2(pairs: list[tuple[bool, bool]]) -> dict:
     """Prince (first) x judge (second) counts."""
     return {
@@ -863,7 +918,10 @@ def main(argv=None) -> int:
     s = get_settings()
     ap = argparse.ArgumentParser()
     ap.add_argument(
-        "action", nargs="?", default="run", choices=("run", "sheet", "agreement", "ablation")
+        "action",
+        nargs="?",
+        default="run",
+        choices=("run", "sheet", "agreement", "ablation", "defense-cost"),
     )
     ap.add_argument("--split", choices=("dev", "test"), default="dev")
     ap.add_argument("--final-test", action="store_true")
@@ -884,6 +942,16 @@ def main(argv=None) -> int:
         text = ablation_report(questions, args.split)
         ABLATION.write_text(text)
         print(text)
+        return 0
+    if args.action == "defense-cost":
+        d = defense_cost(questions, args.split)
+        DEFENSE_COST.write_text(json.dumps(d, indent=1) + "\n")
+        for r in d["rows"]:
+            if r["n"]:
+                print(
+                    f"{r['metric']:<40} n={r['n']:<3} locked {r['locked']:.4f} defended"
+                    f" {r['defended']:.4f} diff {r['diff']:+.4f} [{r['lo']:+.4f}, {r['hi']:+.4f}]"
+                )
         return 0
     if args.action == "agreement":
         path = RESULTS / f"{args.split}_generation_verify_on.json"
