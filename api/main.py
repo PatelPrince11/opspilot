@@ -1,17 +1,23 @@
+import itertools
 import json
 import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from agent.run import SHIPPED, investigate, load
 from llm.client import Client
 
 app = FastAPI(title="OpsPilot")
+DASHBOARD = (
+    Path(__file__).resolve().parents[1] / "frontend" / "dist"
+)  # `npm run build` in frontend/; the image builds it
 
 
 class InvestigateRequest(BaseModel):
@@ -48,11 +54,15 @@ def post_investigate(
     llm: Annotated[Client, Depends(agent_llm)],
     config: Annotated[dict, Depends(agent_config)],
 ):
-    """Server-sent events: tool_call, tool_result, sources, diagnosis, error. The investigation
-    id is in the X-Investigation-Id header, for GET /investigations/{id}."""
+    """Server-sent events: start, then tool_call, tool_result, sources, diagnosis, error. The
+    investigation id is in the start event and the X-Investigation-Id header, for
+    GET /investigations/{id}."""
     iid = uuid.uuid4()
     as_of = (req.as_of or datetime.now(UTC)).astimezone(UTC).isoformat().replace("+00:00", "Z")
-    events = investigate(req.question, as_of, llm, investigation_id=iid, config=config)
+    start = {"event": "start", "investigation_id": str(iid), "as_of": as_of, "config": config}
+    events = itertools.chain(
+        [start], investigate(req.question, as_of, llm, investigation_id=iid, config=config)
+    )
     return StreamingResponse(
         sse(events),
         media_type="text/event-stream",
@@ -66,3 +76,8 @@ def get_investigation(investigation_id: uuid.UUID) -> dict:
     if inv is None:
         raise HTTPException(404, "investigation not found")
     return inv
+
+
+# Last, so the API routes above win. Absent in a backend-only checkout (tests, CI's Python job).
+if DASHBOARD.is_dir():
+    app.mount("/", StaticFiles(directory=DASHBOARD, html=True), name="dashboard")

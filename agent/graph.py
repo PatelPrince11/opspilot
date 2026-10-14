@@ -644,7 +644,7 @@ def build_graph(
                     {
                         "id": e["id"],
                         "source": e["source"],
-                        "text": e["text"][:200],
+                        "text": e["text"],  # whole: the dashboard highlights quotes in it
                         "metadata": e["metadata"],
                         "cited": e["id"] in cited,
                     }
@@ -658,6 +658,7 @@ def build_graph(
                 "event": "diagnosis",
                 "diagnosis": diagnosis,
                 "verify_log": state["verify_log"],
+                "loops": state["loops"],
                 "usage": usage(state["llm_calls"]),  # finish makes no LLM call: these are final
             }
         )

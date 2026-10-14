@@ -81,6 +81,7 @@ def test_sse_event_order_and_persistence(client, db_url):
     assert r.status_code == 200 and r.headers["content-type"].startswith("text/event-stream")
     events = parse_sse(r.text)
     assert [e for e, _ in events] == [
+        "start",
         "tool_call",
         "tool_result",
         "tool_call",
@@ -90,7 +91,10 @@ def test_sse_event_order_and_persistence(client, db_url):
         "sources",
         "diagnosis",
     ]
+    assert events[0][1]["config"] == SHIPPED | {"guard": "off"}
+    assert events[0][1]["investigation_id"] == r.headers["x-investigation-id"]
     assert events[-1][1]["diagnosis"]["citations_verified"] is True
+    assert events[-1][1]["loops"] == 0
     assert events[-1][1]["usage"] == {
         "llm_calls": 4,
         "cached_calls": 0,
