@@ -106,6 +106,18 @@ class Response:
         return d
 
 
+def usage(calls: list[dict]) -> dict:
+    """Totals over call log rows: tokens of every call, the cost of the calls actually made (a
+    cache hit costs nothing again) and how many calls were cache hits."""
+    return {
+        "llm_calls": len(calls),
+        "cached_calls": sum(bool(c.get("cached")) for c in calls),
+        "prompt_tokens": sum(c.get("prompt_tokens", 0) for c in calls),
+        "completion_tokens": sum(c.get("completion_tokens", 0) for c in calls),
+        "cost_usd": round(sum(c.get("cost_usd", 0.0) for c in calls if not c.get("cached")), 8),
+    }
+
+
 def estimate_tokens(*parts) -> int:
     return math.ceil(sum(len(json.dumps(p, default=str)) for p in parts if p) / CHARS_PER_TOKEN)
 
@@ -436,7 +448,11 @@ class Client:
             model=f"{self.provider}:{self.model}",
             model_parameters={k: v for k, v in params.items() if k != "json_schema"},
             input=messages,
-            metadata={"estimated_tokens": r.estimated, "prompt_estimate": r.prompt_estimate},
+            metadata={
+                "estimated_tokens": r.estimated,
+                "prompt_estimate": r.prompt_estimate,
+                "cached": r.cached,
+            },
         )
         gen.update(
             output={"content": r.content, "tool_calls": [asdict(c) for c in r.tool_calls]},
@@ -444,6 +460,12 @@ class Client:
             cost_details={"total": r.cost_usd},
         )
         gen.end()
+
+    def trace_usage(self, trace_id: str, totals: dict) -> None:
+        """One event on the investigation's trace carrying its usage() totals as metadata."""
+        lf = self.tracer()
+        if lf is not None:
+            lf.create_event(trace_context={"trace_id": trace_id}, name="usage", metadata=totals)
 
     def flush(self) -> None:
         if self._tracer is not None:

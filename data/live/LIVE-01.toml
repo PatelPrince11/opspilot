@@ -1,0 +1,68 @@
+# LIVE-01 (eval/live_questions.jsonl): kafka-02's /data/kafka filled; the broker shut down.
+# SYNTHETIC. Loaded by eval/live_eval.py as corpus 'live', visible only to its own case.
+# Facts: broker ids 1/2/3 = kafka-01/02/03, one data dir /data/kafka per broker, replication
+# factor 3 with min.insync.replicas=2 (acks=all writes go on with two in sync), ledger.entries
+# has 12 partitions. ledger-service backs off on publish failures since 4.12 (none happen here).
+date = 2026-10-08
+
+[[burst]]
+from = "09:42:00"
+to = "10:20:00"
+count = 9
+service = "kafka"
+level = "INFO"
+hosts = ["kafka-01.prod.internal", "kafka-02.prod.internal", "kafka-03.prod.internal"]
+message = "kafka: rolled new log segment for ledger.entries-{int:0-11} in /data/kafka"
+
+[[burst]]
+gold = true
+from = "10:21:04"
+to = "10:21:18"
+count = 5
+service = "kafka"
+level = "ERROR"
+hosts = ["kafka-02.prod.internal"]
+message = "kafka: append to ledger.entries-{int:0-11} in /data/kafka failed: No space left on device (ENOSPC)"
+
+[[line]]
+gold = true
+at = "10:21:19"
+service = "kafka"
+host = "kafka-02.prod.internal"
+level = "ERROR"
+message = "kafka: log dir /data/kafka marked offline after an I/O error: No space left on device (ENOSPC)"
+
+[[line]]
+gold = true
+at = "10:21:20"
+service = "kafka"
+host = "kafka-02.prod.internal"
+level = "FATAL"
+message = "kafka: all log dirs on this broker are offline; shutting down broker 2"
+
+[[burst]]
+from = "10:21:52"
+to = "10:23:00"
+count = 8
+service = "kafka"
+level = "WARN"
+hosts = ["kafka-01.prod.internal", "kafka-03.prod.internal"]
+message = "kafka: broker 2 removed from the ISR of ledger.entries-{int:0-11}; ISR now 1,3"
+
+[[burst]]
+from = "09:45:00"
+to = "10:40:00"
+count = 12
+service = "ledger-service"
+level = "INFO"
+hosts = ["ledger-service-01.prod.internal", "ledger-service-02.prod.internal"]
+message = "published ledger entry to ledger.entries acks=all took_ms={int:4-30}"
+
+[[burst]]
+from = "09:45:00"
+to = "10:40:00"
+count = 8
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+message = "send ok in_flight={int:6-20}"

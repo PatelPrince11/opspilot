@@ -16,7 +16,7 @@ from psycopg.rows import dict_row
 from agent import tools
 from agent.graph import build_graph, initial_state
 from config import get_settings
-from llm.client import Client
+from llm.client import Client, usage
 
 
 def investigate(
@@ -63,12 +63,14 @@ def investigate(
                     )
                 yield ev
         except Exception as exc:
+            calls = final.get("llm_calls", [])
             rw.execute(
                 "UPDATE investigations SET status = 'error', error = %s, llm_calls = %s,"
-                " finished_at = now() WHERE id = %s",
+                " cost_usd = %s, finished_at = now() WHERE id = %s",
                 (
                     f"{type(exc).__name__}: {exc}"[:2000],
-                    json.dumps(final.get("llm_calls", [])),
+                    json.dumps(calls),
+                    usage(calls)["cost_usd"],
                     iid,
                 ),
             )
@@ -77,16 +79,20 @@ def investigate(
         finally:
             llm.flush()
         calls = final.get("llm_calls", [])
+        u = usage(calls)
+        llm.trace_usage(iid.hex, u)
+        llm.flush()
         rw.execute(
             "UPDATE investigations SET status = 'done', diagnosis = %s, llm_calls = %s,"
-            " loops = %s, prompt_tokens = %s, completion_tokens = %s, finished_at = now()"
-            " WHERE id = %s",
+            " loops = %s, prompt_tokens = %s, completion_tokens = %s, cost_usd = %s,"
+            " finished_at = now() WHERE id = %s",
             (
                 json.dumps(final.get("diagnosis")),
                 json.dumps(calls),
                 final.get("loops"),
-                sum(c["prompt_tokens"] for c in calls),
-                sum(c["completion_tokens"] for c in calls),
+                u["prompt_tokens"],
+                u["completion_tokens"],
+                u["cost_usd"],
                 iid,
             ),
         )

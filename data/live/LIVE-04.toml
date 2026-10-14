@@ -1,0 +1,53 @@
+# LIVE-04: redis-features-01 is at maxmemory with noeviction, so velocity-counter writes are
+# refused; reads and snapshots still work. SYNTHETIC, corpus 'live', own case only.
+# Facts: redis-features maxmemory 24gb, maxmemory-policy noeviction, single node with no
+# Sentinel; fraud-scorer writes per-card velocity counters on every score (FRD-E140 when
+# refused). BGSAVE succeeds here, so it is not MISCONF (and not September 2025's overcommit).
+date = 2026-10-10
+
+[[line]]
+at = "07:55:00"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "redis: Background saving started by pid {int:20000-40000}"
+
+[[line]]
+at = "07:57:31"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "redis: DB saved on disk"
+
+[[line]]
+at = "08:25:00"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "redis: Background saving started by pid {int:20000-40000}"
+
+[[line]]
+at = "08:27:40"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "redis: DB saved on disk"
+
+[[burst]]
+gold = true
+from = "08:03:00"
+to = "08:45:00"
+count = 24
+service = "fraud-scorer"
+level = "ERROR"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "FRD-E140 velocity counter write rejected by redis-features-01: OOM command not allowed"
+
+[[burst]]
+from = "07:50:00"
+to = "08:45:00"
+count = 12
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "score ok took_ms={int:4-25} features={int:4-12}"

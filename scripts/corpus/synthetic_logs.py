@@ -59,7 +59,7 @@ def generate(incident_id: str, spec: dict, start_day: date) -> list[dict]:
     rng = rng_for(f"logs:{incident_id}")
     events = []
 
-    def add(ts, entry, host, frac=None):
+    def add(ts, entry, host, frac=None, gold=None):
         events.append(
             {
                 "ts": ts,
@@ -70,13 +70,15 @@ def generate(incident_id: str, spec: dict, start_day: date) -> list[dict]:
                 "incident_id": incident_id,
                 "corpus": "main",
             }
+            # live-incident eval: which answer-carrying entry ("line3", "burst0") a row came from
+            | ({"gold": gold} if entry.get("gold") else {})
         )
 
-    for e in spec.get("line", []):
+    for i, e in enumerate(spec.get("line", [])):
         day = date.fromisoformat(e["date"]) if "date" in e else start_day
         ts = _at(day, e["at"]) + timedelta(milliseconds=rng.randrange(1000))
-        add(ts, e, e["host"])
-    for b in spec.get("burst", []):
+        add(ts, e, e["host"], gold=f"line{i}")
+    for j, b in enumerate(spec.get("burst", [])):
         day = date.fromisoformat(b["date"]) if "date" in b else start_day
         lo = _at(day, b["from"])
         hi = _at(date.fromisoformat(b["to_date"]) if "to_date" in b else day, b["to"])
@@ -84,7 +86,11 @@ def generate(incident_id: str, spec: dict, start_day: date) -> list[dict]:
         offsets = sorted(rng.randrange(span + 1) for _ in range(b["count"]))
         for ms in offsets:
             add(
-                lo + timedelta(milliseconds=ms), b, rng.choice(b["hosts"]), ms / span if span else 0
+                lo + timedelta(milliseconds=ms),
+                b,
+                rng.choice(b["hosts"]),
+                ms / span if span else 0,
+                gold=f"burst{j}",
             )
     return sorted(events, key=lambda e: (e["ts"], e["service"], e["message"]))
 

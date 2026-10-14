@@ -1,0 +1,54 @@
+# LIVE-07: a login surge saturates auth-service's CPU with bcrypt; each pod refuses logins past
+# 64 in flight. SYNTHETIC, corpus 'live', own case only.
+# Facts: auth-service checks passwords with bcrypt on the request goroutine, CPU limit 4 per pod
+# since 2025-08-03, returns 503 once more than 64 logins per pod are in flight, login route
+# /v1/auth/login, no login rate limit (only /search is limited at the edge). Session writes to
+# redis-sessions keep succeeding here.
+date = 2026-10-11
+
+[[burst]]
+from = "11:20:00"
+to = "12:15:00"
+count = 10
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "POST /v1/auth/login 200 upstream=auth-service took_ms={int:90-300}"
+
+[[burst]]
+from = "11:50:00"
+to = "12:15:00"
+count = 14
+service = "edge-gateway"
+level = "WARN"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "POST /v1/auth/login 503 upstream=auth-service"
+
+[[burst]]
+from = "11:20:00"
+to = "11:45:00"
+count = 6
+service = "auth-service"
+level = "INFO"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login ok took_ms={int:80-140}; session stored in redis-sessions"
+
+[[burst]]
+gold = true
+from = "11:40:00"
+to = "12:15:00"
+count = 12
+service = "auth-service"
+level = "WARN"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "bcrypt compare slow took_ms={ramp:120-950} logins_in_flight={ramp:30-64}"
+
+[[burst]]
+gold = true
+from = "11:50:00"
+to = "12:15:00"
+count = 14
+service = "auth-service"
+level = "ERROR"
+hosts = ["auth-service-01.prod.internal", "auth-service-02.prod.internal"]
+message = "login refused with 503: 64 logins already in flight on this pod"

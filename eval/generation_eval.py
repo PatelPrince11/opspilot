@@ -48,7 +48,7 @@ from eval.ablation import RESAMPLES
 from eval.judge import JUDGE_RPD, JUDGE_RPM, PROMPT_VERSION, JudgeClient, RateLimiter, judge
 from eval.retrieval_eval import RESULTS, check_split, provenance, write_named
 from eval.validate_questions import QUESTIONS, load
-from llm.client import Client, LLMError
+from llm.client import Client, LLMError, usage
 from scripts.corpus.common import ROOT, SEED
 
 AS_OF = "2026-10-06T14:52:00Z"  # the demo's as_of; every corpus incident is before it
@@ -67,6 +67,7 @@ CONFIGS = {"verify_on": (True, {}), "verify_off": (False, {})} | {
 # Phase 4: the locked config plus the frozen injection defenses, for their utility cost.
 CONFIGS |= {"defended_on": (True, FINAL_DEFENSES), "defended_off": (False, FINAL_DEFENSES)}
 DEFENSE_COST = RESULTS / "dev_generation_defense_cost.json"
+COST = RESULTS / "dev_generation_cost.json"
 PROGRESS = ROOT / ".cache" / "gen_eval"
 SHEET = ROOT / "eval" / "judge_validation.md"
 SHEET_N = 30
@@ -772,6 +773,38 @@ def defense_cost(questions: list[dict], split: str = "dev") -> dict:
     return {"split": split, "defenses": FINAL_DEFENSES, "seed": SEED, "rows": out}
 
 
+def run_costs(questions: list[dict], split: str = "dev") -> dict:
+    """Tokens, cost and LLM response-cache hits of every config with a result file, from the
+    same progress rows the result file was built from. Run spend and provenance are the result
+    file's own (spend is what that run actually paid, cached calls excluded)."""
+    runs = []
+    for config in CONFIGS:
+        path = RESULTS / f"{split}_generation_{config}.json"
+        if not path.exists():
+            continue
+        res = json.loads(path.read_text())
+        rows, _, _ = build_rows(questions, config, split)
+        tot = usage([c for r in rows for c in r["llm_calls"]])
+        n = len(rows)
+        runs.append(
+            {
+                "config": config,
+                "n": n,
+                "prompt_tokens_mean": tot["prompt_tokens"] / n,
+                "completion_tokens_mean": tot["completion_tokens"] / n,
+                "llm_calls_mean": tot["llm_calls"] / n,
+                # as made: a cache hit keeps the original call's cost
+                "cost_usd_mean": sum(c["cost_usd"] for r in rows for c in r["llm_calls"]) / n,
+                "spend_usd": res["spend_usd"],
+                "cache_hits": tot["cached_calls"],
+                "cache_hit_rate": tot["cached_calls"] / tot["llm_calls"],
+                "result_commit": res["commit"],
+                "result_uncommitted": len(res["uncommitted_changes"]),
+            }
+        )
+    return {"split": split, "runs": runs}
+
+
 def table2x2(pairs: list[tuple[bool, bool]]) -> dict:
     """Prince (first) x judge (second) counts."""
     return {
@@ -922,7 +955,7 @@ def main(argv=None) -> int:
         "action",
         nargs="?",
         default="run",
-        choices=("run", "sheet", "agreement", "ablation", "defense-cost"),
+        choices=("run", "sheet", "agreement", "ablation", "defense-cost", "cost"),
     )
     ap.add_argument("--split", choices=("dev", "test"), default="dev")
     ap.add_argument("--final-test", action="store_true")
@@ -953,6 +986,16 @@ def main(argv=None) -> int:
                     f"{r['metric']:<40} n={r['n']:<3} locked {r['locked']:.4f} defended"
                     f" {r['defended']:.4f} diff {r['diff']:+.4f} [{r['lo']:+.4f}, {r['hi']:+.4f}]"
                 )
+        return 0
+    if args.action == "cost":
+        d = run_costs(questions, args.split)
+        COST.write_text(json.dumps(d, indent=1) + "\n")
+        for r in d["runs"]:
+            print(
+                f"{r['config']:<13} in {r['prompt_tokens_mean']:>8,.0f} out"
+                f" {r['completion_tokens_mean']:>6,.0f} ${r['cost_usd_mean']:.4f}/inv"
+                f" spend ${r['spend_usd']:.4f} cache {r['cache_hit_rate']:.3f}"
+            )
         return 0
     if args.action == "agreement":
         path = RESULTS / f"{args.split}_generation_verify_on.json"

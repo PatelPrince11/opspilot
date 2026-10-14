@@ -3339,6 +3339,176 @@ Restricted to the cases whose payload was seen in both runs:
 - **Phase 5's test run uses the defended agent** (FINAL_DEFENSES at the frozen commit), and
   the test split's generation numbers carry this layer's utility cost.
 
+## 2026-10-14: Phase 4 finish step 0, PR #7 merged, the 11 unjudged verify-off answers
+
+- PR #7 (defenses and injection results) merged with CI green on both runs.
+- `make gen-eval ARGS="--config verify_off"`: agent stage fully cached ($0), judge stage graded
+  all 11 answers the Gemini daily limit had blocked (Q156, Q159, H001, H007, H008, H009, H018,
+  H026, H029, H030, H038). No 429 (new Pacific day).
+- Verify-off is now judged on all 100. citation_b 0.968 (283 claims) -> 0.972 (322),
+  faithfulness 4.742 -> 4.770, completeness 0.674 -> 0.673. premise_corrected moved from
+  0.750 (n=4) to 0.429 (n=7): the three answers added were false-premise questions the earlier
+  n=4 had missed, so the old number overstated it. Verify on minus off: still no claimable
+  difference on any judged metric (faithfulness -0.030 [-0.110, +0.040]).
+
+## 2026-10-14: Phase 4 finish step 1, cost and token tracking
+
+- One helper, `llm.client.usage(calls)`, totals a call log: LLM calls, cache hits, input and
+  output tokens, and actual cost (the sum over calls that were not cache hits; a cached
+  response keeps its original cost_usd, so summing every call would bill a replay again).
+  Every consumer uses it:
+  - the final SSE event (`diagnosis`) carries `usage` (finish makes no LLM call, so the totals
+    are final there);
+  - `investigations.cost_usd` (migration 0007; tokens already had columns), set on done and
+    on error, so GET /investigations/{id} returns it;
+  - Langfuse: each generation's metadata now has `cached`, and the investigation's trace gets
+    one `usage` event with the totals (`Client.trace_usage`).
+- Cache hit rate per eval run: `uv run python -m eval.generation_eval cost` writes
+  `eval/results/dev_generation_cost.json` from the same progress rows as each result file;
+  ledger section (c4). Decision: a separate file, not a new field in the 12 result files.
+  I first added the field and regenerated them; metrics were identical, but each file's
+  commit moved to today's, so the ledger would have credited e69bfe87's measurements to a
+  commit that measured nothing. Reverted.
+- Found on the way, left alone: arms a-c still carry end_to_end_s computed before 3f45b35
+  (which counts only runs with no cache hit); a rewrite under the current rule would give
+  n = 0 for them. Their end-to-end latency is not used in the ledger.
+- defended_off shows hit rate 1.000 and run spend $0.0307: its first pass had misses
+  (gather and guard calls); the questions rerun to fix the cache divergence replaced those
+  rows, and the pure-replay rule kept the first measured spend in the result file.
+- Numbers (dev, n = 100 each): the locked config with defenses (defended_on) uses about
+  20.9K input and 4.3K output tokens and $0.0049 per investigation as made (22.6 calls, Prompt
+  Guard calls included, free on Groq). Total run spend over the 12 generation runs: $1.90.
+  The judge is not in these numbers (Gemini free tier).
+
+## 2026-10-14: Phase 4 finish step 2, test coverage
+
+- pytest-cov added (dev group); `[tool.coverage]` in pyproject: source rag/ and agent/,
+  fail_under 85. CI runs `pytest --cov` in place of plain pytest, so a drop under 85% fails
+  the job. `make test` is unchanged (no coverage, faster).
+- Line coverage on rag/ and agent/, local run with Postgres and the LogHub lines: 96.4%
+  before (35 of 969 statements missed), 98.2% after (17 missed), 649 tests. Lowest-covered:
+  rag/ingestion.py 86% (its CLI main and the dry-run printout, run by hand through
+  `make ingest`), rag/retrieval.py 99% (closing a connection retrieve() opened itself; every
+  test passes one in). Every other file 100%. Out of the target: api/main.py 100%,
+  llm/client.py 92%.
+- Coverage was already above target, so the new tests went after behaviour, not lines:
+  - Prompt Guard pacing on Groq (the next call waits a full interval; a cache hit gives its
+    slot back), a long item scored alone by its worst window, no items, and guard calls
+    landing in the run's llm_calls (they are what step 1's cost counts).
+  - an unknown guard mode is refused; malformed read_document arguments fail the call, not
+    the run; search stops at TOP_DOCS documents.
+  - RRF ties broken by chunk id, the first list's hit kept when both lists return a chunk,
+    empty inputs; rerank of nothing loads no model.
+  - chunking keeps every sentence and never ends a chunk on a heading; an empty body has no
+    chunks. A quote must sit inside one cited item (not straddle two); three words is enough.
+  - ingest refuses to start without the downloaded LogHub lines.
+  - Integration: one full investigation through agent.run.investigate (what POST /investigate
+    calls) with the real read-only tools on the fixture DB and the stub LLM, verify on:
+    events end with sources then diagnosis, the claim verifies, usage is in the final event,
+    and the investigation row, its two tool_calls rows and cost_usd are persisted.
+- First failure of the integration test: my query_logs call left out `end`, a required field.
+  The tool was right to fail the call; the test was fixed.
+- Line coverage says a line ran, not that a test checked its result. A 98% number is not a
+  correctness claim.
+
+## 2026-10-14: Phase 4 finish step 3, live-incident questions (answer keys fixed before any run)
+
+- Coverage note for step 2: CI measures 90.0% on rag/ and agent/ (637 passed, 12 skipped),
+  not 98.2%. The 12 tests that need the local-only LogHub lines skip in CI, which leaves
+  rag/ingestion.py at 27% there. Both runs clear the 85% bar.
+- `eval/live_questions.jsonl`: 10 questions asked the way an on-call engineer asks during an
+  incident (current symptoms, "right now", no date, no past incident). Each has an answer key
+  committed here, before any agent run: cause, cause_type, hosts, key facts (each a list of
+  exact tokens, any of which counts), forbidden claims (regexes), and the distractor if any.
+  The gold evidence is marked in each spec (`gold = true` on the entries that carry the answer).
+- Logs: `data/live/LIVE-01..10.toml`, the demo's format and generator, through the same
+  `live_events()` checks (every host, ip:port and code from services.toml, the unverified-string
+  blocklist). Every fact used is a NOTES Fictional fact; each spec's header names the ones it
+  rests on. Dates 2026-10-08..13: after the demo, and no main-corpus log exists after
+  2026-10-06 15:00, so a case's window holds only its own logs.
+- The grid (corpus failure-type labels; 7 types, 2 distractors):
+
+  | case | cause type | where | distractor |
+  |---|---|---|---|
+  | LIVE-01 | disk_full | kafka-02 /data/kafka ENOSPC, broker 2 shut down | - |
+  | LIVE-02 | memory_leak | notification-worker-02 OOMKilled every 21 min | - |
+  | LIVE-03 | conn_pool_exhaustion | ledger-service-01 HikariCP leak on http-nio threads | orders-api-01 pg pool warnings |
+  | LIVE-04 | redis_down | redis-features-01 at maxmemory, OOM command not allowed | - |
+  | LIVE-05 | rate_limiting | edge /search local limit 250/pod, EDGE-RL01 | card-processor-proxy-02 CPX-W429 |
+  | LIVE-06 | memory_leak | fraud-scorer-02 OOMKilled while FRD-W118 | - |
+  | LIVE-07 | high_cpu | auth-service bcrypt, 64 logins in flight, 503 | - |
+  | LIVE-08 | disk_full | redis-features-01 root disk ENOSPC, BGSAVE fails, MISCONF | - |
+  | LIVE-09 | rate_limiting | email provider 429, both workers back off | - |
+  | LIVE-10 | bad_deploy | inventory-service release max_conns=60, inventory-db-01 53300 | - |
+
+  Pairs with the same symptom and different causes, on purpose: LIVE-02 / LIVE-09 (lag alert:
+  OOM vs provider 429), LIVE-04 / LIVE-08 (velocity counters: maxmemory vs full disk). No case
+  touches payments-pgbouncer, and none holds the demo's leak combination (tested).
+  Stayed clear of skeleton rules: no retry spin, no reconciliation pool exhaustion, no overcommit
+  fork failure, WEB_CONCURRENCY described as set (16), edge limit 250 not 100.
+- Isolation, like the injection payloads: rows go into log_events as corpus 'live' (migration
+  0008 widens the CHECK), source 'live:<id>', fixed ids 950,000 + 1000 x case number. query_logs
+  shows them only to a connection that set opspilot.injection_case to that id. They are never
+  documents, so no retrieval eval sees them, and the generation and injection evals never set a
+  live id. Tested: no case, another live case or an injection case sees none; its own case sees
+  only its rows; the corpus build's live file holds only the demo's logs.
+- Scoring, fixed now with the keys (eval/live_eval.py): the answer is the summary, likely_cause
+  and kept claims. A key fact is found when any of its tokens appears, case-insensitively and
+  not inside a longer word. A forbidden claim is made when its regex matches a sentence with no
+  negation cue ("it is not MISCONF" rules MISCONF out). Bare "no" is not a cue, because "no
+  space left" is an assertion. Gold coverage = gold entries with a row among the gathered evidence.
+  Tool calls and failures counted. Every forbidden hit is kept with its sentence for audit.
+- Test of the keys themselves: every key fact has a token in the case's own logs (the answer is
+  in the logs) and in the key's cause text, and the cause text trips no forbidden claim.
+- Errors on the way: (1) LIVE-02's first OOM kill was 64 min before its as_of, outside the hour
+  I required; the case's events moved 10 min later (no run had used it). (2) "http-nio" could
+  never match: the boundary rejected a following hyphen ("http-nio-8080"). The trailing boundary
+  is now "no word character", so "kafka-02" still is not found in "kafka-021".
+
+## 2026-10-14: Phase 4 finish step 4, live-incident results
+
+- Run: `uv run python -m eval.live_eval run`, keys and scoring as committed in 25cc064 (pushed
+  before the run). The locked defended agent (verify on, FINAL_DEFENSES) on the 10, first look
+  off (locked) and on. New spend $0.1042 (OpenRouter; Prompt Guard on Groq is free). No judge.
+  Nothing was tuned on these.
+- Results (n = 10, `eval/results/live_incidents.json`, ledger section c5):
+
+  | | first look off (locked) | first look on |
+  |---|---|---|
+  | key facts, pre-registered | 7/30 | 14/30 |
+  | key facts, post hoc ASCII fold | 10/30 | 17/30 |
+  | cases with every key fact | 0 (post hoc 1) | 0 |
+  | cases with a forbidden claim | 0 | 1 (audited: false positive) |
+  | gold entries covered | 11/25 | 19/25 |
+  | tool calls (failed) | 72 (1) | 75 (2) |
+
+  First look on minus off, paired: key facts better in 6 cases, worse in 2, tied in 2; exact
+  sign test p = 0.29. McNemar on "every key fact": p = 1.0. **n = 10 cannot separate the two
+  configs.** The direction and the gold coverage (+8 entries) point the same way as Phase 3's
+  reason for first look, but this set does not show it at any usual level.
+- What happened (read from the run rows, not tuned on):
+  - With first look off, the agent often never read the logs that hold the answer. LIVE-01 and
+    LIVE-02 made no query_logs call (runbooks and incidents only). LIVE-09 asked for ERROR, but
+    the 429 lines are WARN. LIVE-03 filtered on a string ("SQLTransientConnectionException")
+    that is not in the logs. LIVE-05 queried search-api and search-cluster, never edge-gateway.
+  - With first look on, gold coverage rose, but the reading was still wrong in places. LIVE-02
+    saw one of the three OOM kills, because triage picked a 30-minute window, and blamed the
+    email provider. LIVE-03 saw the leak warnings and called it high CPU. LIVE-05 never queried
+    edge-gateway in either config: triage named search-api.
+  - No case got every key fact under the pre-registered scorer. 0 of 10 with the locked config
+    is the headline: on live incidents the locked agent mostly answers from runbooks.
+- Scorer findings, reported rather than fixed:
+  - The agent model writes U+2011 non-breaking hyphens ("EDGE‑RL01", "Redis‑features‑01",
+    "FRD‑W118"), and the pre-registered exact-token match misses them: LIVE-05 (off) names
+    EDGE‑RL01 and scores 0 for it. A post-hoc variant folds Unicode hyphens and spaces to ASCII
+    and is reported beside the pre-registered numbers, never instead. It moves both configs by
+    +3 key facts and leaves the comparison unchanged (p = 0.29).
+  - The one forbidden hit is a false positive: LIVE-04 (on) describes the config
+    `stop-writes-on-bgsave-error`, and the pattern `bgsave[^.]*(fail|error)` matched "bgsave-error".
+    The answer does not claim BGSAVE failed. The pre-registered count stays 1; audited, 0.
+- Decision: no change to the agent from this set. Whether the locked config should turn first
+  look on is a decision for Prince; this set does not settle it.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's
@@ -3622,7 +3792,7 @@ The runbooks give these as history, so the incident set has to contain them. Eac
 
 ## Status
 
-- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Phase 3a (LLM wrapper, read-only tools, LangGraph graph, SSE API) is complete; Phase 3a.6 (OpenRouter agent, read_document) and Phase 3b (generation eval on dev, verify on vs off) are complete. Judge validation is done (claim support failed, completeness moderate). Phase 4 injection set, defenses and results are done (frozen at b7ef1ad); dashboard, cost tracking and the tests step remain. Phase 5 uses the defended agent.
+- Incidents: 117 of 200 written. The step 3 corpus is complete. The demo incident spec and logs are built. Step 4 is complete: 200 labelled questions, split 100/100. Step 5 is complete. Phase 2 (retrieval) is complete: BM25 added, locked config `hybrid` (BM25 + dense, RRF k 60, no rerank) at 256/32 chunks (547), after Prince's override; done-check failed, with cause found (entry above). Phase 3a (LLM wrapper, read-only tools, LangGraph graph, SSE API) is complete; Phase 3a.6 (OpenRouter agent, read_document) and Phase 3b (generation eval on dev, verify on vs off) are complete. Judge validation is done (claim support failed, completeness moderate). Phase 4 injection set, defenses and results are done (frozen at b7ef1ad); cost tracking, test coverage and the live-incident set are done; the dashboard remains (design: Prince). Phase 5 uses the defended agent.
 - Phase 0 accounts: Groq, Gemini and Langfuse Cloud keys are in .env and checked by live calls (2026-10-12). AWS, Anthropic credits and GitHub: not checked here.
 
 ## Unverified claims (check in Phase 0, record results here)

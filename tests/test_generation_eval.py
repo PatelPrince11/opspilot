@@ -464,3 +464,19 @@ def test_ledger_rule_by_kappa():
     assert kappa_rule(0.47).startswith("moderate")
     assert kappa_rule(0.7).startswith("report normally")
     assert kappa_rule(None) == "not validated"
+
+
+def test_run_costs_counts_cache_hits_and_takes_spend_from_the_result_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(ge, "PROGRESS", tmp_path)
+    monkeypatch.setattr(ge, "RESULTS", tmp_path)
+    row = run_row()
+    row["llm_calls"] = row["llm_calls"] + [row["llm_calls"][0] | {"cached": True}]
+    ge.append_jsonl(ge.runs_path("dev", "verify_on"), row)
+    (tmp_path / "dev_generation_verify_on.json").write_text(
+        json.dumps({"spend_usd": 0.001, "commit": "c" * 40, "uncommitted_changes": []})
+    )
+    d = ge.run_costs([Q], "dev")
+    assert [r["config"] for r in d["runs"]] == ["verify_on"]  # configs with no result file skipped
+    r = d["runs"][0]
+    assert r["cache_hits"] == 1 and r["cache_hit_rate"] == 0.5 and r["spend_usd"] == 0.001
+    assert r["prompt_tokens_mean"] == 200 and r["cost_usd_mean"] == 0.002  # as made

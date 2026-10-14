@@ -1,0 +1,33 @@
+# LIVE-09: the external email provider is answering 429; both workers back off and lag grows.
+# SYNTHETIC, corpus 'live', own case only.
+# Facts: notification-worker sends through an external email provider's HTTP API, 20 sends in
+# flight per pod; NTF-E710 above a lag of 20,000; consumer group notification-worker.
+date = 2026-10-12
+
+[[burst]]
+from = "19:10:00"
+to = "20:05:00"
+count = 10
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+message = "send ok in_flight={int:12-20}"
+
+[[burst]]
+gold = true
+from = "19:20:00"
+to = "20:05:00"
+count = 26
+service = "notification-worker"
+level = "WARN"
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+message = "email provider replied 429 Too Many Requests; retrying in {int:1-8}s"
+
+[[burst]]
+from = "19:40:00"
+to = "20:05:00"
+count = 8
+service = "notification-worker"
+level = "WARN"
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+message = "NTF-E710 consumer lag {ramp:20500-47000} above threshold 20000 group=notification-worker topic=notifications.outbound"

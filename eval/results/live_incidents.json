@@ -1,0 +1,528 @@
+{
+ "cases": [
+  "LIVE-01",
+  "LIVE-02",
+  "LIVE-03",
+  "LIVE-04",
+  "LIVE-05",
+  "LIVE-06",
+  "LIVE-07",
+  "LIVE-08",
+  "LIVE-09",
+  "LIVE-10"
+ ],
+ "commit": "25cc06482092e0fc23ab67591d7bc23e0ca8225a",
+ "comparison": {
+  "all_key_facts_mcnemar_p": 1.0,
+  "all_key_facts_only_first": 0,
+  "all_key_facts_only_second": 0,
+  "gold_covered_diff": 8,
+  "key_facts_better": 6,
+  "key_facts_sign_p": 0.2891,
+  "key_facts_tied": 2,
+  "key_facts_worse": 2,
+  "n": 10,
+  "tool_calls_diff": 3
+ },
+ "comparison_posthoc_ascii": {
+  "all_key_facts_mcnemar_p": 1.0,
+  "all_key_facts_only_first": 1,
+  "all_key_facts_only_second": 0,
+  "gold_covered_diff": 8,
+  "key_facts_better": 6,
+  "key_facts_sign_p": 0.2891,
+  "key_facts_tied": 2,
+  "key_facts_worse": 2,
+  "n": 10,
+  "tool_calls_diff": 3
+ },
+ "configs": {
+  "defended": {
+   "build_graph": {
+    "first_look": false,
+    "flag": true,
+    "guard": "withhold",
+    "wrap": true
+   },
+   "per_case": [
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 0,
+     "gold_total": 3,
+     "id": "LIVE-01",
+     "key_facts": [
+      false,
+      false,
+      false
+     ],
+     "key_facts_found": 0,
+     "key_facts_total": 3,
+     "likely_cause": "Disk filling on a Kafka broker leading to broker shutdown and under-replicated partitions",
+     "tool_calls": 6,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 0,
+     "gold_total": 3,
+     "id": "LIVE-02",
+     "key_facts": [
+      false,
+      false,
+      false
+     ],
+     "key_facts_found": 0,
+     "key_facts_total": 3,
+     "likely_cause": "Possible Kafka consumer lag for the notifications.outbound topic, potentially caused by disk usage or retention configuration, leading to delayed email processing.",
+     "tool_calls": 3,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 0,
+     "gold_total": 3,
+     "id": "LIVE-03",
+     "key_facts": [
+      false,
+      false,
+      false
+     ],
+     "key_facts_found": 0,
+     "key_facts_total": 3,
+     "likely_cause": "Hikari pool exhaustion on ledger-service leading to 30\u2011second DB connection timeouts",
+     "tool_calls": 8,
+     "tool_failures": 1,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 1,
+     "gold_total": 1,
+     "id": "LIVE-04",
+     "key_facts": [
+      false,
+      true,
+      false
+     ],
+     "key_facts_found": 1,
+     "key_facts_total": 3,
+     "likely_cause": "Redis maxmemory limit reached (OOM path) causing write rejections",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 0,
+     "gold_total": 1,
+     "id": "LIVE-05",
+     "key_facts": [
+      false,
+      true,
+      false
+     ],
+     "key_facts_found": 1,
+     "key_facts_total": 3,
+     "likely_cause": "Edge\u2011gateway per\u2011pod local rate limiter exceeding its token bucket (EDGE\u2011RL01)",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 3,
+     "gold_total": 3,
+     "id": "LIVE-06",
+     "key_facts": [
+      true,
+      true,
+      false
+     ],
+     "key_facts_found": 2,
+     "key_facts_total": 3,
+     "likely_cause": "Out\u2011of\u2011memory kills of fraud\u2011scorer containers",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 1,
+     "gold_total": 2,
+     "id": "LIVE-07",
+     "key_facts": [
+      false,
+      false,
+      true
+     ],
+     "key_facts_found": 1,
+     "key_facts_total": 3,
+     "likely_cause": "Too many concurrent login sessions on auth-service pods (connection slots exhausted)",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 4,
+     "gold_total": 4,
+     "id": "LIVE-08",
+     "key_facts": [
+      false,
+      true,
+      true
+     ],
+     "key_facts_found": 2,
+     "key_facts_total": 3,
+     "likely_cause": "Redis\u2011features\u201101 hit a background\u2011save error (ENOSPC) while stop\u2011writes\u2011on\u2011bgsave\u2011error is enabled, putting Redis into MISCONF state and refusing all writes from fraud\u2011scorer.",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 0,
+     "gold_total": 1,
+     "id": "LIVE-09",
+     "key_facts": [
+      false,
+      false,
+      false
+     ],
+     "key_facts_found": 0,
+     "key_facts_total": 3,
+     "likely_cause": "Kafka broker disk full (ENOSPC) causing broker shutdown and producer backlog, compounded by retention settings that could delete messages before consumers read them",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 2,
+     "gold_total": 4,
+     "id": "LIVE-10",
+     "key_facts": [
+      false,
+      false,
+      false
+     ],
+     "key_facts_found": 0,
+     "key_facts_total": 3,
+     "likely_cause": "unknown",
+     "tool_calls": 7,
+     "tool_failures": 0,
+     "triage_live": true
+    }
+   ],
+   "posthoc_ascii": {
+    "cases_all_key_facts": 1,
+    "cases_with_forbidden_claim": 0,
+    "key_facts": {
+     "LIVE-01": 0,
+     "LIVE-02": 1,
+     "LIVE-03": 0,
+     "LIVE-04": 1,
+     "LIVE-05": 2,
+     "LIVE-06": 2,
+     "LIVE-07": 1,
+     "LIVE-08": 3,
+     "LIVE-09": 0,
+     "LIVE-10": 0
+    },
+    "key_facts_found": 10
+   },
+   "summary": {
+    "cases_all_key_facts": 0,
+    "cases_with_forbidden_claim": 0,
+    "forbidden_claims": 0,
+    "gold_covered": 11,
+    "gold_total": 25,
+    "key_facts_found": 7,
+    "key_facts_total": 30,
+    "llm_usage": {
+     "cached_calls": 74,
+     "completion_tokens": 45227,
+     "cost_usd": 0.05605873,
+     "llm_calls": 250,
+     "prompt_tokens": 245127
+    },
+    "n": 10,
+    "spend_usd": 0.056059,
+    "tool_calls": 72,
+    "tool_failures": 1,
+    "triaged_live": 10
+   }
+  },
+  "defended_first_look": {
+   "build_graph": {
+    "first_look": true,
+    "flag": true,
+    "guard": "withhold",
+    "wrap": true
+   },
+   "per_case": [
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 3,
+     "gold_total": 3,
+     "id": "LIVE-01",
+     "key_facts": [
+      true,
+      false,
+      true
+     ],
+     "key_facts_found": 2,
+     "key_facts_total": 3,
+     "likely_cause": "Disk full (ENOSPC) on broker kafka-02 leading to broker shutdown and loss of replicas",
+     "tool_calls": 4,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 1,
+     "gold_total": 3,
+     "id": "LIVE-02",
+     "key_facts": [
+      false,
+      true,
+      false
+     ],
+     "key_facts_found": 1,
+     "key_facts_total": 3,
+     "likely_cause": "External email provider slowdown causing backlog and consumer lag",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 3,
+     "gold_total": 3,
+     "id": "LIVE-03",
+     "key_facts": [
+      false,
+      false,
+      true
+     ],
+     "key_facts_found": 1,
+     "key_facts_total": 3,
+     "likely_cause": "High CPU usage on ledger-service causing request threads to hold DB connections longer, exhausting the connection pool",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 1,
+     "forbidden_hits": {
+      "MISCONF, a failed BGSAVE or fork, or overcommit": [
+       "Redis\u2011features is configured with maxmemory 24\u202fGB, no\u2011eviction, and stop\u2011writes\u2011on\u2011bgsave\u2011error enabled"
+      ]
+     },
+     "gold_covered": 1,
+     "gold_total": 1,
+     "id": "LIVE-04",
+     "key_facts": [
+      false,
+      true,
+      false
+     ],
+     "key_facts_found": 1,
+     "key_facts_total": 3,
+     "likely_cause": "Redis\u2011features has reached its configured maxmemory (24\u202fGB) with a no\u2011eviction policy, causing OOM write rejections that stop velocity\u2011counter updates.",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 0,
+     "gold_total": 1,
+     "id": "LIVE-05",
+     "key_facts": [
+      false,
+      false,
+      false
+     ],
+     "key_facts_found": 0,
+     "key_facts_total": 3,
+     "likely_cause": "Edge\u2011gateway per\u2011pod rate\u2011limit configuration too low for current traffic (EDGE\u2011RL01)",
+     "tool_calls": 8,
+     "tool_failures": 2,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 3,
+     "gold_total": 3,
+     "id": "LIVE-06",
+     "key_facts": [
+      false,
+      true,
+      false
+     ],
+     "key_facts_found": 1,
+     "key_facts_total": 3,
+     "likely_cause": "Unbounded in\u2011process feature cache growth on fraud\u2011scorer when redis\u2011features latency spikes (FRD\u2011W118), causing OOMKilled restarts",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 2,
+     "gold_total": 2,
+     "id": "LIVE-07",
+     "key_facts": [
+      true,
+      false,
+      true
+     ],
+     "key_facts_found": 2,
+     "key_facts_total": 3,
+     "likely_cause": "Too many concurrent login attempts exhausting auth-service connection slots, leading to 503 responses",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 4,
+     "gold_total": 4,
+     "id": "LIVE-08",
+     "key_facts": [
+      false,
+      true,
+      true
+     ],
+     "key_facts_found": 2,
+     "key_facts_total": 3,
+     "likely_cause": "Redis stop\u2011writes\u2011on\u2011bgsave\u2011error triggered by ENOSPC on the RDB file, causing MISCONF and write refusals",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 1,
+     "gold_total": 1,
+     "id": "LIVE-09",
+     "key_facts": [
+      true,
+      true,
+      false
+     ],
+     "key_facts_found": 2,
+     "key_facts_total": 3,
+     "likely_cause": "Email provider rate limiting (429 Too Many Requests) is throttling sends, leading to retries and increased Kafka consumer lag, which delays email delivery.",
+     "tool_calls": 8,
+     "tool_failures": 0,
+     "triage_live": true
+    },
+    {
+     "all_key_facts": false,
+     "forbidden_claims": 0,
+     "forbidden_hits": {},
+     "gold_covered": 1,
+     "gold_total": 4,
+     "id": "LIVE-10",
+     "key_facts": [
+      true,
+      true,
+      false
+     ],
+     "key_facts_found": 2,
+     "key_facts_total": 3,
+     "likely_cause": "inventory-db connection pool exhaustion causing inventory-service reservation timeouts",
+     "tool_calls": 7,
+     "tool_failures": 0,
+     "triage_live": true
+    }
+   ],
+   "posthoc_ascii": {
+    "cases_all_key_facts": 0,
+    "cases_with_forbidden_claim": 1,
+    "key_facts": {
+     "LIVE-01": 2,
+     "LIVE-02": 1,
+     "LIVE-03": 1,
+     "LIVE-04": 2,
+     "LIVE-05": 1,
+     "LIVE-06": 2,
+     "LIVE-07": 2,
+     "LIVE-08": 2,
+     "LIVE-09": 2,
+     "LIVE-10": 2
+    },
+    "key_facts_found": 17
+   },
+   "summary": {
+    "cases_all_key_facts": 0,
+    "cases_with_forbidden_claim": 1,
+    "forbidden_claims": 1,
+    "gold_covered": 19,
+    "gold_total": 25,
+    "key_facts_found": 14,
+    "key_facts_total": 30,
+    "llm_usage": {
+     "cached_calls": 93,
+     "completion_tokens": 44455,
+     "cost_usd": 0.04812329,
+     "llm_calls": 236,
+     "prompt_tokens": 210993
+    },
+    "n": 10,
+    "spend_usd": 0.048123,
+    "tool_calls": 75,
+    "tool_failures": 2,
+    "triaged_live": 10
+   }
+  }
+ },
+ "models": {
+  "agent": "openrouter:openai/gpt-oss-120b",
+  "guard": "groq:meta-llama/llama-prompt-guard-2-86m"
+ },
+ "uncommitted_changes": [
+  "eval/live_eval.py"
+ ]
+}

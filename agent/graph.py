@@ -37,7 +37,7 @@ from pydantic import BaseModel, Field, ValidationError
 from agent import defenses
 from agent.tools import ReadDocumentInput, run_tool, tool_schemas
 from config import get_settings
-from llm.client import Client, LLMError, ToolCall, estimate_tokens
+from llm.client import Client, LLMError, ToolCall, estimate_tokens, usage
 
 MAX_LOOPS = 2
 DRAFT_MAX_TOKENS = 2500  # gpt-oss reasons first: 1,500 cut two of five dev drafts off
@@ -653,7 +653,14 @@ def build_graph(
             }
         )
         diagnosis = d.model_dump()
-        write({"event": "diagnosis", "diagnosis": diagnosis, "verify_log": state["verify_log"]})
+        write(
+            {
+                "event": "diagnosis",
+                "diagnosis": diagnosis,
+                "verify_log": state["verify_log"],
+                "usage": usage(state["llm_calls"]),  # finish makes no LLM call: these are final
+            }
+        )
         return {"diagnosis": diagnosis}
 
     g = StateGraph(State)

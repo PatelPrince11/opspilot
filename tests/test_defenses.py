@@ -144,3 +144,59 @@ def test_all_defenses_off_leaves_prompts_as_before(ro):  # noqa: F811
     llm, _ = run(ro)
     text = " ".join(m["content"] for b in llm.bodies for m in b["messages"])
     assert "untrusted_data" not in text and "⟦" not in text
+
+
+# ---------------------------------------------------------------------- D3 guard edges
+
+
+def groq_say(text: str) -> dict:
+    return {"choices": [{"message": {"content": text}}], "usage": {"prompt_tokens": 9}}
+
+
+def test_guard_paces_groq_calls_and_a_cache_hit_gives_its_slot_back(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    clock, slept = [100.0], []
+
+    def sleep(s):
+        slept.append(s)
+        clock[0] += s
+
+    monkeypatch.setattr(defenses, "time", SimpleNamespace(monotonic=lambda: clock[0], sleep=sleep))
+    monkeypatch.setattr(defenses, "_next_call", [0.0])
+    llm = StubLLM([groq_say("0.1"), groq_say("0.2"), groq_say("0.3")])
+    llm.provider, llm.cache_dir = "groq", tmp_path
+    g = Guard(llm, 0.5)
+    assert g.score_one("one") == 0.1 and slept == []  # first call: no wait
+    assert g.score_one("two") == 0.2 and slept == [pytest.approx(defenses.GUARD_MIN_INTERVAL_S)]
+    g.score_one("one")  # cache hit: waited for its slot, then gives it back
+    assert g.calls[-1]["cached"] is True and len(slept) == 2
+    assert g.score_one("three") == 0.3 and len(slept) == 2  # no wait after a cache hit
+
+
+def test_guard_scores_a_long_item_alone_by_its_worst_window_and_nothing_for_no_items():
+    n = len(list(windows("x" * 3000)))
+    assert n > 1
+    replies = [say("0.1")] * n
+    replies[1] = say("0.9")
+    # The long item is scored as it comes; the short one waits for the final flush.
+    g = Guard(StubLLM([*replies, say("0.05")]), 0.5)
+    assert g.scores(["short", "x" * 3000]) == [0.05, 0.9]  # the long item never shares a window
+    assert len(g.calls) == n + 1
+    assert Guard(StubLLM([]), 0.5).scores([]) == []
+
+
+def test_guard_calls_are_logged_as_llm_calls_of_the_run(ro, monkeypatch):  # noqa: F811
+    from agent import graph as graph_mod
+
+    guard_llm = StubLLM([say("0.01")] * 10)
+    monkeypatch.setattr(graph_mod.Client, "from_spec", classmethod(lambda cls, spec: guard_llm))
+    _, final = run(ro, guard="withhold")
+    names = [c["name"] for c in final["llm_calls"]]
+    assert "guard" in names and names.count("guard") == len(guard_llm.bodies)
+    assert final["diagnosis"]["citations_verified"] is True  # low scores withhold nothing
+
+
+def test_an_unknown_guard_mode_is_refused(ro):  # noqa: F811
+    with pytest.raises(ValueError, match="guard must be off, withhold or warn"):
+        build_graph(StubLLM([]), ro, guard="block")

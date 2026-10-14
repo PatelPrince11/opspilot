@@ -1,0 +1,72 @@
+# LIVE-05: /search traffic is above the edge's local rate limit (250 tokens/s per pod, 3 pods).
+# Distractor: card-processor-proxy-02 logs occasional CPX-W429 delays while payments work.
+# SYNTHETIC, corpus 'live', own case only.
+# Facts: only /search has an edge local rate limit, one bucket per Envoy pod, 250 since
+# 2026-03-10; rejections are 429 with body code EDGE-RL01. CPX-W429 blips with no ORD-5003 are
+# ordinary background (R21 filler).
+date = 2026-10-10
+
+[[burst]]
+gold = true
+from = "17:56:00"
+to = "18:20:00"
+count = 36
+service = "edge-gateway"
+level = "WARN"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "EDGE-RL01 429 GET /search rejected by local_rate_limit (250 tokens/s per pod)"
+
+[[burst]]
+from = "17:40:00"
+to = "18:20:00"
+count = 18
+service = "edge-gateway"
+level = "INFO"
+hosts = ["edge-gateway-01.prod.internal", "edge-gateway-02.prod.internal", "edge-gateway-03.prod.internal"]
+message = "GET /search 200 upstream=search-api took_ms={int:30-120}"
+
+[[burst]]
+from = "17:40:00"
+to = "18:20:00"
+count = 16
+service = "search-api"
+level = "INFO"
+hosts = ["search-api-01.prod.internal", "search-api-02.prod.internal"]
+message = "GET /search 200 took_ms={int:20-90} hits={int:0-48}"
+
+[[line]]
+at = "17:48:10"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "WARN"
+message = "CPX-W429 processor rate limit hit; request delayed {int:200-600}ms then sent"
+
+[[line]]
+at = "18:02:33"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "WARN"
+message = "CPX-W429 processor rate limit hit; request delayed {int:200-600}ms then sent"
+
+[[line]]
+at = "18:11:05"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "WARN"
+message = "CPX-W429 processor rate limit hit; request delayed {int:200-600}ms then sent"
+
+[[line]]
+at = "18:16:40"
+service = "card-processor-proxy"
+host = "card-processor-proxy-02.prod.internal"
+level = "WARN"
+message = "CPX-W429 processor rate limit hit; request delayed {int:200-600}ms then sent"
+
+[[burst]]
+from = "17:40:00"
+to = "18:20:00"
+count = 10
+service = "card-processor-proxy"
+level = "INFO"
+hosts = ["card-processor-proxy-01.prod.internal", "card-processor-proxy-02.prod.internal"]
+message = "authorize ok took_ms={int:180-420}"

@@ -88,6 +88,13 @@ def test_sse_event_order_and_persistence(client, db_url):
         "diagnosis",
     ]
     assert events[-1][1]["diagnosis"]["citations_verified"] is True
+    assert events[-1][1]["usage"] == {
+        "llm_calls": 4,
+        "cached_calls": 0,
+        "prompt_tokens": 400,
+        "completion_tokens": 80,
+        "cost_usd": 0.0,  # the stub is an ollama model: free
+    }
     iid = r.headers["x-investigation-id"]
 
     inv = client.get(f"/investigations/{iid}").json()
@@ -99,7 +106,7 @@ def test_sse_event_order_and_persistence(client, db_url):
     ]
     assert all(t["success"] and t["output_tokens"] > 0 for t in inv["tool_calls"])
     assert [c["name"] for c in inv["llm_calls"]] == ["triage", "gather", "gather", "draft"]
-    assert inv["prompt_tokens"] == 400 and inv["completion_tokens"] == 80
+    assert inv["prompt_tokens"] == 400 and inv["completion_tokens"] == 80 and inv["cost_usd"] == 0
     assert inv["llm"] == "ollama:stub" and inv["verify_enabled"] is True
 
 

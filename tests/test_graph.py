@@ -311,6 +311,12 @@ def test_quote_must_come_from_a_cited_item_not_any_item():
     assert graph_mod.quote_found("disk usage at 99 percent", ["b"], ev) is False
 
 
+def test_a_quote_must_sit_inside_one_item_and_three_words_is_enough():
+    ev = {"a": {"text": "pool exhausted on payments-api-01"}, "b": {"text": "after the deploy"}}
+    assert graph_mod.quote_found("pool exhausted on", ["a"], ev) is True  # MIN_QUOTE_WORDS
+    assert graph_mod.quote_found("payments-api-01 after the", ["a", "b"], ev) is False
+
+
 def test_a_repeated_call_is_not_run_again(monkeypatch):
     # Same call in a later turn and twice in one turn: run once, the repeats fail and count.
     llm = StubLLM(

@@ -1,0 +1,68 @@
+# LIVE-02: notification-worker-02 is OOMKilled about every 21 minutes; -01 alone cannot keep up.
+# SYNTHETIC, corpus 'live', visible only to its own case.
+# Facts: 20 sends in flight per pod, NTF-E710 above a lag of 20,000, evening produce rate about
+# 40 messages/s, consumer group notification-worker on notifications.outbound.
+date = 2026-10-08
+
+[[line]]
+gold = true
+at = "18:41:12"
+service = "notification-worker"
+host = "notification-worker-02.prod.internal"
+level = "ERROR"
+message = "kubelet: container notification-worker terminated reason=OOMKilled exitCode=137"
+
+[[line]]
+at = "18:41:41"
+service = "notification-worker"
+host = "notification-worker-02.prod.internal"
+level = "INFO"
+message = "consumer joined group=notification-worker topic=notifications.outbound"
+
+[[line]]
+gold = true
+at = "19:02:40"
+service = "notification-worker"
+host = "notification-worker-02.prod.internal"
+level = "ERROR"
+message = "kubelet: container notification-worker terminated reason=OOMKilled exitCode=137"
+
+[[line]]
+at = "19:03:09"
+service = "notification-worker"
+host = "notification-worker-02.prod.internal"
+level = "INFO"
+message = "consumer joined group=notification-worker topic=notifications.outbound"
+
+[[line]]
+gold = true
+at = "19:24:05"
+service = "notification-worker"
+host = "notification-worker-02.prod.internal"
+level = "ERROR"
+message = "kubelet: container notification-worker terminated reason=OOMKilled exitCode=137"
+
+[[line]]
+at = "19:24:34"
+service = "notification-worker"
+host = "notification-worker-02.prod.internal"
+level = "INFO"
+message = "consumer joined group=notification-worker topic=notifications.outbound"
+
+[[burst]]
+from = "18:40:00"
+to = "19:35:00"
+count = 16
+service = "notification-worker"
+level = "INFO"
+hosts = ["notification-worker-01.prod.internal", "notification-worker-02.prod.internal"]
+message = "send ok in_flight={int:8-20}"
+
+[[burst]]
+from = "19:05:00"
+to = "19:35:00"
+count = 8
+service = "notification-worker"
+level = "WARN"
+hosts = ["notification-worker-01.prod.internal"]
+message = "NTF-E710 consumer lag {ramp:21000-58000} above threshold 20000 group=notification-worker topic=notifications.outbound"

@@ -1,5 +1,5 @@
 {
- "commit": "8095cae6f3508643203539976b46a56a9be06ea6",
+ "commit": "8b9885522855ebc7a76f471ccbd929e3f36a14a1",
  "config": {
   "agent_max_tool_calls": 8,
   "as_of": "2026-10-06T14:52:00Z",
@@ -38,19 +38,19 @@
     "value": 0.8029739776951673
    },
    "citation_b": {
-    "den": 259,
-    "n": 78,
-    "value": 0.9691119691119691
+    "den": 269,
+    "n": 80,
+    "value": 0.9702602230483272
    },
    "completeness": {
-    "den": 192,
-    "n": 78,
-    "value": 0.6822916666666666
+    "den": 198,
+    "n": 80,
+    "value": 0.6818181818181818
    },
    "faithfulness": {
-    "den": 78,
-    "n": 78,
-    "value": 4.730769230769231
+    "den": 80,
+    "n": 80,
+    "value": 4.7375
    },
    "gold_all": {
     "den": 80,
@@ -106,19 +106,19 @@
     "value": 0.6981132075471698
    },
    "citation_b": {
-    "den": 24,
-    "n": 11,
-    "value": 0.9583333333333334
+    "den": 53,
+    "n": 20,
+    "value": 0.9811320754716981
    },
    "completeness": {
-    "den": 29,
-    "n": 11,
-    "value": 0.6206896551724138
+    "den": 56,
+    "n": 20,
+    "value": 0.6428571428571429
    },
    "faithfulness": {
-    "den": 11,
-    "n": 11,
-    "value": 4.818181818181818
+    "den": 20,
+    "n": 20,
+    "value": 4.9
    },
    "gold_all": {
     "den": 20,
@@ -147,9 +147,9 @@
     "tool_calls": 5.85
    },
    "premise_corrected": {
-    "den": 4,
-    "n": 4,
-    "value": 0.75
+    "den": 7,
+    "n": 7,
+    "value": 0.42857142857142855
    },
    "tool_success": {
     "den": 117,
@@ -157,8 +157,8 @@
     "value": 0.7948717948717948
    },
    "unrecorded_respected": {
-    "den": 3,
-    "n": 3,
+    "den": 6,
+    "n": 6,
     "value": 0.6666666666666666
    },
    "verify_loop": {
@@ -174,19 +174,19 @@
     "value": 0.7769784172661871
    },
    "citation_b": {
-    "den": 126,
-    "n": 42,
-    "value": 0.9682539682539683
+    "den": 139,
+    "n": 45,
+    "value": 0.9712230215827338
    },
    "completeness": {
-    "den": 101,
-    "n": 42,
-    "value": 0.7227722772277227
+    "den": 109,
+    "n": 45,
+    "value": 0.7247706422018348
    },
    "faithfulness": {
-    "den": 42,
-    "n": 42,
-    "value": 4.738095238095238
+    "den": 45,
+    "n": 45,
+    "value": 4.7555555555555555
    },
    "gold_all": {
     "den": 45,
@@ -242,19 +242,19 @@
     "value": 0.7757009345794392
    },
    "citation_b": {
-    "den": 91,
-    "n": 25,
-    "value": 0.978021978021978
+    "den": 107,
+    "n": 28,
+    "value": 0.9813084112149533
    },
    "completeness": {
-    "den": 67,
-    "n": 25,
-    "value": 0.6268656716417911
+    "den": 77,
+    "n": 28,
+    "value": 0.6493506493506493
    },
    "faithfulness": {
-    "den": 25,
-    "n": 25,
-    "value": 4.76
+    "den": 28,
+    "n": 28,
+    "value": 4.785714285714286
    },
    "gold_all": {
     "den": 28,
@@ -293,9 +293,9 @@
     "value": 0.7967032967032966
    },
    "unrecorded_respected": {
-    "den": 0,
-    "n": 0,
-    "value": null
+    "den": 1,
+    "n": 1,
+    "value": 1.0
    },
    "verify_loop": {
     "den": 28,
@@ -310,19 +310,19 @@
     "value": 0.8157894736842105
    },
    "citation_b": {
-    "den": 66,
-    "n": 22,
-    "value": 0.9545454545454546
+    "den": 76,
+    "n": 27,
+    "value": 0.9605263157894737
    },
    "completeness": {
-    "den": 53,
-    "n": 22,
-    "value": 0.6415094339622641
+    "den": 68,
+    "n": 27,
+    "value": 0.6176470588235294
    },
    "faithfulness": {
-    "den": 22,
-    "n": 22,
-    "value": 4.7272727272727275
+    "den": 27,
+    "n": 27,
+    "value": 4.777777777777778
    },
    "gold_all": {
     "den": 27,
@@ -351,9 +351,9 @@
     "tool_calls": 4.518518518518518
    },
    "premise_corrected": {
-    "den": 2,
-    "n": 2,
-    "value": 0.5
+    "den": 5,
+    "n": 5,
+    "value": 0.2
    },
    "tool_success": {
     "den": 122,
@@ -361,9 +361,9 @@
     "value": 0.8852459016393442
    },
    "unrecorded_respected": {
-    "den": 3,
-    "n": 3,
-    "value": 0.6666666666666666
+    "den": 5,
+    "n": 5,
+    "value": 0.6
    },
    "verify_loop": {
     "den": 27,
@@ -378,19 +378,19 @@
     "value": 0.7987012987012987
    },
    "citation_b": {
-    "den": 273,
-    "n": 85,
-    "value": 0.9706959706959707
+    "den": 308,
+    "n": 93,
+    "value": 0.974025974025974
    },
    "completeness": {
-    "den": 208,
-    "n": 85,
-    "value": 0.6875
+    "den": 232,
+    "n": 93,
+    "value": 0.7025862068965517
    },
    "faithfulness": {
-    "den": 85,
-    "n": 85,
-    "value": 4.752941176470588
+    "den": 93,
+    "n": 93,
+    "value": 4.774193548387097
    },
    "gold_all": {
     "den": 93,
@@ -429,9 +429,9 @@
     "value": 0.8906976744186047
    },
    "unrecorded_respected": {
-    "den": 2,
-    "n": 2,
-    "value": 0.5
+    "den": 3,
+    "n": 3,
+    "value": 0.6666666666666666
    },
    "verify_loop": {
     "den": 93,
@@ -446,19 +446,19 @@
     "value": 0.5
    },
    "citation_b": {
-    "den": 10,
-    "n": 4,
-    "value": 0.9
+    "den": 14,
+    "n": 7,
+    "value": 0.9285714285714286
    },
    "completeness": {
-    "den": 13,
-    "n": 4,
-    "value": 0.46153846153846156
+    "den": 22,
+    "n": 7,
+    "value": 0.36363636363636365
    },
    "faithfulness": {
-    "den": 4,
-    "n": 4,
-    "value": 4.5
+    "den": 7,
+    "n": 7,
+    "value": 4.714285714285714
    },
    "gold_all": {
     "den": 7,
@@ -487,9 +487,9 @@
     "tool_calls": 7.0
    },
    "premise_corrected": {
-    "den": 4,
-    "n": 4,
-    "value": 0.75
+    "den": 7,
+    "n": 7,
+    "value": 0.42857142857142855
    },
    "tool_success": {
     "den": 49,
@@ -497,9 +497,9 @@
     "value": 0.7346938775510204
    },
    "unrecorded_respected": {
-    "den": 1,
-    "n": 1,
-    "value": 1.0
+    "den": 3,
+    "n": 3,
+    "value": 0.6666666666666666
    },
    "verify_loop": {
     "den": 7,
@@ -514,19 +514,19 @@
     "value": 0.7857142857142857
    },
    "citation_b": {
-    "den": 283,
-    "n": 89,
-    "value": 0.9681978798586572
+    "den": 322,
+    "n": 100,
+    "value": 0.9720496894409938
    },
    "completeness": {
-    "den": 221,
-    "n": 89,
-    "value": 0.6742081447963801
+    "den": 254,
+    "n": 100,
+    "value": 0.6732283464566929
    },
    "faithfulness": {
-    "den": 89,
-    "n": 89,
-    "value": 4.741573033707865
+    "den": 100,
+    "n": 100,
+    "value": 4.77
    },
    "gold_all": {
     "den": 100,
@@ -555,9 +555,9 @@
     "tool_calls": 4.79
    },
    "premise_corrected": {
-    "den": 4,
-    "n": 4,
-    "value": 0.75
+    "den": 7,
+    "n": 7,
+    "value": 0.42857142857142855
    },
    "tool_success": {
     "den": 479,
@@ -565,8 +565,8 @@
     "value": 0.8747390396659708
    },
    "unrecorded_respected": {
-    "den": 3,
-    "n": 3,
+    "den": 6,
+    "n": 6,
     "value": 0.6666666666666666
    },
    "verify_loop": {
@@ -6983,7 +6983,59 @@
    "cost_usd": 0.00379635,
    "dropped_claims": 0,
    "id": "Q156",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     },
+     {
+      "claim": 6,
+      "supported": true
+     },
+     {
+      "claim": 7,
+      "supported": true
+     },
+     {
+      "claim": 8,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 7,
    "loops": 0,
    "prompt_tokens": 13265,
@@ -6992,9 +7044,18 @@
      4,
      8
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     8,
+     8
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -7114,7 +7175,35 @@
    "cost_usd": 0.0017508,
    "dropped_claims": 0,
    "id": "Q159",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 5,
    "loops": 0,
    "prompt_tokens": 6460,
@@ -7123,9 +7212,18 @@
      1,
      2
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     2,
+     2
+    ],
+    "completeness": [
+     1,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -7157,7 +7255,35 @@
    "cost_usd": 0.00397845,
    "dropped_claims": 0,
    "id": "H001",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 8,
    "loops": 0,
    "prompt_tokens": 14355,
@@ -7166,9 +7292,18 @@
      2,
      3
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     2,
+     2
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -7291,7 +7426,63 @@
    "cost_usd": 0.0049077,
    "dropped_claims": 0,
    "id": "H007",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     },
+     {
+      "claim": 5,
+      "supported": true
+     },
+     {
+      "claim": 6,
+      "supported": true
+     },
+     {
+      "claim": 7,
+      "supported": true
+     },
+     {
+      "claim": 8,
+      "supported": true
+     },
+     {
+      "claim": 9,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 10,
    "loops": 0,
    "prompt_tokens": 18882,
@@ -7300,9 +7491,18 @@
      8,
      9
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     9,
+     9
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -7334,7 +7534,43 @@
    "cost_usd": 0.00421305,
    "dropped_claims": 0,
    "id": "H008",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     },
+     {
+      "claim": 4,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 10,
    "loops": 0,
    "prompt_tokens": 19839,
@@ -7343,9 +7579,18 @@
      2,
      4
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     4,
+     4
+    ],
+    "completeness": [
+     2,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -7377,7 +7622,43 @@
    "cost_usd": 0.00484575,
    "dropped_claims": 0,
    "id": "H009",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     },
+     {
+      "fact": 4,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": true
+   },
    "llm_calls": 11,
    "loops": 0,
    "prompt_tokens": 21573,
@@ -7386,9 +7667,18 @@
      2,
      3
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     3,
+     4
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -7406,7 +7696,10 @@
      5,
      8
     ],
-    "unrecorded_respected": null,
+    "unrecorded_respected": [
+     1,
+     1
+    ],
     "verify_loop": [
      0,
      1
@@ -7572,7 +7865,31 @@
    "cost_usd": 0.0030204,
    "dropped_claims": 0,
    "id": "H018",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": false,
+    "unrecorded_respected": true
+   },
    "llm_calls": 11,
    "loops": 0,
    "prompt_tokens": 18266,
@@ -7581,9 +7898,18 @@
      0,
      1
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     1,
+     1
+    ],
+    "completeness": [
+     1,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -7596,12 +7922,18 @@
      0,
      1
     ],
-    "premise_corrected": null,
+    "premise_corrected": [
+     0,
+     1
+    ],
     "tool_success": [
      5,
      8
     ],
-    "unrecorded_respected": null,
+    "unrecorded_respected": [
+     1,
+     1
+    ],
     "verify_loop": [
      0,
      1
@@ -7868,7 +8200,31 @@
    "cost_usd": 0.00400155,
    "dropped_claims": 0,
    "id": "H026",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": false,
+    "unrecorded_respected": false
+   },
    "llm_calls": 10,
    "loops": 0,
    "prompt_tokens": 18189,
@@ -7877,9 +8233,18 @@
      0,
      1
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     1,
+     1
+    ],
+    "completeness": [
+     1,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -7892,12 +8257,18 @@
      0,
      1
     ],
-    "premise_corrected": null,
+    "premise_corrected": [
+     0,
+     1
+    ],
     "tool_success": [
      6,
      8
     ],
-    "unrecorded_respected": null,
+    "unrecorded_respected": [
+     0,
+     1
+    ],
     "verify_loop": [
      0,
      1
@@ -7994,7 +8365,39 @@
    "cost_usd": 0.002073,
    "dropped_claims": 0,
    "id": "H029",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 5,
    "loops": 0,
    "prompt_tokens": 6952,
@@ -8003,9 +8406,18 @@
      2,
      3
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      0,
      1
@@ -8037,7 +8449,39 @@
    "cost_usd": 0.0028344,
    "dropped_claims": 0,
    "id": "H030",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     },
+     {
+      "claim": 3,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": true
+     },
+     {
+      "fact": 2,
+      "present": true
+     },
+     {
+      "fact": 3,
+      "present": true
+     }
+    ],
+    "premise_corrected": null,
+    "unrecorded_respected": null
+   },
    "llm_calls": 7,
    "loops": 0,
    "prompt_tokens": 11700,
@@ -8046,9 +8490,18 @@
      0,
      3
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     3,
+     3
+    ],
+    "completeness": [
+     3,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      0,
      1
@@ -8235,7 +8688,35 @@
    "cost_usd": 0.00342225,
    "dropped_claims": 0,
    "id": "H038",
-   "judge": null,
+   "judge": {
+    "claims": [
+     {
+      "claim": 1,
+      "supported": true
+     },
+     {
+      "claim": 2,
+      "supported": true
+     }
+    ],
+    "faithfulness": 5,
+    "key_facts": [
+     {
+      "fact": 1,
+      "present": false
+     },
+     {
+      "fact": 2,
+      "present": false
+     },
+     {
+      "fact": 3,
+      "present": false
+     }
+    ],
+    "premise_corrected": false,
+    "unrecorded_respected": null
+   },
    "llm_calls": 10,
    "loops": 0,
    "prompt_tokens": 16651,
@@ -8244,9 +8725,18 @@
      0,
      2
     ],
-    "citation_b": null,
-    "completeness": null,
-    "faithfulness": null,
+    "citation_b": [
+     2,
+     2
+    ],
+    "completeness": [
+     0,
+     3
+    ],
+    "faithfulness": [
+     5,
+     1
+    ],
     "gold_all": [
      1,
      1
@@ -8259,7 +8749,10 @@
      0,
      1
     ],
-    "premise_corrected": null,
+    "premise_corrected": [
+     0,
+     1
+    ],
     "tool_success": [
      7,
      8
@@ -8437,18 +8930,6 @@
  "spend_usd": 0,
  "split": "dev",
  "uncommitted_changes": [],
- "unjudged": [
-  "Q156",
-  "Q159",
-  "H001",
-  "H007",
-  "H008",
-  "H009",
-  "H018",
-  "H026",
-  "H029",
-  "H030",
-  "H038"
- ],
+ "unjudged": [],
  "wall_s_total": 14.3
 }

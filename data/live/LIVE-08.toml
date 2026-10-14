@@ -1,0 +1,63 @@
+# LIVE-08: redis-features-01's root disk is full, so BGSAVE fails and Redis refuses writes with
+# MISCONF. SYNTHETIC, corpus 'live', own case only.
+# Facts: redis-features stop-writes-on-bgsave-error yes; on VMs /var is on the root disk; the VM
+# log agent ships its own errors. The fork itself succeeds here (not September 2025's
+# overcommit); used memory is not at maxmemory.
+date = 2026-10-12
+
+[[line]]
+gold = true
+at = "05:55:30"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "ERROR"
+message = "log-agent: write position file under /var/lib/log-agent: no space left on device (ENOSPC)"
+
+[[line]]
+at = "05:58:08"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "redis: Background saving started by pid {int:20000-40000}"
+
+[[line]]
+gold = true
+at = "05:58:10"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "ERROR"
+message = "redis: Background saving error: write of the RDB file failed: No space left on device (ENOSPC)"
+
+[[line]]
+at = "06:03:08"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "INFO"
+message = "redis: Background saving started by pid {int:20000-40000}"
+
+[[line]]
+gold = true
+at = "06:03:10"
+service = "redis-features"
+host = "redis-features-01.prod.internal"
+level = "ERROR"
+message = "redis: Background saving error: write of the RDB file failed: No space left on device (ENOSPC)"
+
+[[burst]]
+gold = true
+from = "05:58:15"
+to = "06:30:00"
+count = 22
+service = "fraud-scorer"
+level = "ERROR"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "FRD-E140 velocity counter write refused by redis-features-01 (MISCONF); counters stale"
+
+[[burst]]
+from = "05:40:00"
+to = "06:30:00"
+count = 10
+service = "fraud-scorer"
+level = "INFO"
+hosts = ["fraud-scorer-01.prod.internal", "fraud-scorer-02.prod.internal"]
+message = "score ok took_ms={int:4-25} features={int:4-12}"
