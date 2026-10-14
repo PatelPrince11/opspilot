@@ -3774,6 +3774,42 @@ change would be a cache miss.
   (2,288 agent, 1,947 verify off, 100 judge), 0 requests, $0; both test result files
   "unchanged", `git diff` empty.
 
+## 2026-10-14: Dashboard redesign
+
+- Frontend only (PR #13). Audit first (`docs/dashboard_audit.md`, before shots in
+  `docs/img/before/`). Top findings: the diagnosis had no more weight than any other panel and
+  came last on a phone; confidence and citation status were identical grey pills; every panel was
+  the same bordered card; colours were raw Tailwind classes with gaps in dark (defenses off,
+  `cited`, the quote mark, the disabled button); running state was a lone spinner and nothing
+  honoured reduced motion.
+- Skills (taste-skill, installed project-scoped, telemetry off, not committed): read before
+  running. `redesign-existing-projects` used for the audit and its fix order (colour cleanup,
+  hover and press states, empty/loading/error states, focus). Skipped its font swap (no font
+  download; system stack kept), picsum images, grain and glass. `design-taste-frontend` is for
+  landing pages and says so; used as a reference only. Skipped its photo and motion minimums
+  and its no-monospace rule (tool calls, ids, logs and quotes stay monospace), its no-rule rule
+  for the sources table and its no-shadow rule for the dialog (a real overlay). `lint.mjs` run
+  locally; its remaining FAILs are those exceptions. `assets.mjs` and `draw.mjs` never run.
+- Design: tokens as CSS variables (`light-dark()` pairs in `src/index.css`) mapped into
+  Tailwind 4 with `@theme inline`; no `dark:` classes. Diagnosis dominant (accent top bar,
+  larger summary, likely-cause callout), confidence as bars plus the word, citation status and
+  defenses as coloured chips with icons, tool calls as a status timeline, compact stats strip.
+  Diagnosis first in the DOM so a phone shows it before the evidence; desktop layout unchanged.
+  Motion only through `motion-safe:`. No new runtime dependency.
+- Theme: dark by default (`data-theme="dark"` on `<html>` in index.html, so the first paint is
+  dark); the header toggle (System / Light / Dark) is React state only, no storage, so a reload
+  goes back to dark.
+- Contrast: first computed from the token pairs with the WCAG formula (all text pairs >= 5.30:1,
+  UI pairs >= 3.60:1 in both themes), then measured in the browser: the Playwright smoke test
+  runs axe's `color-contrast` rule in both themes and three states (running, done, citation
+  open), with reduced motion so nothing is measured mid-fade. 0 violations in all six. axe
+  could not resolve the background of the evidence `<pre>` and `<mark>` inside the open dialog
+  (top layer), so the test measures those two directly from computed colours (pre 15.62 / 13.50,
+  mark 14.35 / 6.05, light / dark), matching the token figures. Checked that the scan fails when
+  a token is weakened (light `--muted` at #a0a8b2 gave 2.4:1 failures).
+- README screenshots are not updated: they are retaken on the deployed app (Phase 5B note
+  below). Redesign screenshots are in `docs/img/redesign/`.
+
 ## Phase 5B notes (deploy)
 
 - Run uvicorn with one worker: the rate limiter and its counts live in process memory, so two
