@@ -3575,6 +3575,99 @@ Restricted to the cases whose payload was seen in both runs:
   `npm audit` flagged vitest <= 4.1.10 (mocker path traversal, tinypool prototype pollution).
   0 vulnerabilities at commit.
 
+## 2026-10-14: Phase 5 hardening (API-key auth, rate limits, spend ceiling)
+
+- `POST /investigate` has one FastAPI dependency, `api/main.py guard`, in this order: API key,
+  rate limits, spend ceiling. `/health`, `GET /investigations/{id}` and the dashboard files stay
+  open (an investigation id is an unguessable uuid4).
+- Auth: `X-API-Key` against `API_KEYS` (comma-separated, so a key can be rotated by adding the
+  new one before removing the old). Every configured key is compared with
+  `hmac.compare_digest`, with no early exit, so response time does not reveal how much of a key
+  matched. Unset or empty `API_KEYS` refuses everything (fail closed): a forgotten env var must
+  not mean an open, billable endpoint. 401 on missing or wrong key. The old unused `API_KEY`
+  setting is gone.
+- Rate limits: sliding windows in process memory, one bucket per key and one per client IP;
+  a request needs room in both (`RATE_PER_MINUTE` 5, `RATE_PER_DAY` 100 by default), a refused
+  request records nothing, and 429 carries `Retry-After` (seconds until the oldest hit that
+  matters leaves its window). In memory is enough for one uvicorn process on one instance; a
+  second worker or replica would need the counts in Postgres or Redis (ponytail comment).
+  Behind Nginx, uvicorn needs `--proxy-headers` or every caller shares the proxy's IP bucket.
+- Spend ceiling: `DAILY_SPEND_LIMIT_USD` (default $1.00) against the sum of
+  `investigations.cost_usd` for rows created today (UTC), the same per-call costs the eval
+  reports. Over it: 503 with `Retry-After` to UTC midnight. Known gap: a running investigation
+  records its cost when it ends, so concurrent runs can overshoot by about one investigation's
+  cost each (~$0.005). Checked after auth, so an unauthenticated caller cannot make the app
+  query the database.
+- Dashboard: an "API key" password field (autocomplete off); `setApiKey` keeps it in a module
+  variable in `src/stream.ts`, and `authHeaders()` sends it. Never localStorage, sessionStorage
+  or a cookie, never in the bundle; a reload forgets it. The Playwright smoke test types the
+  key `tests/e2e_server.py` configures.
+- Tests: tests/test_api_guard.py (401 for missing, empty, unknown, prefix and whole-list keys;
+  no keys configured; 429 with Retry-After per key and per IP; 503 at the ceiling and 200 just
+  under it; spend not read for a bad key; the limiter's window arithmetic), plus the
+  `spent_today` SQL against a real database (today's costs only, NULL cost ignored).
+
+## 2026-10-14: Phase 5 pre-registration (written before any test question ran)
+
+Nothing below may change after the test run starts. A bug found later is reported, not fixed
+and rerun, unless it makes the run invalid; then the whole run is repeated and the invalid run
+is documented here.
+
+**Config under test: `shipped`** (agent/run.py SHIPPED): the locked dev config (hybrid BM25 +
+dense, RRF k 60, bge prefix on, 30 candidates, chunks 256/32, no rerank; verify on; default
+draft effort; at most 8 tool calls, 2 verify loops, 6,000-token budget per call) plus the frozen
+defenses (wrap, flag, Prompt Guard withhold) plus live-only first look.
+
+**Code:** the commit tagged `v0.1-frozen`, which is this pre-registration commit (it adds
+`shipped_off` and the test ledger section and nothing else that runs the agent). The tag's hash
+is recorded with the results. The result files must show that commit and no uncommitted files.
+
+**Models and prices:**
+- Agent `openrouter:openai/gpt-oss-120b`, upstream pinned to Groq, fallbacks off. Cost: the
+  provider-reported `usage.cost`; if none is reported, $0.15 / $0.60 per 1M input / output
+  tokens (llm/client.py PRICES_PER_M, checked 2026-10-12).
+- Prompt Guard `groq:meta-llama/llama-prompt-guard-2-86m`, $0.04 / $0.04 per 1M.
+- Judge `gemini:gemini-3.5-flash-lite` (free tier), prompt judge-v1, completeness only.
+- Embedder `BAAI/bge-small-en-v1.5@5c38ec7c`; no reranker.
+
+**What runs, once, with `--final-test`:**
+1. Retrieval: `make eval ARGS="--split test --final-test"` (locked) and the dense baseline,
+   `--mode dense`. Free.
+2. Generation: `make gen-eval ARGS="--split test --final-test --config shipped --max-spend
+   1.10"` (judged), then `--config shipped_off --skip-judge --max-spend 0.10` (verify off: the
+   same trajectories' first drafts, replayed from the cache).
+3. Injection: the 45 held-out cases with `defended` (= shipped on these past-incident
+   questions: first look fires only on live incidents) via `make injection-eval ARGS="--config
+   defended --cases heldout_pooled --max-spend 0.10"`. If the cap stops it, the
+   Phase 4 held-out numbers are cited instead and labelled as such.
+- Spend cap for the whole test run: $1.50. Estimate: $0.48 for shipped (dev: $0.0048 per
+  investigation x 100), ~$0 for shipped_off and a cached injection rerun, $0 judge.
+
+**Metrics reported on test, each with n and a 95% CI (percentile bootstrap over questions,
+10,000 resamples, seed 20261003):**
+- Retrieval: Recall@5, Recall@10, MRR, all-gold Recall@10 (questions with 2+ gold docs), Hit@5,
+  for hybrid and dense, plus hybrid - dense paired for Recall@5, Recall@10 and MRR.
+- Generation: citation (a); first-draft citation (a) failure (shipped_off); gold_all; gold_frac;
+  tool-call success; verify-loop rate; no-diagnosis rate; completeness (judged, reported with
+  the judge's key-fact kappa 0.47 beside it); $ per investigation; p50 / p95 end-to-end and LLM
+  call latency; verify on - off for citation (a), paired.
+- Slices: difficulty (exact-token, multi-doc, paraphrase) and author (claude, gemini).
+- Injection: attack success on the 45 held-out cases, Wilson 95% CI.
+- **Not reported as results:** judged citation (b) (judge kappa -0.05 on claims) and
+  faithfulness (not validated per metric).
+
+**Invalid run** (then the whole run is repeated, and this run documented): the result files show
+a commit other than the tag or uncommitted files; the wrong config ran; or 5+ questions end in
+an LLM provider failure (HTTP errors after retries, transport errors). Model behaviour (bad tool
+calls, no diagnosis, wrong answers) is a result, never a reason to rerun. If the judge's daily
+quota cuts the judge stage, unjudged answers are listed and count for deterministic metrics only.
+
+**Resume bullets** (docs/BUILD_GUIDE.md), filled from test rows only. A bullet is marked
+"drop" when: its comparison's CI includes 0 (retrieval, verify); its number is not measured on
+the test split or on what the bullet names (EC2 latency: not deployed yet); or it rests on a
+judge with kappa below 0.6 (judge agreement). Citation (a) is enforced by the verify node, so
+the agent bullet must say so and lean on first-draft failure vs final.
+
 ## Standing rules (write-ups)
 
 - **Team naming:** a write-up may name a team only if `services.toml` lists it as owner of the row's

@@ -13,12 +13,13 @@ Test rows appear once eval/results/test_*.json exist (Phase 5,
 
 import argparse
 import json
+import random
 import re
 import sys
 from collections import Counter
 
 from config import get_settings
-from eval.ablation import bootstrap
+from eval.ablation import RESAMPLES, bootstrap
 from eval.injection_eval import LOCATIONS, STYLES
 from eval.retrieval_eval import NAMES, RESULTS, token_gold
 from eval.validate_questions import QUESTIONS, SPLIT_DIMS, Corpus, load
@@ -824,6 +825,201 @@ def bullets_section() -> list[str]:
     return out
 
 
+def level_ci(pairs: list) -> tuple[float, float, float] | None:
+    """Pooled ratio of per-question [num, den] pairs and its 95% percentile-bootstrap CI
+    (resampling questions, seed SEED). None when no question has the metric."""
+    from eval.generation_eval import ratio
+
+    pairs = [p for p in pairs if p is not None and p[1]]
+    if not pairs:
+        return None
+    rng = random.Random(SEED)
+    stats = sorted(ratio(rng.choices(pairs, k=len(pairs))) for _ in range(RESAMPLES))
+    return ratio(pairs), stats[int(0.025 * RESAMPLES)], stats[int(0.975 * RESAMPLES) - 1]
+
+
+def cell(pairs: list, invert: bool = False, digits: int = 3) -> str:
+    """value [95% CI] (n questions); invert reports 1 - the rate (a failure rate)."""
+    c = level_ci(pairs)
+    if c is None:
+        return "- (n 0)"
+    v, lo, hi = (1 - c[0], 1 - c[2], 1 - c[1]) if invert else c
+    n = sum(1 for p in pairs if p is not None and p[1])
+    return f"{v:.{digits}f} [{lo:.{digits}f}, {hi:.{digits}f}] (n {n})"
+
+
+RET_TEST = [  # (label, per-question key)
+    ("Recall@5", "recall@5"),
+    ("Recall@10", "recall@10"),
+    ("MRR", "rr"),
+    ("all-gold Recall@10 (2+ gold docs)", "all_gold@10"),
+    ("Hit@5", "hit@5"),
+]
+# (label, config, per-question metric, invert): the pre-registered generation metrics (NOTES,
+# "Phase 5 pre-registration"). Judged citation (b) and faithfulness are not reported.
+GEN_TEST = [
+    ("citation accuracy (a)", "shipped", "citation_a", False),
+    ("first-draft citation (a) failure (verify off)", "shipped_off", "citation_a", True),
+    ("gold_all: gathered every gold doc", "shipped", "gold_all", False),
+    ("gold_frac: share of gold docs gathered", "shipped", "gold_frac", False),
+    ("tool-call success", "shipped", "tool_success", False),
+    ("verify-loop rate", "shipped", "verify_loop", False),
+    ("no diagnosis (fallback returned)", "shipped", "no_diagnosis", False),
+    ("completeness (judged; see kappa note)", "shipped", "completeness", False),
+]
+GEN_SLICE_COLS = ["citation_a", "gold_all", "gold_frac", "tool_success", "completeness"]
+
+
+def gen_pairs(r: dict | None, metric: str, ids: set | None = None) -> list:
+    if r is None:
+        return []
+    rows = [q for q in r["questions"] if ids is None or q["id"] in ids]
+    if metric == "cost":
+        return [[q["cost_usd"], 1] for q in rows]
+    return [q["scores"][metric] for q in rows]
+
+
+def test_section(questions: list[dict]) -> list[str]:
+    """Phase 5: the one test-split run beside dev, every level with its bootstrap CI."""
+    ret = {sp: load_named(sp, "locked") for sp in ("dev", "test")}
+    dense = {sp: load_named(sp, "dense_baseline") for sp in ("dev", "test")}
+    gen = {
+        (sp, c): load_named(sp, f"generation_{c}")
+        for sp in ("dev", "test")
+        for c in ("shipped", "shipped_off")
+    }
+    if not ret["test"] and not gen[("test", "shipped")]:
+        return []
+    by_id = {q["id"]: q for q in questions}
+    kappa = json.loads((RESULTS / "judge_agreement.json").read_text())["overall"]["key_facts"]
+    out = [
+        "## (f) Test split: the one pre-registered run (Phase 5)",
+        "",
+        'Pre-registered in NOTES.md ("Phase 5 pre-registration") before any test question ran;'
+        " code frozen at tag `v0.1-frozen`; run once with `--final-test`. Every cell is value"
+        f" [95% CI] (n questions); CI: percentile bootstrap resampling questions, {RESAMPLES:,}"
+        f" resamples, seed {SEED}; rates pool claims, calls or key facts over the questions"
+        " resampled. **Dev was used for every tuning decision, so dev numbers are optimistic and"
+        " a drop from dev to test is expected; only the test column is a result.**",
+        "",
+        "### Retrieval (locked: hybrid BM25 + dense, RRF; baseline: dense)",
+        "",
+        "| metric | config | dev | test |",
+        "|---|---|---|---|",
+    ]
+    for name, src in (("hybrid (locked)", ret), ("dense", dense)):
+        for label, key in RET_TEST:
+            cells = [
+                cell([[q[key], 1] if q.get(key) is not None else None for q in r["questions"]])
+                if r
+                else "not run"
+                for r in (src["dev"], src["test"])
+            ]
+            out.append(f"| {label} | {name} | {cells[0]} | {cells[1]} |")
+    out += ["", "| hybrid - dense, paired | dev | test |", "|---|---|---|"]
+    for label, key in RET_TEST[:3]:
+        cells = []
+        for sp in ("dev", "test"):
+            a, b = ret[sp], dense[sp]
+            if not a or not b:
+                cells.append("not run")
+                continue
+            qb = {x["id"]: x for x in b["questions"]}
+            ids = [x["id"] for x in a["questions"]]
+            d, lo, hi = bootstrap([x[key] for x in a["questions"]], [qb[i][key] for i in ids])
+            cells.append(f"{d:+.3f} [{lo:+.3f}, {hi:+.3f}] (n {len(ids)})")
+        out.append(f"| {label} | {cells[0]} | {cells[1]} |")
+    out += [
+        "",
+        "Per slice, hybrid (locked):",
+        "",
+        "| slice | metric | dev | test |",
+        "|---|---|---|---|",
+    ]
+    for dim in ("difficulty", "author"):
+        for v in sorted({q[dim] for q in questions}):
+            for label, key in RET_TEST[:3]:
+                cells = [
+                    cell([[x[key], 1] for x in r["questions"] if by_id[x["id"]][dim] == v])
+                    if r
+                    else "not run"
+                    for r in (ret["dev"], ret["test"])
+                ]
+                out.append(f"| {dim}={v} | {label} | {cells[0]} | {cells[1]} |")
+
+    out += [
+        "",
+        "### Generation (the shipped agent: locked + defenses on + live-only first look)",
+        "",
+        "Verify off is the same trajectory's first draft (cached replay), so on vs off is paired."
+        f" Completeness is judged by the Gemini judge, whose key-fact agreement with Prince's"
+        f" hand labels is kappa {kappa['kappa']:.2f} [{kappa['kappa_ci95'][0]:.2f},"
+        f" {kappa['kappa_ci95'][1]:.2f}] (n {kappa['n']} facts): moderate, so completeness is"
+        " context, not a headline. Judged citation (b) is not reported (judge kappa -0.05)."
+        " Dev shipped was not judged (its completeness cell is empty).",
+        "",
+        "| metric | dev | test |",
+        "|---|---|---|",
+    ]
+    for label, config, m, inv in GEN_TEST:
+        cells = [
+            cell(gen_pairs(gen[(sp, config)], m), inv) if gen[(sp, config)] else "not run"
+            for sp in ("dev", "test")
+        ]
+        out.append(f"| {label} | {cells[0]} | {cells[1]} |")
+    cost = [
+        cell(gen_pairs(gen[(sp, "shipped")], "cost"), digits=4) if gen[(sp, "shipped")] else "-"
+        for sp in ("dev", "test")
+    ]
+    out.append(f"| $ per investigation (as made) | {cost[0]} | {cost[1]} |")
+    for k, unit in (("end_to_end_s", "s"), ("llm_call_ms", "ms")):
+        cells = []
+        for sp in ("dev", "test"):
+            r = gen[(sp, "shipped")]
+            lat = r["latency"][k] if r else None
+            cells.append(
+                f"p50 {lat['p50']:.1f} {unit}, p95 {lat['p95']:.1f} {unit} (n {lat['n']})"
+                if lat and lat["n"]
+                else "not measured (cache hits)"
+            )
+        out.append(f"| latency {k} (live calls only) | {cells[0]} | {cells[1]} |")
+    out += ["", "| verify on - off, citation (a), paired | dev | test |", "|---|---|---|"]
+    cells = []
+    for sp in ("dev", "test"):
+        on, off = gen[(sp, "shipped")], gen[(sp, "shipped_off")]
+        if not on or not off:
+            cells.append("not run")
+            continue
+        from eval.generation_eval import paired_bootstrap
+
+        qa = {q["id"]: q["scores"]["citation_a"] for q in on["questions"]}
+        qb = {q["id"]: q["scores"]["citation_a"] for q in off["questions"]}
+        ids = sorted(i for i in qa if qa[i] and qb.get(i))
+        d, lo, hi = paired_bootstrap(qa, qb, ids)
+        cells.append(f"{d:+.3f} [{lo:+.3f}, {hi:+.3f}] (n {len(ids)})")
+    out.append(f"| overall | {cells[0]} | {cells[1]} |")
+    for sp in ("test", "dev"):
+        r = gen[(sp, "shipped")]
+        if not r:
+            continue
+        out += [
+            "",
+            f"Per slice, shipped, {sp}:",
+            "",
+            "| slice | " + " | ".join(GEN_SLICE_COLS) + " |",
+            "|---|" + "---|" * len(GEN_SLICE_COLS),
+        ]
+        for dim in ("difficulty", "author"):
+            for v in sorted({q[dim] for q in questions}):
+                ids = {q["id"] for q in questions if q[dim] == v and q["split"] == sp}
+                cells = [cell(gen_pairs(r, m, ids)) for m in GEN_SLICE_COLS]
+                out.append(f"| {dim}={v} | " + " | ".join(cells) + " |")
+    spend = sum((r or {}).get("spend_usd") or 0.0 for (sp, _), r in gen.items() if sp == "test")
+    if gen[("test", "shipped")]:
+        out += ["", f"Test-run agent spend (new, uncached LLM calls): ${spend:.4f}."]
+    return out
+
+
 def render() -> str:
     questions = load(QUESTIONS)
     a = corpus_section(questions)
@@ -834,6 +1030,7 @@ def render() -> str:
     c4 = cost_section()
     c5 = live_section()
     c6 = shipped_section()
+    f = test_section(questions)
     out = [
         "# OpsPilot results ledger",
         "",
@@ -851,6 +1048,7 @@ def render() -> str:
         *([*c4, ""] if c4 else []),
         *([*c5, ""] if c5 else []),
         *([*c6, ""] if c6 else []),
+        *([*f, ""] if f else []),
         *placeholder_section(
             (GEN_MEASURED if c else frozenset())
             | ({"Judge agreement with Prince's 30 hand labels"} if c2 else frozenset())

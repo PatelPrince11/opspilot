@@ -480,3 +480,11 @@ def test_run_costs_counts_cache_hits_and_takes_spend_from_the_result_file(tmp_pa
     r = d["runs"][0]
     assert r["cache_hits"] == 1 and r["cache_hit_rate"] == 0.5 and r["spend_usd"] == 0.001
     assert r["prompt_tokens_mean"] == 200 and r["cost_usd_mean"] == 0.002  # as made
+
+
+def test_shipped_off_is_shipped_with_verify_off():
+    from agent.run import SHIPPED
+    from eval.generation_eval import CONFIGS
+
+    assert CONFIGS["shipped"] == (True, SHIPPED)
+    assert CONFIGS["shipped_off"] == (False, SHIPPED)
