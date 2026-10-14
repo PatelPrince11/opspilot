@@ -1,1 +1,77 @@
 @import "tailwindcss";
+
+/* Design tokens. Components use only these (bg-surface, text-muted, …), never raw palette
+   classes, so the two themes are one list of light-dark() pairs. color-scheme picks the side:
+   <html data-theme> (dark by default, set by the header toggle), or the OS preference when the
+   toggle is on "system". It also themes native controls (the date picker, scrollbars). */
+:root {
+  color-scheme: light dark;
+  --canvas: light-dark(#f3f5f7, #0b0e12);
+  --surface: light-dark(#ffffff, #13181e);
+  --raised: light-dark(#edf0f3, #1b222a);
+  --line: light-dark(#d8dee5, #29323d);
+  --field-line: light-dark(#7d8896, #6c7988);
+  --ink: light-dark(#111820, #e7ecf1);
+  --muted: light-dark(#4b5664, #a3aebb);
+  --accent: light-dark(#0b6a80, #52c3d8);
+  --accent-hover: light-dark(#08566a, #7dd3e3);
+  --accent-ink: light-dark(#ffffff, #04232b);
+  --accent-soft: light-dark(#e0f0f4, #10303a);
+  --ok: light-dark(#17703a, #5fd38c);
+  --ok-soft: light-dark(#e2f3e7, #10281a);
+  --warn: light-dark(#8a4f00, #f0b44a);
+  --warn-soft: light-dark(#fbefd8, #2d220c);
+  --bad: light-dark(#b42318, #ff8b80);
+  --bad-soft: light-dark(#fdecea, #301615);
+  --mark: light-dark(#fde68a, #6a5513);
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-field-line: var(--field-line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-mark: var(--mark);
+}
+
+/* Motion: short and small, only where something new arrives. Used through motion-safe:, so
+   prefers-reduced-motion gets the content with no travel. */
+@theme {
+  --animate-rise: rise 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-breathe: breathe 1.8s ease-in-out infinite;
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+}

@@ -139,6 +139,24 @@ describe("App", () => {
     expect(screen.getByText("No diagnosis: the run did not finish.")).toBeInTheDocument();
   });
 
+  it("switches theme from the header, in memory only", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const root = document.documentElement;
+    const group = screen.getByRole("group", { name: "Theme" });
+    expect(within(group).getByRole("button", { name: "dark" })).toHaveAttribute("aria-pressed", "true");
+    expect(root.dataset.theme).toBe("dark"); // dark by default
+
+    await user.click(within(group).getByRole("button", { name: "light" }));
+    expect(root.dataset.theme).toBe("light");
+    expect(within(group).getByRole("button", { name: "light" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(within(group).getByRole("button", { name: "system" }));
+    expect(root.dataset.theme).toBeUndefined(); // follows prefers-color-scheme
+    await user.click(within(group).getByRole("button", { name: "dark" }));
+    expect(root.dataset.theme).toBe("dark");
+    expect(localStorage.length + sessionStorage.length).toBe(0);
+  });
+
   it("reports a network failure", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
     await start();
