@@ -1,0 +1,1474 @@
+{
+ "host": "35.182.220.71",
+ "commit": "ce5b41b4976a7eed305f594051d0bb9a35537135",
+ "app_image_digest": "sha256:5970c8cd73d14d086cd48133d67de55ab6a7018d387931c95ae1327717ce63fe",
+ "config": "shipped (agent.run.SHIPPED), server LLM cache off",
+ "as_of": "2026-10-06T14:52:00Z",
+ "seed": 20261003,
+ "split": "dev",
+ "question_ids": [
+  "H008",
+  "Q118",
+  "H001",
+  "Q043",
+  "H039",
+  "Q089",
+  "Q028",
+  "Q097",
+  "H029",
+  "Q120",
+  "Q056",
+  "Q095",
+  "Q035",
+  "H015",
+  "H007",
+  "Q132",
+  "Q084",
+  "Q055",
+  "H034",
+  "Q125"
+ ],
+ "n": 20,
+ "errors": 0,
+ "cached_llm_calls": 0,
+ "wall_s": {
+  "p50": 35.9615,
+  "p95": 64.36595,
+  "max": 69.438
+ },
+ "first_event_s": {
+  "p50": 0.209,
+  "p95": 1.29065
+ },
+ "cost_usd": {
+  "n": 20,
+  "mean": 0.004425212,
+  "p50": 0.00456228,
+  "total": 0.088504
+ },
+ "tool_calls": {
+  "p50": 7.0
+ },
+ "runs": [
+  {
+   "id": "H008",
+   "http": 200,
+   "wall_s": 69.438,
+   "events": [
+    [
+     "start",
+     20.113
+    ],
+    [
+     "tool_call",
+     21.85
+    ],
+    [
+     "tool_result",
+     21.85
+    ],
+    [
+     "tool_call",
+     22.192
+    ],
+    [
+     "tool_result",
+     26.803
+    ],
+    [
+     "tool_call",
+     27.454
+    ],
+    [
+     "tool_result",
+     33.278
+    ],
+    [
+     "tool_call",
+     33.753
+    ],
+    [
+     "tool_result",
+     41.813
+    ],
+    [
+     "tool_call",
+     42.598
+    ],
+    [
+     "tool_result",
+     48.232
+    ],
+    [
+     "tool_call",
+     48.624
+    ],
+    [
+     "tool_result",
+     50.481
+    ],
+    [
+     "tool_call",
+     51.508
+    ],
+    [
+     "tool_result",
+     58.981
+    ],
+    [
+     "tool_call",
+     59.705
+    ],
+    [
+     "tool_result",
+     59.709
+    ],
+    [
+     "sources",
+     69.127
+    ],
+    [
+     "diagnosis",
+     69.425
+    ]
+   ],
+   "investigation_id": "0433acbe-540d-493c-9804-61708f5c6ead",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00638006,
+   "tool_calls": 8,
+   "llm_calls": 30,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q118",
+   "http": 200,
+   "wall_s": 37.226,
+   "events": [
+    [
+     "start",
+     0.3
+    ],
+    [
+     "tool_call",
+     1.75
+    ],
+    [
+     "tool_result",
+     1.754
+    ],
+    [
+     "tool_call",
+     1.756
+    ],
+    [
+     "tool_result",
+     1.757
+    ],
+    [
+     "tool_call",
+     2.396
+    ],
+    [
+     "tool_result",
+     2.396
+    ],
+    [
+     "tool_call",
+     2.711
+    ],
+    [
+     "tool_result",
+     7.309
+    ],
+    [
+     "tool_call",
+     8.555
+    ],
+    [
+     "tool_result",
+     13.771
+    ],
+    [
+     "tool_call",
+     14.302
+    ],
+    [
+     "tool_result",
+     20.222
+    ],
+    [
+     "tool_call",
+     20.934
+    ],
+    [
+     "tool_result",
+     24.426
+    ],
+    [
+     "tool_call",
+     24.941
+    ],
+    [
+     "tool_result",
+     24.941
+    ],
+    [
+     "sources",
+     37.153
+    ],
+    [
+     "diagnosis",
+     37.204
+    ]
+   ],
+   "investigation_id": "dfebbe81-8c2f-491d-a89a-2f5bd6aa57e3",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00608229,
+   "tool_calls": 8,
+   "llm_calls": 21,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "H001",
+   "http": 200,
+   "wall_s": 47.067,
+   "events": [
+    [
+     "start",
+     0.208
+    ],
+    [
+     "tool_call",
+     2.103
+    ],
+    [
+     "tool_result",
+     6.699
+    ],
+    [
+     "tool_call",
+     7.11
+    ],
+    [
+     "tool_result",
+     13.108
+    ],
+    [
+     "tool_call",
+     13.79
+    ],
+    [
+     "tool_result",
+     19.506
+    ],
+    [
+     "tool_call",
+     20.18
+    ],
+    [
+     "tool_result",
+     25.936
+    ],
+    [
+     "tool_call",
+     26.364
+    ],
+    [
+     "tool_result",
+     32.364
+    ],
+    [
+     "tool_call",
+     33.145
+    ],
+    [
+     "tool_result",
+     34.602
+    ],
+    [
+     "tool_call",
+     34.906
+    ],
+    [
+     "tool_result",
+     34.907
+    ],
+    [
+     "tool_call",
+     35.461
+    ],
+    [
+     "tool_result",
+     43.105
+    ],
+    [
+     "sources",
+     46.989
+    ],
+    [
+     "diagnosis",
+     47.067
+    ]
+   ],
+   "investigation_id": "44cacf98-c8ee-4dc0-b9d5-912f19373356",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00456202,
+   "tool_calls": 8,
+   "llm_calls": 30,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q043",
+   "http": 200,
+   "wall_s": 42.998,
+   "events": [
+    [
+     "start",
+     0.207
+    ],
+    [
+     "tool_call",
+     1.752
+    ],
+    [
+     "tool_result",
+     1.758
+    ],
+    [
+     "tool_call",
+     2.185
+    ],
+    [
+     "tool_result",
+     6.785
+    ],
+    [
+     "tool_call",
+     7.463
+    ],
+    [
+     "tool_result",
+     15.366
+    ],
+    [
+     "tool_call",
+     15.921
+    ],
+    [
+     "tool_result",
+     21.861
+    ],
+    [
+     "tool_call",
+     22.736
+    ],
+    [
+     "tool_result",
+     26.068
+    ],
+    [
+     "tool_call",
+     27.102
+    ],
+    [
+     "tool_result",
+     32.542
+    ],
+    [
+     "tool_call",
+     38.231
+    ],
+    [
+     "tool_result",
+     38.234
+    ],
+    [
+     "tool_call",
+     38.943
+    ],
+    [
+     "tool_result",
+     38.945
+    ],
+    [
+     "sources",
+     42.939
+    ],
+    [
+     "diagnosis",
+     42.998
+    ]
+   ],
+   "investigation_id": "6b8da6c6-22ed-4ca7-be32-156fe213fc3a",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00625289,
+   "tool_calls": 8,
+   "llm_calls": 27,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "H039",
+   "http": 200,
+   "wall_s": 17.768,
+   "events": [
+    [
+     "start",
+     0.232
+    ],
+    [
+     "tool_call",
+     2.215
+    ],
+    [
+     "tool_result",
+     6.789
+    ],
+    [
+     "tool_call",
+     7.346
+    ],
+    [
+     "tool_result",
+     15.37
+    ],
+    [
+     "sources",
+     17.768
+    ],
+    [
+     "diagnosis",
+     17.768
+    ]
+   ],
+   "investigation_id": "7498c889-b2ce-4881-855d-0540429e09a0",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.0019601,
+   "tool_calls": 2,
+   "llm_calls": 12,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q089",
+   "http": 200,
+   "wall_s": 19.924,
+   "events": [
+    [
+     "start",
+     0.205
+    ],
+    [
+     "tool_call",
+     2.03
+    ],
+    [
+     "tool_result",
+     6.52
+    ],
+    [
+     "tool_call",
+     7.294
+    ],
+    [
+     "tool_result",
+     15.154
+    ],
+    [
+     "sources",
+     19.912
+    ],
+    [
+     "diagnosis",
+     19.918
+    ]
+   ],
+   "investigation_id": "e24a4b64-6ddc-4a60-ac48-5e4689ac9362",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00241675,
+   "tool_calls": 2,
+   "llm_calls": 12,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q028",
+   "http": 200,
+   "wall_s": 15.612,
+   "events": [
+    [
+     "start",
+     0.272
+    ],
+    [
+     "tool_call",
+     1.735
+    ],
+    [
+     "tool_result",
+     6.352
+    ],
+    [
+     "tool_call",
+     6.878
+    ],
+    [
+     "tool_result",
+     12.777
+    ],
+    [
+     "sources",
+     15.606
+    ],
+    [
+     "diagnosis",
+     15.612
+    ]
+   ],
+   "investigation_id": "3a00b56a-1672-47ee-a325-a96456212d64",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00181124,
+   "tool_calls": 2,
+   "llm_calls": 11,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q097",
+   "http": 200,
+   "wall_s": 17.321,
+   "events": [
+    [
+     "start",
+     0.206
+    ],
+    [
+     "tool_call",
+     1.954
+    ],
+    [
+     "tool_result",
+     6.63
+    ],
+    [
+     "tool_call",
+     7.337
+    ],
+    [
+     "tool_result",
+     13.103
+    ],
+    [
+     "sources",
+     17.321
+    ],
+    [
+     "diagnosis",
+     17.321
+    ]
+   ],
+   "investigation_id": "7fbe726e-5526-4a23-8b10-ae9a52d0033e",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00239771,
+   "tool_calls": 2,
+   "llm_calls": 11,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "H029",
+   "http": 200,
+   "wall_s": 16.65,
+   "events": [
+    [
+     "start",
+     0.287
+    ],
+    [
+     "tool_call",
+     2.123
+    ],
+    [
+     "tool_result",
+     6.721
+    ],
+    [
+     "tool_call",
+     7.194
+    ],
+    [
+     "tool_result",
+     13.152
+    ],
+    [
+     "sources",
+     16.637
+    ],
+    [
+     "diagnosis",
+     16.643
+    ]
+   ],
+   "investigation_id": "045d5532-8f13-46f2-80b2-7fabd8dcc56d",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00213766,
+   "tool_calls": 2,
+   "llm_calls": 11,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q120",
+   "http": 200,
+   "wall_s": 40.68,
+   "events": [
+    [
+     "start",
+     0.206
+    ],
+    [
+     "tool_call",
+     2.175
+    ],
+    [
+     "tool_result",
+     2.177
+    ],
+    [
+     "tool_call",
+     2.471
+    ],
+    [
+     "tool_result",
+     4.925
+    ],
+    [
+     "tool_call",
+     5.501
+    ],
+    [
+     "tool_result",
+     13.457
+    ],
+    [
+     "tool_call",
+     14.238
+    ],
+    [
+     "tool_result",
+     17.743
+    ],
+    [
+     "tool_call",
+     18.32
+    ],
+    [
+     "tool_result",
+     19.889
+    ],
+    [
+     "tool_call",
+     21.175
+    ],
+    [
+     "tool_result",
+     21.175
+    ],
+    [
+     "tool_call",
+     27.667
+    ],
+    [
+     "tool_result",
+     27.671
+    ],
+    [
+     "tool_call",
+     29.597
+    ],
+    [
+     "tool_result",
+     34.164
+    ],
+    [
+     "sources",
+     40.623
+    ],
+    [
+     "diagnosis",
+     40.647
+    ]
+   ],
+   "investigation_id": "9337c8ff-23cb-44bd-9de3-3fdd70f298b0",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00735212,
+   "tool_calls": 8,
+   "llm_calls": 25,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q056",
+   "http": 200,
+   "wall_s": 30.827,
+   "events": [
+    [
+     "start",
+     0.209
+    ],
+    [
+     "tool_call",
+     1.632
+    ],
+    [
+     "tool_result",
+     1.637
+    ],
+    [
+     "tool_call",
+     1.637
+    ],
+    [
+     "tool_result",
+     1.638
+    ],
+    [
+     "tool_call",
+     2.018
+    ],
+    [
+     "tool_result",
+     6.572
+    ],
+    [
+     "tool_call",
+     7.352
+    ],
+    [
+     "tool_result",
+     10.858
+    ],
+    [
+     "tool_call",
+     11.379
+    ],
+    [
+     "tool_result",
+     17.288
+    ],
+    [
+     "tool_call",
+     17.79
+    ],
+    [
+     "tool_result",
+     25.884
+    ],
+    [
+     "sources",
+     30.759
+    ],
+    [
+     "diagnosis",
+     30.827
+    ]
+   ],
+   "investigation_id": "542cf614-46be-4f63-a9cb-10ee9e3954c3",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00350529,
+   "tool_calls": 6,
+   "llm_calls": 19,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q095",
+   "http": 200,
+   "wall_s": 34.697,
+   "events": [
+    [
+     "start",
+     0.21
+    ],
+    [
+     "tool_call",
+     2.159
+    ],
+    [
+     "tool_result",
+     6.809
+    ],
+    [
+     "tool_call",
+     7.191
+    ],
+    [
+     "tool_result",
+     17.485
+    ],
+    [
+     "tool_call",
+     18.397
+    ],
+    [
+     "tool_result",
+     23.91
+    ],
+    [
+     "tool_call",
+     24.687
+    ],
+    [
+     "tool_result",
+     28.199
+    ],
+    [
+     "sources",
+     34.633
+    ],
+    [
+     "diagnosis",
+     34.697
+    ]
+   ],
+   "investigation_id": "2f43a963-26c9-4db9-ae69-cf3be9d1a95f",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00358514,
+   "tool_calls": 4,
+   "llm_calls": 20,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q035",
+   "http": 200,
+   "wall_s": 46.346,
+   "events": [
+    [
+     "start",
+     0.207
+    ],
+    [
+     "tool_call",
+     3.356
+    ],
+    [
+     "tool_result",
+     5.767
+    ],
+    [
+     "tool_call",
+     6.769
+    ],
+    [
+     "tool_result",
+     12.265
+    ],
+    [
+     "tool_call",
+     12.845
+    ],
+    [
+     "tool_result",
+     21.081
+    ],
+    [
+     "tool_call",
+     22.395
+    ],
+    [
+     "tool_result",
+     27.3
+    ],
+    [
+     "tool_call",
+     28.234
+    ],
+    [
+     "tool_result",
+     31.474
+    ],
+    [
+     "tool_call",
+     32.188
+    ],
+    [
+     "tool_result",
+     32.188
+    ],
+    [
+     "tool_call",
+     33.457
+    ],
+    [
+     "tool_result",
+     33.457
+    ],
+    [
+     "tool_call",
+     35.469
+    ],
+    [
+     "tool_result",
+     40.05
+    ],
+    [
+     "sources",
+     46.346
+    ],
+    [
+     "diagnosis",
+     46.346
+    ]
+   ],
+   "investigation_id": "535414cb-b512-4b9c-9d59-d8c8a11c1cb0",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00565415,
+   "tool_calls": 8,
+   "llm_calls": 28,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "H015",
+   "http": 200,
+   "wall_s": 26.587,
+   "events": [
+    [
+     "start",
+     0.206
+    ],
+    [
+     "tool_call",
+     2.597
+    ],
+    [
+     "tool_result",
+     7.231
+    ],
+    [
+     "tool_call",
+     7.637
+    ],
+    [
+     "tool_result",
+     9.396
+    ],
+    [
+     "tool_call",
+     9.877
+    ],
+    [
+     "tool_result",
+     15.804
+    ],
+    [
+     "tool_call",
+     16.305
+    ],
+    [
+     "tool_result",
+     16.307
+    ],
+    [
+     "tool_call",
+     17.075
+    ],
+    [
+     "tool_result",
+     17.075
+    ],
+    [
+     "tool_call",
+     17.721
+    ],
+    [
+     "tool_result",
+     22.323
+    ],
+    [
+     "tool_call",
+     22.841
+    ],
+    [
+     "tool_result",
+     22.841
+    ],
+    [
+     "tool_call",
+     23.658
+    ],
+    [
+     "tool_result",
+     23.661
+    ],
+    [
+     "sources",
+     26.581
+    ],
+    [
+     "diagnosis",
+     26.581
+    ]
+   ],
+   "investigation_id": "4b405460-6872-4299-bbbb-4920651893f6",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00351779,
+   "tool_calls": 8,
+   "llm_calls": 20,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "H007",
+   "http": 200,
+   "wall_s": 47.768,
+   "events": [
+    [
+     "start",
+     0.234
+    ],
+    [
+     "tool_call",
+     1.996
+    ],
+    [
+     "tool_result",
+     4.426
+    ],
+    [
+     "tool_call",
+     5.582
+    ],
+    [
+     "tool_result",
+     10.848
+    ],
+    [
+     "tool_call",
+     11.499
+    ],
+    [
+     "tool_result",
+     21.566
+    ],
+    [
+     "tool_call",
+     23.202
+    ],
+    [
+     "tool_result",
+     28.019
+    ],
+    [
+     "tool_call",
+     28.812
+    ],
+    [
+     "tool_result",
+     32.281
+    ],
+    [
+     "tool_call",
+     33.316
+    ],
+    [
+     "tool_result",
+     33.317
+    ],
+    [
+     "error",
+     47.768
+    ],
+    [
+     "sources",
+     47.768
+    ],
+    [
+     "diagnosis",
+     47.768
+    ]
+   ],
+   "investigation_id": "e916e96b-52c6-4754-9912-f414538fc861",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00667213,
+   "tool_calls": 6,
+   "llm_calls": 25,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q132",
+   "http": 200,
+   "wall_s": 44.046,
+   "events": [
+    [
+     "start",
+     0.21
+    ],
+    [
+     "tool_call",
+     1.095
+    ],
+    [
+     "tool_result",
+     1.101
+    ],
+    [
+     "tool_call",
+     1.102
+    ],
+    [
+     "tool_result",
+     1.102
+    ],
+    [
+     "tool_call",
+     1.728
+    ],
+    [
+     "tool_result",
+     1.874
+    ],
+    [
+     "tool_call",
+     2.552
+    ],
+    [
+     "tool_result",
+     8.292
+    ],
+    [
+     "tool_call",
+     8.807
+    ],
+    [
+     "tool_result",
+     14.721
+    ],
+    [
+     "tool_call",
+     15.796
+    ],
+    [
+     "tool_result",
+     21.153
+    ],
+    [
+     "tool_call",
+     27.953
+    ],
+    [
+     "tool_result",
+     32.542
+    ],
+    [
+     "tool_call",
+     33.239
+    ],
+    [
+     "tool_result",
+     34.695
+    ],
+    [
+     "sources",
+     44.031
+    ],
+    [
+     "diagnosis",
+     44.04
+    ]
+   ],
+   "investigation_id": "731f5342-b20c-4108-b73c-21758ee39a09",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00587242,
+   "tool_calls": 8,
+   "llm_calls": 26,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q084",
+   "http": 200,
+   "wall_s": 41.581,
+   "events": [
+    [
+     "start",
+     0.276
+    ],
+    [
+     "tool_call",
+     3.168
+    ],
+    [
+     "tool_result",
+     7.737
+    ],
+    [
+     "tool_call",
+     8.302
+    ],
+    [
+     "tool_result",
+     14.163
+    ],
+    [
+     "tool_call",
+     14.857
+    ],
+    [
+     "tool_result",
+     20.616
+    ],
+    [
+     "tool_call",
+     21.139
+    ],
+    [
+     "tool_result",
+     27.022
+    ],
+    [
+     "tool_call",
+     27.779
+    ],
+    [
+     "tool_result",
+     27.781
+    ],
+    [
+     "tool_call",
+     28.478
+    ],
+    [
+     "tool_result",
+     33.454
+    ],
+    [
+     "tool_call",
+     34.046
+    ],
+    [
+     "tool_result",
+     34.046
+    ],
+    [
+     "tool_call",
+     36.165
+    ],
+    [
+     "tool_result",
+     36.166
+    ],
+    [
+     "sources",
+     41.46
+    ],
+    [
+     "diagnosis",
+     41.481
+    ]
+   ],
+   "investigation_id": "6431e6de-3471-4c27-8976-2a6e0d698add",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00456254,
+   "tool_calls": 8,
+   "llm_calls": 25,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q055",
+   "http": 200,
+   "wall_s": 11.184,
+   "events": [
+    [
+     "start",
+     0.208
+    ],
+    [
+     "tool_call",
+     1.785
+    ],
+    [
+     "tool_result",
+     4.224
+    ],
+    [
+     "tool_call",
+     4.707
+    ],
+    [
+     "tool_result",
+     8.524
+    ],
+    [
+     "sources",
+     11.173
+    ],
+    [
+     "diagnosis",
+     11.184
+    ]
+   ],
+   "investigation_id": "89cbdae3-051d-4909-bdf7-ecc9a15094b3",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00191658,
+   "tool_calls": 2,
+   "llm_calls": 9,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "H034",
+   "http": 200,
+   "wall_s": 27.148,
+   "events": [
+    [
+     "start",
+     0.209
+    ],
+    [
+     "tool_call",
+     2.218
+    ],
+    [
+     "tool_result",
+     6.701
+    ],
+    [
+     "tool_call",
+     7.01
+    ],
+    [
+     "tool_result",
+     13.111
+    ],
+    [
+     "tool_call",
+     17.303
+    ],
+    [
+     "tool_result",
+     17.306
+    ],
+    [
+     "tool_call",
+     21.715
+    ],
+    [
+     "tool_result",
+     24.087
+    ],
+    [
+     "sources",
+     27.148
+    ],
+    [
+     "diagnosis",
+     27.148
+    ]
+   ],
+   "investigation_id": "4380428a-3c4c-460b-ac1a-54667852a310",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00512024,
+   "tool_calls": 4,
+   "llm_calls": 19,
+   "cached_llm_calls": 0
+  },
+  {
+   "id": "Q125",
+   "http": 200,
+   "wall_s": 64.099,
+   "events": [
+    [
+     "start",
+     0.209
+    ],
+    [
+     "tool_call",
+     2.67
+    ],
+    [
+     "tool_result",
+     5.101
+    ],
+    [
+     "tool_call",
+     6.139
+    ],
+    [
+     "tool_result",
+     15.805
+    ],
+    [
+     "tool_call",
+     16.354
+    ],
+    [
+     "tool_result",
+     20.118
+    ],
+    [
+     "tool_call",
+     21.137
+    ],
+    [
+     "tool_result",
+     32.994
+    ],
+    [
+     "tool_call",
+     34.012
+    ],
+    [
+     "tool_result",
+     37.238
+    ],
+    [
+     "tool_call",
+     37.936
+    ],
+    [
+     "tool_result",
+     41.526
+    ],
+    [
+     "tool_call",
+     42.478
+    ],
+    [
+     "tool_result",
+     50.116
+    ],
+    [
+     "tool_call",
+     51.345
+    ],
+    [
+     "tool_result",
+     54.388
+    ],
+    [
+     "sources",
+     64.052
+    ],
+    [
+     "diagnosis",
+     64.099
+    ]
+   ],
+   "investigation_id": "eba006a9-db74-45be-b5e4-f404e9bffb1e",
+   "rate_limit_waits_s": [],
+   "status": "done",
+   "cost_usd": 0.00674512,
+   "tool_calls": 8,
+   "llm_calls": 36,
+   "cached_llm_calls": 0
+  }
+ ]
+}
