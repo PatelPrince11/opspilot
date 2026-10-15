@@ -4,6 +4,8 @@
 
 OpsPilot is an incident-investigation agent. An on-call engineer describes a problem. The agent searches runbooks, past incidents, logs and service status, then returns a diagnosis. Each claim names the evidence it cites and quotes it, and code checks that the quote appears in that evidence. The corpus is synthetic: 30 runbooks and 117 incident write-ups about a fictional company, with public LogHub lines as background noise.
 
+Demo video (about 90 s, a local run with the LLM cache off): https://youtu.be/k9yHhlwRVRQ
+
 ![A diagnosis claim opened to the evidence it cites](docs/img/live/live-citation.png)
 
 ## How it works
@@ -155,7 +157,7 @@ The steps before it need the network: Docker images (pgvector, the Python base i
 
 ## Deployment
 
-The demo ran on one AWS EC2 t3.medium with Docker Compose ([docker-compose.prod.yml](docker-compose.prod.yml)). Nginx serves the dashboard and proxies the API. For server-sent events it turns proxy buffering off and uses a long read timeout ([deploy/nginx.conf](deploy/nginx.conf)). The app runs one uvicorn worker. CI builds the app and proxy images and pushes them to GHCR on every merge to main. Postgres and the app port are not published. Setup steps are in [docs/deploy.md](docs/deploy.md).
+The demo ran on one AWS EC2 t3.medium with Docker Compose ([docker-compose.prod.yml](docker-compose.prod.yml)). Nginx serves the dashboard and proxies the API. For server-sent events it turns proxy buffering off and uses a long read timeout ([deploy/nginx.conf](deploy/nginx.conf)). The app runs one uvicorn worker. CI builds the app and proxy images and pushes them to GHCR on every merge to main. Postgres and the app port are not published. Setup steps are in [docs/deploy.md](docs/deploy.md). The instance is stopped between demos, so there is no standing public link: section 10 of docs/deploy.md starts it for a demo, and the demo video above shows a run.
 
 ## Repo layout
 

@@ -3909,6 +3909,14 @@ change would be a cache miss.
   pulls images and packages; the embedding model downloads on first use). Not rechecked here.
 - Spend, Part B: $0.0885 latency run, $0 burst, about $0.004 smoke test (Part A setup).
 
+## 2026-10-15: Scope cuts, CD and the MCP server
+
+- **CD and the MCP server were considered and cut (time), not built.** CI builds, checks and
+  pushes the app and proxy images to GHCR on every merge to main; nothing deploys them, so the
+  instance is updated by hand (docs/deploy.md section 8). `mcp_server/` holds only the empty
+  `__init__.py` from the scaffold; no tool is exposed over MCP.
+- The dashboard keeps the paper theme as merged (PR #15).
+
 ## Phase 5B notes (deploy)
 
 - Run uvicorn with one worker: the rate limiter and its counts live in process memory, so two
