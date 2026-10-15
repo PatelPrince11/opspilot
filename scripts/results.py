@@ -1135,6 +1135,59 @@ def test_section(questions: list[dict]) -> list[str]:
     return out
 
 
+# Phase 5B, from `docker image inspect` on the server (image ID only) and GHCR's commit-SHA tag;
+# the app image's digest is also in eval/results/deploy_latency.json.
+PROXY_DIGEST = "sha256:509d33f827ba90552ae1cc10e380c9b58e4cafe8d63833ac1ee3c5ed8836e24e"
+
+
+def deploy_section() -> list[str]:
+    """Phase 5B end-to-end latency on EC2 (eval/results/deploy_latency.json)."""
+    path = RESULTS / "deploy_latency.json"
+    if not path.exists():
+        return []
+    d = json.loads(path.read_text())
+    runs = d["runs"]
+    walls = sorted(r["wall_s"] for r in runs)
+    c = d["cost_usd"]
+    out = [
+        "## (g) Deployed latency (EC2, Phase 5B, dev)",
+        "",
+        f"`eval/results/{path.name}` (scripts/deploy_latency.py). n = {d['n']} dev questions,"
+        f" a seeded sample (seed {d['seed']}): {', '.join(d['question_ids'])}. Shipped config,"
+        f" the server's LLM response cache off ({d['cached_llm_calls']} cached calls),"
+        f" as_of {d['as_of']}. Image built from commit {d['commit'][:7]}: app"
+        f" `{d['app_image_digest']}`, proxy `{PROXY_DIGEST}`. One sequential client on a Mac in"
+        " Calgary, plain HTTP through Nginx to one t3.medium in ca-central-1. Wall time: from"
+        " just before the POST until the server closes the SSE stream.",
+        "",
+        "| metric | n | value |",
+        "|---|---|---|",
+        f"| wall time p50 | {d['n']} | {d['wall_s']['p50']:.1f} s |",
+        f"| wall time p95 | {d['n']} | {d['wall_s']['p95']:.1f} s |",
+        f"| first SSE event p50 | {d['n']} | {d['first_event_s']['p50']:.2f} s |",
+        f"| errors (not HTTP 200 and status done) | {d['n']} | {d['errors']} |",
+        f"| cost per investigation, mean | {c['n']} | ${c['mean']:.5f} |",
+        f"| cost, total | {c['n']} | ${c['total']:.4f} |",
+        "",
+        "| tool calls | runs | wall min | wall max |",
+        "|---|---|---|---|",
+    ]
+    for k in sorted({r["tool_calls"] for r in runs}):
+        w = [r["wall_s"] for r in runs if r["tool_calls"] == k]
+        out.append(f"| {k} | {len(w)} | {min(w):.1f} s | {max(w):.1f} s |")
+    out += [
+        "",
+        f"- p95 over n = {d['n']} (inclusive method) lies between the two slowest runs"
+        f" ({walls[-2]:.1f} s and {walls[-1]:.1f} s), so it is essentially the second-slowest"
+        " run, not a stable tail estimate.",
+        "- Latency is bimodal and follows the tool-call count: runs that stop after the 2"
+        " first-look calls are fast, runs that use all 8 allowed calls are slow.",
+        "- Not tested: concurrency (one request at a time), cold start (the app was warm),"
+        " accuracy (no scoring; the questions only drive the load).",
+    ]
+    return out
+
+
 def render() -> str:
     questions = load(QUESTIONS)
     a = corpus_section(questions)
@@ -1146,6 +1199,7 @@ def render() -> str:
     c5 = live_section()
     c6 = shipped_section()
     f = test_section(questions)
+    g = deploy_section()
     out = [
         "# OpsPilot results ledger",
         "",
@@ -1164,11 +1218,13 @@ def render() -> str:
         *([*c5, ""] if c5 else []),
         *([*c6, ""] if c6 else []),
         *([*f, ""] if f else []),
+        *([*g, ""] if g else []),
         *placeholder_section(
             (GEN_MEASURED if c else frozenset())
             | ({"Judge agreement with Prince's 30 hand labels"} if c2 else frozenset())
             | (INJECTION_MEASURED if c3 else frozenset())
             | (COST_MEASURED if c4 else frozenset())
+            | ({"p50 / p95 latency, end to end per investigation"} if g else frozenset())
             | (
                 DEFENDED_MEASURED
                 if (RESULTS / "injection_comparison.json").exists()

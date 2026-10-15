@@ -477,11 +477,34 @@ Per slice, shipped, dev:
 
 Test-run agent spend (new, uncached LLM calls): $0.4763.
 
+## (g) Deployed latency (EC2, Phase 5B, dev)
+
+`eval/results/deploy_latency.json` (scripts/deploy_latency.py). n = 20 dev questions, a seeded sample (seed 20261003): H008, Q118, H001, Q043, H039, Q089, Q028, Q097, H029, Q120, Q056, Q095, Q035, H015, H007, Q132, Q084, Q055, H034, Q125. Shipped config, the server's LLM response cache off (0 cached calls), as_of 2026-10-06T14:52:00Z. Image built from commit ce5b41b: app `sha256:5970c8cd73d14d086cd48133d67de55ab6a7018d387931c95ae1327717ce63fe`, proxy `sha256:509d33f827ba90552ae1cc10e380c9b58e4cafe8d63833ac1ee3c5ed8836e24e`. One sequential client on a Mac in Calgary, plain HTTP through Nginx to one t3.medium in ca-central-1. Wall time: from just before the POST until the server closes the SSE stream.
+
+| metric | n | value |
+|---|---|---|
+| wall time p50 | 20 | 36.0 s |
+| wall time p95 | 20 | 64.4 s |
+| first SSE event p50 | 20 | 0.21 s |
+| errors (not HTTP 200 and status done) | 20 | 0 |
+| cost per investigation, mean | 20 | $0.00443 |
+| cost, total | 20 | $0.0885 |
+
+| tool calls | runs | wall min | wall max |
+|---|---|---|---|
+| 2 | 6 | 11.2 s | 19.9 s |
+| 4 | 2 | 27.1 s | 34.7 s |
+| 6 | 2 | 30.8 s | 47.8 s |
+| 8 | 10 | 26.6 s | 69.4 s |
+
+- p95 over n = 20 (inclusive method) lies between the two slowest runs (64.1 s and 69.4 s), so it is essentially the second-slowest run, not a stable tail estimate.
+- Latency is bimodal and follows the tool-call count: runs that stop after the 2 first-look calls are fast, runs that use all 8 allowed calls are slow.
+- Not tested: concurrency (one request at a time), cold start (the app was warm), accuracy (no scoring; the questions only drive the load).
+
 ## (d) Not measured yet
 
 | metric | status |
 |---|---|
-| p50 / p95 latency, end to end per investigation | end-to-end latency per investigation: not measured; the test run was fully cached. Phase 5B measures it on EC2 with the cache disabled on 20 dev questions |
 | p50 / p95 latency, retrieval on EC2 | not measured yet (Phase 5) |
 
 ## (e) Resume bullets (test split only)
