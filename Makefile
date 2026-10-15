@@ -135,14 +135,16 @@ gen-eval:
 	@DATABASE_URL=$(HOST_DATABASE_URL) PYTHONUNBUFFERED=1 uv run python -m eval.generation_eval run $(ARGS)
 
 # The reported test-split generation results (shipped, verify on and off) from the committed
-# final-run response cache (eval/cache/llm): no API keys, no requests, no spend. Run it in a fresh
-# clone (with `make up` and `make ingest` done): an existing .cache/gen_eval would be reused instead
-# of replayed. The result files must come out unchanged.
+# final-run response cache (eval/cache/llm): no API keys, no requests, no spend. Prerequisites, in
+# a fresh clone (an existing .cache/gen_eval would be reused instead of replayed):
+#   cp .env.example .env   (compose reads it; keys may stay empty)
+#   make up && make corpus && make ingest   (corpus downloads LogHub; ingest needs it)
+# Without the ingested corpus the prompts differ and every call misses the cache. Exits 1 when a
+# run raised an error, a config wrote no result file, or either test result file differs from
+# HEAD (scripts/reproduce.py).
 reproduce:
-	@LLM_CACHE_DIR=eval/cache/llm $(MAKE) -s gen-eval \
-		ARGS="--split test --final-test --config shipped --max-spend 0.001"
-	@LLM_CACHE_DIR=eval/cache/llm $(MAKE) -s gen-eval \
-		ARGS="--split test --final-test --config shipped_off --skip-judge --max-spend 0.001"
+	@LLM_CACHE_DIR=eval/cache/llm DATABASE_URL=$(HOST_DATABASE_URL) PYTHONUNBUFFERED=1 \
+		uv run python -m scripts.reproduce
 
 # Injection eval (eval/injection_eval.py): loads the 30 payloads, runs the locked agent per case
 # with its payload, then the clean control; writes eval/results/injection_no_defense.json.
