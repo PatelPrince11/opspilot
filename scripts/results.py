@@ -932,8 +932,19 @@ def bullets_section() -> list[str]:
         f"  - Source: section (c2); key facts kappa {kf['kappa']:.3f} [{kf['kappa_ci95'][0]:.3f},"
         f" {kf['kappa_ci95'][1]:.3f}] (n {kf['n']}); claims {kc['kappa']:.3f}"
         f" [{kc['kappa_ci95'][0]:.3f}, {kc['kappa_ci95'][1]:.3f}] (n {kc['n']}).",
-        "- Deploy (FastAPI, Postgres and the dashboard on AWS EC2, p95 latency): pending"
-        " Phase 5B (not measured).",
+    ]
+
+    d = json.loads((RESULTS / "deploy_latency.json").read_text())
+    out += [
+        "- Deployed FastAPI, Postgres and the dashboard to AWS EC2 (t3.medium) with Docker Compose"
+        f" and Nginx: median end-to-end latency {d['wall_s']['p50']:.1f} s, p95"
+        f" {d['wall_s']['p95']:.1f} s.",
+        f"  - Source: section (g); n = {d['n']} {d['split']} questions, LLM cache off"
+        f" ({d['cached_llm_calls']} cached calls), one sequential client from a Mac; mean cost"
+        f" ${d['cost_usd']['mean']:.4f} per investigation.",
+        "  - Disclose: a single client, so no concurrency or cold-start test; dev questions, not"
+        f" the test split; p95 over {d['n']} runs is essentially the second-slowest run, so it is"
+        " noisy; plain HTTP, no TLS.",
     ]
     return out
 

@@ -529,4 +529,6 @@ Every number comes from the files named under each bullet; nothing is typed by h
   - Disclose: these numbers are from the `defended` agent (locked config + the frozen defenses, first look off), not exactly the shipped agent (which adds first look on live incidents; the injection cases are past incidents).
 - Validated an LLM judge against 30 hand-labelled answers (Cohen's kappa 0.47 on key facts, -0.05 on claim support) and based decisions on deterministic metrics.
   - Source: section (c2); key facts kappa 0.471 [0.283, 0.667] (n 77); claims -0.053 [-0.103, 0.000] (n 87).
-- Deploy (FastAPI, Postgres and the dashboard on AWS EC2, p95 latency): pending Phase 5B (not measured).
+- Deployed FastAPI, Postgres and the dashboard to AWS EC2 (t3.medium) with Docker Compose and Nginx: median end-to-end latency 36.0 s, p95 64.4 s.
+  - Source: section (g); n = 20 dev questions, LLM cache off (0 cached calls), one sequential client from a Mac; mean cost $0.0044 per investigation.
+  - Disclose: a single client, so no concurrency or cold-start test; dev questions, not the test split; p95 over 20 runs is essentially the second-slowest run, so it is noisy; plain HTTP, no TLS.
