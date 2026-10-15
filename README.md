@@ -9,7 +9,7 @@ OpsPilot is an incident-investigation agent. An on-call engineer describes a pro
 ## How it works
 
 ```mermaid
-flowchart LR
+flowchart TD
     UI[Dashboard<br/>React] -->|POST /investigate<br/>X-API-Key| API[FastAPI<br/>key, rate and spend checks]
     API -->|SSE events| UI
     API --> T
