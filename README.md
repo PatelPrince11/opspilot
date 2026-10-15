@@ -4,7 +4,9 @@
 
 OpsPilot is an incident-investigation agent. An on-call engineer describes a problem. The agent searches runbooks, past incidents, logs and service status, then returns a diagnosis. Each claim names the evidence it cites and quotes it, and code checks that the quote appears in that evidence. The corpus is synthetic: 30 runbooks and 117 incident write-ups about a fictional company, with public LogHub lines as background noise.
 
-Demo video (about 90 s, a local run with the LLM cache off): https://youtu.be/k9yHhlwRVRQ
+[![OpsPilot demo video (about 90 s, a local run with the LLM cache off)](docs/img/demo-poster.jpg)](https://youtu.be/k9yHhlwRVRQ)
+
+Demo video, about 90 s: a local run with the LLM cache off.
 
 ![A diagnosis claim opened to the evidence it cites](docs/img/live/live-citation.png)
 
