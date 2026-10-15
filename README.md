@@ -197,3 +197,9 @@ A citation opened: the cited status line, with the claim's quote highlighted.
 Everything except the LogHub lines is synthetic and describes a fictional company. The OpenStack sample from [LogHub](https://github.com/logpai/loghub) is downloaded by `make corpus`, pinned to a commit and checked by sha256. It is not committed. Its license is saved next to the download in `data/raw/loghub/LICENSE`. Citation:
 
 > Jieming Zhu, Shilin He, Pinjia He, Jinyang Liu, Michael R. Lyu. Loghub: A Large Collection of System Log Datasets for AI-driven Log Analytics. In ISSRE, 2023.
+
+LogHub's [license](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/LICENSE) makes its datasets freely available for research or academic work and requires its notice in every copy, so the sample is downloaded at build time and not redistributed here.
+
+## License
+
+The code is under the [MIT License](LICENSE); it does not cover the LogHub data.
