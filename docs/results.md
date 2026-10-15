@@ -390,7 +390,7 @@ The API's agent `{'wrap': True, 'flag': True, 'guard': 'withhold', 'first_look':
 
 ## (f) Test split: the one pre-registered run (Phase 5)
 
-Pre-registered in NOTES.md ("Phase 5 pre-registration") before any test question ran; code frozen at tag `v0.1-frozen`; run once with `--final-test`. Every cell is value [95% CI] (n questions); CI: percentile bootstrap resampling questions, 10,000 resamples, seed 20261003; rates pool claims, calls or key facts over the questions resampled. **Retrieval and agent settings were tuned on dev, the injection defenses on 15 separate tune cases, and first look was chosen after the 10-case live-incident set; the test split was not used for any of these. So dev numbers are optimistic and a drop from dev to test is expected; only the test column is a result.**
+Pre-registered in NOTES.md ("Phase 5 pre-registration") before any test question ran; code frozen at tag `v0.1-frozen`; run with `--final-test`. Run 1 was invalid (a ledger file was edited during it, so its result files were dirty); the reported run 2 is a full cache replay from the clean tag with identical numbers. Every cell is value [95% CI] (n questions); CI: percentile bootstrap resampling questions, 10,000 resamples, seed 20261003; rates pool claims, calls or key facts over the questions resampled. **Retrieval and agent settings were tuned on dev, the injection defenses on 15 separate tune cases, and first look was chosen after the 10-case live-incident set; the test split was not used for any of these. So dev numbers are optimistic and a drop from dev to test is expected; only the test column is a result.**
 
 ### Retrieval (locked: hybrid BM25 + dense, RRF; baseline: dense)
 
