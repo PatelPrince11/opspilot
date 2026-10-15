@@ -1012,8 +1012,10 @@ def test_section(questions: list[dict]) -> list[str]:
         " code frozen at tag `v0.1-frozen`; run once with `--final-test`. Every cell is value"
         f" [95% CI] (n questions); CI: percentile bootstrap resampling questions, {RESAMPLES:,}"
         f" resamples, seed {SEED}; rates pool claims, calls or key facts over the questions"
-        " resampled. **Dev was used for every tuning decision, so dev numbers are optimistic and"
-        " a drop from dev to test is expected; only the test column is a result.**",
+        " resampled. **Retrieval and agent settings were tuned on dev, the injection defenses on"
+        " 15 separate tune cases, and first look was chosen after the 10-case live-incident set;"
+        " the test split was not used for any of these. So dev numbers are optimistic and a drop"
+        " from dev to test is expected; only the test column is a result.**",
         "",
         "### Retrieval (locked: hybrid BM25 + dense, RRF; baseline: dense)",
         "",
