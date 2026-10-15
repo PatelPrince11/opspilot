@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/PatelPrince11/opspilot/actions/workflows/ci.yml/badge.svg)](https://github.com/PatelPrince11/opspilot/actions/workflows/ci.yml)
 
-OpsPilot is an incident-investigation agent. An on-call engineer describes a problem. The agent searches runbooks, past incidents, logs and service status, then returns a diagnosis in which every claim cites the evidence it rests on. The corpus is synthetic: 30 runbooks and 117 incident write-ups about a fictional company, with public LogHub lines as background noise.
+OpsPilot is an incident-investigation agent. An on-call engineer describes a problem. The agent searches runbooks, past incidents, logs and service status, then returns a diagnosis. Each claim names the evidence it cites and quotes it, and code checks that the quote appears in that evidence. The corpus is synthetic: 30 runbooks and 117 incident write-ups about a fictional company, with public LogHub lines as background noise.
 
 ![A diagnosis claim opened to the evidence it cites](docs/img/live/live-citation.png)
 
@@ -51,7 +51,9 @@ All LLM calls go through [llm/client.py](llm/client.py). The agent runs `openai/
 
 ## Results
 
-The full ledger is [docs/results.md](docs/results.md). It is generated from committed result files, and CI fails if it is stale. The 200 eval questions are split 100 dev and 100 test. Dev was used for every tuning decision. The test split was run once, after the code was frozen at tag `v0.1-frozen`, with metrics and decision rules pre-registered in NOTES.md before any test question ran.
+The full ledger is [docs/results.md](docs/results.md). It is generated from committed result files, and CI fails if it is stale. The 200 eval questions are split 100 dev and 100 test. Retrieval and agent settings were tuned on dev, the injection defenses on a separate set of 15 tune cases, and first look was chosen after the 10-case live-incident set; the test split was not used for any of these. Metrics and decision rules were pre-registered in NOTES.md before any test question ran.
+
+The first test run was declared invalid under those rules because a file (the ledger renderer, which the eval does not run) was edited while it ran, so its result files recorded an uncommitted change. The reported results are a full rerun from a clean tree at the frozen tag `v0.1-frozen`. Every model call in it was a hit in the response cache from the first run, so there were no new model calls and every metric matched the first run.
 
 | result | split | n | value |
 |---|---|---|---|
@@ -61,7 +63,7 @@ The full ledger is [docs/results.md](docs/results.md). It is generated from comm
 | first-draft claims failing the citation check | test | 100 | 0.256 [0.195, 0.319] |
 | citation check, verify on minus off | test | 98 | +0.254 [+0.192, +0.320] |
 | tool-call success | test | 100 | 0.852 [0.826, 0.879] |
-| injection success, undefended vs defended | held-out cases | 45 | 11/45 vs 2/45, McNemar p = 0.012 |
+| injection success, undefended vs defended | held-out cases | 45 | 11/45 vs 2/45, McNemar p = 0.012 (cache replay, first look off; see limitations) |
 | judge vs hand labels, Cohen's kappa, key facts | dev | 77 facts (30 answers) | 0.471 [0.283, 0.667] |
 | judge vs hand labels, Cohen's kappa, claim support | dev | 87 claims (29 answers) | -0.053 [-0.103, +0.000] |
 | cost per investigation, shipped agent | dev | 100 | $0.0048 [0.0044, 0.0052] |
@@ -82,7 +84,8 @@ Comparisons are paired by question. Confidence intervals are 95% percentile boot
 - The exposure-matched injection comparison (5/33 to 2/33, p = 0.375) is not significant.
 - If the Prompt Guard provider call fails, the affected tool results enter the evidence with the Prompt Guard check and the in-place flagging both skipped, so only wrapping protects them.
 - The test run recorded which tool calls failed but not why, so the share of failures caused by Prompt Guard errors is unknown.
-- Key facts on the 10 live incidents are low: 14 of 30 at best under the pre-registered scoring (17 of 30 with a post hoc ASCII fold).
+- Key facts on the 10 live incidents are low: 14 of 30 under the pre-registered scoring and 17 of 30 with the post hoc ASCII fold.
+- The verify check confirms that a quoted passage appears in the cited item. It does not check that the passage supports the claim, and my judge validation could not measure that (kappa -0.05 on claim support).
 - Verify checks claims, not the summary text, so a dropped claim can still appear in the summary.
 - 2 of 100 test answers ended with no claims.
 - Repeated tool calls count as failed calls in tool-call success.
@@ -177,7 +180,7 @@ Before a run: a question in the incident field and an empty API key field.
 
 ![Dashboard before an investigation](docs/img/live/live-idle.png)
 
-During a run: two tool calls listed, the second still in progress.
+During a run: two tool calls listed, `get_service_status` finished and `query_logs` still in progress.
 
 ![Dashboard mid-investigation](docs/img/live/live-running.png)
 
