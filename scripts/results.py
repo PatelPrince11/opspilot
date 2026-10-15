@@ -1009,7 +1009,9 @@ def test_section(questions: list[dict]) -> list[str]:
         "## (f) Test split: the one pre-registered run (Phase 5)",
         "",
         'Pre-registered in NOTES.md ("Phase 5 pre-registration") before any test question ran;'
-        " code frozen at tag `v0.1-frozen`; run once with `--final-test`. Every cell is value"
+        " code frozen at tag `v0.1-frozen`; run with `--final-test`. Run 1 was invalid (a ledger"
+        " file was edited during it, so its result files were dirty); the reported run 2 is a"
+        " full cache replay from the clean tag with identical numbers. Every cell is value"
         f" [95% CI] (n questions); CI: percentile bootstrap resampling questions, {RESAMPLES:,}"
         f" resamples, seed {SEED}; rates pool claims, calls or key facts over the questions"
         " resampled. **Retrieval and agent settings were tuned on dev, the injection defenses on"
