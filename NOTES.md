@@ -3841,6 +3841,74 @@ change would be a cache miss.
 - Not checked yet (Part B, on EC2): a full investigation through Nginx, incremental arrival of
   the events, memory under load, amd64 image on the instance.
 
+## 2026-10-15: Phase 5B Part B, deployed on EC2 and measured
+
+- Instance: one t3.medium (2 vCPU, 4 GiB, x86_64), Ubuntu 24.04.4 LTS, ca-central-1, 30 GiB gp3,
+  2 GiB swapfile (in /etc/fstab). Docker Compose v5.6.0 from Docker's apt repository, set up by
+  docs/deploy.md. Images: app `ghcr.io/patelprince11/opspilot@sha256:5970c8cd73d1...63fe`,
+  proxy `opspilot-proxy@sha256:509d33f827ba...e24e`, both equal to GHCR's commit tag of ce5b41b
+  (the images carry no revision label, so the digests were matched against the tags). Ingest on
+  the instance: 547 chunks (the locked count), 97 s, lowest available memory 2,173 MB, no swap.
+  Smoke test (`scripts/smoke_remote.sh`) OK.
+- Snag: SSH timed out at first. The security group's "My IP" rule held 104.28.116.13 (the
+  browser's Cloudflare WARP address) while this shell left from another address; fixed by Prince
+  in the console. Port 80 also timed out at first because the instance was still initialising.
+- **Latency** (ledger (g), eval/results/deploy_latency.json, scripts/deploy_latency.py): 20 dev
+  questions, seeded sample (SEED), shipped config, server LLM cache off (0 cached calls), one
+  sequential client from a Mac in Calgary over plain HTTP. p50 36.0 s, p95 64.4 s (between the two
+  slowest runs: n = 20 cannot estimate a tail), 0 errors, $0.00443 mean, $0.0885 total. Bimodal by
+  tool calls: 2-call runs 11.2-19.9 s (n 6), 8-call runs 26.6-69.4 s (n 10). Not tested:
+  concurrency, cold start, accuracy. Cache off by a compose override holding only
+  `LLM_CACHE_DIR: ""` (environment beats env_file; .env not read or edited), app recreated with
+  `--no-deps`; reverted, `llm_cache_dir` back to `/app/.cache/llm`, /health 200.
+- 8-call share: 10 of 20 here vs 53 of 100 in the committed dev run of the shipped config (on the
+  same 20 ids the committed run had 7 of 20; only 8 of 20 ids used the same number of calls), so
+  trajectories vary between runs of the same question.
+- Memory during the latency run (`free -m -s 5` on the server, 224 samples, files in
+  scratchpad/deploy/, not committed): lowest available 2,579 MB, peak used 1,254 MB, swap never
+  used. Deviation from the plan below: the memory figures are here, not in deploy_latency.json.
+- Streaming through Nginx: the client stamps each `event:` line as it comes off the socket. Q118
+  (37.2 s, 19 events): first event 0.30 s, last 37.20 s, gaps up to 4.6, 5.2, 5.9 and 12.2 s
+  (the last before `sources`: the draft and verify make no events). All 20 runs have a gap over
+  1 s and spread their events over at least 71% of the wall time; buffering would bunch them at
+  the end.
+- Rate limit: one burst of invalid bodies (`question: "x"`; the guard runs before body
+  validation, checked with a local FastAPI stub, so no model call): 422 x5, then 429 with
+  Retry-After 58. Code: every request is counted in two buckets, `key:<X-API-Key>` and
+  `ip:<request.client.host>`, each against RATE_PER_MINUTE per 60 s and RATE_PER_DAY per 86,400 s
+  (sliding windows). The app's access log (counts only) showed the real client addresses, not
+  Nginx's: 3 requests from 104.28.116.13 and 3 from 104.28.116.14 (Cloudflare WARP alternated). The
+  429 came when .14's IP bucket held 2 hits, so the **per-key bucket** applied; the per-minute limit
+  in force behaves as 5.
+- **HTTP only:** the API key crosses the network in cleartext (X-API-Key). Demo key only, low
+  DAILY_SPEND_LIMIT_USD, rotate afterwards.
+- Langfuse off in production (TRACING_ENABLED=false, keys empty, as in .env.prod.example).
+- Prompt Guard fails open (entry below, re-read in the code): a Groq error escapes
+  `defenses.screen`, `run_one` marks the tool call failed, and `gather` still adds its items to
+  the evidence (`new.update(items)`), with D3 and D2 skipped; only D1 wraps them. The committed
+  test file has counts only: 91 of 616 tool calls failed, no reasons recorded, so the share caused
+  by Prompt Guard errors is unknown.
+- Prompt Guard and the response cache: guard calls go through `Client.chat`, so they are cached,
+  but only successes are written (`cache_put` after a good reply), and an errored call raises
+  before `Guard.calls.append`, so it leaves no cache entry and no `llm_calls` row. A replay
+  therefore cannot serve a past error from the cache; it sends that call again. With keys, a
+  successful resend would show as a non-cached row, and run 2 had none. A resend that errored
+  again would leave no row and no trace. Without a Groq key the resend raises
+  "GROQ_API_KEY is not set" before any request, the tool node catches it the same way, and the
+  replay harness's "0 requests" would not see it.
+- What the test file's counts are (checked in code, not rerun): 2,288 = the agent's LLM calls in
+  the 100 committed `shipped` rows (triage, gather and draft calls with their retries; verify is
+  a code check with no LLM call; plus Prompt Guard calls, which `gather` appends to `llm_calls`);
+  the judge's 100 and verify-off's 1,947 are
+  separate. 1,463 = the non-cached calls of **run 1** (the invalid run): run 2 was a pure cache
+  replay, and `write_results` keeps the measured run's latency and spend on a pure replay. So the
+  earlier entries stand: the reported final run is a replay, as is the Phase 5 injection figure.
+  The committed files hold no per-type split of the 1,463.
+- `make reproduce` by design needs no API keys and makes no LLM requests (every call from
+  eval/cache/llm; the fresh-clone check above). Setup still needs network (`make up` builds and
+  pulls images and packages; the embedding model downloads on first use). Not rechecked here.
+- Spend, Part B: $0.0885 latency run, $0 burst, about $0.004 smoke test (Part A setup).
+
 ## Phase 5B notes (deploy)
 
 - Run uvicorn with one worker: the rate limiter and its counts live in process memory, so two
