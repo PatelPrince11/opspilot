@@ -176,3 +176,69 @@ EC2 -> Instances -> select -> Instance state -> **Stop**. A stopped instance doe
 but its 30 GiB gp3 volume (and an allocated Elastic IP) still bill. Terminate deletes the disk and
 the database with it; do that only when the project is finished. Check Billing -> Bills a day
 later to see what was charged.
+
+## 10. Running a demo (starting the stopped instance)
+
+1. EC2 -> Instances -> select `opspilot` -> Instance state -> **Start**. Wait until Status checks
+   shows **2/2 checks passed**.
+2. Copy the **new** Public IPv4 address from the instance details. It changes on every Start
+   (this instance has no Elastic IP), so an address from an earlier session is dead.
+3. Security groups -> `opspilot-sg` -> Edit inbound rules -> set the SSH source to your terminal's
+   current IP. The console's "My IP" is your browser's address; behind a VPN or Cloudflare WARP
+   the terminal can leave from a different one. Check it from the terminal you will SSH from:
+
+   ```bash
+   curl -s https://checkip.amazonaws.com
+   ```
+
+   and use that address with `/32`.
+4. Log in and check the stack:
+
+   ```bash
+   ssh -i ~/.ssh/opspilot.pem ubuntu@<PUBLIC_IP>
+   ```
+
+   ```bash
+   cd ~/opspilot && docker compose -f docker-compose.prod.yml ps
+   ```
+
+   `db`, `app` and `proxy` should be up (`migrate` exited 0). If they are not:
+
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d
+   ```
+
+   What the files say: `db`, `app` and `proxy` have `restart: unless-stopped`
+   (`docker-compose.prod.yml` lines 24, 52, 60), so they come back whenever the Docker daemon
+   starts. Whether the daemon starts on boot is not set anywhere in this repo: step 2 installs
+   Docker's apt packages and does not run `systemctl enable docker`. **Not tested after a
+   stop/start.**
+5. Open `http://<PUBLIC_IP>/` and type the throwaway API key into the dashboard's API key field.
+   Never paste it into a chat, an issue or a screenshot; keep the field out of any recording.
+6. Limits, as in `.env.prod.example` (the server `.env` may differ; check with `grep -E
+   '^(DAILY_SPEND_LIMIT_USD|RATE_PER_MINUTE|RATE_PER_DAY)=' .env`): `DAILY_SPEND_LIMIT_USD=1.0`
+   (503 once today's UTC spend reaches it), `RATE_PER_MINUTE=5` per key and per client IP (429),
+   `RATE_PER_DAY=100`.
+7. The app keeps model responses on the `cache` volume. A question asked again with the same text
+   and As of is served from it: near-instant and $0. To show live behaviour, ask a question not
+   asked on this instance before; the Cost card shows what that run spent.
+8. When you are done, **Stop** (section 9), not Terminate. The 30 GiB gp3 volume still bills while
+   the instance is stopped. If the API key was visible on screen, rotate it (section 4).
+
+### Demo questions
+
+All five were run on this deployment in the Phase 5B latency run (`eval/results/deploy_latency.json`:
+shipped agent, LLM cache off, As of `2026-10-06T14:52`, one client). Set As of to that value; with
+it empty the log windows end now, after the corpus. Timings and tool-call counts vary from run to
+run.
+
+| id | question | measured | cost | tool calls |
+| --- | --- | --- | --- | --- |
+| Q028 | payments-api getting 503 from ledger-service-01 and ledger-service-02 from 13:15 on 11 September 2026, what changed right before? | 15.6 s | $0.0018 | 2 |
+| H039 | An update broke internal name resolution for the ledger service back in May 2025. What was incorrectly configured during that deployment? | 17.8 s | $0.0020 | 2 |
+| Q084 | catalog-api-01 and -02 slow with the odd EAI_AGAIN on a September 2026 evening. what do their pods share with the earlier notification-worker slowdown? | 41.6 s | $0.0046 | 8 |
+| H001 | I'm seeing SRCH-E502 errors from the search cluster impacting the search API in March 2025. What's going on here? | 47.1 s | $0.0046 | 8 |
+| H007 | Payments pgbouncer 01 is pegged on CPU and throwing PAYAPI-E1042 at the payments API in March 2025. What went wrong, and what diagnostic steps do the guides offer? | 47.8 s | $0.0067 | 6 |
+
+H007 is the one to open a citation on: in the dev run its 6 claims all passed the citation
+check, each citing a chunk of runbook RB-011 (the PgBouncer CPU and pool-statistics steps).
